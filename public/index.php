@@ -129,7 +129,6 @@ if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'trycurtiss.co
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
-        'domain' => '.trycurtiss.com',
         'secure' => $isSecure,
         'httponly' => true,
         'samesite' => 'Lax'
