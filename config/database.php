@@ -50,7 +50,7 @@ if (isset($_SERVER['HTTP_HOST'])) {
     }
     define('APP_URL', $protocol . '://' . $_SERVER['HTTP_HOST'] . $dir);
 } else {
-    define('APP_URL', 'https://curtiss.suzxlabs.com');
+    define('APP_URL', 'https://falcon.trycurtiss.com');
 }
 
 // Site Name
