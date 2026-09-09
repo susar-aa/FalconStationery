@@ -52,7 +52,9 @@ define('DB_NAME', get_env_var('DB_NAME', 'curtiss_erp'));
 
 // App Root URL - Dynamically determined for local dev (XAMPP) & Plesk production
 if (isset($_SERVER['HTTP_HOST'])) {
-    $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+    $isHttps = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
+               (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    $protocol = $isHttps ? 'https' : 'http';
     $script = $_SERVER['SCRIPT_NAME'];
     $dir = str_replace('\\', '/', dirname($script));
     if ($dir === '/') {
