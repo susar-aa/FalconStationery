@@ -18,7 +18,7 @@ function loadEnv($path) {
             if (preg_match('/^["\'](.*)["\']$/', $val, $matches)) {
                 $val = $matches[1];
             }
-            if (getenv($key) === false) {
+            if (function_exists('putenv') && getenv($key) === false) {
                 putenv("$key=$val");
             }
             if (!isset($_ENV[$key])) {
@@ -31,14 +31,24 @@ function loadEnv($path) {
     }
 }
 
+function get_env_var($key, $default = '') {
+    if (isset($_ENV[$key])) return $_ENV[$key];
+    if (isset($_SERVER[$key])) return $_SERVER[$key];
+    if (function_exists('getenv')) {
+        $val = getenv($key);
+        if ($val !== false) return $val;
+    }
+    return $default;
+}
+
 // Load env file from project root
 loadEnv(__DIR__ . '/../.env');
 
 // Database Constants
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_USER', getenv('DB_USER') ?: 'root'); 
-define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');    
-define('DB_NAME', getenv('DB_NAME') ?: 'curtiss_erp'); 
+define('DB_HOST', get_env_var('DB_HOST', 'localhost'));
+define('DB_USER', get_env_var('DB_USER', 'root')); 
+define('DB_PASS', get_env_var('DB_PASS', ''));    
+define('DB_NAME', get_env_var('DB_NAME', 'curtiss_erp')); 
 
 // App Root URL - Dynamically determined for local dev (XAMPP) & Plesk production
 if (isset($_SERVER['HTTP_HOST'])) {
@@ -57,7 +67,7 @@ if (isset($_SERVER['HTTP_HOST'])) {
 define('APP_NAME', 'CURTISS ERP');
 
 // Brevo API Configuration
-define('BREVO_API_KEY', getenv('BREVO_API_KEY') ?: '');
+define('BREVO_API_KEY', get_env_var('BREVO_API_KEY', ''));
 
 // System Financial Account Code Mappings
 define('COA_CODE_CASH_PARENT', '1600');
