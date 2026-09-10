@@ -132,6 +132,9 @@ class Customer {
             UNION ALL
             SELECT 'Opening Bal' as type, id, 'System generated' as ref, COALESCE(opening_balance_date, DATE(created_at)) as date, opening_balance as debit, 0 as credit, created_at 
             FROM customers WHERE id = :c5 AND opening_balance > 0
+            UNION ALL
+            SELECT 'Payment Reversal' as type, id, CONCAT('Reversed: ', payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, DATE(reversed_at) as date, amount as debit, 0 as credit, reversed_at as created_at 
+            FROM customer_payments WHERE customer_id = :c6 AND status = 'Reversed'
             ORDER BY date ASC, created_at ASC
         ";
         $this->db->query($sql);
@@ -140,6 +143,7 @@ class Customer {
         $this->db->bind(':c3', $id);
         $this->db->bind(':c4', $id);
         $this->db->bind(':c5', $id);
+        $this->db->bind(':c6', $id);
         $ledger = $this->db->resultSet();
 
         $balance = 0;

@@ -599,16 +599,55 @@ class Payment {
 
             // 5. If it was a cheque payment, find and mark cheque as Bounced / Voided
             if ($payment->payment_method === 'Cheque') {
-                $this->db->query("UPDATE cheques SET status = 'Bounced' WHERE customer_id = :cid AND amount = :amt AND cheque_number = (
-                    SELECT cheque_number FROM (
-                        SELECT cheque_number FROM cheques WHERE customer_id = :cid2 AND amount = :amt2 ORDER BY id DESC LIMIT 1
-                    ) as tmp
-                )");
+                $this->db->query("SELECT id, status, banking_date, bank_account_id FROM cheques WHERE customer_id = :cid AND amount = :amt ORDER BY id DESC LIMIT 1");
                 $this->db->bind(':cid', $payment->customer_id);
                 $this->db->bind(':amt', $payment->amount);
-                $this->db->bind(':cid2', $payment->customer_id);
-                $this->db->bind(':amt2', $payment->amount);
-                $this->db->execute();
+                $chk = $this->db->single();
+
+                if ($chk) {
+                    if ($chk->status === 'Cleared' && $chk->bank_account_id) {
+                        // Was cleared: Bank balance was added. Reverse clearing entry: Credit Bank, Debit the original Asset account
+                        $assetAccountId = null;
+                        foreach ($txs as $tx) {
+                            if ($tx->debit > 0) {
+                                $assetAccountId = $tx->account_id;
+                                break;
+                            }
+                        }
+
+                        if ($assetAccountId) {
+                            $clearRevDesc = "Reversal: Cleared Customer Cheque for Payment ID " . $payment->id;
+                            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, status) VALUES (CURRENT_DATE(), :ref, :desc, :uid, 'Posted')");
+                            $this->db->bind(':ref', 'REV-CQ-CLR-' . $payment->reference);
+                            $this->db->bind(':desc', $clearRevDesc);
+                            $this->db->bind(':uid', $userId);
+                            $this->db->execute();
+                            $clearRevJid = $this->db->lastInsertId();
+
+                            $clearLines = [
+                                ['account_id' => $chk->bank_account_id, 'debit' => 0, 'credit' => $payment->amount],
+                                ['account_id' => $assetAccountId, 'debit' => $payment->amount, 'credit' => 0]
+                            ];
+                            foreach ($clearLines as $cline) {
+                                $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit) VALUES (:jid, :aid, :deb, :cred)");
+                                $this->db->bind(':jid', $clearRevJid);
+                                $this->db->bind(':aid', $cline['account_id']);
+                                $this->db->bind(':deb', $cline['debit']);
+                                $this->db->bind(':cred', $cline['credit']);
+                                $this->db->execute();
+
+                                $this->db->query("UPDATE chart_of_accounts SET balance = balance " . ($cline['debit'] > 0 ? "+ :amt " : "- :amt ") . "WHERE id = :id");
+                                $this->db->bind(':amt', $payment->amount);
+                                $this->db->bind(':id', $cline['account_id']);
+                                $this->db->execute();
+                            }
+                        }
+                    }
+
+                    $this->db->query("UPDATE cheques SET status = 'Bounced' WHERE id = :cid");
+                    $this->db->bind(':cid', $chk->id);
+                    $this->db->execute();
+                }
             }
 
             // 6. Reverse Allocations
