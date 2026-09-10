@@ -338,7 +338,6 @@ if (isset($_GET['success'])) {
                     
                     <div class="b-actions">
                         <a href="<?= APP_URL ?>/banking/ledger/<?= $acc->id ?>" class="sf-btn sf-btn-secondary"><i class="fa-solid fa-list"></i> Register</a>
-                        <a href="<?= APP_URL ?>/banking/reconcile/<?= $acc->id ?>" class="sf-btn sf-btn-success"><i class="fa-solid fa-scale-balanced"></i> Reconcile</a>
                     </div>
                 </div>
             <?php endforeach; endif; ?>
@@ -355,7 +354,6 @@ if (isset($_GET['success'])) {
     </div>
     <div class="cmd-divider"></div>
     <button type="button" onclick="openTransferModal()" class="cmd-icon" title="Inter-Bank Transfer"><i class="fa-solid fa-money-bill-transfer"></i></button>
-    <button type="button" onclick="openTransactionModal('deposit')" class="cmd-icon" title="Record Deposit"><i class="fa-solid fa-arrow-down-long"></i></button>
     <button type="button" onclick="openTransactionModal('withdrawal')" class="cmd-icon" title="Record Withdrawal"><i class="fa-solid fa-arrow-up-long"></i></button>
     <button type="button" onclick="openAddBankModal()" class="cmd-cta"><i class="fa-solid fa-plus" style="font-size:13px;"></i> Add Bank</button>
 </div>
