@@ -12,417 +12,412 @@ if (isset($_GET['success'])) {
     }
 }
 ?>
+
+<!-- Inter Font & FontAwesome Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
 <style>
-    /* Styling & Theme Variables */
-    .banking-container {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: var(--text-dark, #333);
-    }
-    .header-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    .btn-group { display: flex; gap: 10px; }
-    .btn {
-        padding: 10px 18px;
-        font-size: 13px;
-        font-weight: 600;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        text-decoration: none;
-    }
-    
-    .btn-primary { background: #0066cc; color: #fff; }
-    .btn-primary:hover { background: #0056b3; }
-    
-    .btn-success { background: #2e7d32; color: #fff; }
-    .btn-success:hover { background: #235f26; }
-    
-    .btn-danger { background: #c62828; color: #fff; }
-    .btn-danger:hover { background: #9a1f1f; }
-    
-    .btn-secondary { background: #fff; color: #475569; border: 1px solid #cbd5e1; }
-    .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
-    @media (prefers-color-scheme: dark) {
-        .btn-secondary { background: #1e1e2d; color: #e2e8f0; border-color: #3f3f46; }
-        .btn-secondary:hover { background: #27273a; border-color: #52525b; }
-    }
+/* ============================================================
+   SF PRO + APPLE DESIGN LANGUAGE — BANKING DASHBOARD
+   ============================================================ */
 
-    /* Section Headings */
-    .section-title {
-        font-size: 15px;
-        font-weight: bold;
-        text-transform: uppercase;
-        color: #64748b;
-        letter-spacing: 0.5px;
-        margin: 30px 0 15px 0;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    @media (prefers-color-scheme: dark) {
-        .section-title { border-color: #27272a; color: #a1a1aa; }
-    }
+:root {
+    --c-bg:           #f2f2f7;
+    --c-surface:      #ffffff;
+    --c-surface2:     #f9f9fb;
+    --c-fill:         rgba(120,120,128,0.12);
+    --c-fill2:        rgba(120,120,128,0.16);
+    --c-separator:    rgba(60,60,67,0.12);
+    --c-separator2:   rgba(60,60,67,0.06);
 
-    /* Bank Account Cards Grid */
-    .bank-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 20px;
-        margin-bottom: 10px;
-    }
-    
-    .bank-card {
-        background: #fff;
-        border: 1px solid var(--mac-border, #e2e8f0);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .bank-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    }
-    .bank-card.temp-bank {
-        border-left: 5px solid #ef6c00;
-        background: rgba(239, 108, 0, 0.01);
-    }
-    .bank-card.real-bank {
-        border-left: 5px solid #0066cc;
-    }
+    --c-blue:         #007aff;
+    --c-blue-light:   #e5f2ff;
+    --c-blue-mid:     #b3d6ff;
+    --c-green:        #34c759;
+    --c-green-light:  #e6f9ec;
+    --c-orange:       #ff9500;
+    --c-orange-light: #fff4e5;
+    --c-red:          #ff3b30;
+    --c-red-light:    #fff0ef;
 
-    @media (prefers-color-scheme: dark) {
-        .bank-card { background: #1e1e2d; border-color: #2d2d3d; }
-    }
-    
-    .bank-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 10px;
-    }
-    
-    .bank-title { font-size: 16px; font-weight: 700; color: var(--text-dark, #1e293b); }
-    @media (prefers-color-scheme: dark) { .bank-title { color: #f1f5f9; } }
-    
-    .bank-tag {
-        font-size: 10px;
-        font-weight: 800;
-        text-transform: uppercase;
-        padding: 3px 8px;
-        border-radius: 20px;
-    }
-    .tag-temp { background: #fff3e0; color: #ef6c00; }
-    .tag-real { background: #e0f2fe; color: #0369a1; }
-    @media (prefers-color-scheme: dark) {
-        .tag-temp { background: rgba(239, 108, 0, 0.15); }
-        .tag-real { background: rgba(3, 105, 161, 0.15); }
-    }
-    
-    .bank-code { font-size: 11px; color: #94a3b8; margin-bottom: 15px; }
-    
-    .bank-balance-wrapper {
-        margin-bottom: 20px;
-    }
-    .balance-label { font-size: 10px; text-transform: uppercase; font-weight: bold; color: #94a3b8; }
-    .balance-amount { font-size: 26px; font-weight: 800; font-family: monospace; color: #0066cc; margin-top: 2px;}
-    .temp-bank .balance-amount { color: #ef6c00; }
-    
-    .bank-actions {
-        margin-top: auto;
-        display: flex;
-        gap: 8px;
-        border-top: 1px solid var(--mac-border, #f1f5f9);
-        padding-top: 15px;
-    }
-    @media (prefers-color-scheme: dark) { .bank-actions { border-color: #27272a; } }
-    .bank-actions .btn { flex: 1; justify-content: center; }
+    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
+    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
 
-    /* Cash / Subsidiary Accounts Table */
-    .cash-table-wrapper {
-        background: #fff;
-        border: 1px solid var(--mac-border, #e2e8f0);
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    }
-    @media (prefers-color-scheme: dark) { .cash-table-wrapper { background: #1e1e2d; border-color: #2d2d3d; } }
-    
-    .cash-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .cash-table th, .cash-table td { padding: 12px 20px; border-bottom: 1px solid var(--mac-border, #e2e8f0); }
-    @media (prefers-color-scheme: dark) { .cash-table th, .cash-table td { border-color: #27272a; } }
-    .cash-table th { background: rgba(0,0,0,0.01); font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; }
-    @media (prefers-color-scheme: dark) { .cash-table th { background: rgba(255,255,255,0.01); } }
-    .cash-table tr:last-child td { border-bottom: none; }
-    .cash-table tr:hover td { background: rgba(0,0,0,0.01); }
-    @media (prefers-color-scheme: dark) { .cash-table tr:hover td { background: rgba(255,255,255,0.01); } }
+    --t-primary:   #1c1c1e;
+    --t-secondary: #636366;
+    --t-tertiary:  #aeaeb2;
+    --t-label:     #8e8e93;
 
-    /* Modals CSS */
-    .modal-backdrop {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(4px);
-        z-index: 2000;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal-panel {
-        background: #fff;
-        width: 100%;
-        max-width: 480px;
-        border-radius: 12px;
-        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
-        border: 1px solid #e2e8f0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    @media (prefers-color-scheme: dark) {
-        .modal-panel { background: #1e1e2d; border-color: #2d2d3d; }
-    }
-    @keyframes modalFadeIn {
-        from { transform: scale(0.95); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-    }
-    .modal-header {
-        padding: 15px 20px;
-        background: #0066cc;
-        color: #fff;
-        font-weight: 700;
-        font-size: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-    .modal-body label { font-weight: 700; font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 2px; display: block;}
-    .modal-body input, .modal-body select {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        box-sizing: border-box;
-        font-size: 13px;
-        background: transparent;
-        color: inherit;
-    }
-    .modal-body input:focus, .modal-body select:focus { border-color: #0066cc; outline: none; }
-    @media (prefers-color-scheme: dark) {
-        .modal-body input, .modal-body select { border-color: #3f3f46; }
-    }
-    .modal-footer {
-        padding: 15px 20px;
-        background: rgba(0,0,0,0.02);
-        border-top: 1px solid var(--mac-border, #e2e8f0);
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-    @media (prefers-color-scheme: dark) {
-        .modal-footer { background: rgba(255,255,255,0.01); border-color: #27272a; }
-    }
+    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
+    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
 
-    .edit-btn {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        color: #94a3b8;
-        transition: color 0.15s;
+    --r-xs: 6px;
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-xl: 26px;
+    --r-pill: 999px;
+
+    --dur-fast:    0.18s;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --c-bg:           #121212;
+        --c-surface:      #1e1e2e;
+        --c-surface2:     #161622;
+        --c-fill:         rgba(255,255,255,0.08);
+        --c-fill2:        rgba(255,255,255,0.12);
+        --c-separator:    rgba(255,255,255,0.15);
+        --c-separator2:   rgba(255,255,255,0.08);
+        --t-primary:   #f5f5f7;
+        --t-secondary: #a1a1aa;
+        --t-tertiary:  #71717a;
+        --t-label:     #52525b;
     }
-    .edit-btn:hover { color: #0066cc; }
+}
+
+.cust-root {
+    font-family: var(--f-system);
+    font-size: 15px;
+    color: var(--t-primary);
+    background: var(--c-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.cust-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 32px 60px;
+}
+
+/* ---- Header & Breadcrumb ---- */
+.sf-header { margin-bottom: 24px; }
+.sf-title-row {
+    display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
+}
+.sf-title-col h1 {
+    font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin: 0; color: var(--t-primary); line-height: 1.1;
+}
+.sf-title-col p {
+    font-size: 15px; color: var(--t-secondary); margin: 6px 0 0 0; font-weight: 500;
+}
+.sf-actions { display: flex; gap: 10px; align-items: center; }
+
+/* ---- Buttons ---- */
+.sf-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 18px; font-size: 13.5px; font-weight: 600;
+    border-radius: var(--r-sm); border: none; cursor: pointer;
+    transition: all var(--dur-fast); text-decoration: none;
+}
+.sf-btn-primary { background: var(--c-blue); color: #fff; }
+.sf-btn-primary:hover { background: #0062cc; }
+.sf-btn-secondary { background: var(--c-surface); color: var(--t-primary); border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-xs); }
+.sf-btn-secondary:hover { background: var(--c-fill); }
+.sf-btn-success { background: var(--c-green); color: #fff; }
+.sf-btn-success:hover { background: #2fb350; }
+.sf-btn-danger { background: var(--c-red); color: #fff; }
+.sf-btn-danger:hover { background: #e6352b; }
+
+/* ---- Section Title ---- */
+.section-title {
+    font-size: 18px; font-weight: 700; color: var(--t-primary);
+    margin: 40px 0 20px 0; display: flex; justify-content: space-between; align-items: center;
+}
+
+/* ---- Bank Cards Grid ---- */
+.bank-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+}
+.bank-card {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-xl);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column;
+    position: relative;
+    transition: transform var(--dur-fast), box-shadow var(--dur-fast);
+}
+.bank-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.bank-card.temp-bank { border-left: 4px solid var(--c-orange); }
+.bank-card.real-bank { border-left: 4px solid var(--c-blue); }
+
+.edit-trigger {
+    position: absolute; top: 20px; right: 20px;
+    color: var(--t-tertiary); cursor: pointer; transition: color var(--dur-fast);
+    background: transparent; border: none; font-size: 16px;
+}
+.edit-trigger:hover { color: var(--c-blue); }
+
+.b-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; padding-right: 25px; }
+.b-title { font-size: 18px; font-weight: 700; color: var(--t-primary); line-height: 1.2; }
+.b-nickname { font-size: 13px; font-weight: 500; color: var(--t-secondary); display: block; margin-top: 2px; }
+
+/* Status Pill */
+.status-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 4px 10px; border-radius: var(--r-pill); font-size: 10px; font-weight: 800;
+    letter-spacing: 0.04em; text-transform: uppercase;
+}
+.status-pill.temp { background: var(--c-orange-light); color: var(--c-orange); }
+.status-pill.real { background: var(--c-blue-light); color: var(--c-blue); }
+
+.b-code { font-size: 12px; color: var(--t-label); font-weight: 600; margin-bottom: 16px; }
+
+.b-details { font-size: 13px; color: var(--t-secondary); margin-bottom: 24px; line-height: 1.5; }
+.b-details strong { color: var(--t-primary); font-weight: 600; }
+
+.b-bal-wrap { margin-bottom: 24px; }
+.b-bal-lbl { font-size: 11px; font-weight: 700; color: var(--t-label); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.b-bal-val { font-size: 28px; font-weight: 800; font-family: var(--f-mono); color: var(--c-blue); letter-spacing: -0.02em; }
+.bank-card.temp-bank .b-bal-val { color: var(--c-orange); }
+
+.b-actions { display: flex; gap: 10px; margin-top: auto; }
+.b-actions .sf-btn { flex: 1; justify-content: center; font-size: 13px; padding: 8px 12px; }
+
+/* ---- Table ---- */
+.sf-card { background: var(--c-surface); border: 0.5px solid var(--c-separator); border-radius: var(--r-xl); box-shadow: var(--shadow-md); overflow: hidden; }
+.sf-table-wrapper { width: 100%; overflow-x: auto; }
+.sf-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+.sf-table th, .sf-table td { padding: 14px 18px; border-bottom: 0.5px solid var(--c-separator); }
+.sf-table th { background: var(--c-surface2); font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--t-label); }
+.sf-table td { font-size: 14.5px; font-weight: 500; color: var(--t-primary); }
+.sf-table tr:last-child td { border-bottom: none; }
+.sf-table tr:hover td { background: var(--c-fill2); }
+
+.td-mono { font-family: var(--f-mono); font-weight: 600; }
+
+/* ---- Alerts ---- */
+.sf-alert { padding: 14px 18px; border-radius: var(--r-md); margin-bottom: 24px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+.sf-alert.success { background: var(--c-green-light); color: #1e4620; border: 1px solid rgba(52,199,89,0.3); }
+.sf-alert.error { background: var(--c-red-light); color: #6e1a15; border: 1px solid rgba(255,59,48,0.3); }
+
+/* ---- Modals ---- */
+.modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center;
+}
+.modal-panel {
+    background: var(--c-surface); width: 100%; max-width: 550px; border-radius: var(--r-xl);
+    box-shadow: var(--shadow-xl); border: 0.5px solid var(--c-separator); overflow: hidden;
+    display: flex; flex-direction: column; animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalFadeIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal-header { padding: 20px 24px; background: var(--c-surface2); border-bottom: 0.5px solid var(--c-separator); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--t-primary); }
+.modal-close { background: transparent; border: none; font-size: 18px; color: var(--t-tertiary); cursor: pointer; transition: color var(--dur-fast); padding: 0; }
+.modal-close:hover { color: var(--t-primary); }
+
+.modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; max-height: 60vh; overflow-y: auto; }
+.sf-form-group { display: flex; flex-direction: column; gap: 6px; }
+.sf-form-group label { font-size: 11px; font-weight: 700; color: var(--t-label); text-transform: uppercase; letter-spacing: 0.04em; }
+.sf-input, .sf-select {
+    padding: 10px 14px; font-family: var(--f-system); font-size: 14px; color: var(--t-primary);
+    background: var(--c-bg); border: 1px solid var(--c-separator); border-radius: var(--r-sm);
+    outline: none; transition: border-color var(--dur-fast), box-shadow var(--dur-fast); width: 100%; box-sizing: border-box;
+}
+.sf-input:focus, .sf-select:focus { border-color: var(--c-blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+
+.modal-footer {
+    padding: 20px 24px; background: var(--c-surface2); border-top: 0.5px solid var(--c-separator);
+    display: flex; justify-content: flex-end; gap: 12px;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.note-box { font-size: 12px; color: var(--t-secondary); padding: 12px; background: var(--c-bg); border-radius: var(--r-sm); border: 0.5px solid var(--c-separator); }
 </style>
 
-<div class="banking-container">
-    <div class="header-actions">
-        <div>
-            <h2 style="margin: 0 0 5px 0;">Bank & Cash Accounts Management</h2>
-            <p style="margin: 0; color: #64748b; font-size: 14px;">Manage commercial bank sub-ledgers, view transaction registers, and record inter-bank transfers.</p>
-        </div>
-        <div class="btn-group">
-            <button class="btn btn-secondary" onclick="openTransferModal()">💸 Inter-Bank Transfer</button>
-            <button class="btn btn-success" onclick="openTransactionModal('deposit')">💵 Record Deposit</button>
-            <button class="btn btn-danger" onclick="openTransactionModal('withdrawal')">💰 Record Withdrawal</button>
-        </div>
-    </div>
+<div class="cust-root">
+    <div class="cust-wrap">
 
-    <!-- Feedback Alerts -->
-    <?php if(!empty($successMsg)): ?>
-        <div style="padding: 12px 16px; background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; border-radius:8px; margin-bottom:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px;">
-            <span>✅</span> <?= htmlspecialchars($successMsg) ?>
-        </div>
-    <?php endif; ?>
-    <?php if(!empty($data['error'])): ?>
-        <div style="padding: 12px 16px; background:#ffebee; color:#c62828; border:1px solid #ffcdd2; border-radius:8px; margin-bottom:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px;">
-            <span>⚠️</span> <?= htmlspecialchars($data['error']) ?>
-        </div>
-    <?php endif; ?>
-
-    <!-- Section 1: Bank Accounts -->
-    <div class="section-title">
-        <span>🏦 Registered Bank Accounts</span>
-        <button class="btn btn-primary" onclick="openAddBankModal()" style="padding: 4px 10px; font-size: 11px;">+ Add Bank</button>
-    </div>
-    
-    <div class="bank-grid">
-        <?php if(empty($data['bank_accounts'])): ?>
-            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8; border: 2px dashed var(--mac-border, #cbd5e1); border-radius: 12px;">
-                <span style="font-size: 40px; display: block; margin-bottom: 10px;">🏦</span>
-                No bank accounts registered. Click "+ Add Bank" to register a new account.
+        <div class="sf-header">
+            <div class="sf-title-row">
+                <div class="sf-title-col">
+                    <h1>Bank & Cash Accounts</h1>
+                    <p>Manage commercial bank sub-ledgers, view transaction registers, and record inter-bank transfers.</p>
+                </div>
+                <div class="sf-actions">
+                    <button class="sf-btn sf-btn-secondary" onclick="openTransferModal()"><i class="fa-solid fa-money-bill-transfer"></i> Inter-Bank Transfer</button>
+                    <button class="sf-btn sf-btn-success" onclick="openTransactionModal('deposit')"><i class="fa-solid fa-money-bill-wave"></i> Record Deposit</button>
+                    <button class="sf-btn sf-btn-danger" onclick="openTransactionModal('withdrawal')"><i class="fa-solid fa-hand-holding-dollar"></i> Record Withdrawal</button>
+                </div>
             </div>
-        <?php else: foreach($data['bank_accounts'] as $acc): ?>
-            <?php 
-                $isTemp = $acc->account_code === '1605';
-                $cardClass = $isTemp ? 'temp-bank' : 'real-bank';
-                $tagText = $isTemp ? 'Clearing / Temp' : 'Bank Sub-ledger';
-                $tagClass = $isTemp ? 'tag-temp' : 'tag-real';
-            ?>
-            <div class="bank-card <?= $cardClass ?>">
-                <!-- Edit & Delete Trigger for Real Banks -->
-                <?php if (!$isTemp): ?>
-                    <button class="edit-btn" onclick="openEditBankModal(<?= $acc->id ?>, '<?= htmlspecialchars($acc->account_name, ENT_QUOTES) ?>')" title="Edit Bank Account">✏️</button>
-                <?php endif; ?>
-                
-                <div class="bank-header">
-                    <div class="bank-title">
+        </div>
+
+        <!-- Feedback Alerts -->
+        <?php if(!empty($successMsg)): ?>
+            <div class="sf-alert success">
+                <i class="fa-solid fa-circle-check"></i> <?= htmlspecialchars($successMsg) ?>
+            </div>
+        <?php endif; ?>
+        <?php if(!empty($data['error'])): ?>
+            <div class="sf-alert error">
+                <i class="fa-solid fa-circle-exclamation"></i> <?= htmlspecialchars($data['error']) ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Section 1: Bank Accounts -->
+        <div class="section-title">
+            <span>Registered Bank Accounts</span>
+            <button class="sf-btn sf-btn-primary" onclick="openAddBankModal()" style="font-size: 12px; padding: 6px 12px;"><i class="fa-solid fa-plus"></i> Add Bank</button>
+        </div>
+        
+        <div class="bank-grid">
+            <?php if(empty($data['bank_accounts'])): ?>
+                <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--t-tertiary); border: 1.5px dashed var(--c-separator); border-radius: var(--r-xl); background: var(--c-surface);">
+                    <i class="fa-solid fa-building-columns" style="font-size: 40px; margin-bottom: 12px;"></i>
+                    <h3 style="margin:0 0 8px 0; color: var(--t-primary); font-size: 18px;">No bank accounts registered</h3>
+                    <p style="margin:0; font-size: 14px;">Click "+ Add Bank" to register a new account.</p>
+                </div>
+            <?php else: foreach($data['bank_accounts'] as $acc): ?>
+                <?php 
+                    $isTemp = $acc->account_code === '1605';
+                    $cardClass = $isTemp ? 'temp-bank' : 'real-bank';
+                    $tagText = $isTemp ? 'Clearing / Temp' : 'Bank Sub-ledger';
+                    $tagClass = $isTemp ? 'temp' : 'real';
+                ?>
+                <div class="bank-card <?= $cardClass ?>">
+                    <?php if (!$isTemp): ?>
+                        <button class="edit-trigger" onclick="openEditBankModal(<?= $acc->id ?>, '<?= htmlspecialchars($acc->account_name, ENT_QUOTES) ?>')" title="Edit Bank Account"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <?php endif; ?>
+                    
+                    <div class="b-head">
+                        <div>
+                            <span class="status-pill <?= $tagClass ?>"><?= $tagText ?></span>
+                        </div>
+                    </div>
+
+                    <div class="b-title">
                         <?= htmlspecialchars($acc->bank_name ?? $acc->account_name) ?>
                         <?php if (!empty($acc->nickname)): ?>
-                            <span style="font-size:12px; font-weight: normal; color: #64748b; margin-left: 5px;">("<?= htmlspecialchars($acc->nickname) ?>")</span>
+                            <span class="b-nickname">"<?= htmlspecialchars($acc->nickname) ?>"</span>
                         <?php endif; ?>
                     </div>
-                    <span class="bank-tag <?= $tagClass ?>"><?= $tagText ?></span>
-                </div>
-                <div class="bank-code" style="margin-bottom: 5px;">GL Account Code: <strong><?= htmlspecialchars($acc->account_code) ?></strong></div>
-                
-                <?php if (!empty($acc->account_number)): ?>
-                    <div style="font-size: 12px; margin-bottom: 5px; color: #475569;">
-                        💳 No: <strong><?= htmlspecialchars($acc->account_number) ?></strong> (<?= htmlspecialchars($acc->account_type) ?>)
+                    
+                    <div class="b-code">GL: <?= htmlspecialchars($acc->account_code) ?></div>
+                    
+                    <div class="b-details">
+                        <?php if (!empty($acc->account_number)): ?>
+                            <div><i class="fa-regular fa-credit-card" style="width: 16px; text-align: center;"></i> <strong><?= htmlspecialchars($acc->account_number) ?></strong> (<?= htmlspecialchars($acc->account_type) ?>)</div>
+                            <div><i class="fa-solid fa-location-dot" style="width: 16px; text-align: center;"></i> <?= htmlspecialchars($acc->branch_name) ?> <?= !empty($acc->branch_code) ? '(' . htmlspecialchars($acc->branch_code) . ')' : '' ?> | <?= htmlspecialchars($acc->currency) ?></div>
+                        <?php else: ?>
+                            <div>System Clearing Account</div>
+                            <div>&nbsp;</div>
+                        <?php endif; ?>
                     </div>
-                    <div style="font-size: 11px; margin-bottom: 12px; color: #64748b;">
-                        📍 Branch: <?= htmlspecialchars($acc->branch_name) ?> <?= !empty($acc->branch_code) ? '(' . htmlspecialchars($acc->branch_code) . ')' : '' ?> | <?= htmlspecialchars($acc->currency) ?>
+                    
+                    <div class="b-bal-wrap">
+                        <div class="b-bal-lbl">Current Ledger Balance</div>
+                        <div class="b-bal-val">Rs <?= number_format($acc->balance, 2) ?></div>
                     </div>
-                <?php endif; ?>
-                
-                <div class="bank-balance-wrapper">
-                    <div class="balance-label">Current Ledger Balance</div>
-                    <div class="balance-amount">Rs <?= number_format($acc->balance, 2) ?></div>
+                    
+                    <div class="b-actions">
+                        <a href="<?= APP_URL ?>/banking/ledger/<?= $acc->id ?>" class="sf-btn sf-btn-secondary"><i class="fa-solid fa-list"></i> Register</a>
+                        <a href="<?= APP_URL ?>/banking/reconcile/<?= $acc->id ?>" class="sf-btn sf-btn-success"><i class="fa-solid fa-scale-balanced"></i> Reconcile</a>
+                    </div>
                 </div>
-                
-                <div class="bank-actions">
-                    <a href="<?= APP_URL ?>/banking/ledger/<?= $acc->id ?>" class="btn btn-secondary">🔍 Register</a>
-                    <a href="<?= APP_URL ?>/banking/reconcile/<?= $acc->id ?>" class="btn btn-primary" style="background: #2e7d32; border-color: #2e7d32;">⚖️ Reconcile</a>
-                </div>
-            </div>
-        <?php endforeach; endif; ?>
-    </div>
+            <?php endforeach; endif; ?>
+        </div>
 
-    <!-- Section 2: Cash & Subsidiaries -->
-    <div class="section-title">
-        <span>💵 Cash & Clearing Asset Accounts</span>
-    </div>
-    
-    <div class="cash-table-wrapper">
-        <table class="cash-table">
-            <thead>
-                <tr>
-                    <th>Account Code</th>
-                    <th>Account Name</th>
-                    <th>Account Type</th>
-                    <th style="text-align: right;">Current Balance</th>
-                    <th style="text-align: center; width: 150px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if(empty($data['cash_accounts'])): ?>
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #94a3b8; padding: 30px;">No cash asset accounts found.</td>
-                    </tr>
-                <?php else: foreach($data['cash_accounts'] as $acc): ?>
-                    <tr>
-                        <td style="font-weight: 700; color: #0066cc;"># <?= htmlspecialchars($acc->account_code) ?></td>
-                        <td style="font-weight: 600;"><?= htmlspecialchars($acc->account_name) ?></td>
-                        <td><span style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: #64748b;"><?= htmlspecialchars($acc->account_type) ?></span></td>
-                        <td style="text-align: right; font-weight: bold; font-family: monospace; font-size: 14px;">Rs <?= number_format($acc->balance, 2) ?></td>
-                        <td style="text-align: center;">
-                            <a href="<?= APP_URL ?>/banking/ledger/<?= $acc->id ?>" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">🔍 Register</a>
-                        </td>
-                    </tr>
-                <?php endforeach; endif; ?>
-            </tbody>
-        </table>
+        <!-- Section 2: Cash & Subsidiaries -->
+        <div class="section-title">
+            <span>Cash & Clearing Asset Accounts</span>
+        </div>
+        
+        <div class="sf-card">
+            <div class="sf-table-wrapper">
+                <table class="sf-table">
+                    <thead>
+                        <tr>
+                            <th>Account Code</th>
+                            <th>Account Name</th>
+                            <th>Account Type</th>
+                            <th style="text-align: right;">Current Balance</th>
+                            <th style="text-align: center; width: 120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if(empty($data['cash_accounts'])): ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px; color: var(--t-tertiary);">No cash asset accounts found.</td>
+                            </tr>
+                        <?php else: foreach($data['cash_accounts'] as $acc): ?>
+                            <tr>
+                                <td class="td-mono" style="color: var(--c-blue);"># <?= htmlspecialchars($acc->account_code) ?></td>
+                                <td style="font-weight: 600;"><?= htmlspecialchars($acc->account_name) ?></td>
+                                <td><span class="status-pill" style="background: var(--c-fill); color: var(--t-secondary);"><?= htmlspecialchars($acc->account_type) ?></span></td>
+                                <td class="td-mono" style="text-align: right; font-size: 15px;">Rs <?= number_format($acc->balance, 2) ?></td>
+                                <td style="text-align: center;">
+                                    <a href="<?= APP_URL ?>/banking/ledger/<?= $acc->id ?>" class="sf-btn sf-btn-secondary" style="padding: 6px 12px; font-size: 12px;"><i class="fa-solid fa-list"></i> Register</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <!-- MODAL 1: Add Bank Account -->
 <div class="modal-backdrop" id="addBankModal">
-    <div class="modal-panel" style="max-width: 550px;">
+    <div class="modal-panel">
         <div class="modal-header">
-            <span>🏦 Add Bank Account</span>
-            <button type="button" onclick="closeModal('addBankModal')" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+            <h3><i class="fa-solid fa-building-columns"></i> Add Bank Account</h3>
+            <button type="button" class="modal-close" onclick="closeModal('addBankModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="<?= APP_URL ?>/banking" method="POST">
             <input type="hidden" name="action" value="add_bank">
-            <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+            <div class="modal-body">
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Bank Name *</label>
-                        <input type="text" name="bank_name" placeholder="e.g. Commercial Bank" required>
+                        <input type="text" name="bank_name" class="sf-input" placeholder="e.g. Commercial Bank" required>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Branch Name *</label>
-                        <input type="text" name="branch_name" placeholder="e.g. Colombo Fort" required>
+                        <input type="text" name="branch_name" class="sf-input" placeholder="e.g. Colombo Fort" required>
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Branch Code (Optional)</label>
-                        <input type="text" name="branch_code" placeholder="e.g. 018">
+                        <input type="text" name="branch_code" class="sf-input" placeholder="e.g. 018">
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Account Number *</label>
-                        <input type="text" name="account_number" placeholder="e.g. 100293810" required>
+                        <input type="text" name="account_number" class="sf-input" placeholder="e.g. 100293810" required>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Account Holder Name *</label>
-                        <input type="text" name="account_holder_name" placeholder="e.g. Curtiss Enterprises (Pvt) Ltd" required>
+                        <input type="text" name="account_holder_name" class="sf-input" placeholder="e.g. Curtiss Enterprises (Pvt) Ltd" required>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Nickname</label>
-                        <input type="text" name="nickname" placeholder="e.g. Primary Operating Account">
+                        <input type="text" name="nickname" class="sf-input" placeholder="e.g. Primary Operating Account">
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Account Type *</label>
-                        <select name="account_type" required>
+                        <select name="account_type" class="sf-select" required>
                             <option value="Current">Current</option>
                             <option value="Savings">Savings</option>
                             <option value="Personal">Personal</option>
@@ -430,38 +425,38 @@ if (isset($_GET['success'])) {
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Currency *</label>
-                        <input type="text" name="currency" value="LKR" placeholder="e.g. LKR" required>
+                        <input type="text" name="currency" class="sf-input" value="LKR" placeholder="e.g. LKR" required>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Opening Balance *</label>
-                        <input type="number" name="opening_balance" step="0.01" value="0.00" required>
+                        <input type="number" name="opening_balance" class="sf-input" step="0.01" value="0.00" required>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Opening Balance Date *</label>
-                        <input type="date" name="opening_balance_date" value="<?= date('Y-m-d') ?>" required>
+                        <input type="date" name="opening_balance_date" class="sf-input" value="<?= date('Y-m-d') ?>" required>
                     </div>
                 </div>
                 
-                <div>
+                <div class="sf-form-group">
                     <label>Account Status *</label>
-                    <select name="status" required>
+                    <select name="status" class="sf-select" required>
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                     </select>
                 </div>
                 
-                <div style="font-size: 11px; color: #64748b; line-height: 1.4; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 6px;">
-                    ℹ️ <strong>Accounting Note:</strong> An opening balance journal entry will be automatically posted to debit this bank ledger account and credit <strong>3000 - Owner Capital / Equity</strong>.
+                <div class="note-box">
+                    <i class="fa-solid fa-circle-info"></i> <strong>Accounting Note:</strong> An opening balance journal entry will be automatically posted to debit this bank ledger account and credit <strong>3000 - Owner Capital / Equity</strong>.
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('addBankModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Add Bank Account</button>
+                <button type="button" class="sf-btn sf-btn-secondary" onclick="closeModal('addBankModal')">Cancel</button>
+                <button type="submit" class="sf-btn sf-btn-primary">Add Bank Account</button>
             </div>
         </form>
     </div>
@@ -469,52 +464,52 @@ if (isset($_GET['success'])) {
 
 <!-- MODAL 2: Edit Bank Account -->
 <div class="modal-backdrop" id="editBankModal">
-    <div class="modal-panel" style="max-width: 550px;">
-        <div class="modal-header" style="background: #0066cc;">
-            <span>✏️ Edit Bank Account</span>
-            <button type="button" onclick="closeModal('editBankModal')" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+    <div class="modal-panel">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-pen-to-square"></i> Edit Bank Account</h3>
+            <button type="button" class="modal-close" onclick="closeModal('editBankModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="<?= APP_URL ?>/banking" method="POST">
             <input type="hidden" name="action" value="edit_bank">
             <input type="hidden" name="bank_id" id="editBankId">
-            <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+            <div class="modal-body">
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Bank Name *</label>
-                        <input type="text" name="bank_name" id="editBankName" required>
+                        <input type="text" name="bank_name" id="editBankName" class="sf-input" required>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Branch Name *</label>
-                        <input type="text" name="branch_name" id="editBranchName" required>
+                        <input type="text" name="branch_name" id="editBranchName" class="sf-input" required>
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Branch Code (Optional)</label>
-                        <input type="text" name="branch_code" id="editBranchCode">
+                        <input type="text" name="branch_code" id="editBranchCode" class="sf-input">
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Account Number *</label>
-                        <input type="text" name="account_number" id="editAccountNumber" required>
+                        <input type="text" name="account_number" id="editAccountNumber" class="sf-input" required>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Account Holder Name *</label>
-                        <input type="text" name="account_holder_name" id="editHolderName" required>
+                        <input type="text" name="account_holder_name" id="editHolderName" class="sf-input" required>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Nickname</label>
-                        <input type="text" name="nickname" id="editNickname" placeholder="e.g. Primary Operating Account">
+                        <input type="text" name="nickname" id="editNickname" class="sf-input" placeholder="e.g. Primary Operating Account">
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Account Type *</label>
-                        <select name="account_type" id="editAccountType" required>
+                        <select name="account_type" id="editAccountType" class="sf-select" required>
                             <option value="Current">Current</option>
                             <option value="Savings">Savings</option>
                             <option value="Personal">Personal</option>
@@ -522,20 +517,20 @@ if (isset($_GET['success'])) {
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Currency *</label>
-                        <input type="text" name="currency" id="editCurrency" required>
+                        <input type="text" name="currency" id="editCurrency" class="sf-input" required>
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div>
+                <div class="grid-2">
+                    <div class="sf-form-group">
                         <label>Opening Balance Date *</label>
-                        <input type="date" name="opening_balance_date" id="editOpeningDate" required>
+                        <input type="date" name="opening_balance_date" id="editOpeningDate" class="sf-input" required>
                     </div>
-                    <div>
+                    <div class="sf-form-group">
                         <label>Account Status *</label>
-                        <select name="status" id="editStatus" required>
+                        <select name="status" id="editStatus" class="sf-select" required>
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
@@ -543,10 +538,10 @@ if (isset($_GET['success'])) {
                 </div>
             </div>
             <div class="modal-footer" style="justify-content: space-between;">
-                <button type="button" class="btn btn-danger" onclick="openDeleteConfirmation()" style="background: #9a1f1f;">🗑️ Delete Bank</button>
+                <button type="button" class="sf-btn sf-btn-danger" onclick="openDeleteConfirmation()"><i class="fa-solid fa-trash"></i> Delete Bank</button>
                 <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('editBankModal')">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="sf-btn sf-btn-secondary" onclick="closeModal('editBankModal')">Cancel</button>
+                    <button type="submit" class="sf-btn sf-btn-primary">Save Changes</button>
                 </div>
             </div>
         </form>
@@ -555,26 +550,26 @@ if (isset($_GET['success'])) {
 
 <!-- MODAL: Delete Bank Account Confirmation -->
 <div class="modal-backdrop" id="deleteBankModal">
-    <div class="modal-panel" style="max-width: 400px;">
-        <div class="modal-header" style="background: #9a1f1f;">
-            <span>⚠️ Confirm Bank Deletion</span>
-            <button type="button" onclick="closeModal('deleteBankModal')" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+    <div class="modal-panel" style="max-width: 420px;">
+        <div class="modal-header" style="background: var(--c-red-light); border-bottom-color: rgba(255,59,48,0.2);">
+            <h3 style="color: var(--c-red);"><i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion</h3>
+            <button type="button" class="modal-close" onclick="closeModal('deleteBankModal')" style="color: var(--c-red);"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="<?= APP_URL ?>/banking" method="POST">
             <input type="hidden" name="action" value="delete_bank">
             <input type="hidden" name="bank_id" id="deleteBankIdInput">
             <div class="modal-body">
-                <p style="margin-top: 0; font-size: 13px; line-height: 1.5; color: #c62828; font-weight: 500;">
+                <p style="margin-top: 0; font-size: 14px; line-height: 1.5; color: var(--c-red); font-weight: 500;">
                     Warning: Deleting a bank account requires administrator/user verification. It will also ensure there are no transactions or active linkages.
                 </p>
-                <div>
-                    <label>Enter Password to Verify Identity *</label>
-                    <input type="password" name="confirm_password" placeholder="Verify password to confirm" required style="margin-top: 5px;">
+                <div class="sf-form-group">
+                    <label style="color: var(--c-red);">Enter Password to Verify Identity *</label>
+                    <input type="password" name="confirm_password" class="sf-input" placeholder="Verify password to confirm" required style="border-color: rgba(255,59,48,0.3);">
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteBankModal')">Cancel</button>
-                <button type="submit" class="btn btn-danger" style="background: #9a1f1f;">Verify & Delete</button>
+            <div class="modal-footer" style="background: var(--c-surface);">
+                <button type="button" class="sf-btn sf-btn-secondary" onclick="closeModal('deleteBankModal')">Cancel</button>
+                <button type="submit" class="sf-btn sf-btn-danger">Verify & Delete</button>
             </div>
         </form>
     </div>
@@ -583,21 +578,21 @@ if (isset($_GET['success'])) {
 <!-- MODAL 3: Inter-bank Fund Transfer -->
 <div class="modal-backdrop" id="transferModal">
     <div class="modal-panel">
-        <div class="modal-header" style="background: #0066cc;">
-            <span>💸 Inter-Bank Fund Transfer</span>
-            <button onclick="closeModal('transferModal')" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-money-bill-transfer"></i> Inter-Bank Fund Transfer</h3>
+            <button type="button" class="modal-close" onclick="closeModal('transferModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="<?= APP_URL ?>/banking" method="POST">
             <input type="hidden" name="action" value="transfer_funds">
             <div class="modal-body">
-                <div>
+                <div class="sf-form-group">
                     <label>Transfer Date *</label>
-                    <input type="date" name="entry_date" value="<?= date('Y-m-d') ?>" required>
+                    <input type="date" name="entry_date" class="sf-input" value="<?= date('Y-m-d') ?>" required>
                 </div>
                 
-                <div>
+                <div class="sf-form-group">
                     <label>From Bank Account (Source - Credits account) *</label>
-                    <select name="from_account_id" required>
+                    <select name="from_account_id" class="sf-select" required>
                         <option value="">-- Select Source Bank --</option>
                         <?php foreach($data['bank_accounts'] as $acc): ?>
                             <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_name) ?> (Rs: <?= number_format($acc->balance, 2) ?>)</option>
@@ -605,9 +600,9 @@ if (isset($_GET['success'])) {
                     </select>
                 </div>
                 
-                <div>
+                <div class="sf-form-group">
                     <label>To Bank Account (Destination - Debits account) *</label>
-                    <select name="to_account_id" required>
+                    <select name="to_account_id" class="sf-select" required>
                         <option value="">-- Select Destination Bank --</option>
                         <?php foreach($data['bank_accounts'] as $acc): ?>
                             <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_name) ?> (Rs: <?= number_format($acc->balance, 2) ?>)</option>
@@ -615,19 +610,19 @@ if (isset($_GET['success'])) {
                     </select>
                 </div>
                 
-                <div>
+                <div class="sf-form-group">
                     <label>Transfer Amount (Rs:) *</label>
-                    <input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00" required style="font-size: 16px; font-weight:bold;">
+                    <input type="number" name="amount" class="sf-input td-mono" step="0.01" min="0.01" placeholder="0.00" required style="font-size: 18px; color: var(--c-blue);">
                 </div>
                 
-                <div>
+                <div class="sf-form-group">
                     <label>Memo / Reference *</label>
-                    <input type="text" name="description" placeholder="e.g. Weekly Cash Liquidity Sweep" required>
+                    <input type="text" name="description" class="sf-input" placeholder="e.g. Weekly Cash Liquidity Sweep" required>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('transferModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary" style="background:#0066cc;">Record Transfer</button>
+                <button type="button" class="sf-btn sf-btn-secondary" onclick="closeModal('transferModal')">Cancel</button>
+                <button type="submit" class="sf-btn sf-btn-primary">Record Transfer</button>
             </div>
         </form>
     </div>
@@ -637,31 +632,31 @@ if (isset($_GET['success'])) {
 <div class="modal-backdrop" id="transactionModal">
     <div class="modal-panel">
         <div class="modal-header" id="transModalHeader">
-            <span id="transModalTitle">Record Transaction</span>
-            <button onclick="closeModal('transactionModal')" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+            <h3 id="transModalTitle"><i class="fa-solid fa-money-check-dollar"></i> Record Transaction</h3>
+            <button type="button" class="modal-close" onclick="closeModal('transactionModal')" id="transModalClose"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="<?= APP_URL ?>/banking" method="POST">
             <input type="hidden" name="action" value="quick_entry">
             <input type="hidden" name="type" id="transType" value="deposit">
             
             <div class="modal-body">
-                <div>
+                <div class="sf-form-group">
                     <label>Transaction Date *</label>
-                    <input type="date" name="entry_date" value="<?= date('Y-m-d') ?>" required>
+                    <input type="date" name="entry_date" class="sf-input" value="<?= date('Y-m-d') ?>" required>
                 </div>
 
-                <div>
+                <div class="sf-form-group">
                     <label id="transBankLabel">Bank Account *</label>
-                    <select name="bank_account_id" required>
+                    <select name="bank_account_id" class="sf-select" required>
                         <?php foreach($data['bank_accounts'] as $acc): ?>
                             <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_name) ?> (Rs: <?= number_format($acc->balance, 2) ?>)</option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
-                <div>
+                <div class="sf-form-group">
                     <label id="transOffsetLabel">Ledger Double-Entry Offset Account *</label>
-                    <select name="offset_account_id" required>
+                    <select name="offset_account_id" class="sf-select" required>
                         <option value="">-- Select Offset Account --</option>
                         <?php 
                         $db = new Database();
@@ -674,20 +669,20 @@ if (isset($_GET['success'])) {
                     </select>
                 </div>
 
-                <div>
+                <div class="sf-form-group">
                     <label>Amount (Rs:) *</label>
-                    <input type="number" name="amount" step="0.01" min="0.01" placeholder="0.00" required style="font-size: 16px; font-weight:bold;">
+                    <input type="number" name="amount" class="sf-input td-mono" step="0.01" min="0.01" placeholder="0.00" required style="font-size: 18px;" id="transAmountInput">
                 </div>
 
-                <div>
+                <div class="sf-form-group">
                     <label>Memo / Reference *</label>
-                    <input type="text" name="description" placeholder="e.g. Sales Collection Offset" required>
+                    <input type="text" name="description" class="sf-input" placeholder="e.g. Sales Collection Offset" required>
                 </div>
             </div>
             
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('transactionModal')">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="transSubmitBtn">Save Transaction</button>
+            <div class="modal-footer" id="transModalFooter">
+                <button type="button" class="sf-btn sf-btn-secondary" onclick="closeModal('transactionModal')">Cancel</button>
+                <button type="submit" class="sf-btn sf-btn-primary" id="transSubmitBtn">Save Transaction</button>
             </div>
         </form>
     </div>
@@ -748,25 +743,38 @@ if (isset($_GET['success'])) {
         document.getElementById('transType').value = type;
         const header = document.getElementById('transModalHeader');
         const title = document.getElementById('transModalTitle');
+        const closeBtn = document.getElementById('transModalClose');
         const bankLabel = document.getElementById('transBankLabel');
         const offsetLabel = document.getElementById('transOffsetLabel');
         const submitBtn = document.getElementById('transSubmitBtn');
+        const amountInput = document.getElementById('transAmountInput');
+        const footer = document.getElementById('transModalFooter');
         
         if (type === 'deposit') {
-            header.style.background = '#2e7d32';
-            title.innerText = 'Record Deposit';
+            header.style.background = 'var(--c-green-light)';
+            header.style.borderBottomColor = 'rgba(52,199,89,0.2)';
+            title.style.color = 'var(--c-green)';
+            title.innerHTML = '<i class="fa-solid fa-money-bill-wave"></i> Record Deposit';
+            closeBtn.style.color = 'var(--c-green)';
+            
             bankLabel.innerText = 'Bank Account (Receiving Funds) *';
             offsetLabel.innerText = 'From Account (Source of Funds / Revenue Offset) *';
-            submitBtn.style.background = '#2e7d32';
-            submitBtn.style.borderColor = '#2e7d32';
+            
+            amountInput.style.color = 'var(--c-green)';
+            submitBtn.className = 'sf-btn sf-btn-success';
             submitBtn.innerText = 'Record Deposit';
         } else {
-            header.style.background = '#c62828';
-            title.innerText = 'Record Withdrawal';
+            header.style.background = 'var(--c-red-light)';
+            header.style.borderBottomColor = 'rgba(255,59,48,0.2)';
+            title.style.color = 'var(--c-red)';
+            title.innerHTML = '<i class="fa-solid fa-hand-holding-dollar"></i> Record Withdrawal';
+            closeBtn.style.color = 'var(--c-red)';
+            
             bankLabel.innerText = 'Bank Account (Withdrawing From) *';
             offsetLabel.innerText = 'To Account (Expense / Offset Paid) *';
-            submitBtn.style.background = '#c62828';
-            submitBtn.style.borderColor = '#c62828';
+            
+            amountInput.style.color = 'var(--c-red)';
+            submitBtn.className = 'sf-btn sf-btn-danger';
             submitBtn.innerText = 'Record Withdrawal';
         }
         
