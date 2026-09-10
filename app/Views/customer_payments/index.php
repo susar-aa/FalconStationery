@@ -594,11 +594,6 @@
 <!-- ========================================== -->
 <!-- TAB PANEL: RECORD CUSTOMER PAYMENT         -->
 <!-- ========================================== -->
-<div class="payment-center-tabs">
-    <button type="button" class="payment-tab-btn active" onclick="switchArTab(event, 'tab-ar')"><i class="ph ph-receipt"></i> Record Payment</button>
-    <button type="button" class="payment-tab-btn" onclick="switchArTab(event, 'tab-history')"><i class="ph ph-clock-counter-clockwise"></i> Payment History & Reversals</button>
-</div>
-
 <div id="tab-ar" class="payment-tab-panel">
     <div style="display: grid; grid-template-columns: 1.45fr 0.55fr; gap: 20px; align-items: stretch; margin-top: 15px; height: 680px;">
         <form action="<?= APP_URL ?>/customerpayment/recordCustomerPayment" method="POST" id="customerPayForm" style="margin: 0; display: flex; flex-direction: column; height: 100%;">
@@ -779,79 +774,9 @@
                 <span style="font-size: 12px;">Select a customer to view history.</span>
             </div>
         </div>
-    </div>
-</div>
-
-
-<!-- ========================================== -->
-<!-- TAB PANEL: PAYMENT HISTORY & REVERSALS     -->
-<!-- ========================================== -->
-<div id="tab-history" class="payment-tab-panel" style="display: none;">
-    <div class="payment-panel" style="margin-top: 15px;">
-        <div class="payment-panel-header">
-            <span>Payment History & Reversals</span>
-        </div>
-        <div class="payment-panel-body" style="padding: 0; max-height: 600px; overflow-y: auto;">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Reference</th>
-                        <th>Customer</th>
-                        <th>Method</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th style="text-align: right;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (!empty($data['payments_history'])): ?>
-                        <?php foreach($data['payments_history'] as $ph): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($ph->payment_date ?? '') ?></td>
-                            <td><strong><?= htmlspecialchars($ph->reference ?? '') ?></strong></td>
-                            <td><?= htmlspecialchars($ph->counterparty_name ?? '') ?></td>
-                            <td>
-                                <span class="badge-method method-<?= str_replace(' ', '', $ph->payment_method ?? '') ?>">
-                                    <?= htmlspecialchars($ph->payment_method ?? '') ?>
-                                </span>
-                            </td>
-                            <td style="font-family: monospace; font-weight: 700;">Rs <?= number_format($ph->amount ?? 0, 2) ?></td>
-                            <td>
-                                <span class="status-badge status-<?= $ph->status ?? '' ?>">
-                                    <?= htmlspecialchars($ph->status ?? '') ?>
-                                </span>
-                            </td>
-                            <td style="text-align: right;">
-                                <?php if (($ph->status ?? '') === 'Active'): ?>
-                                <button type="button" class="btn-action-small btn-danger" onclick="triggerReversal(<?= $ph->id ?>, <?= $ph->amount ?>)">
-                                    <i class="ph ph-arrow-u-up-left"></i> Reverse
-                                </button>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <tr>
-                            <td colspan="7" style="text-align: center; color: var(--slate-500); padding: 20px;">No payment history found.</td>
-                        </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-</div> <!-- /ar-wrapper -->
+    </div> <!-- /ar-wrapper -->
 
 <script>
-    function switchArTab(e, tabId) {
-        document.querySelectorAll('.payment-tab-btn').forEach(btn => btn.classList.remove('active'));
-        if (e && e.currentTarget) e.currentTarget.classList.add('active');
-        document.querySelectorAll('.payment-tab-panel').forEach(panel => panel.style.display = 'none');
-        document.getElementById(tabId).style.display = 'block';
-    }
-
     // Global states
     let activeCustomerInvoices = [];
     let activeCustomerSearchIndex = -1;

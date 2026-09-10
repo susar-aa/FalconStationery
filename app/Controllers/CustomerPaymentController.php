@@ -79,6 +79,50 @@ class CustomerPaymentController extends Controller {
     }
 
     /**
+     * Dedicated Customer Payment History Page
+     */
+    public function history() {
+        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+        if ($page < 1) $page = 1;
+        $limit = 50; // Default items per page
+        $offset = ($page - 1) * $limit;
+
+        $filters = [
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? '',
+            'method' => $_GET['method'] ?? '',
+            'status' => $_GET['status'] ?? '',
+            'search' => $_GET['search'] ?? '',
+            'limit' => $limit,
+            'offset' => $offset
+        ];
+
+        $paymentsHistory = $this->paymentModel->getCustomerPaymentHistory($filters);
+        $totalRecords = $this->paymentModel->countCustomerPaymentHistory($filters);
+        $totalPages = ceil($totalRecords / $limit);
+
+        $data = [
+            'title' => 'Customer Payment History',
+            'content_view' => 'customer_payments/history',
+            'payments_history' => $paymentsHistory,
+            'filters' => $filters,
+            'page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords,
+            'error' => $_GET['error'] ?? '',
+            'success' => ''
+        ];
+
+        if (isset($_GET['success'])) {
+            if ($_GET['success'] === 'reversed') {
+                $data['success'] = 'Payment reversed successfully and ledger updated!';
+            }
+        }
+
+        $this->view('layouts/main', $data);
+    }
+
+    /**
      * API to fetch customer unpaid invoices in JSON
      */
     public function getCustomerInvoicesJson($customerId) {
@@ -192,11 +236,14 @@ class CustomerPaymentController extends Controller {
      * Reverse Customer Payment
      */
     public function reverseCustomerPayment($id) {
+        $fromHistory = isset($_GET['from']) && $_GET['from'] === 'history';
+        $redirectUrl = APP_URL . ($fromHistory ? '/customerpayment/history' : '/customerpayment');
+        
         if ($this->paymentModel->reverseCustomerPayment(intval($id), $_SESSION['user_id'])) {
             $this->logActivity('Reverse Customer Payment', 'Payments', "Reversed customer payment ID: {$id}");
-            header('Location: ' . APP_URL . '/customerpayment?success=reversed');
+            header('Location: ' . $redirectUrl . '?success=reversed');
         } else {
-            header('Location: ' . APP_URL . '/customerpayment?error=Failed to reverse customer payment.');
+            header('Location: ' . $redirectUrl . '?error=Failed to reverse customer payment.');
         }
         exit;
     }

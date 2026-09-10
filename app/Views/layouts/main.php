@@ -1725,6 +1725,13 @@ if (!function_exists('hasPermission')) {
                                 <div class="desc">AR Collections & Allocations</div>
                             </div>
                         </a>
+                        <a href="<?= APP_URL ?>/customerpayment/history" class="mega-list-item">
+                            <div class="icon-wrapper text-primary"><i class="ph ph-clock-counter-clockwise"></i></div>
+                            <div class="mega-list-item-content">
+                                <div class="title text-primary">Payment History</div>
+                                <div class="desc">View history & reversals</div>
+                            </div>
+                        </a>
                         <?php endif; ?>
                         <?php if (hasPermission('supplierpayment')): ?>
                         <a href="<?= APP_URL ?>/payment" class="mega-list-item">
@@ -2015,7 +2022,10 @@ if (!function_exists('hasPermission')) {
                             <a href="<?= APP_URL ?>/banking" class="fs-link"><i class="ph ph-bank"></i> Banking</a>
                             <a href="<?= APP_URL ?>/deposit" class="fs-link"><i class="ph ph-receipt"></i> Bank Deposits</a>
                         <?php endif; ?>
-                        <?php if (hasPermission('customerpayment')): ?><a href="<?= APP_URL ?>/customerpayment" class="fs-link"><i class="ph ph-hand-coins"></i> Customer Payments</a><?php endif; ?>
+                        <?php if (hasPermission('customerpayment')): ?>
+                            <a href="<?= APP_URL ?>/customerpayment" class="fs-link"><i class="ph ph-hand-coins"></i> Customer Payments</a>
+                            <a href="<?= APP_URL ?>/customerpayment/history" class="fs-link"><i class="ph ph-clock-counter-clockwise"></i> Payment History</a>
+                        <?php endif; ?>
                         <?php if (hasPermission('supplierpayment')): ?><a href="<?= APP_URL ?>/payment" class="fs-link"><i class="ph ph-hand-deposit"></i> Payments</a><?php endif; ?>
                         <?php if (hasPermission('asset')): ?><a href="<?= APP_URL ?>/asset" class="fs-link"><i class="ph ph-buildings"></i> Fixed Assets</a><?php endif; ?>
                     </div>

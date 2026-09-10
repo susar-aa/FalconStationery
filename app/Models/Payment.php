@@ -1075,6 +1075,12 @@ class Payment {
         if (!empty($filters['method'])) {
             $sql .= " AND p.payment_method = :method";
         }
+        if (!empty($filters['status'])) {
+            $sql .= " AND p.status = :status";
+        }
+        if (!empty($filters['search'])) {
+            $sql .= " AND (p.reference LIKE :search OR c.name LIKE :search2)";
+        }
 
         $sql .= " ORDER BY payment_date DESC, id DESC LIMIT :limit OFFSET :offset";
         $this->db->query($sql);
@@ -1088,6 +1094,13 @@ class Payment {
         if (!empty($filters['method'])) {
             $this->db->bind(':method', $filters['method']);
         }
+        if (!empty($filters['status'])) {
+            $this->db->bind(':status', $filters['status']);
+        }
+        if (!empty($filters['search'])) {
+            $this->db->bind(':search', '%' . $filters['search'] . '%');
+            $this->db->bind(':search2', '%' . $filters['search'] . '%');
+        }
 
         $limit = $filters['limit'] ?? 50;
         $offset = $filters['offset'] ?? 0;
@@ -1095,6 +1108,56 @@ class Payment {
         $this->db->bind(':offset', $offset, PDO::PARAM_INT);
 
         return $this->db->resultSet();
+    }
+
+    /**
+     * Get Customer Payment History Count (for Pagination)
+     */
+    public function countCustomerPaymentHistory($filters = []) {
+        $sql = "
+            SELECT COUNT(*) as total
+            FROM customer_payments p
+            JOIN customers c ON p.customer_id = c.id
+            WHERE 1=1
+        ";
+
+        if (!empty($filters['start_date'])) {
+            $sql .= " AND p.payment_date >= :start_date";
+        }
+        if (!empty($filters['end_date'])) {
+            $sql .= " AND p.payment_date <= :end_date";
+        }
+        if (!empty($filters['method'])) {
+            $sql .= " AND p.payment_method = :method";
+        }
+        if (!empty($filters['status'])) {
+            $sql .= " AND p.status = :status";
+        }
+        if (!empty($filters['search'])) {
+            $sql .= " AND (p.reference LIKE :search OR c.name LIKE :search2)";
+        }
+
+        $this->db->query($sql);
+
+        if (!empty($filters['start_date'])) {
+            $this->db->bind(':start_date', $filters['start_date']);
+        }
+        if (!empty($filters['end_date'])) {
+            $this->db->bind(':end_date', $filters['end_date']);
+        }
+        if (!empty($filters['method'])) {
+            $this->db->bind(':method', $filters['method']);
+        }
+        if (!empty($filters['status'])) {
+            $this->db->bind(':status', $filters['status']);
+        }
+        if (!empty($filters['search'])) {
+            $this->db->bind(':search', '%' . $filters['search'] . '%');
+            $this->db->bind(':search2', '%' . $filters['search'] . '%');
+        }
+
+        $row = $this->db->single();
+        return $row ? (int)$row->total : 0;
     }
 
     /**
