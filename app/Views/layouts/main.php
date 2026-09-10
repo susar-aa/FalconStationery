@@ -2115,21 +2115,7 @@ if (!function_exists('hasPermission')) {
         </main>
     </div>
 
-    <!-- GLASSMORPHISM RECENT BAR -->
-    <div id="recentBar" class="mac-recent-bar">
-        <div class="recent-toggle-tab" onclick="toggleRecentBar()">
-            <span id="recentToggleIcon"><i class="ph ph-clock-counter-clockwise"></i></span>
-            Recent
-        </div>
-        <div class="recent-links-container" id="recentLinksContainer">
-            <!-- JavaScript will populate this dynamically -->
-        </div>
-        <div class="recent-clock">
-            <i class="ph ph-clock" style="font-size: 13px;"></i>
-            <span id="clock"></span>
-        </div>
-    </div>
-
+    <!-- Removed GLASSMORPHISM RECENT BAR -->
     <script>
         // --- Session Expiration and Inactivity Monitoring ---
         if (typeof window.sessionExpiredHandled === 'undefined') {
