@@ -62,6 +62,10 @@ if (isset($_GET['success'])) {
     --r-pill: 999px;
 
     --dur-fast:    0.18s;
+    --dur-mid:     0.28s;
+    --dur-slow:    0.42s;
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-ios:    cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -92,42 +96,7 @@ if (isset($_GET['success'])) {
 .cust-wrap {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 24px 32px 60px;
-}
-
-/* ---- Header & Breadcrumb ---- */
-.sf-header { margin-bottom: 24px; }
-.sf-title-row {
-    display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
-}
-.sf-title-col h1 {
-    font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin: 0; color: var(--t-primary); line-height: 1.1;
-}
-.sf-title-col p {
-    font-size: 15px; color: var(--t-secondary); margin: 6px 0 0 0; font-weight: 500;
-}
-.sf-actions { display: flex; gap: 10px; align-items: center; }
-
-/* ---- Buttons ---- */
-.sf-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px 18px; font-size: 13.5px; font-weight: 600;
-    border-radius: var(--r-sm); border: none; cursor: pointer;
-    transition: all var(--dur-fast); text-decoration: none;
-}
-.sf-btn-primary { background: var(--c-blue); color: #fff; }
-.sf-btn-primary:hover { background: #0062cc; }
-.sf-btn-secondary { background: var(--c-surface); color: var(--t-primary); border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-xs); }
-.sf-btn-secondary:hover { background: var(--c-fill); }
-.sf-btn-success { background: var(--c-green); color: #fff; }
-.sf-btn-success:hover { background: #2fb350; }
-.sf-btn-danger { background: var(--c-red); color: #fff; }
-.sf-btn-danger:hover { background: #e6352b; }
-
-/* ---- Section Title ---- */
-.section-title {
-    font-size: 18px; font-weight: 700; color: var(--t-primary);
-    margin: 40px 0 20px 0; display: flex; justify-content: space-between; align-items: center;
+    padding: 24px 32px 100px;
 }
 
 /* ---- Bank Cards Grid ---- */
@@ -185,24 +154,84 @@ if (isset($_GET['success'])) {
 .bank-card.temp-bank .b-bal-val { color: var(--c-orange); }
 
 .b-actions { display: flex; gap: 10px; margin-top: auto; }
+.sf-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 18px; font-size: 13.5px; font-weight: 600;
+    border-radius: var(--r-sm); border: none; cursor: pointer;
+    transition: all var(--dur-fast); text-decoration: none;
+}
+.sf-btn-primary { background: var(--c-blue); color: #fff; }
+.sf-btn-primary:hover { background: #0062cc; }
+.sf-btn-secondary { background: var(--c-surface); color: var(--t-primary); border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-xs); }
+.sf-btn-secondary:hover { background: var(--c-fill); }
+.sf-btn-success { background: var(--c-green); color: #fff; }
+.sf-btn-success:hover { background: #2fb350; }
+.sf-btn-danger { background: var(--c-red); color: #fff; }
+.sf-btn-danger:hover { background: #e6352b; }
 .b-actions .sf-btn { flex: 1; justify-content: center; font-size: 13px; padding: 8px 12px; }
-
-/* ---- Table ---- */
-.sf-card { background: var(--c-surface); border: 0.5px solid var(--c-separator); border-radius: var(--r-xl); box-shadow: var(--shadow-md); overflow: hidden; }
-.sf-table-wrapper { width: 100%; overflow-x: auto; }
-.sf-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
-.sf-table th, .sf-table td { padding: 14px 18px; border-bottom: 0.5px solid var(--c-separator); }
-.sf-table th { background: var(--c-surface2); font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--t-label); }
-.sf-table td { font-size: 14.5px; font-weight: 500; color: var(--t-primary); }
-.sf-table tr:last-child td { border-bottom: none; }
-.sf-table tr:hover td { background: var(--c-fill2); }
-
-.td-mono { font-family: var(--f-mono); font-weight: 600; }
 
 /* ---- Alerts ---- */
 .sf-alert { padding: 14px 18px; border-radius: var(--r-md); margin-bottom: 24px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
 .sf-alert.success { background: var(--c-green-light); color: #1e4620; border: 1px solid rgba(52,199,89,0.3); }
 .sf-alert.error { background: var(--c-red-light); color: #6e1a15; border: 1px solid rgba(255,59,48,0.3); }
+
+/* ---- Command Bar (Dynamic Island style) ---- */
+.cmd-bar {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(28, 28, 30, 0.92);
+    backdrop-filter: saturate(180%) blur(28px);
+    -webkit-backdrop-filter: saturate(180%) blur(28px);
+    border: 0.5px solid rgba(255,255,255,0.12);
+    border-radius: var(--r-pill);
+    padding: 7px 10px;
+    display: flex; align-items: center; gap: 4px;
+    box-shadow: var(--shadow-xl), 0 0 0 0.5px rgba(0,0,0,0.3);
+    z-index: 100;
+}
+.cmd-search {
+    display: flex; align-items: center; gap: 9px;
+    background: rgba(255,255,255,0.1);
+    border-radius: var(--r-pill);
+    padding: 8px 14px;
+    width: 196px;
+    transition: width var(--dur-slow) var(--ease-ios),
+                background var(--dur-mid);
+}
+.cmd-search:focus-within {
+    width: 300px;
+    background: rgba(255,255,255,0.18);
+}
+.cmd-search i { color: rgba(255,255,255,0.55); font-size: 14px; flex-shrink: 0; }
+.cmd-search input {
+    background: transparent; border: none; outline: none;
+    color: #fff; font-size: 14px; font-weight: 500;
+    font-family: var(--f-system); width: 100%;
+}
+.cmd-search input::placeholder { color: rgba(255,255,255,0.45); }
+.cmd-divider { width: 0.5px; height: 22px; background: rgba(255,255,255,0.15); margin: 0 3px; }
+.cmd-icon {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.8); font-size: 15px;
+    background: transparent; border: none; cursor: pointer; text-decoration: none;
+    transition: background var(--dur-fast);
+}
+.cmd-icon:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.cmd-cta {
+    display: flex; align-items: center; gap: 7px;
+    background: #fff; color: #1c1c1e;
+    border: none; border-radius: var(--r-pill);
+    padding: 0 18px; height: 38px;
+    font-size: 14px; font-weight: 700;
+    font-family: var(--f-system);
+    cursor: pointer; text-decoration: none;
+    transition: transform var(--dur-fast) var(--ease-spring),
+                background var(--dur-fast);
+    margin-left: 2px;
+}
+.cmd-cta:hover { background: #e5e5ea; transform: scale(0.97); }
 
 /* ---- Modals ---- */
 .modal-backdrop {
@@ -236,24 +265,11 @@ if (isset($_GET['success'])) {
 }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .note-box { font-size: 12px; color: var(--t-secondary); padding: 12px; background: var(--c-bg); border-radius: var(--r-sm); border: 0.5px solid var(--c-separator); }
+.td-mono { font-family: var(--f-mono); font-weight: 600; }
 </style>
 
 <div class="cust-root">
     <div class="cust-wrap">
-
-        <div class="sf-header">
-            <div class="sf-title-row">
-                <div class="sf-title-col">
-                    <h1>Bank & Cash Accounts</h1>
-                    <p>Manage commercial bank sub-ledgers, view transaction registers, and record inter-bank transfers.</p>
-                </div>
-                <div class="sf-actions">
-                    <button class="sf-btn sf-btn-secondary" onclick="openTransferModal()"><i class="fa-solid fa-money-bill-transfer"></i> Inter-Bank Transfer</button>
-                    <button class="sf-btn sf-btn-success" onclick="openTransactionModal('deposit')"><i class="fa-solid fa-money-bill-wave"></i> Record Deposit</button>
-                    <button class="sf-btn sf-btn-danger" onclick="openTransactionModal('withdrawal')"><i class="fa-solid fa-hand-holding-dollar"></i> Record Withdrawal</button>
-                </div>
-            </div>
-        </div>
 
         <!-- Feedback Alerts -->
         <?php if(!empty($successMsg)): ?>
@@ -267,18 +283,13 @@ if (isset($_GET['success'])) {
             </div>
         <?php endif; ?>
 
-        <!-- Section 1: Bank Accounts -->
-        <div class="section-title">
-            <span>Registered Bank Accounts</span>
-            <button class="sf-btn sf-btn-primary" onclick="openAddBankModal()" style="font-size: 12px; padding: 6px 12px;"><i class="fa-solid fa-plus"></i> Add Bank</button>
-        </div>
-        
-        <div class="bank-grid">
+        <!-- Bank Accounts Grid -->
+        <div class="bank-grid" id="bankGrid">
             <?php if(empty($data['bank_accounts'])): ?>
                 <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--t-tertiary); border: 1.5px dashed var(--c-separator); border-radius: var(--r-xl); background: var(--c-surface);">
                     <i class="fa-solid fa-building-columns" style="font-size: 40px; margin-bottom: 12px;"></i>
                     <h3 style="margin:0 0 8px 0; color: var(--t-primary); font-size: 18px;">No bank accounts registered</h3>
-                    <p style="margin:0; font-size: 14px;">Click "+ Add Bank" to register a new account.</p>
+                    <p style="margin:0; font-size: 14px;">Click "+ Add Bank" below to register a new account.</p>
                 </div>
             <?php else: foreach($data['bank_accounts'] as $acc): ?>
                 <?php 
@@ -286,8 +297,11 @@ if (isset($_GET['success'])) {
                     $cardClass = $isTemp ? 'temp-bank' : 'real-bank';
                     $tagText = $isTemp ? 'Clearing / Temp' : 'Bank Sub-ledger';
                     $tagClass = $isTemp ? 'temp' : 'real';
+                    
+                    // Search terms
+                    $searchTerms = strtolower($acc->bank_name . ' ' . $acc->account_name . ' ' . $acc->account_code . ' ' . $acc->account_number . ' ' . $acc->branch_name);
                 ?>
-                <div class="bank-card <?= $cardClass ?>">
+                <div class="bank-card <?= $cardClass ?> bank-card-item" data-search="<?= htmlspecialchars($searchTerms, ENT_QUOTES) ?>">
                     <?php if (!$isTemp): ?>
                         <button class="edit-trigger" onclick="openEditBankModal(<?= $acc->id ?>, '<?= htmlspecialchars($acc->account_name, ENT_QUOTES) ?>')" title="Edit Bank Account"><i class="fa-solid fa-pen-to-square"></i></button>
                     <?php endif; ?>
@@ -330,45 +344,20 @@ if (isset($_GET['success'])) {
             <?php endforeach; endif; ?>
         </div>
 
-        <!-- Section 2: Cash & Subsidiaries -->
-        <div class="section-title">
-            <span>Cash & Clearing Asset Accounts</span>
-        </div>
-        
-        <div class="sf-card">
-            <div class="sf-table-wrapper">
-                <table class="sf-table">
-                    <thead>
-                        <tr>
-                            <th>Account Code</th>
-                            <th>Account Name</th>
-                            <th>Account Type</th>
-                            <th style="text-align: right;">Current Balance</th>
-                            <th style="text-align: center; width: 120px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if(empty($data['cash_accounts'])): ?>
-                            <tr>
-                                <td colspan="5" style="text-align: center; padding: 40px; color: var(--t-tertiary);">No cash asset accounts found.</td>
-                            </tr>
-                        <?php else: foreach($data['cash_accounts'] as $acc): ?>
-                            <tr>
-                                <td class="td-mono" style="color: var(--c-blue);"># <?= htmlspecialchars($acc->account_code) ?></td>
-                                <td style="font-weight: 600;"><?= htmlspecialchars($acc->account_name) ?></td>
-                                <td><span class="status-pill" style="background: var(--c-fill); color: var(--t-secondary);"><?= htmlspecialchars($acc->account_type) ?></span></td>
-                                <td class="td-mono" style="text-align: right; font-size: 15px;">Rs <?= number_format($acc->balance, 2) ?></td>
-                                <td style="text-align: center;">
-                                    <a href="<?= APP_URL ?>/banking/ledger/<?= $acc->id ?>" class="sf-btn sf-btn-secondary" style="padding: 6px 12px; font-size: 12px;"><i class="fa-solid fa-list"></i> Register</a>
-                                </td>
-                            </tr>
-                        <?php endforeach; endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
+</div>
+
+<!-- Command Bar -->
+<div class="cmd-bar">
+    <div class="cmd-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" oninput="searchBanks()" placeholder="Search banks...">
+    </div>
+    <div class="cmd-divider"></div>
+    <button type="button" onclick="openTransferModal()" class="cmd-icon" title="Inter-Bank Transfer"><i class="fa-solid fa-money-bill-transfer"></i></button>
+    <button type="button" onclick="openTransactionModal('deposit')" class="cmd-icon" title="Record Deposit"><i class="fa-solid fa-arrow-down-long"></i></button>
+    <button type="button" onclick="openTransactionModal('withdrawal')" class="cmd-icon" title="Record Withdrawal"><i class="fa-solid fa-arrow-up-long"></i></button>
+    <button type="button" onclick="openAddBankModal()" class="cmd-cta"><i class="fa-solid fa-plus" style="font-size:13px;"></i> Add Bank</button>
 </div>
 
 <!-- MODAL 1: Add Bank Account -->
@@ -689,6 +678,20 @@ if (isset($_GET['success'])) {
 </div>
 
 <script>
+    function searchBanks() {
+        const input = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.bank-card-item');
+        
+        cards.forEach(card => {
+            const terms = card.getAttribute('data-search') || '';
+            if (terms.includes(input)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
     function openModal(id) {
         document.getElementById(id).style.display = 'flex';
     }
