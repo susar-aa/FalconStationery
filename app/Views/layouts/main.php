@@ -448,10 +448,10 @@ if (!function_exists('hasPermission')) {
             from { opacity: 0; transform: translateY(-6px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .glass-menu-container:hover .mega-menu { display: flex; }
+        .glass-menu-container.active .mega-menu { display: flex; }
         
         .align-right .mega-menu { left: auto; right: 0; }
-        .glass-menu-container:hover .mega-menu .glass-nav-item {
+        .glass-menu-container.active .mega-menu .glass-nav-item {
             background: transparent;
             color: var(--text-main);
         }
@@ -2543,6 +2543,31 @@ if (!function_exists('hasPermission')) {
             if (!str) return '#';
             return str.replace(/"/g, '&quot;');
         }
+
+        // Mega Menu Click to Open Logic
+        document.querySelectorAll('.glass-menu-container').forEach(container => {
+            const navItem = container.querySelector('.glass-nav-item');
+            if (navItem) {
+                navItem.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Close other active menus
+                    document.querySelectorAll('.glass-menu-container.active').forEach(c => {
+                        if (c !== container) c.classList.remove('active');
+                    });
+                    container.classList.toggle('active');
+                });
+            }
+        });
+
+        // Close mega menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.glass-menu-container')) {
+                document.querySelectorAll('.glass-menu-container.active').forEach(c => {
+                    c.classList.remove('active');
+                });
+            }
+        });
 
         // Global Keydown Listeners for Command Palette
         document.addEventListener('keydown', e => {
