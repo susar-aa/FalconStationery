@@ -212,6 +212,29 @@ class App {
         if (isset($_GET['url'])) {
             return explode('/', filter_var(rtrim($_GET['url'], '/'), FILTER_SANITIZE_URL));
         }
+        
+        // Fallback for Nginx without ?url= rewrite rule
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        
+        // Strip query string if present
+        if (($pos = strpos($uri, '?')) !== false) {
+            $uri = substr($uri, 0, $pos);
+        }
+        
+        // Remove base path if necessary (e.g. if running in a subdirectory)
+        $script = dirname($_SERVER['SCRIPT_NAME']);
+        $script = str_replace('\\', '/', $script); // Handle Windows paths safely
+        
+        if ($script !== '/' && $script !== '' && strpos($uri, $script) === 0) {
+            $uri = substr($uri, strlen($script));
+        }
+        
+        $uri = trim($uri, '/');
+        
+        if (!empty($uri)) {
+            return explode('/', filter_var($uri, FILTER_SANITIZE_URL));
+        }
+        
         return [];
     }
 }
