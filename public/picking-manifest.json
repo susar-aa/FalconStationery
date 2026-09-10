@@ -3,7 +3,7 @@
   "short_name": "Picking Portal",
   "version": "1.0.0",
   "description": "Warehouse Pre-Loading Verification and Product Picking Module",
-  "api_endpoint": "https://curtiss.suzxlabs.com/picking",
+  "api_endpoint": "https://falcon.trycurtiss.com/picking",
   "portal_url": "https://curtiss.portal.suzxlabs.com",
   "theme": {
     "background": "#0f172a",

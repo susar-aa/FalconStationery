@@ -1,7 +1,7 @@
 -- =========================================================================
 -- CURTISS ERP - CONSOLIDATED DATABASE SCHEMA UPGRADES & MIGRATIONS
 -- =========================================================================
--- Execute these queries on your server/production database (curtiss.suzxlabs.com)
+-- Execute these queries on your server/production database (falcon.trycurtiss.com)
 -- to bring it to a 100% stable state matching the latest code features.
 -- Note: Standard MySQL does not support "ADD COLUMN IF NOT EXISTS".
 -- If a column already exists, you can ignore the "duplicate column" warning/error.
@@ -215,7 +215,7 @@ ALTER TABLE petty_cash_transactions ADD COLUMN approved_at DATETIME NULL AFTER a
 INSERT IGNORE INTO migrations (migration) VALUES ('upgrade_petty_cash_tables_columns');
 
 -- Petty Cash Module - Production Server Complete Self-Healing Schema Fix
--- Execute this block on your production database (curtiss.suzxlabs.com)
+-- Execute this block on your production database (falcon.trycurtiss.com)
 CREATE TABLE IF NOT EXISTS petty_cash_config (
     id INT AUTO_INCREMENT PRIMARY KEY,
     limit_amount DECIMAL(15,2) NOT NULL DEFAULT 50000.00,
