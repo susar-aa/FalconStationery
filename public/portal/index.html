@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Curtiss Picking Portal</title>
+  <meta name="theme-color" content="#6366f1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Background Glows -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Global App Container -->
+  <div id="app">
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="view-login" class="view active">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="logo-box">📦</div>
+          <h1>CURTISS PORTAL</h1>
+          <p>Warehouse Final Loading Verification Module</p>
+        </div>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter warehouse username" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter security password" required autocomplete="current-password">
+          </div>
+          <div id="login-error" class="error-msg" style="display: none;"></div>
+          <button type="submit" class="btn-primary">
+            <span>Log In Security Portal</span>
+            <div class="btn-glow"></div>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. LOADING SHEETS DASHBOARD -->
+    <div id="view-sheets" class="view">
+      <header class="app-header">
+        <div class="header-left">
+          <span class="user-badge" id="user-display">Warehouse Staff</span>
+          <span class="status-indicator online" id="connection-status">Online</span>
+        </div>
+        <div class="header-right">
+          <button id="sync-btn" class="btn-icon" title="Sync Offline Data" style="position: relative;">
+            🔄
+            <span id="sync-badge" class="badge-count" style="display: none;">0</span>
+          </button>
+          <button id="logout-btn" class="btn-icon" title="Log Out">🚪</button>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div class="page-title">
+          <h2>Delivery Loading Sheets</h2>
+          <p>Select a manifest to verify before loading</p>
+        </div>
+
+        <!-- Search and Filter Controls -->
+        <div class="controls-bar">
+          <input type="text" id="search-sheets" placeholder="Search by route, vehicle, driver...">
+          <select id="filter-status">
+            <option value="all">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+          </select>
+        </div>
+
+        <div id="sheets-loading-spinner" class="spinner-wrapper" style="display: none;">
+          <div class="spinner"></div>
+          <p>Loading manifests...</p>
+        </div>
+
+        <div id="sheets-empty-state" class="empty-state" style="display: none;">
+          <div class="empty-icon">📄</div>
+          <h3>No Loading Sheets Found</h3>
+          <p>All sheets might be finalized or none match filters.</p>
+        </div>
+
+        <div id="sheets-list" class="grid-list">
+          <!-- Dynamic Loading Sheet Cards -->
+        </div>
+      </main>
+    </div>
+
+    <!-- 3. FINAL LOADING VERIFICATION INTERFACE -->
+    <div id="view-final-loading" class="view">
+      <header class="app-header">
+        <div class="header-left">
+          <button id="btn-back-to-sheets-final" class="btn-icon">⬅️</button>
+          <div class="header-title-wrapper">
+            <h3 id="final-sheet-num">Loading Sheet #00</h3>
+            <span id="final-sheet-route" class="route-subtitle">Route info</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="status-indicator online" id="connection-status-final">Online</span>
+        </div>
+      </header>
+
+      <!-- Stage indicator/Summary -->
+      <div class="stage-summary-bar">
+        <span>Warehouse Final Loading Verification</span>
+        <span id="final-progress-badge" class="badge-accent">0/0 Verified</span>
+      </div>
+
+      <!-- Main Final Loading Area -->
+      <main class="content-area final-loading-area">
+        <!-- Search Products -->
+        <div class="controls-bar search-products-bar">
+          <input type="text" id="search-products-final" placeholder="Search products in this list...">
+        </div>
+
+        <div id="final-loading-list" class="flat-list" style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Final loading verification items -->
+        </div>
+      </main>
+    </div>
+
+    <!-- 4. PICKING SCREEN / CHECKLIST -->
+    <div id="view-picking" class="view">
+      <header class="app-header">
+        <div class="header-left">
+          <button id="btn-back-to-sheets" class="btn-icon">⬅️</button>
+          <div class="header-title-wrapper">
+            <h3 id="picking-sheet-num">Loading Sheet #00</h3>
+            <span id="picking-sheet-route" class="route-subtitle">Route info</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="status-indicator online">Online</span>
+        </div>
+      </header>
+
+      <!-- Sliding Tabs Control -->
+      <div class="tabs-container">
+        <button id="tab-to-pick" class="tab-btn active">
+          To Pick <span id="count-to-pick" class="tab-badge">0</span>
+        </button>
+        <button id="tab-picked" class="tab-btn">
+          Picked <span id="count-picked" class="tab-badge">0</span>
+        </button>
+        <div class="tab-slider"></div>
+      </div>
+
+      <!-- Main Picking Area -->
+      <main class="content-area picking-area">
+        <!-- Search Products -->
+        <div class="controls-bar search-products-bar">
+          <input type="text" id="search-products" placeholder="Search products to pick...">
+        </div>
+
+        <!-- Sliding Tab Panes -->
+        <div id="pane-to-pick" class="tab-pane active">
+          <div id="to-pick-list" style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- Grouped To-Pick Items -->
+          </div>
+        </div>
+
+        <div id="pane-picked" class="tab-pane">
+          <div id="picked-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Picked Items -->
+          </div>
+        </div>
+      </main>
+    </div>
+
+  </div>
+
+  <!-- Action Selection Modal -->
+  <div id="action-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card action-selector-card">
+      <div class="modal-header">
+        <h3>Select Warehouse Stage</h3>
+        <button id="action-modal-close" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px; background: transparent; min-height: auto;">
+        <div class="action-options-grid">
+          <div id="opt-stage1" class="action-option-box">
+            <span class="option-icon">📦</span>
+            <h4>Stage 1: Pre-Loading Picking</h4>
+            <p>Gather items from warehouse shelves and prepare for loading</p>
+          </div>
+          <div id="opt-stage2" class="action-option-box">
+            <span class="option-icon">🚚</span>
+            <h4>Stage 2: Final Loading</h4>
+            <p>Verify quantities as items are loaded into the delivery vehicle</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Replacement Modal -->
+  <div id="replace-product-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="replace-modal-title">Replace Product</h3>
+        <button id="replace-modal-close" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px; display: flex; flex-direction: column; gap: 15px; align-items: stretch; justify-content: flex-start; min-height: auto; background: var(--surface);">
+        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 5px;">
+          Replacing: <strong id="replace-orig-name" style="color: var(--text-primary);">[Product Name]</strong> (Required Qty: <strong id="replace-orig-qty">[Qty]</strong>)
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="color: var(--text-secondary); font-size: 12px; font-weight: 600; text-transform: uppercase;">Search Replacement Product</label>
+          <input type="text" id="replacement-search-input" placeholder="Type product name or code..." style="width: 100%; box-sizing: border-box;">
+        </div>
+
+        <div id="replacement-search-results" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: rgba(15, 23, 42, 0.8); display: none;">
+          <!-- dynamic results -->
+        </div>
+
+        <div id="selected-replacement-box" style="display: none; padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-sm); font-size: 13px;">
+          Selected Substitution: <strong id="selected-repl-name" style="color: var(--accent);">[Product]</strong>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="color: var(--text-secondary); font-size: 12px; font-weight: 600; text-transform: uppercase;">Replacement Quantity</label>
+          <input type="number" id="replacement-qty-input" min="1" value="1" style="width: 100%; box-sizing: border-box;">
+        </div>
+
+        <button id="btn-save-replacement" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Replacement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. DYNAMIC IMAGE MODAL -->
+  <div id="image-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-product-name">Product Image</h3>
+        <button id="modal-close" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <img id="modal-image" src="" alt="Product View">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Programmatically unregister service workers to avoid stale cache issues on mobile devices
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    // Delete all browser caches for this origin
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      });
+    }
+  </script>
+  <script src="app.js?v=1.0.4"></script>
+</body>
+</html>
