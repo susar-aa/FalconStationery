@@ -1903,6 +1903,12 @@ if (!function_exists('hasPermission')) {
             <?php endif; ?>
         </div><!-- /.glass-nav-left -->
 
+        <!-- Portal Quick Access Button -->
+        <a href="<?= APP_URL ?>/portal/" target="_blank" class="sf-btn sf-btn-ghost" style="margin-right: 16px; display: flex; align-items: center; gap: 6px; padding: 6px 12px; text-decoration: none;">
+            <i class="ph ph-scan" style="font-size: 18px; color: var(--c-blue, #007aff);"></i>
+            Picking Portal
+        </a>
+
         <!-- Page Heading + Menu Button -->
         <div class="nav-page-heading">
             <span class="nav-page-dot"></span>

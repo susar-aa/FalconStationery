@@ -10,6 +10,9 @@ ini_set('memory_limit', '-1');
 
 header('Access-Control-Allow-Origin: *');
 
+// Load existing database config
+require_once __DIR__ . '/../config/database.php';
+
 // Handle AJAX chunk uploads
 if (isset($_POST['action']) && $_POST['action'] === 'upload_chunk') {
     if (!isset($_FILES['chunk'])) {
@@ -128,19 +131,19 @@ if (isset($_POST['action']) && $_POST['action'] === 'import_temp') {
     <form id="importForm">
         <div class="form-group">
             <label>Database Host</label>
-            <input type="text" id="db_host" value="localhost" required>
+            <input type="text" id="db_host" value="<?= htmlspecialchars(DB_HOST) ?>" required readonly style="background: #e5e5ea; color: #8e8e93; cursor: not-allowed;">
         </div>
         <div class="form-group">
             <label>Database Username</label>
-            <input type="text" id="db_user" value="root" required>
+            <input type="text" id="db_user" value="<?= htmlspecialchars(DB_USER) ?>" required readonly style="background: #e5e5ea; color: #8e8e93; cursor: not-allowed;">
         </div>
         <div class="form-group">
             <label>Database Password</label>
-            <input type="password" id="db_pass" value="">
+            <input type="password" id="db_pass" value="<?= htmlspecialchars(DB_PASS) ?>" readonly style="background: #e5e5ea; color: #8e8e93; cursor: not-allowed;">
         </div>
         <div class="form-group">
             <label>Database Name</label>
-            <input type="text" id="db_name" value="falcon_erp" required>
+            <input type="text" id="db_name" value="<?= htmlspecialchars(DB_NAME) ?>" required readonly style="background: #e5e5ea; color: #8e8e93; cursor: not-allowed;">
         </div>
         <div class="form-group">
             <label>Select Local SQL File</label>
