@@ -1280,9 +1280,9 @@ class RepDashboardController extends Controller {
                             $this->db->execute();
                             $existingInv->uuid = $inv['uuid'];
                         }
-                        $isReserved = (isset($existingInv->stock_status) && $existingInv->stock_status === 'reserved');
-                        if ($isReserved) {
-                            // Invoice exists but is not finalized, allow updating it
+                        $isEditable = (isset($existingInv->stock_status) && in_array($existingInv->stock_status, ['reserved', 'deducted']));
+                        if ($isEditable) {
+                            // Invoice exists but is not finalized in a way that prevents edits, allow updating it
                             $itemsPayload = [];
                             if (isset($inv['items']) && is_array($inv['items'])) {
                                 foreach ($inv['items'] as $item) {
