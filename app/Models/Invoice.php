@@ -320,7 +320,7 @@ class Invoice {
         }
     }
 
-    public function updateInvoiceWithAccounting($invoiceId, $invoiceData, $items, $arAccountId, $revenueAccountId, $userId) {
+    public function updateInvoiceWithAccounting($invoiceId, $invoiceData, $items, $arAccountId, $revenueAccountId, $userId, $allowNegativeInventory = false) {
         try {
             $this->db->beginTransaction();
 
@@ -394,6 +394,20 @@ class Invoice {
             $this->db->query("DELETE FROM invoice_items WHERE invoice_id = :id");
             $this->db->bind(':id', $invoiceId);
             $this->db->execute();
+
+            // VERIFY NEW STOCK DEMANDS NOW THAT OLD STOCK IS REVERTED
+            require_once __DIR__ . '/../Services/StockMovementService.php';
+            $stockService = new \App\Services\StockMovementService();
+            $stockDemands = [];
+            foreach ($items as $item) {
+                $parts = explode('|', $item['item_selection']);
+                $stockDemands[] = [
+                    'item_id' => $parts[0] ?? null,
+                    'variation_option_id' => isset($parts[1]) && $parts[1] !== 'MIX' && $parts[1] !== '0' ? $parts[1] : null,
+                    'quantity' => $item['quantity']
+                ];
+            }
+            $stockService->lockAndVerifyAvailability($stockDemands, $allowNegativeInventory);
 
             // 2. ADJUST LEDGER BALANCE & RE-POST REVISED TRANSACTIONS
             $jid = $oldInvoice->journal_entry_id;

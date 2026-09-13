@@ -983,9 +983,17 @@ class RepDashboardController extends Controller {
                     // Check if a route with the same UUID or user_id, route_name and start_time already exists to prevent duplicate
                     $existingRoute = null;
                     if (!empty($r['uuid'])) {
-                        $this->db->query("SELECT id FROM rep_daily_routes WHERE uuid = :uuid LIMIT 1");
+                        $this->db->query("SELECT id, user_id FROM rep_daily_routes WHERE uuid = :uuid LIMIT 1");
                         $this->db->bind(':uuid', $r['uuid']);
-                        $existingRoute = $this->db->single();
+                        $match = $this->db->single();
+                        if ($match) {
+                            if (intval($match->user_id) === intval($userId)) {
+                                $existingRoute = $match;
+                            } else {
+                                $this->logActivity('Sync Collision Avoided', 'RepTracking', "UUID collision on route. Stripping UUID for new creation.", null);
+                                $r['uuid'] = '';
+                            }
+                        }
                     }
                     if (!$existingRoute) {
                         $this->db->query("SELECT id FROM rep_daily_routes WHERE user_id = :user_id AND route_name = :route_name AND start_time = :start_time LIMIT 1");
@@ -1364,7 +1372,8 @@ class RepDashboardController extends Controller {
                                 $itemsPayload,
                                 $arAccountId,
                                 $revenueAccountId,
-                                $userId
+                                $userId,
+                                true // allowNegativeInventory
                             );
 
                             if ($updateOk) {
@@ -1605,9 +1614,17 @@ class RepDashboardController extends Controller {
                     // Idempotency: Check if this payment was already synced via UUID or mobile_local_id and mobile_rep_id
                     $existingPmt = null;
                     if (!empty($p['uuid'])) {
-                        $this->db->query("SELECT id, uuid FROM pending_collections WHERE uuid = :uuid LIMIT 1");
+                        $this->db->query("SELECT id, uuid, mobile_rep_id FROM pending_collections WHERE uuid = :uuid LIMIT 1");
                         $this->db->bind(':uuid', $p['uuid']);
-                        $existingPmt = $this->db->single();
+                        $match = $this->db->single();
+                        if ($match) {
+                            if (intval($match->mobile_rep_id) === intval($userId)) {
+                                $existingPmt = $match;
+                            } else {
+                                $this->logActivity('Sync Collision Avoided', 'Billing', "UUID collision on payment. Stripping UUID for new creation.", null);
+                                $p['uuid'] = '';
+                            }
+                        }
                     }
                     if (!$existingPmt && $localId > 0) {
                         $this->db->query("SELECT id, uuid FROM pending_collections WHERE mobile_local_id = :mlid AND mobile_rep_id = :mrepid LIMIT 1");

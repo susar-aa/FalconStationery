@@ -25,9 +25,15 @@ class UnproductiveVisit
         $repRouteId = $data['rep_route_id'] ?? $data['route_id'] ?? null;
 
         // Check if uuid exists
-        $stmt = $db->prepare("SELECT id FROM unproductive_visits WHERE uuid = :uuid");
+        $stmt = $db->prepare("SELECT id, rep_user_id FROM unproductive_visits WHERE uuid = :uuid");
         $stmt->execute([':uuid' => $data['uuid']]);
         $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing && (int)$existing['rep_user_id'] !== (int)$repUserId) {
+            // Collision with another user! Strip UUID and insert as new record
+            $data['uuid'] = '';
+            $existing = false;
+        }
 
         if ($existing) {
             $updateStmt = $db->prepare("
