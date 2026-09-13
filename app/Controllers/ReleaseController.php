@@ -31,6 +31,20 @@ class ReleaseController extends Controller {
         if (isset($_GET['url'])) {
             return explode('/', filter_var(rtrim($_GET['url'], '/'), FILTER_SANITIZE_URL));
         }
+        
+        // Fallback for Nginx without ?url= rewrite rule
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        if (($pos = strpos($uri, '?')) !== false) {
+            $uri = substr($uri, 0, $pos);
+        }
+        $script = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        if ($script !== '/' && $script !== '' && strpos($uri, $script) === 0) {
+            $uri = substr($uri, strlen($script));
+        }
+        $uri = trim($uri, '/');
+        if (!empty($uri)) {
+            return explode('/', filter_var($uri, FILTER_SANITIZE_URL));
+        }
         return [];
     }
 
