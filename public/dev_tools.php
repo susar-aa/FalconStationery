@@ -18,31 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $output_git = "<div class='success-box'><pre>" . htmlspecialchars($result) . "</pre></div>";
         } 
         
-        // --- GIT PUSH ---
-        elseif ($_POST['action'] === 'git_push') {
-            $repo_dir = realpath(__DIR__ . '/../');
-            $safe_dir = escapeshellarg(str_replace('\\', '/', $repo_dir));
-            $commit_msg = !empty($_POST['commit_msg']) ? escapeshellarg($_POST['commit_msg']) : escapeshellarg("Automated web commit");
-            
-            // Force Git to never prompt for credentials or hang
-            putenv("GCM_INTERACTIVE=false");
-            putenv("GIT_TERMINAL_PROMPT=0");
-            putenv("GIT_ASKPASS=echo");
-            
-            $output = [];
-            $cwd = "cd " . escapeshellarg($repo_dir) . " && ";
-            exec($cwd . "git config --global --add safe.directory $safe_dir 2>&1", $output);
-            exec($cwd . "git config user.email \"admin@falcon.trycurtiss.com\" 2>&1", $output);
-            exec($cwd . "git config user.name \"ERP_Web_Tool\" 2>&1", $output);
-            exec($cwd . "git add . 2>&1", $output);
-            exec($cwd . "git commit -m $commit_msg 2>&1", $output);
-            exec($cwd . "git push origin main 2>&1", $output);
-            
-            $result = implode("\n", $output);
-            if (trim($result) === '') $result = "No changes to commit. Everything is up to date!";
-            $output_git = "<div class='success-box'><pre>" . htmlspecialchars($result) . "</pre></div>";
-        } 
-        
         // --- SQL EXECUTION ---
         elseif ($_POST['action'] === 'run_sql' && !empty($_POST['sql_code'])) {
             try {
@@ -104,34 +79,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- Git Deploy Card -->
         <div class="card">
-            <h2><i class="fa-brands fa-github"></i> Git Manager</h2>
+            <h2><i class="fa-brands fa-github"></i> Git Auto-Deploy</h2>
             <p style="font-size: 14px; color: #475569; margin-bottom: 20px;">
-                Manage your code deployments between your local environment, GitHub, and the live server.
+                Use this on the <strong>Live aaPanel Server</strong> to pull the latest changes from the main branch on GitHub. This will overwrite any uncommitted local changes on the server.
             </p>
-            
-            <div style="display: flex; gap: 20px;">
-                <!-- PUSH (Local -> GitHub) -->
-                <div style="flex: 1; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; background: #f8fafc;">
-                    <h3 style="margin-top: 0; font-size: 15px; color: #334155;"><i class="fa-solid fa-cloud-arrow-up"></i> Push to GitHub</h3>
-                    <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Use this on your <strong>Local XAMPP</strong> environment to commit and push changes.</p>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="git_push">
-                        <input type="text" name="commit_msg" placeholder="Commit message (optional)">
-                        <button type="submit" class="btn btn-purple"><i class="fa-solid fa-code-commit"></i> Commit & Push</button>
-                    </form>
-                </div>
-
-                <!-- PULL (GitHub -> Server) -->
-                <div style="flex: 1; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; background: #f8fafc;">
-                    <h3 style="margin-top: 0; font-size: 15px; color: #334155;"><i class="fa-solid fa-cloud-arrow-down"></i> Pull from GitHub</h3>
-                    <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Use this on the <strong>Live aaPanel Server</strong> to pull the latest changes.</p>
-                    <form method="POST">
-                        <input type="hidden" name="action" value="git_pull">
-                        <button type="submit" class="btn" style="margin-top: 40px;"><i class="fa-solid fa-download"></i> Pull Latest Changes</button>
-                    </form>
-                </div>
-            </div>
-            
+            <form method="POST">
+                <input type="hidden" name="action" value="git_pull">
+                <button type="submit" class="btn"><i class="fa-solid fa-cloud-arrow-down"></i> Pull Latest Changes</button>
+            </form>
             <?= $output_git ?>
         </div>
 
