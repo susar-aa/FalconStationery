@@ -23,8 +23,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $repo_dir = realpath(__DIR__ . '/../');
             $safe_dir = escapeshellarg(str_replace('\\', '/', $repo_dir));
             $commit_msg = !empty($_POST['commit_msg']) ? escapeshellarg($_POST['commit_msg']) : escapeshellarg("Automated web commit");
-            $cmd = "cd " . escapeshellarg($repo_dir) . " && git config --global --add safe.directory $safe_dir 2>&1 && git config user.email \"admin@falcon.trycurtiss.com\" 2>&1 && git config user.name \"ERP_Web_Tool\" 2>&1 && git add . 2>&1 && git commit -m $commit_msg 2>&1 && git push origin main 2>&1";
-            $result = shell_exec($cmd);
+            
+            $output = [];
+            $cwd = "cd " . escapeshellarg($repo_dir) . " && ";
+            exec($cwd . "git config --global --add safe.directory $safe_dir 2>&1", $output);
+            exec($cwd . "git config user.email \"admin@falcon.trycurtiss.com\" 2>&1", $output);
+            exec($cwd . "git config user.name \"ERP_Web_Tool\" 2>&1", $output);
+            exec($cwd . "git add . 2>&1", $output);
+            exec($cwd . "git commit -m $commit_msg 2>&1", $output);
+            exec($cwd . "git push origin main 2>&1", $output);
+            
+            $result = implode("\n", $output);
+            if (trim($result) === '') $result = "No changes to commit. Everything is up to date!";
             $output_git = "<div class='success-box'><pre>" . htmlspecialchars($result) . "</pre></div>";
         } 
         
