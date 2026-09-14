@@ -2,60 +2,6 @@
 session_start();
 require_once __DIR__ . '/../config/database.php';
 
-// ==========================================
-// SECURITY: Change this token if you want!
-$SECRET_TOKEN = 'admin123'; 
-// ==========================================
-
-// Handle Authentication
-if (!isset($_SESSION['dev_auth']) || $_SESSION['dev_auth'] !== true) {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['auth_token'])) {
-        if ($_POST['auth_token'] === $SECRET_TOKEN) {
-            $_SESSION['dev_auth'] = true;
-            header("Location: dev_tools.php");
-            exit;
-        } else {
-            $auth_error = "Invalid token!";
-        }
-    }
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dev Tools Login</title>
-    <style>
-        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; width: 300px; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: white; box-sizing: border-box; }
-        button { background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
-        button:hover { background: #2563eb; }
-        .error { color: #ef4444; margin-bottom: 15px; font-size: 14px; }
-    </style>
-</head>
-<body>
-    <div class="login-box">
-        <h2>Developer Tools</h2>
-        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 25px;">Enter security token to continue</p>
-        <?php if(isset($auth_error)) echo "<div class='error'>$auth_error</div>"; ?>
-        <form method="POST">
-            <input type="password" name="auth_token" placeholder="Security Token" required>
-            <button type="submit">Access Tools</button>
-        </form>
-    </div>
-</body>
-</html>
-<?php
-    exit;
-}
-
-// Handle Logout
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header("Location: dev_tools.php");
-    exit;
-}
-
 $output_git = '';
 $output_sql = '';
 
@@ -63,10 +9,21 @@ $output_sql = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         
-        // --- GIT DEPLOYMENT ---
+        // --- GIT PULL (FETCH & RESET) ---
         if ($_POST['action'] === 'git_pull') {
             $repo_dir = realpath(__DIR__ . '/../');
-            $cmd = "cd " . escapeshellarg($repo_dir) . " && git fetch --all 2>&1 && git reset --hard origin/main 2>&1";
+            $safe_dir = escapeshellarg(str_replace('\\', '/', $repo_dir));
+            $cmd = "cd " . escapeshellarg($repo_dir) . " && git config --global --add safe.directory $safe_dir 2>&1 && git fetch --all 2>&1 && git reset --hard origin/main 2>&1";
+            $result = shell_exec($cmd);
+            $output_git = "<div class='success-box'><pre>" . htmlspecialchars($result) . "</pre></div>";
+        } 
+        
+        // --- GIT PUSH ---
+        elseif ($_POST['action'] === 'git_push') {
+            $repo_dir = realpath(__DIR__ . '/../');
+            $safe_dir = escapeshellarg(str_replace('\\', '/', $repo_dir));
+            $commit_msg = !empty($_POST['commit_msg']) ? escapeshellarg($_POST['commit_msg']) : escapeshellarg("Automated web commit");
+            $cmd = "cd " . escapeshellarg($repo_dir) . " && git config --global --add safe.directory $safe_dir 2>&1 && git config user.email \"admin@falcon.trycurtiss.com\" 2>&1 && git config user.name \"ERP_Web_Tool\" 2>&1 && git add . 2>&1 && git commit -m $commit_msg 2>&1 && git push origin main 2>&1";
             $result = shell_exec($cmd);
             $output_git = "<div class='success-box'><pre>" . htmlspecialchars($result) . "</pre></div>";
         } 
@@ -106,13 +63,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); margin-bottom: 30px; border: 1px solid #e2e8f0; }
         .card h2 { margin-top: 0; font-size: 18px; color: #1e293b; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         
-        textarea { width: 100%; height: 150px; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: 'Courier New', Courier, monospace; font-size: 14px; resize: vertical; box-sizing: border-box; margin-bottom: 15px; background: #f8fafc; }
-        textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        textarea, input[type="text"] { width: 100%; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; margin-bottom: 15px; background: #f8fafc; }
+        textarea { height: 150px; font-family: 'Courier New', Courier, monospace; resize: vertical; }
+        textarea:focus, input[type="text"]:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         
         .btn { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; transition: 0.2s; }
         .btn:hover { background: #2563eb; }
         .btn-green { background: #10b981; }
         .btn-green:hover { background: #059669; }
+        .btn-purple { background: #8b5cf6; }
+        .btn-purple:hover { background: #7c3aed; }
         
         .success-box { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 14px; }
         .error-box { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; padding: 15px; border-radius: 8px; margin-top: 20px; font-size: 14px; }
@@ -125,19 +85,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <div class="header">
             <h1><i class="fa-solid fa-code"></i> Developer Tools</h1>
-            <a href="?logout=1" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
         </div>
 
         <!-- Git Deploy Card -->
         <div class="card">
-            <h2><i class="fa-brands fa-github"></i> Git Auto-Deploy</h2>
+            <h2><i class="fa-brands fa-github"></i> Git Manager</h2>
             <p style="font-size: 14px; color: #475569; margin-bottom: 20px;">
-                Pull the latest code from the <strong>main</strong> branch on GitHub. This will overwrite any uncommitted local changes on this server.
+                Manage your code deployments between your local environment, GitHub, and the live server.
             </p>
-            <form method="POST">
-                <input type="hidden" name="action" value="git_pull">
-                <button type="submit" class="btn"><i class="fa-solid fa-cloud-arrow-down"></i> Pull Latest Changes</button>
-            </form>
+            
+            <div style="display: flex; gap: 20px;">
+                <!-- PUSH (Local -> GitHub) -->
+                <div style="flex: 1; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; background: #f8fafc;">
+                    <h3 style="margin-top: 0; font-size: 15px; color: #334155;"><i class="fa-solid fa-cloud-arrow-up"></i> Push to GitHub</h3>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Use this on your <strong>Local XAMPP</strong> environment to commit and push changes.</p>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="git_push">
+                        <input type="text" name="commit_msg" placeholder="Commit message (optional)">
+                        <button type="submit" class="btn btn-purple"><i class="fa-solid fa-code-commit"></i> Commit & Push</button>
+                    </form>
+                </div>
+
+                <!-- PULL (GitHub -> Server) -->
+                <div style="flex: 1; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; background: #f8fafc;">
+                    <h3 style="margin-top: 0; font-size: 15px; color: #334155;"><i class="fa-solid fa-cloud-arrow-down"></i> Pull from GitHub</h3>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Use this on the <strong>Live aaPanel Server</strong> to pull the latest changes.</p>
+                    <form method="POST">
+                        <input type="hidden" name="action" value="git_pull">
+                        <button type="submit" class="btn" style="margin-top: 40px;"><i class="fa-solid fa-download"></i> Pull Latest Changes</button>
+                    </form>
+                </div>
+            </div>
+            
             <?= $output_git ?>
         </div>
 
