@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($_POST['action'] === 'git_pull') {
             $repo_dir = realpath(__DIR__ . '/../');
             $safe_dir = escapeshellarg(str_replace('\\', '/', $repo_dir));
-            $cmd = "cd " . escapeshellarg($repo_dir) . " && git config --global --add safe.directory $safe_dir 2>&1 && git fetch --all 2>&1 && git reset --hard origin/main 2>&1";
+            $cmd = "set GCM_INTERACTIVE=false && set GIT_TERMINAL_PROMPT=0 && cd " . escapeshellarg($repo_dir) . " && git config --global --add safe.directory $safe_dir 2>&1 && git fetch --all 2>&1 && git reset --hard origin/main 2>&1";
             $result = shell_exec($cmd);
             $output_git = "<div class='success-box'><pre>" . htmlspecialchars($result) . "</pre></div>";
         } 
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $commit_msg = !empty($_POST['commit_msg']) ? escapeshellarg($_POST['commit_msg']) : escapeshellarg("Automated web commit");
             
             $output = [];
-            $cwd = "cd " . escapeshellarg($repo_dir) . " && ";
+            $cwd = "set GCM_INTERACTIVE=false && set GIT_TERMINAL_PROMPT=0 && cd " . escapeshellarg($repo_dir) . " && ";
             exec($cwd . "git config --global --add safe.directory $safe_dir 2>&1", $output);
             exec($cwd . "git config user.email \"admin@falcon.trycurtiss.com\" 2>&1", $output);
             exec($cwd . "git config user.name \"ERP_Web_Tool\" 2>&1", $output);
