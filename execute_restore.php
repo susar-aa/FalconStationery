@@ -2,16 +2,21 @@
 // execute_restore.php
 
 // 1. Database Connection Variables
-// The script will try to read these from your .env file automatically.
-// If it fails to read them, you can manually update the 4 lines below with your live server credentials:
 $host = '127.0.0.1';
 $dbname = 'curtiss_erp';
 $user = 'root';
 $pass = '';
 
-// Attempt to read the .env file automatically if it exists in the same folder
+// Attempt to read the .env file automatically (checks current and parent directory)
+$env_path = '';
 if (file_exists('.env')) {
-    $env = file_get_contents('.env');
+    $env_path = '.env';
+} elseif (file_exists('../.env')) {
+    $env_path = '../.env';
+}
+
+if ($env_path) {
+    $env = file_get_contents($env_path);
     if (preg_match('/DB_HOST=(.*)/', $env, $m)) $host = trim($m[1]);
     if (preg_match('/DB_NAME=(.*)/', $env, $m)) $dbname = trim($m[1]);
     if (preg_match('/DB_USER=(.*)/', $env, $m)) $user = trim($m[1]);
