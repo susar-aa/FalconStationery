@@ -371,10 +371,8 @@ class AccountingController extends Controller {
             $debits = $_POST['debit'];
             $credits = $_POST['credit'];
             
-            $entityType = $_POST['entity_type'] ?? null;
-            if ($entityType === 'None' || empty($entityType)) $entityType = null;
-            $entityId = $_POST['entity_id'] ?? null;
-            if (!empty($entityId)) $entityId = intval($entityId); else $entityId = null;
+            $line_entity_types = $_POST['line_entity_type'] ?? [];
+            $line_entity_ids = $_POST['line_entity_id'] ?? [];
 
             $line_descriptions = $_POST['line_description'] ?? [];
 
@@ -387,6 +385,11 @@ class AccountingController extends Controller {
                 $deb = empty($debits[$i]) ? 0 : floatval($debits[$i]);
                 $cred = empty($credits[$i]) ? 0 : floatval($credits[$i]);
                 $line_desc = empty($line_descriptions[$i]) ? '' : trim($line_descriptions[$i]);
+                
+                $let = $line_entity_types[$i] ?? null;
+                if ($let === 'None' || empty($let)) $let = null;
+                $leid = $line_entity_ids[$i] ?? null;
+                if (!empty($leid)) $leid = intval($leid); else $leid = null;
 
                 if ($deb < 0 || $cred < 0) {
                     $hasNegative = true;
@@ -396,7 +399,14 @@ class AccountingController extends Controller {
                 }
 
                 if (($deb > 0 || $cred > 0) && $deb >= 0 && $cred >= 0) {
-                    $lines[] = ['account_id' => $accounts[$i], 'debit' => $deb, 'credit' => $cred, 'description' => $line_desc];
+                    $lines[] = [
+                        'account_id' => $accounts[$i], 
+                        'debit' => $deb, 
+                        'credit' => $cred, 
+                        'description' => $line_desc,
+                        'entity_type' => $let,
+                        'entity_id' => $leid
+                    ];
                     $totalDebit += $deb; $totalCredit += $cred;
                 }
             }
@@ -409,7 +419,7 @@ class AccountingController extends Controller {
             elseif (empty($lines)) { $data['error'] = 'You must enter at least one transaction line.'; } 
             elseif ($totalDebitCents !== $totalCreditCents) { $data['error'] = 'Accounting Error: Total Debits must equal Total Credits.'; } 
             else {
-                $postResult = $this->journalModel->postEntry($date, $reference, $description, $lines, $_SESSION['user_id'], true, $entityType, $entityId);
+                $postResult = $this->journalModel->postEntry($date, $reference, $description, $lines, $_SESSION['user_id'], true);
                 if ($postResult === true) {
                     $data['success'] = 'Journal Entry successfully posted.';
                     // Recalculate

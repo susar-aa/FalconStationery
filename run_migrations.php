@@ -14,7 +14,10 @@ try {
         "ALTER TABLE `customers` ADD COLUMN `reviewed_at` DATETIME DEFAULT NULL AFTER `reviewed_by_user_id`" => "customers.reviewed_at",
         "ALTER TABLE `journal_entries` ADD COLUMN `entity_type` ENUM('Customer', 'Vendor') NULL DEFAULT NULL AFTER `is_manual`" => "journal_entries.entity_type",
         "ALTER TABLE `journal_entries` ADD COLUMN `entity_id` INT(11) NULL DEFAULT NULL AFTER `entity_type`" => "journal_entries.entity_id",
-        "ALTER TABLE `journal_entries` ADD INDEX `idx_entity` (`entity_type`, `entity_id`)" => "journal_entries.idx_entity"
+        "ALTER TABLE `journal_entries` ADD INDEX `idx_entity` (`entity_type`, `entity_id`)" => "journal_entries.idx_entity",
+        "ALTER TABLE `transactions` ADD COLUMN `entity_type` ENUM('Customer', 'Vendor') NULL DEFAULT NULL AFTER `description`" => "transactions.entity_type",
+        "ALTER TABLE `transactions` ADD COLUMN `entity_id` INT(11) NULL DEFAULT NULL AFTER `entity_type`" => "transactions.entity_id",
+        "ALTER TABLE `transactions` ADD INDEX `idx_tx_entity` (`entity_type`, `entity_id`)" => "transactions.idx_tx_entity"
     ];
     
     foreach ($queries as $sql => $col) {

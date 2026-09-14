@@ -9,11 +9,9 @@ class JournalEntry {
     }
 
     public function getAllEntries(?int $limit = null, ?int $offset = null, array $filters = []): array {
-        $sql = "SELECT je.*, u.username, c.name as customer_name, v.name as vendor_name 
+        $sql = "SELECT je.*, u.username 
                 FROM journal_entries je 
                 LEFT JOIN users u ON je.created_by = u.id 
-                LEFT JOIN customers c ON je.entity_type = 'Customer' AND je.entity_id = c.id
-                LEFT JOIN vendors v ON je.entity_type = 'Vendor' AND je.entity_id = v.id
                 WHERE je.is_manual = 1";
         
         $params = [];
@@ -84,7 +82,7 @@ class JournalEntry {
         return $row ? (int)$row->total : 0;
     }
 
-    public function postEntry(string $date, string $reference, string $description, array $lines, int $userId, bool $isManual = false, ?string $entityType = null, ?int $entityId = null): string|bool {
+    public function postEntry(string $date, string $reference, string $description, array $lines, int $userId, bool $isManual = false): string|bool {
         try {
             // Check if period is closed/locked
             $this->db->query("SELECT COUNT(*) as cnt FROM financial_years WHERE :entry_date BETWEEN start_date AND end_date");
@@ -112,27 +110,27 @@ class JournalEntry {
                 }
             }
 
-            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, is_manual, entity_type, entity_id) 
-                              VALUES (:entry_date, :reference, :description, :created_by, :is_manual, :entity_type, :entity_id)");
+            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, is_manual) 
+                              VALUES (:entry_date, :reference, :description, :created_by, :is_manual)");
             $this->db->bind(':entry_date', $date);
             $this->db->bind(':reference', $reference);
             $this->db->bind(':description', $description);
             $this->db->bind(':created_by', $userId);
             $this->db->bind(':is_manual', $isManual ? 1 : 0);
-            $this->db->bind(':entity_type', $entityType ?: null);
-            $this->db->bind(':entity_id', $entityId ?: null);
             $this->db->execute();
             
             $journalId = $this->db->lastInsertId();
 
             foreach ($lines as $line) {
-                $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit, description) 
-                                  VALUES (:journal_id, :account_id, :debit, :credit, :description)");
+                $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit, description, entity_type, entity_id) 
+                                  VALUES (:journal_id, :account_id, :debit, :credit, :description, :entity_type, :entity_id)");
                 $this->db->bind(':journal_id', $journalId);
                 $this->db->bind(':account_id', $line['account_id']);
                 $this->db->bind(':debit', $line['debit']);
                 $this->db->bind(':credit', $line['credit']);
                 $this->db->bind(':description', !empty($line['description']) ? $line['description'] : null);
+                $this->db->bind(':entity_type', !empty($line['entity_type']) ? $line['entity_type'] : null);
+                $this->db->bind(':entity_id', !empty($line['entity_id']) ? $line['entity_id'] : null);
                 $this->db->execute();
 
                 $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id FOR UPDATE");
@@ -413,20 +411,21 @@ class JournalEntry {
 
     public function getEntryDetails(int $id): array|bool {
         // 1. Fetch the journal entry details
-        $this->db->query("SELECT je.*, u.username, c.name as customer_name, v.name as vendor_name 
+        $this->db->query("SELECT je.*, u.username 
                           FROM journal_entries je 
                           LEFT JOIN users u ON je.created_by = u.id 
-                          LEFT JOIN customers c ON je.entity_type = 'Customer' AND je.entity_id = c.id
-                          LEFT JOIN vendors v ON je.entity_type = 'Vendor' AND je.entity_id = v.id
                           WHERE je.id = :id");
         $this->db->bind(':id', $id);
         $entry = $this->db->single();
         if (!$entry) return false;
 
-        // 2. Fetch the transaction lines with account codes and names
-        $this->db->query("SELECT t.*, c.account_code, c.account_name 
+        // 2. Fetch the transaction lines with account codes and names, and entity names
+        $this->db->query("SELECT t.*, c.account_code, c.account_name, 
+                                 cu.name as customer_name, v.name as vendor_name
                           FROM transactions t 
                           JOIN chart_of_accounts c ON t.account_id = c.id 
+                          LEFT JOIN customers cu ON t.entity_type = 'Customer' AND t.entity_id = cu.id
+                          LEFT JOIN vendors v ON t.entity_type = 'Vendor' AND t.entity_id = v.id
                           WHERE t.journal_entry_id = :id");
         $this->db->bind(':id', $id);
         $lines = $this->db->resultSet();

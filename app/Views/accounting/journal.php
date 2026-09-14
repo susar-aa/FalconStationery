@@ -339,23 +339,6 @@ $endDate = $data['filters']['end_date'] ?? '';
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label>Link to Entity Type (Optional)</label>
-                        <select name="entity_type" id="entityType" class="form-control" onchange="toggleEntitySelect()">
-                            <option value="None">None</option>
-                            <option value="Customer">Customer</option>
-                            <option value="Vendor">Supplier</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="flex: 2; display: none; position: relative;" id="entityIdGroup">
-                        <label>Search Entity</label>
-                        <input type="hidden" name="entity_id" id="entityId">
-                        <input type="text" id="entitySearch" class="form-control" placeholder="Type to search..." autocomplete="off" onkeyup="filterEntities()" onfocus="showEntityDropdown()" onblur="hideEntityDropdown()">
-                        <div id="entityDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--c-surface); border: 1px solid var(--c-separator); border-radius: var(--r-sm); box-shadow: var(--shadow-md); z-index: 100; max-height: 200px; overflow-y: auto; margin-top: 5px;">
-                            <!-- Results go here -->
-                        </div>
-                    </div>
                 </div>
 
                 <table class="journal-input-table" id="linesTable">
@@ -372,31 +355,53 @@ $endDate = $data['filters']['end_date'] ?? '';
                         <!-- Initial 2 lines -->
                         <tr>
                             <td>
-                                <select name="account_id[]" class="form-control" required>
+                                <select name="account_id[]" class="form-control" style="margin-bottom: 6px;" required>
                                     <option value="">Select Account...</option>
                                     <?php foreach($data['accounts'] as $acc): ?>
                                         <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_code . ' - ' . $acc->account_name) ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                                <select name="line_entity_type[]" class="form-control" style="font-size: 12.5px; padding: 4px 8px; height: auto;" onchange="toggleLineEntitySelect(this)">
+                                    <option value="">No Entity</option>
+                                    <option value="Customer">Customer</option>
+                                    <option value="Vendor">Supplier</option>
+                                </select>
+                                <div class="line-entity-search-container" style="display: none; position: relative; margin-top: 4px;">
+                                    <input type="hidden" name="line_entity_id[]" class="line-entity-id">
+                                    <input type="text" class="form-control line-entity-search" style="font-size: 12.5px; padding: 4px 8px;" placeholder="Search..." autocomplete="off" onkeyup="filterLineEntities(this)" onfocus="showLineEntityDropdown(this)" onblur="hideLineEntityDropdown(this)">
+                                    <div class="line-entity-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--c-surface); border: 1px solid var(--c-separator); border-radius: var(--r-sm); box-shadow: var(--shadow-md); z-index: 100; max-height: 150px; overflow-y: auto; margin-top: 2px;">
+                                    </div>
+                                </div>
                             </td>
-                            <td><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note"></td>
-                            <td><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" onchange="calcTotals()"></td>
-                            <td><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" onchange="calcTotals()"></td>
-                            <td></td>
+                            <td style="vertical-align: top;"><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note"></td>
+                            <td style="vertical-align: top;"><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" onchange="calcTotals()"></td>
+                            <td style="vertical-align: top;"><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" onchange="calcTotals()"></td>
+                            <td style="vertical-align: top;"></td>
                         </tr>
                         <tr>
                             <td>
-                                <select name="account_id[]" class="form-control" required>
+                                <select name="account_id[]" class="form-control" style="margin-bottom: 6px;" required>
                                     <option value="">Select Account...</option>
                                     <?php foreach($data['accounts'] as $acc): ?>
                                         <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_code . ' - ' . $acc->account_name) ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                                <select name="line_entity_type[]" class="form-control" style="font-size: 12.5px; padding: 4px 8px; height: auto;" onchange="toggleLineEntitySelect(this)">
+                                    <option value="">No Entity</option>
+                                    <option value="Customer">Customer</option>
+                                    <option value="Vendor">Supplier</option>
+                                </select>
+                                <div class="line-entity-search-container" style="display: none; position: relative; margin-top: 4px;">
+                                    <input type="hidden" name="line_entity_id[]" class="line-entity-id">
+                                    <input type="text" class="form-control line-entity-search" style="font-size: 12.5px; padding: 4px 8px;" placeholder="Search..." autocomplete="off" onkeyup="filterLineEntities(this)" onfocus="showLineEntityDropdown(this)" onblur="hideLineEntityDropdown(this)">
+                                    <div class="line-entity-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--c-surface); border: 1px solid var(--c-separator); border-radius: var(--r-sm); box-shadow: var(--shadow-md); z-index: 100; max-height: 150px; overflow-y: auto; margin-top: 2px;">
+                                    </div>
+                                </div>
                             </td>
-                            <td><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note"></td>
-                            <td><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" onchange="calcTotals()"></td>
-                            <td><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" onchange="calcTotals()"></td>
-                            <td></td>
+                            <td style="vertical-align: top;"><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note"></td>
+                            <td style="vertical-align: top;"><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" onchange="calcTotals()"></td>
+                            <td style="vertical-align: top;"><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" onchange="calcTotals()"></td>
+                            <td style="vertical-align: top;"></td>
                         </tr>
                     </tbody>
                     <tfoot>
@@ -594,52 +599,53 @@ $endDate = $data['filters']['end_date'] ?? '';
     const customersList = <?= json_encode($data['customers'] ?? []) ?>;
     const suppliersList = <?= json_encode($data['suppliers'] ?? []) ?>;
 
-    let currentEntityList = [];
-
-    function toggleEntitySelect() {
-        const type = document.getElementById('entityType').value;
-        const group = document.getElementById('entityIdGroup');
-        const searchInput = document.getElementById('entitySearch');
-        const hiddenInput = document.getElementById('entityId');
+    function toggleLineEntitySelect(selectEl) {
+        const type = selectEl.value;
+        const container = selectEl.closest('td').querySelector('.line-entity-search-container');
+        const searchInput = container.querySelector('.line-entity-search');
+        const hiddenInput = container.querySelector('.line-entity-id');
         
         searchInput.value = '';
         hiddenInput.value = '';
         
         if (type === 'None' || type === '') {
-            group.style.display = 'none';
+            container.style.display = 'none';
             hiddenInput.required = false;
-            currentEntityList = [];
         } else {
-            group.style.display = 'block';
+            container.style.display = 'block';
             hiddenInput.required = true;
-            currentEntityList = type === 'Customer' ? customersList : suppliersList;
-            renderEntityDropdown(currentEntityList);
+            const list = type === 'Customer' ? customersList : suppliersList;
+            renderLineEntityDropdown(container, list);
         }
     }
 
-    function filterEntities() {
-        const q = document.getElementById('entitySearch').value.toLowerCase();
-        const filtered = currentEntityList.filter(item => item.name.toLowerCase().includes(q));
-        renderEntityDropdown(filtered);
-        document.getElementById('entityDropdown').style.display = 'block';
+    function filterLineEntities(inputEl) {
+        const container = inputEl.closest('.line-entity-search-container');
+        const type = container.closest('td').querySelector('select[name="line_entity_type[]"]').value;
+        const list = type === 'Customer' ? customersList : suppliersList;
+        
+        const q = inputEl.value.toLowerCase();
+        const filtered = list.filter(item => item.name.toLowerCase().includes(q));
+        renderLineEntityDropdown(container, filtered);
+        container.querySelector('.line-entity-dropdown').style.display = 'block';
     }
 
-    function renderEntityDropdown(list) {
-        const dd = document.getElementById('entityDropdown');
+    function renderLineEntityDropdown(container, list) {
+        const dd = container.querySelector('.line-entity-dropdown');
         dd.innerHTML = '';
         if (list.length === 0) {
-            dd.innerHTML = '<div style="padding: 10px 14px; color: var(--t-tertiary); font-size: 14px;">No results found.</div>';
+            dd.innerHTML = '<div style="padding: 8px 12px; color: var(--t-tertiary); font-size: 12.5px;">No results found.</div>';
             return;
         }
         list.forEach(item => {
             const div = document.createElement('div');
-            div.style.padding = '10px 14px';
+            div.style.padding = '8px 12px';
             div.style.cursor = 'pointer';
-            div.style.fontSize = '14px';
+            div.style.fontSize = '12.5px';
             div.style.borderBottom = '0.5px solid var(--c-separator2)';
             div.textContent = item.name;
-            div.onmousedown = function() { // mousedown fires before blur
-                selectEntity(item.id, item.name);
+            div.onmousedown = function() {
+                selectLineEntity(container, item.id, item.name);
             };
             div.onmouseover = function() { div.style.background = 'var(--c-fill2)'; };
             div.onmouseout = function() { div.style.background = 'transparent'; };
@@ -647,26 +653,28 @@ $endDate = $data['filters']['end_date'] ?? '';
         });
     }
 
-    function selectEntity(id, name) {
-        document.getElementById('entityId').value = id;
-        document.getElementById('entitySearch').value = name;
-        document.getElementById('entityDropdown').style.display = 'none';
-        
-        // Remove required validation if they selected something valid to prevent HTML5 form errors on hidden inputs
-        document.getElementById('entityId').required = false; 
+    function selectLineEntity(container, id, name) {
+        container.querySelector('.line-entity-id').value = id;
+        container.querySelector('.line-entity-search').value = name;
+        container.querySelector('.line-entity-dropdown').style.display = 'none';
+        container.querySelector('.line-entity-id').required = false; 
     }
 
-    function showEntityDropdown() {
-        if (currentEntityList.length > 0) {
-            filterEntities();
-            document.getElementById('entityDropdown').style.display = 'block';
+    function showLineEntityDropdown(inputEl) {
+        const container = inputEl.closest('.line-entity-search-container');
+        const type = container.closest('td').querySelector('select[name="line_entity_type[]"]').value;
+        if (type !== 'None' && type !== '') {
+            filterLineEntities(inputEl);
+            container.querySelector('.line-entity-dropdown').style.display = 'block';
         }
     }
 
-    function hideEntityDropdown() {
-        // Delay to allow click event to register
+    function hideLineEntityDropdown(inputEl) {
         setTimeout(() => {
-            document.getElementById('entityDropdown').style.display = 'none';
+            const container = inputEl.closest('.line-entity-search-container');
+            if(container.querySelector('.line-entity-dropdown')) {
+                container.querySelector('.line-entity-dropdown').style.display = 'none';
+            }
         }, 200);
     }
 
@@ -695,11 +703,24 @@ $endDate = $data['filters']['end_date'] ?? '';
         const tbody = document.getElementById('journalBody');
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><select name="account_id[]" class="form-control" required>${accountOptions}</select></td>
-            <td><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note"></td>
-            <td><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" onchange="calcTotals()"></td>
-            <td><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" onchange="calcTotals()"></td>
-            <td><button type="button" class="sf-btn danger" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button></td>
+            <td>
+                <select name="account_id[]" class="form-control" style="margin-bottom: 6px;" required>${accountOptions}</select>
+                <select name="line_entity_type[]" class="form-control" style="font-size: 12.5px; padding: 4px 8px; height: auto;" onchange="toggleLineEntitySelect(this)">
+                    <option value="">No Entity</option>
+                    <option value="Customer">Customer</option>
+                    <option value="Vendor">Supplier</option>
+                </select>
+                <div class="line-entity-search-container" style="display: none; position: relative; margin-top: 4px;">
+                    <input type="hidden" name="line_entity_id[]" class="line-entity-id">
+                    <input type="text" class="form-control line-entity-search" style="font-size: 12.5px; padding: 4px 8px;" placeholder="Search..." autocomplete="off" onkeyup="filterLineEntities(this)" onfocus="showLineEntityDropdown(this)" onblur="hideLineEntityDropdown(this)">
+                    <div class="line-entity-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--c-surface); border: 1px solid var(--c-separator); border-radius: var(--r-sm); box-shadow: var(--shadow-md); z-index: 100; max-height: 150px; overflow-y: auto; margin-top: 2px;">
+                    </div>
+                </div>
+            </td>
+            <td style="vertical-align: top;"><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note"></td>
+            <td style="vertical-align: top;"><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" onchange="calcTotals()"></td>
+            <td style="vertical-align: top;"><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" onchange="calcTotals()"></td>
+            <td style="vertical-align: top;"><button type="button" class="sf-btn danger" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button></td>
         `;
         tbody.appendChild(tr);
     }
@@ -765,12 +786,18 @@ $endDate = $data['filters']['end_date'] ?? '';
         const rows = tbody.querySelectorAll('tr');
         const lines = [];
         rows.forEach(row => {
-            const select = row.querySelector('select');
+            const select = row.querySelector('select[name="account_id[]"]');
+            const typeSelect = row.querySelector('select[name="line_entity_type[]"]');
+            const entityIdInput = row.querySelector('.line-entity-id');
+            const entitySearchInput = row.querySelector('.line-entity-search');
             const descInput = row.querySelector('input[placeholder*="note"]');
             const debitInput = row.querySelector('.debit-input');
             const creditInput = row.querySelector('.credit-input');
             lines.push({
                 account_id: select ? select.value : '',
+                entity_type: typeSelect ? typeSelect.value : '',
+                entity_id: entityIdInput ? entityIdInput.value : '',
+                entity_search: entitySearchInput ? entitySearchInput.value : '',
                 line_description: descInput ? descInput.value : '',
                 debit: debitInput ? debitInput.value : '',
                 credit: creditInput ? creditInput.value : ''
@@ -799,14 +826,36 @@ $endDate = $data['filters']['end_date'] ?? '';
             const tr = document.createElement('tr');
             const isInitial = index < 2; 
             tr.innerHTML = `
-                <td><select name="account_id[]" class="form-control" required>${accountOptions}</select></td>
-                <td><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note" value="${escapeHtml(line.line_description)}"></td>
-                <td><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" value="${line.debit}" onchange="calcTotals()"></td>
-                <td><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" value="${line.credit}" onchange="calcTotals()"></td>
-                <td>${isInitial ? '' : '<button type="button" class="sf-btn danger" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button>'}</td>
+                <td>
+                    <select name="account_id[]" class="form-control" style="margin-bottom: 6px;" required>${accountOptions}</select>
+                    <select name="line_entity_type[]" class="form-control" style="font-size: 12.5px; padding: 4px 8px; height: auto;" onchange="toggleLineEntitySelect(this)">
+                        <option value="">No Entity</option>
+                        <option value="Customer">Customer</option>
+                        <option value="Vendor">Supplier</option>
+                    </select>
+                    <div class="line-entity-search-container" style="display: none; position: relative; margin-top: 4px;">
+                        <input type="hidden" name="line_entity_id[]" class="line-entity-id">
+                        <input type="text" class="form-control line-entity-search" style="font-size: 12.5px; padding: 4px 8px;" placeholder="Search..." autocomplete="off" onkeyup="filterLineEntities(this)" onfocus="showLineEntityDropdown(this)" onblur="hideLineEntityDropdown(this)">
+                        <div class="line-entity-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--c-surface); border: 1px solid var(--c-separator); border-radius: var(--r-sm); box-shadow: var(--shadow-md); z-index: 100; max-height: 150px; overflow-y: auto; margin-top: 2px;">
+                        </div>
+                    </div>
+                </td>
+                <td style="vertical-align: top;"><input type="text" name="line_description[]" class="form-control" placeholder="Line-specific note" value="${escapeHtml(line.line_description)}"></td>
+                <td style="vertical-align: top;"><input type="number" name="debit[]" class="form-control debit-input" step="0.01" min="0" value="${line.debit}" onchange="calcTotals()"></td>
+                <td style="vertical-align: top;"><input type="number" name="credit[]" class="form-control credit-input" step="0.01" min="0" value="${line.credit}" onchange="calcTotals()"></td>
+                <td style="vertical-align: top;">${isInitial ? '' : '<button type="button" class="sf-btn danger" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button>'}</td>
             `;
             tbody.appendChild(tr);
-            tr.querySelector('select').value = line.account_id;
+            if (line.account_id) tr.querySelector('select[name="account_id[]"]').value = line.account_id;
+            if (line.entity_type) {
+                const typeSelect = tr.querySelector('select[name="line_entity_type[]"]');
+                typeSelect.value = line.entity_type;
+                toggleLineEntitySelect(typeSelect);
+                if (line.entity_id) {
+                    tr.querySelector('.line-entity-id').value = line.entity_id;
+                    tr.querySelector('.line-entity-search').value = line.entity_search;
+                }
+            }
         });
 
         previousState = null;
@@ -844,7 +893,7 @@ $endDate = $data['filters']['end_date'] ?? '';
         addRow();
         addRow();
 
-        const newSelects = tbody.querySelectorAll('select');
+        const newSelects = tbody.querySelectorAll('select[name="account_id[]"]');
         const newDebits = tbody.querySelectorAll('.debit-input');
 
         const options1 = Array.from(newSelects[0].options);
@@ -920,12 +969,7 @@ $endDate = $data['filters']['end_date'] ?? '';
                         statusEl.innerHTML = '<span class="sf-badge badge-draft">' + entry.status + '</span>';
                     }
                     
-                    if (entry.entity_type) {
-                        document.getElementById('detEntityGroup').style.display = 'block';
-                        document.getElementById('detEntity').innerText = entry.entity_type + ' - ' + (entry.customer_name || entry.vendor_name || 'ID ' + entry.entity_id);
-                    } else {
-                        document.getElementById('detEntityGroup').style.display = 'none';
-                    }
+                    document.getElementById('detEntityGroup').style.display = 'none';
                     
                     // Lines Table
                     const tbody = document.getElementById('detLinesBody');
@@ -943,9 +987,17 @@ $endDate = $data['filters']['end_date'] ?? '';
                         
                         totalDebit += debitVal;
                         totalCredit += creditVal;
+
+                        let entityText = '';
+                        if (line.entity_type) {
+                            let name = line.customer_name || line.vendor_name || ('ID ' + line.entity_id);
+                            entityText = `<div style="font-size: 11.5px; color: var(--c-blue); margin-top: 4px; font-weight: 500;">
+                                <i class="fa-solid fa-user-tag" style="margin-right:4px;"></i> ${line.entity_type}: ${escapeHtml(name)}
+                            </div>`;
+                        }
                         
                         tr.innerHTML = `
-                            <td style="padding: 12px 14px;"><strong>${escapeHtml(line.account_code)}</strong> - ${escapeHtml(line.account_name)}</td>
+                            <td style="padding: 12px 14px;"><strong>${escapeHtml(line.account_code)}</strong> - ${escapeHtml(line.account_name)}${entityText}</td>
                             <td style="padding: 12px 14px; color: var(--t-secondary);">${escapeHtml(line.description) || '-'}</td>
                             <td style="padding: 12px 14px; text-align: right;">${debitVal > 0 ? debitVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</td>
                             <td style="padding: 12px 14px; text-align: right;">${creditVal > 0 ? creditVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</td>
