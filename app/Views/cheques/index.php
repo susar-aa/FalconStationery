@@ -36,8 +36,10 @@
 .badge-Pending .dot { background: var(--c-orange); }
 .badge-Cleared { background: var(--c-green-light); color: #1a7f3c; }
 .badge-Cleared .dot { background: var(--c-green); }
-.badge-Bounced { background: var(--c-red-light); color: var(--c-red); }
-.badge-Bounced .dot { background: var(--c-red); }
+.badge-Bounced, .badge-Returned, .badge-Rejected { background: var(--c-red-light); color: var(--c-red); }
+.badge-Bounced .dot, .badge-Returned .dot, .badge-Rejected .dot { background: var(--c-red); }
+.badge-Deposited { background: var(--c-blue-light); color: var(--c-blue); }
+.badge-Deposited .dot { background: var(--c-blue); }
 
 /* Row Actions */
 .row-acts { display: flex; gap: 6px; justify-content: flex-end; }
@@ -177,19 +179,103 @@
         
         <div class="sf-segment-wrap">
             <div class="sf-segments">
-                <button class="sf-seg-btn active" id="tab-received" onclick="switchChequeTab('received')">Collections (Received)</button>
+                <button class="sf-seg-btn active" id="tab-all" onclick="switchChequeTab('all')">All Cheques</button>
+                <button class="sf-seg-btn" id="tab-received" onclick="switchChequeTab('received')">Collections (Received)</button>
                 <button class="sf-seg-btn" id="tab-issued" onclick="switchChequeTab('issued')">Payments (Issued)</button>
             </div>
         </div>
 
-        <?php if(empty($data['grouped_received_cheques']) && empty($data['grouped_issued_cheques'])): ?>
+        <?php if(empty($data['grouped_all_cheques'])): ?>
         <div class="table-panel" style="padding: 60px; text-align: center; color: var(--t-secondary);">
             <i class="fa-solid fa-money-check" style="font-size: 32px; margin-bottom: 16px; opacity: 0.5;"></i>
             <p>No cheques recorded matching this query.</p>
         </div>
         <?php else: ?>
             
-            <div id="section-received" class="chq-section active">
+            <!-- SECTION: ALL CHEQUES -->
+            <div id="section-all" class="chq-section active">
+                <?php foreach($data['grouped_all_cheques'] as $date => $cheques): ?>
+                    <?php 
+                        $dayTotal = 0;
+                        foreach($cheques as $c) { if($c->status == 'Pending') $dayTotal += $c->amount; }
+                        $isPastDue = strtotime($date) < strtotime('today') && $dayTotal > 0;
+                    ?>
+                    <div class="date-group <?= $isPastDue ? 'overdue' : '' ?>">
+                        <span><i class="fa-regular fa-calendar" style="margin-right:6px;"></i> <?= date('l, F j, Y', strtotime($date)) ?> <?= $isPastDue ? '— OVERDUE' : '' ?></span>
+                        <span>Pending Rs: <?= number_format($dayTotal, 2) ?></span>
+                    </div>
+                    <div class="table-panel" style="border-radius: 0; border-top: none; margin-bottom: 0;">
+                        <div class="table-responsive">
+                            <table class="sf-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Payee / Customer</th>
+                                    <th style="width: 20%;">Bank details</th>
+                                    <th style="width: 15%;">Cheque Number</th>
+                                    <th style="width: 12%;">Status</th>
+                                    <th style="width: 15%; text-align: right;">Amount (Rs:)</th>
+                                    <th style="width: 13%; text-align: right;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach($cheques as $chk): 
+                                    $isIssued = !empty($chk->bank_account_id);
+                                    $typeTag = $isIssued ? 'issued' : 'received';
+                                ?>
+                                <tr>
+                                    <td>
+                                        <strong style="font-weight:600;"><?= htmlspecialchars($chk->payee_name ?: '-') ?></strong>
+                                        <?php if ($isIssued): ?>
+                                            <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Supplier Payment</div>
+                                        <?php else: ?>
+                                            <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center"></i> Customer Collection</div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div style="font-weight:500;"><?= htmlspecialchars($chk->bank_name) ?></div>
+                                        <?php if (!empty($chk->drawn_bank_name)): ?>
+                                            <div style="font-size: 11px; color: var(--t-secondary); margin-top:2px;">
+                                                <i class="fa-solid fa-building-columns"></i> <?= htmlspecialchars($chk->drawn_bank_name) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span style="font-family: var(--f-mono); background: var(--c-fill); padding: 4px 8px; border-radius: 6px; font-size: 13px;">
+                                            <?= htmlspecialchars($chk->cheque_number) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="sf-badge badge-<?= $chk->status ?>">
+                                            <div class="dot"></div> <?= $chk->status ?>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right; font-weight: 600;">
+                                        <?= number_format($chk->amount, 2) ?>
+                                    </td>
+                                    <td>
+                                        <div class="row-acts">
+                                            <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </button>
+                                            <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, '<?= $typeTag ?>')">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </button>
+                                            <button class="act-btn delete" title="Delete" onclick="openDeleteModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
+                                                <i class="fa-regular fa-trash-can"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- SECTION: RECEIVED CHEQUES -->
+            <div id="section-received" class="chq-section">
                 <?php if(empty($data['grouped_received_cheques'])): ?>
                     <div class="table-panel" style="padding: 60px; text-align: center; color: var(--t-secondary);">
                         <p>No received cheques matching this query.</p>
@@ -624,19 +710,19 @@
         openModal('viewModal');
     }
 
-    let activeTab = 'received';
+    let activeTab = 'all';
 
     function switchChequeTab(tab) {
         activeTab = tab;
         // Update Buttons
-        document.getElementById('tab-received').classList.remove('active');
-        document.getElementById('tab-issued').classList.remove('active');
-        document.getElementById('tab-' + tab).classList.add('active');
+        document.querySelectorAll('.sf-seg-btn').forEach(btn => btn.classList.remove('active'));
+        const btn = document.getElementById('tab-' + tab);
+        if (btn) btn.classList.add('active');
         
         // Update Sections
-        document.getElementById('section-received').classList.remove('active');
-        document.getElementById('section-issued').classList.remove('active');
-        document.getElementById('section-' + tab).classList.add('active');
+        document.querySelectorAll('.chq-section').forEach(sec => sec.classList.remove('active'));
+        const sec = document.getElementById('section-' + tab);
+        if (sec) sec.classList.add('active');
     }
 
     // AJAX Search implementation

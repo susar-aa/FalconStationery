@@ -1,154 +1,433 @@
+<!-- Inter Font & FontAwesome Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<?php
+$totalDraftCount = 0; $totalDraftAmount = 0;
+$totalTransitCount = 0; $totalTransitAmount = 0;
+$totalCompletedCount = 0; $totalCompletedAmount = 0;
+
+if (!empty($data['deposits'])) {
+    foreach ($data['deposits'] as $dep) {
+        $tot = floatval($dep->total_deposit ?? 0);
+        if ($dep->status === 'Draft') {
+            $totalDraftCount++;
+            $totalDraftAmount += $tot;
+        } elseif ($dep->status === 'Sent to Bank') {
+            $totalTransitCount++;
+            $totalTransitAmount += $tot;
+        } elseif ($dep->status === 'Completed') {
+            $totalCompletedCount++;
+            $totalCompletedAmount += $tot;
+        }
+    }
+}
+?>
+
 <style>
-    .deposit-container {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    .header-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    .btn {
-        padding: 10px 18px;
-        font-size: 13px;
-        font-weight: 600;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        text-decoration: none;
-    }
-    .btn-primary { background: #0066cc; color: #fff; }
-    .btn-primary:hover { background: #0056b3; }
-    .btn-secondary { background: #fff; color: #475569; border: 1px solid #cbd5e1; }
-    .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
-    .btn-success { background: #2e7d32; color: #fff; }
-    .btn-success:hover { background: #235f26; }
-    .btn-danger { background: #c62828; color: #fff; }
-    .btn-danger:hover { background: #9a1f1f; }
-    
-    @media (prefers-color-scheme: dark) {
-        .btn-secondary { background: #1e1e2d; color: #e2e8f0; border-color: #3f3f46; }
-        .btn-secondary:hover { background: #27273a; border-color: #52525b; }
-    }
+:root {
+    --c-bg:           #f2f2f7;
+    --c-surface:      #ffffff;
+    --c-surface2:     #f9f9fb;
+    --c-fill:         rgba(120,120,128,0.12);
+    --c-fill2:        rgba(120,120,128,0.16);
+    --c-separator:    rgba(60,60,67,0.12);
 
-    .table-card {
-        background: #fff;
-        border: 1px solid var(--mac-border, #e2e8f0);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        margin-top: 15px;
-    }
-    @media (prefers-color-scheme: dark) {
-        .table-card { background: #1e1e2d; border-color: #2d2d3d; }
-    }
+    --c-blue:         #007aff;
+    --c-blue-light:   #e5f2ff;
+    --c-green:        #34c759;
+    --c-green-light:  #e6f9ec;
+    --c-orange:       #ff9500;
+    --c-orange-light: #fff4e5;
+    --c-purple:       #af52de;
+    --c-purple-light: #f5e8ff;
+    --c-red:          #ff3b30;
+    --c-red-light:    #fff0ef;
 
-    .deposit-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .deposit-table th, .deposit-table td { padding: 14px 20px; border-bottom: 1px solid var(--mac-border, #e2e8f0); }
-    @media (prefers-color-scheme: dark) { .deposit-table th, .deposit-table td { border-color: #27272a; } }
-    .deposit-table th { background: rgba(0,0,0,0.01); font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; }
-    @media (prefers-color-scheme: dark) { .deposit-table th { background: rgba(255,255,255,0.01); } }
-    .deposit-table tr:last-child td { border-bottom: none; }
-    .deposit-table tr:hover td { background: rgba(0,0,0,0.01); }
-    @media (prefers-color-scheme: dark) { .deposit-table tr:hover td { background: rgba(255,255,255,0.01); } }
+    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', sans-serif;
+    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
 
-    .status-badge {
-        font-size: 11px;
-        font-weight: 700;
-        padding: 4px 10px;
-        border-radius: 20px;
-        display: inline-block;
-        text-transform: uppercase;
+    --t-primary:   #1c1c1e;
+    --t-secondary: #636366;
+    --t-label:     #8e8e93;
+
+    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
+    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md:  0 8px 24px rgba(0,0,0,0.08);
+
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-pill: 999px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --c-bg:           #121212;
+        --c-surface:      #1e1e2e;
+        --c-surface2:     #161622;
+        --c-fill:         rgba(255,255,255,0.08);
+        --c-fill2:        rgba(255,255,255,0.12);
+        --c-separator:    rgba(255,255,255,0.15);
+        --t-primary:   #f5f5f7;
+        --t-secondary: #a1a1aa;
+        --t-label:     #52525b;
     }
-    .status-Draft { background: #f1f5f9; color: #475569; }
-    .status-Sent { background: #e0f2fe; color: #0369a1; } /* Sent to Bank */
-    .status-Approved { background: #dcfce7; color: #15803d; }
-    .status-Completed { background: #dcfce7; color: #15803d; }
-    
-    @media (prefers-color-scheme: dark) {
-        .status-Draft { background: #334155; color: #cbd5e1; }
-        .status-Sent { background: rgba(3, 105, 161, 0.15); color: #38bdf8; }
-        .status-Approved { background: rgba(21, 128, 61, 0.15); color: #4ade80; }
-        .status-Completed { background: rgba(21, 128, 61, 0.15); color: #4ade80; }
-    }
+}
+
+.deposit-root {
+    font-family: var(--f-system);
+    font-size: 15px;
+    color: var(--t-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Page Header */
+.sf-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.sf-page-title h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.02em;
+}
+.sf-page-title p {
+    margin: 0;
+    color: var(--t-secondary);
+    font-size: 14px;
+}
+
+/* KPI Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.kpi-card {
+    background: var(--c-surface);
+    border-radius: var(--r-md);
+    padding: 20px;
+    border: 0.5px solid var(--c-separator);
+    box-shadow: var(--shadow-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--t-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.kpi-val {
+    font-size: 24px;
+    font-weight: 800;
+    font-family: var(--f-mono);
+    color: var(--t-primary);
+}
+.kpi-sub {
+    font-size: 12px;
+    color: var(--t-label);
+    font-weight: 500;
+}
+
+/* Segmented Control & Controls Header */
+.sf-controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.sf-segments {
+    display: inline-flex;
+    background: var(--c-fill);
+    padding: 4px;
+    border-radius: var(--r-md);
+    gap: 2px;
+}
+.sf-seg-btn {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--f-system);
+    border: none;
+    background: transparent;
+    color: var(--t-secondary);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.sf-seg-btn.active {
+    background: var(--c-surface);
+    color: var(--t-primary);
+    box-shadow: var(--shadow-xs);
+}
+
+/* Search Input */
+.search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-pill);
+    padding: 8px 16px;
+    width: 280px;
+    box-shadow: var(--shadow-xs);
+}
+.search-box i { color: var(--t-label); }
+.search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    color: inherit;
+    width: 100%;
+}
+
+/* Table Panel */
+.table-panel {
+    background: var(--c-surface);
+    border-radius: var(--r-lg);
+    border: 0.5px solid var(--c-separator);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.sf-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 14px;
+}
+.sf-table th {
+    background: var(--c-surface2);
+    padding: 14px 18px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--t-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 0.5px solid var(--c-separator);
+}
+.sf-table td {
+    padding: 14px 18px;
+    border-bottom: 0.5px solid var(--c-separator);
+    vertical-align: middle;
+}
+.sf-table tr:last-child td { border-bottom: none; }
+.sf-table tr:hover td { background: var(--c-fill); }
+
+/* Badges */
+.sf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--r-pill);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.sf-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+.badge-Draft { background: var(--c-fill2); color: var(--t-secondary); }
+.badge-Draft .dot { background: var(--t-label); }
+.badge-Sent { background: var(--c-blue-light); color: var(--c-blue); }
+.badge-Sent .dot { background: var(--c-blue); }
+.badge-Completed { background: var(--c-green-light); color: #15803d; }
+.badge-Completed .dot { background: var(--c-green); }
+
+/* Buttons */
+.btn-sf {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--r-sm);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: all 0.18s ease;
+}
+.btn-sf-primary { background: var(--c-blue); color: #fff; }
+.btn-sf-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-sf-secondary { background: var(--c-fill); color: var(--t-primary); }
+.btn-sf-secondary:hover { background: var(--c-fill2); }
+.btn-sf-success { background: var(--c-green); color: #fff; }
+.btn-sf-success:hover { opacity: 0.9; }
+.btn-sf-orange { background: var(--c-orange); color: #fff; }
+.btn-sf-orange:hover { opacity: 0.9; }
+.btn-sf-danger { background: var(--c-red-light); color: var(--c-red); }
+.btn-sf-danger:hover { background: var(--c-red); color: #fff; }
+
+.act-group { display: flex; gap: 6px; justify-content: center; }
+
+/* Alerts */
+.sf-alert {
+    padding: 14px 18px;
+    border-radius: var(--r-md);
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sf-alert-success { background: var(--c-green-light); color: #166534; border: 0.5px solid rgba(52,199,89,0.3); }
+.sf-alert-error { background: var(--c-red-light); color: #991b1b; border: 0.5px solid rgba(255,59,48,0.3); }
 </style>
 
-<div class="deposit-container">
-    <div class="header-actions">
-        <div>
-            <h2 style="margin: 0 0 5px 0;">Bank Deposits Workflow</h2>
-            <p style="margin: 0; color: #64748b; font-size: 14px;">Prepare, audit, and process cash and cheque deposits from collections into bank accounts.</p>
+<div class="deposit-root">
+    <div class="sf-page-header">
+        <div class="sf-page-title">
+            <h1>Bank Deposits Workflow</h1>
+            <p>Prepare, track, and clear cash & cheque bank deposits into general ledger accounts</p>
         </div>
         <div>
-            <a href="<?= APP_URL ?>/deposit/create" class="btn btn-primary">➕ New Bank Deposit</a>
+            <a href="<?= APP_URL ?>/deposit/create" class="btn-sf btn-sf-primary" style="padding: 10px 20px; border-radius: var(--r-pill); font-size: 14px;">
+                <i class="fa-solid fa-plus"></i> New Bank Deposit
+            </a>
         </div>
     </div>
 
-    <!-- Feedback Alerts -->
+    <!-- Alerts -->
     <?php if(!empty($data['success'])): ?>
-        <div style="padding: 12px 16px; background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; border-radius:8px; margin-bottom:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px;">
-            <span>✅</span> <?= htmlspecialchars($data['success']) ?>
+        <div class="sf-alert sf-alert-success">
+            <i class="fa-solid fa-circle-check" style="font-size: 18px;"></i>
+            <span><?= htmlspecialchars($data['success']) ?></span>
         </div>
     <?php endif; ?>
     <?php if(!empty($data['error'])): ?>
-        <div style="padding: 12px 16px; background:#ffebee; color:#c62828; border:1px solid #ffcdd2; border-radius:8px; margin-bottom:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px;">
-            <span>⚠️</span> <?= htmlspecialchars($data['error']) ?>
+        <div class="sf-alert sf-alert-error">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 18px;"></i>
+            <span><?= htmlspecialchars($data['error']) ?></span>
         </div>
     <?php endif; ?>
 
-    <div class="table-card">
-        <table class="deposit-table">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label" style="color: var(--t-secondary);">Draft Deposits</div>
+            <div class="kpi-val">Rs: <?= number_format($totalDraftAmount, 2) ?></div>
+            <div class="kpi-sub"><?= $totalDraftCount ?> Drafts pending submission</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label" style="color: var(--c-blue);">In Transit (Sent to Bank)</div>
+            <div class="kpi-val" style="color: var(--c-blue);">Rs: <?= number_format($totalTransitAmount, 2) ?></div>
+            <div class="kpi-sub"><?= $totalTransitCount ?> Deposits awaiting bank clearance</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label" style="color: var(--c-green);">Completed / Realized</div>
+            <div class="kpi-val" style="color: var(--c-green);">Rs: <?= number_format($totalCompletedAmount, 2) ?></div>
+            <div class="kpi-sub"><?= $totalCompletedCount ?> Fully processed bank deposits</div>
+        </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="sf-controls-bar">
+        <div class="sf-segments">
+            <button class="sf-seg-btn active" onclick="filterTable('all', this)">All Deposits</button>
+            <button class="sf-seg-btn" onclick="filterTable('Draft', this)">Drafts (<?= $totalDraftCount ?>)</button>
+            <button class="sf-seg-btn" onclick="filterTable('Sent to Bank', this)">In Transit (<?= $totalTransitCount ?>)</button>
+            <button class="sf-seg-btn" onclick="filterTable('Completed', this)">Completed (<?= $totalCompletedCount ?>)</button>
+        </div>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="depositSearch" placeholder="Search deposit #, bank, date..." onkeyup="searchDeposits()">
+        </div>
+    </div>
+
+    <!-- Table Panel -->
+    <div class="table-panel">
+        <table class="sf-table" id="depositsTable">
             <thead>
                 <tr>
-                    <th>Deposit Number</th>
-                    <th>Date</th>
+                    <th style="width: 140px;">Deposit #</th>
+                    <th style="width: 110px;">Date</th>
                     <th>Destination Bank</th>
-                    <th style="text-align: right;">Cash Total</th>
-                    <th style="text-align: right;">Cheques Total</th>
-                    <th style="text-align: right;">Grand Total</th>
-                    <th style="text-align: center;">Status</th>
-                    <th style="text-align: center; width: 250px;">Actions</th>
+                    <th style="text-align: right; width: 130px;">Cash</th>
+                    <th style="text-align: right; width: 130px;">Cheques</th>
+                    <th style="text-align: right; width: 140px;">Grand Total</th>
+                    <th style="text-align: center; width: 130px;">Status</th>
+                    <th style="text-align: center; width: 230px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if(empty($data['deposits'])): ?>
-                    <tr>
-                        <td colspan="8" style="text-align: center; color: #94a3b8; padding: 40px;">
-                            <span style="font-size: 32px; display: block; margin-bottom: 10px;">📥</span>
-                            No deposits recorded yet. Click "New Bank Deposit" to start.
+                    <tr class="no-records-row">
+                        <td colspan="8" style="text-align: center; color: var(--t-secondary); padding: 50px;">
+                            <i class="fa-solid fa-building-columns" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block;"></i>
+                            No deposit records found. Click <strong>"New Bank Deposit"</strong> to start a cash/cheque batch.
                         </td>
                     </tr>
-                <?php else: foreach($data['deposits'] as $dep): ?>
-                    <tr>
-                        <td style="font-weight: 700; color: #0066cc;"># <?= htmlspecialchars($dep->deposit_number) ?></td>
-                        <td><?= date('Y-m-d', strtotime($dep->deposit_date)) ?></td>
-                        <td style="font-weight: 600;"><?= htmlspecialchars($dep->bank_name) ?></td>
-                        <td style="text-align: right; font-family: monospace; font-size: 13px;">Rs <?= number_format($dep->cash_total, 2) ?></td>
-                        <td style="text-align: right; font-family: monospace; font-size: 13px;">Rs <?= number_format($dep->cheque_total, 2) ?></td>
-                        <td style="text-align: right; font-weight: 700; font-family: monospace; font-size: 13px; color: #2e7d32;">Rs <?= number_format($dep->total_deposit, 2) ?></td>
-                        <td style="text-align: center;">
-                            <span class="status-badge status-<?= str_replace(' ', '', $dep->status) ?>">
-                                <?= htmlspecialchars($dep->status) ?>
+                <?php else: foreach($data['deposits'] as $dep): 
+                    $statusClass = str_replace(' ', '', $dep->status);
+                ?>
+                    <tr class="deposit-row" data-status="<?= htmlspecialchars($dep->status) ?>">
+                        <td>
+                            <span style="font-family: var(--f-mono); font-weight: 700; color: var(--c-blue); background: var(--c-blue-light); padding: 4px 8px; border-radius: 6px; font-size: 13px;">
+                                #<?= htmlspecialchars($dep->deposit_number) ?>
                             </span>
                         </td>
+                        <td style="font-size: 13px; font-weight: 500; color: var(--t-secondary);">
+                            <?= date('M d, Y', strtotime($dep->deposit_date)) ?>
+                        </td>
+                        <td>
+                            <strong style="font-weight: 600; color: var(--t-primary);"><?= htmlspecialchars($dep->bank_name) ?></strong>
+                            <div style="font-size: 11px; color: var(--t-label);">By <?= htmlspecialchars($dep->prepared_by_name ?: 'System User') ?></div>
+                        </td>
+                        <td style="text-align: right; font-family: var(--f-mono); font-size: 13px;">
+                            Rs <?= number_format($dep->cash_total, 2) ?>
+                        </td>
+                        <td style="text-align: right; font-family: var(--f-mono); font-size: 13px;">
+                            Rs <?= number_format($dep->cheque_total, 2) ?>
+                        </td>
+                        <td style="text-align: right; font-weight: 700; font-family: var(--f-mono); font-size: 14px; color: var(--c-green);">
+                            Rs <?= number_format($dep->total_deposit, 2) ?>
+                        </td>
                         <td style="text-align: center;">
-                            <div style="display: flex; gap: 8px; justify-content: center;">
+                            <div class="sf-badge badge-<?= $statusClass ?>">
+                                <div class="dot"></div> <?= htmlspecialchars($dep->status === 'Sent to Bank' ? 'In Transit' : $dep->status) ?>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <div class="act-group">
                                 <?php if ($dep->status === 'Draft'): ?>
-                                    <a href="<?= APP_URL ?>/deposit/edit/<?= $dep->id ?>" class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;">✏️ Edit</a>
-                                    <a href="<?= APP_URL ?>/deposit/send/<?= $dep->id ?>" class="btn btn-success" style="padding: 5px 10px; font-size: 11px;" onclick="return confirm('Are you sure you want to send this deposit to the bank? This will debit Deposit in Transit and credit Cash/Cheque in Hand.')">📤 Send to Bank</a>
-                                    <a href="<?= APP_URL ?>/deposit/delete/<?= $dep->id ?>" class="btn btn-danger" style="padding: 5px 10px; font-size: 11px; background:#c62828;" onclick="return confirm('Are you sure you want to delete this draft?')">🗑️</a>
+                                    <a href="<?= APP_URL ?>/deposit/edit/<?= $dep->id ?>" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Edit Draft">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </a>
+                                    <a href="<?= APP_URL ?>/deposit/send/<?= $dep->id ?>" class="btn-sf btn-sf-success" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure you want to send this deposit to the bank? This will debit Deposit in Transit and credit Cash/Cheque in Hand.')" title="Post to Transit">
+                                        <i class="fa-solid fa-paper-plane"></i> Send
+                                    </a>
+                                    <a href="<?= APP_URL ?>/deposit/delete/<?= $dep->id ?>" class="btn-sf btn-sf-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure you want to delete this draft?')" title="Delete Draft">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
                                 <?php elseif ($dep->status === 'Sent to Bank'): ?>
-                                    <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn btn-primary" style="padding: 5px 10px; font-size: 11px; background:#ef6c00; border-color:#ef6c00;">⚙️ Process</a>
-                                    <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;">🖨️</a>
+                                    <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn-sf btn-sf-orange" style="padding: 5px 12px; font-size: 12px;" title="Realize & Process Deposit">
+                                        <i class="fa-solid fa-gears"></i> Process
+                                    </a>
+                                    <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Print Deposit Slip">
+                                        <i class="fa-solid fa-print"></i>
+                                    </a>
                                 <?php else: ?>
-                                    <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;">🔍 View Details</a>
-                                    <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn btn-secondary" style="padding: 5px 10px; font-size: 11px;">🖨️</a>
+                                    <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="View Details">
+                                        <i class="fa-solid fa-eye"></i> View
+                                    </a>
+                                    <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Print Deposit Slip">
+                                        <i class="fa-solid fa-print"></i>
+                                    </a>
                                 <?php endif; ?>
                             </div>
                         </td>
@@ -158,3 +437,33 @@
         </table>
     </div>
 </div>
+
+<script>
+    let activeFilter = 'all';
+
+    function filterTable(status, btn) {
+        activeFilter = status;
+        document.querySelectorAll('.sf-seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        searchDeposits();
+    }
+
+    function searchDeposits() {
+        const query = document.getElementById('depositSearch').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.deposit-row');
+
+        rows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const text = row.innerText.toLowerCase();
+
+            const matchesStatus = (activeFilter === 'all') || (status === activeFilter);
+            const matchesQuery = !query || text.includes(query);
+
+            if (matchesStatus && matchesQuery) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>

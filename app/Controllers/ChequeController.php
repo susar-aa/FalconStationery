@@ -27,6 +27,7 @@ class ChequeController extends Controller {
         $nextBankingDate = null;
         $nextBankingAmount = 0;
 
+        $groupedAllCheques = [];
         $groupedReceivedCheques = [];
         $groupedIssuedCheques = [];
 
@@ -34,6 +35,8 @@ class ChequeController extends Controller {
             // Group by Date for UI display
             $dateKey = date('Y-m-d', strtotime($chk->banking_date));
             
+            $groupedAllCheques[$dateKey][] = $chk;
+
             if (!empty($chk->bank_account_id)) {
                 // If it has a drawn bank_account_id, it's a payment/issued cheque.
                 $groupedIssuedCheques[$dateKey][] = $chk;
@@ -60,6 +63,7 @@ class ChequeController extends Controller {
         $data = [
             'title' => 'Cheque Management',
             'content_view' => 'cheques/index',
+            'grouped_all_cheques' => $groupedAllCheques,
             'grouped_received_cheques' => $groupedReceivedCheques,
             'grouped_issued_cheques' => $groupedIssuedCheques,
             'search' => $search,
