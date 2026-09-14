@@ -2245,9 +2245,12 @@ if (!function_exists('hasPermission')) {
 
         // Clock Logic
         function updateClock() {
-            const now = new Date();
-            const options = { weekday: 'short', hour: 'numeric', minute: '2-digit' };
-            document.getElementById('clock').innerText = now.toLocaleDateString('en-US', options).replace(',', '');
+            const clockEl = document.getElementById('clock');
+            if (clockEl) {
+                const now = new Date();
+                const options = { weekday: 'short', hour: 'numeric', minute: '2-digit' };
+                clockEl.innerText = now.toLocaleDateString('en-US', options).replace(',', '');
+            }
         }
         setInterval(updateClock, 1000);
         updateClock();

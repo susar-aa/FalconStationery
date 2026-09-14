@@ -158,7 +158,7 @@ class Customer {
             SELECT 'Opening Bal' as type, id, 'System generated' as ref, COALESCE(opening_balance_date, DATE(created_at)) as date, opening_balance as debit, 0 as credit, created_at 
             FROM customers WHERE id = :c5 AND opening_balance > 0
             UNION ALL
-            SELECT 'Payment Reversal' as type, id, CONCAT('Payment Reversed: ', payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, DATE(COALESCE(reversed_at, updated_at, created_at)) as date, amount as debit, 0 as credit, COALESCE(reversed_at, updated_at, created_at) as created_at 
+            SELECT 'Payment Reversal' as type, id, CONCAT('Payment Reversed: ', payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, DATE(COALESCE(reversed_at, created_at)) as date, amount as debit, 0 as credit, COALESCE(reversed_at, created_at) as created_at 
             FROM customer_payments WHERE customer_id = :c6 AND status = 'Reversed'
             UNION ALL
             SELECT 'Journal Entry' as type, je.id, je.reference as ref, je.entry_date as date, t.debit as debit, t.credit as credit, je.created_at 
