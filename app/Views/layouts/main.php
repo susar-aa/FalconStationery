@@ -2280,15 +2280,17 @@ if (!function_exists('hasPermission')) {
 
             // Render the pills to the HTML bar (skipping index 0)
             const container = document.getElementById('recentLinksContainer');
-            if (history.length <= 1) {
-                container.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">No recent pages yet.</span>';
-            } else {
-                for(let i = 1; i < history.length; i++) {
-                    let a = document.createElement('a');
-                    a.href = history[i].url;
-                    a.className = 'recent-link';
-                    a.innerHTML = `<i class="ph ph-file-text" style="font-size: 13px;"></i> ${history[i].title}`;
-                    container.appendChild(a);
+            if (container) {
+                if (history.length <= 1) {
+                    container.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">No recent pages yet.</span>';
+                } else {
+                    for(let i = 1; i < history.length; i++) {
+                        let a = document.createElement('a');
+                        a.href = history[i].url;
+                        a.className = 'recent-link';
+                        a.innerHTML = `<i class="ph ph-file-text" style="font-size: 13px;"></i> ${history[i].title}`;
+                        container.appendChild(a);
+                    }
                 }
             }
 
@@ -2297,7 +2299,7 @@ if (!function_exists('hasPermission')) {
             const icon = document.getElementById('recentToggleIcon');
             let isCollapsed = localStorage.getItem('curtiss_recent_collapsed') === 'true';
             
-            if(isCollapsed) {
+            if(isCollapsed && bar && icon) {
                 bar.classList.add('collapsed');
                 icon.innerHTML = '<i class="ph ph-clock"></i>';
             }
@@ -2307,6 +2309,7 @@ if (!function_exists('hasPermission')) {
             const bar = document.getElementById('recentBar');
             const icon = document.getElementById('recentToggleIcon');
             
+            if (!bar || !icon) return;
             bar.classList.toggle('collapsed');
             const collapsedNow = bar.classList.contains('collapsed');
             
