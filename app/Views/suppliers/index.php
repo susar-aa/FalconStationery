@@ -504,6 +504,8 @@ foreach ($data['suppliers'] ?? [] as $s) {
                                     <a href="<?= APP_URL ?>/supplier-return/show/<?= $l->id ?>" target="_blank" style="color:var(--c-red); font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
+                                <?php elseif($l->type == 'Payment Reversal'): ?>
+                                    <span style="color: #ff9500; font-size: 12px; font-weight:600; background: rgba(255, 149, 0, 0.1); padding: 2px 6px; border-radius: 4px;"><?= htmlspecialchars($l->ref) ?></span>
                                 <?php else: ?>
                                     <span style="color:var(--t-primary);"><?= htmlspecialchars($l->ref) ?></span>
                                 <?php endif; ?>

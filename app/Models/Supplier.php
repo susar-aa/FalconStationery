@@ -211,6 +211,13 @@ class Supplier {
             FROM supplier_payments sp
             WHERE sp.vendor_id = :vid4 AND sp.status = 'Active'
             UNION ALL
+            SELECT 'Payment Reversal' as type, sp.id, CONCAT('Payment Reversed: ', sp.payment_method, IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')) as ref, DATE(COALESCE(sp.reversed_at, sp.created_at)) as date,
+                   0 as debit, 
+                   sp.amount as credit, 
+                   COALESCE(sp.reversed_at, sp.created_at) as created_at
+            FROM supplier_payments sp
+            WHERE sp.vendor_id = :vid7 AND sp.status = 'Reversed'
+            UNION ALL
             SELECT 'Opening Bal' as type, id, 'System generated' as ref, COALESCE(opening_balance_date, DATE(created_at)) as date,
                    0 as debit,
                    opening_balance as credit,
@@ -235,6 +242,7 @@ class Supplier {
         $this->db->bind(':vid4', $id);
         $this->db->bind(':vid5', $id);
         $this->db->bind(':vid6', $id);
+        $this->db->bind(':vid7', $id);
         $ledger = $this->db->resultSet();
 
         $balance = 0;

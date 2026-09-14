@@ -644,7 +644,7 @@ class Payment {
                         }
                     }
 
-                    $this->db->query("UPDATE cheques SET status = 'Bounced' WHERE id = :cid");
+                    $this->db->query("UPDATE cheques SET status = 'Reversed' WHERE id = :cid");
                     $this->db->bind(':cid', $chk->id);
                     $this->db->execute();
                 }

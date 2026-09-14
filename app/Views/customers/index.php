@@ -1013,6 +1013,8 @@ foreach ($data['customers'] ?? [] as $cust) {
                                     <a href="<?= APP_URL ?>/creditnote/show/<?= $l->id ?>" target="_blank" style="color:var(--c-red); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
+                                <?php elseif($l->type == 'Payment Reversal'): ?>
+                                    <span style="color: var(--c-orange); font-size: 11px; margin-left: 5px; font-weight:600; background: var(--c-orange-light); padding: 2px 6px; border-radius: 4px;"><?= htmlspecialchars($l->ref) ?></span>
                                 <?php else: ?>
                                     <span style="color:var(--t-secondary); font-size: 11px; margin-left: 5px;"><?= htmlspecialchars($l->ref) ?></span>
                                 <?php endif; ?>
