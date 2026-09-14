@@ -386,10 +386,24 @@ class AccountingController extends Controller {
                 $cred = empty($credits[$i]) ? 0 : floatval($credits[$i]);
                 $line_desc = empty($line_descriptions[$i]) ? '' : trim($line_descriptions[$i]);
                 
-                $let = $line_entity_types[$i] ?? null;
-                if ($let === 'None' || empty($let)) $let = null;
                 $leid = $line_entity_ids[$i] ?? null;
                 if (!empty($leid)) $leid = intval($leid); else $leid = null;
+
+                $aid_raw = $accounts[$i];
+                $let = null;
+                $aid = 0;
+
+                if ($aid_raw === 'Customer') {
+                    $let = 'Customer';
+                    $ar_account = $this->coaModel->getAccountByCode('1200'); // Accounts Receivable default code
+                    $aid = $ar_account ? $ar_account->id : 0;
+                } else if ($aid_raw === 'Vendor') {
+                    $let = 'Vendor';
+                    $ap_account = $this->coaModel->getAccountByCode('2000'); // Accounts Payable default code
+                    $aid = $ap_account ? $ap_account->id : 0;
+                } else {
+                    $aid = intval($aid_raw);
+                }
 
                 if ($deb < 0 || $cred < 0) {
                     $hasNegative = true;
@@ -400,7 +414,7 @@ class AccountingController extends Controller {
 
                 if (($deb > 0 || $cred > 0) && $deb >= 0 && $cred >= 0) {
                     $lines[] = [
-                        'account_id' => $accounts[$i], 
+                        'account_id' => $aid, 
                         'debit' => $deb, 
                         'credit' => $cred, 
                         'description' => $line_desc,

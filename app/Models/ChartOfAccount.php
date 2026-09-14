@@ -25,6 +25,12 @@ class ChartOfAccount {
         return $this->db->single();
     }
 
+    public function getAccountByCode($code) {
+        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = :code");
+        $this->db->bind(':code', $code);
+        return $this->db->single();
+    }
+
     public function addAccount($data) {
         $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, parent_id) 
                           VALUES (:account_code, :account_name, :account_type, :account_category, :parent_id)");
