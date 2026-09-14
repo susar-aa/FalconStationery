@@ -339,6 +339,23 @@ $endDate = $data['filters']['end_date'] ?? '';
                     </div>
                 </div>
 
+                <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Link to Entity Type (Optional)</label>
+                        <select name="entity_type" id="entityType" class="form-control" onchange="toggleEntitySelect()">
+                            <option value="None">None</option>
+                            <option value="Customer">Customer</option>
+                            <option value="Vendor">Supplier</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 2; display: none;" id="entityIdGroup">
+                        <label>Select Entity</label>
+                        <select name="entity_id" id="entityId" class="form-control">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
+                </div>
+
                 <table class="journal-input-table" id="linesTable">
                     <thead>
                         <tr>
@@ -527,6 +544,10 @@ $endDate = $data['filters']['end_date'] ?? '';
                         <div style="font-size: 11px; text-transform: uppercase; color: var(--t-label); font-weight: 600; margin-bottom: 4px;">Status</div>
                         <div id="detStatus"></div>
                     </div>
+                    <div id="detEntityGroup" style="display: none; grid-column: span 2;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: var(--t-label); font-weight: 600; margin-bottom: 4px;">Linked Entity</div>
+                        <div id="detEntity" style="font-weight: 600; color: var(--c-blue);"></div>
+                    </div>
                 </div>
 
                 <h4 style="margin: 0 0 12px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--t-label);">Transactions / Double-Entry Lines</h4>
@@ -568,6 +589,31 @@ $endDate = $data['filters']['end_date'] ?? '';
 </div>
 
 <script>
+    const customersList = <?= json_encode($data['customers'] ?? []) ?>;
+    const suppliersList = <?= json_encode($data['suppliers'] ?? []) ?>;
+
+    function toggleEntitySelect() {
+        const type = document.getElementById('entityType').value;
+        const group = document.getElementById('entityIdGroup');
+        const select = document.getElementById('entityId');
+        
+        select.innerHTML = '<option value="">-- Select --</option>';
+        if (type === 'None' || type === '') {
+            group.style.display = 'none';
+            select.required = false;
+        } else {
+            group.style.display = 'block';
+            select.required = true;
+            let list = type === 'Customer' ? customersList : suppliersList;
+            list.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                select.appendChild(opt);
+            });
+        }
+    }
+
     function toggleCreatePanel() {
         const panel = document.getElementById('createPanel');
         if (panel.classList.contains('active')) {
@@ -816,6 +862,13 @@ $endDate = $data['filters']['end_date'] ?? '';
                         statusEl.innerHTML = '<span class="sf-badge badge-voided">' + entry.status + '</span>';
                     } else {
                         statusEl.innerHTML = '<span class="sf-badge badge-draft">' + entry.status + '</span>';
+                    }
+                    
+                    if (entry.entity_type) {
+                        document.getElementById('detEntityGroup').style.display = 'block';
+                        document.getElementById('detEntity').innerText = entry.entity_type + ' - ' + (entry.customer_name || entry.vendor_name || 'ID ' + entry.entity_id);
+                    } else {
+                        document.getElementById('detEntityGroup').style.display = 'none';
                     }
                     
                     // Lines Table

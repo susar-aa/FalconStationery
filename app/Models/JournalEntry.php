@@ -9,9 +9,11 @@ class JournalEntry {
     }
 
     public function getAllEntries(?int $limit = null, ?int $offset = null, array $filters = []): array {
-        $sql = "SELECT je.*, u.username 
+        $sql = "SELECT je.*, u.username, c.name as customer_name, v.name as vendor_name 
                 FROM journal_entries je 
                 LEFT JOIN users u ON je.created_by = u.id 
+                LEFT JOIN customers c ON je.entity_type = 'Customer' AND je.entity_id = c.id
+                LEFT JOIN vendors v ON je.entity_type = 'Vendor' AND je.entity_id = v.id
                 WHERE je.is_manual = 1";
         
         $params = [];
@@ -82,7 +84,7 @@ class JournalEntry {
         return $row ? (int)$row->total : 0;
     }
 
-    public function postEntry(string $date, string $reference, string $description, array $lines, int $userId, bool $isManual = false): string|bool {
+    public function postEntry(string $date, string $reference, string $description, array $lines, int $userId, bool $isManual = false, ?string $entityType = null, ?int $entityId = null): string|bool {
         try {
             // Check if period is closed/locked
             $this->db->query("SELECT COUNT(*) as cnt FROM financial_years WHERE :entry_date BETWEEN start_date AND end_date");
@@ -110,13 +112,15 @@ class JournalEntry {
                 }
             }
 
-            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, is_manual) 
-                              VALUES (:entry_date, :reference, :description, :created_by, :is_manual)");
+            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, is_manual, entity_type, entity_id) 
+                              VALUES (:entry_date, :reference, :description, :created_by, :is_manual, :entity_type, :entity_id)");
             $this->db->bind(':entry_date', $date);
             $this->db->bind(':reference', $reference);
             $this->db->bind(':description', $description);
             $this->db->bind(':created_by', $userId);
             $this->db->bind(':is_manual', $isManual ? 1 : 0);
+            $this->db->bind(':entity_type', $entityType ?: null);
+            $this->db->bind(':entity_id', $entityId ?: null);
             $this->db->execute();
             
             $journalId = $this->db->lastInsertId();
@@ -409,9 +413,11 @@ class JournalEntry {
 
     public function getEntryDetails(int $id): array|bool {
         // 1. Fetch the journal entry details
-        $this->db->query("SELECT je.*, u.username 
+        $this->db->query("SELECT je.*, u.username, c.name as customer_name, v.name as vendor_name 
                           FROM journal_entries je 
                           LEFT JOIN users u ON je.created_by = u.id 
+                          LEFT JOIN customers c ON je.entity_type = 'Customer' AND je.entity_id = c.id
+                          LEFT JOIN vendors v ON je.entity_type = 'Vendor' AND je.entity_id = v.id
                           WHERE je.id = :id");
         $this->db->bind(':id', $id);
         $entry = $this->db->single();

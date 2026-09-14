@@ -343,6 +343,8 @@ class AccountingController extends Controller {
             'title' => 'General Journal',
             'content_view' => 'accounting/journal',
             'accounts' => $this->coaModel->getAccounts(),
+            'customers' => $this->model('Customer')->getAllCustomers(),
+            'suppliers' => $this->model('Supplier')->getAllSuppliers(),
             'entries' => $entries,
             'page' => $page,
             'total_pages' => $totalPages,
@@ -368,6 +370,11 @@ class AccountingController extends Controller {
             $accounts = $_POST['account_id'];
             $debits = $_POST['debit'];
             $credits = $_POST['credit'];
+            
+            $entityType = $_POST['entity_type'] ?? null;
+            if ($entityType === 'None' || empty($entityType)) $entityType = null;
+            $entityId = $_POST['entity_id'] ?? null;
+            if (!empty($entityId)) $entityId = intval($entityId); else $entityId = null;
 
             $line_descriptions = $_POST['line_description'] ?? [];
 
@@ -402,7 +409,7 @@ class AccountingController extends Controller {
             elseif (empty($lines)) { $data['error'] = 'You must enter at least one transaction line.'; } 
             elseif ($totalDebitCents !== $totalCreditCents) { $data['error'] = 'Accounting Error: Total Debits must equal Total Credits.'; } 
             else {
-                $postResult = $this->journalModel->postEntry($date, $reference, $description, $lines, $_SESSION['user_id'], true);
+                $postResult = $this->journalModel->postEntry($date, $reference, $description, $lines, $_SESSION['user_id'], true, $entityType, $entityId);
                 if ($postResult === true) {
                     $data['success'] = 'Journal Entry successfully posted.';
                     // Recalculate

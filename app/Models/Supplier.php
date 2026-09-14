@@ -23,13 +23,18 @@ class Supplier {
                     WHERE vendor_id = v.id AND status = 'Active') as total_paid,
                    (SELECT COALESCE(SUM(total_amount), 0) 
                     FROM supplier_returns 
-                    WHERE vendor_id = v.id) as total_returned
+                    WHERE vendor_id = v.id) as total_returned,
+                   (SELECT SUM(t.credit) - SUM(t.debit) 
+                    FROM transactions t
+                    JOIN journal_entries je ON t.journal_entry_id = je.id
+                    JOIN chart_of_accounts coa ON t.account_id = coa.id
+                    WHERE je.entity_type = 'Vendor' AND je.entity_id = v.id AND je.status = 'Posted' AND coa.account_code = '2000') as total_je_balance
             FROM vendors v
             ORDER BY v.name ASC
         ");
         $suppliers = $this->db->resultSet();
         foreach ($suppliers as $s) {
-            $s->outstanding_balance = floatval($s->opening_balance ?? 0) + $s->total_billed - $s->total_paid - $s->total_returned;
+            $s->outstanding_balance = floatval($s->opening_balance ?? 0) + $s->total_billed - $s->total_paid - $s->total_returned + floatval($s->total_je_balance ?? 0);
         }
         return $suppliers;
     }
@@ -147,6 +152,17 @@ class Supplier {
         $this->db->bind(':id', $id);
         $returned = $this->db->single();
 
+        // Total JE Balance
+        $this->db->query("
+            SELECT COALESCE(SUM(t.credit) - SUM(t.debit), 0) as total_je_balance
+            FROM transactions t
+            JOIN journal_entries je ON t.journal_entry_id = je.id
+            JOIN chart_of_accounts coa ON t.account_id = coa.id
+            WHERE je.entity_type = 'Vendor' AND je.entity_id = :id AND je.status = 'Posted' AND coa.account_code = '2000'
+        ");
+        $this->db->bind(':id', $id);
+        $je = $this->db->single();
+
         $stats = new stdClass();
         $this->db->query("SELECT opening_balance FROM vendors WHERE id = :id");
         $this->db->bind(':id', $id);
@@ -158,8 +174,9 @@ class Supplier {
         $stats->total_billed = $billed->total_billed;
         $stats->total_paid = $paid->total_paid;
         $stats->total_returned = $returned->total_returned;
+        $stats->total_je_balance = $je->total_je_balance;
         $stats->opening_balance = $opening;
-        $stats->outstanding = $opening + $stats->total_billed - $stats->total_paid - $stats->total_returned;
+        $stats->outstanding = $opening + $stats->total_billed - $stats->total_paid - $stats->total_returned + $stats->total_je_balance;
 
         return $stats;
     }
@@ -200,6 +217,15 @@ class Supplier {
                    created_at
             FROM vendors
             WHERE id = :vid5 AND opening_balance > 0
+            UNION ALL
+            SELECT 'Journal Entry' as type, je.id, je.reference as ref, je.entry_date as date,
+                   t.debit as debit,
+                   t.credit as credit,
+                   je.created_at
+            FROM transactions t
+            JOIN journal_entries je ON t.journal_entry_id = je.id
+            JOIN chart_of_accounts coa ON t.account_id = coa.id
+            WHERE je.entity_type = 'Vendor' AND je.entity_id = :vid6 AND je.status = 'Posted' AND coa.account_code = '2000'
             ORDER BY date ASC, created_at ASC
         ";
         $this->db->query($sql);
@@ -208,6 +234,7 @@ class Supplier {
         $this->db->bind(':vid3', $id);
         $this->db->bind(':vid4', $id);
         $this->db->bind(':vid5', $id);
+        $this->db->bind(':vid6', $id);
         $ledger = $this->db->resultSet();
 
         $balance = 0;

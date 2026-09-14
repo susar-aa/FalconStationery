@@ -12,7 +12,7 @@ class Customer {
             SELECT c.*, m.name as mca_name,
                    u.username as created_by_username,
                    ru.username as reviewed_by_username,
-                   (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0)) AS outstanding_balance
+                   (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) AS outstanding_balance
             FROM customers c
             LEFT JOIN mca_areas m ON c.mca_id = m.id
             LEFT JOIN users u ON c.created_by_user_id = u.id
@@ -35,6 +35,14 @@ class Customer {
                 FROM credit_notes
                 GROUP BY customer_id
             ) cn ON c.id = cn.customer_id
+            LEFT JOIN (
+                SELECT je.entity_id as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
+                FROM transactions t
+                JOIN journal_entries je ON t.journal_entry_id = je.id
+                JOIN chart_of_accounts coa ON t.account_id = coa.id
+                WHERE je.entity_type = 'Customer' AND je.status = 'Posted' AND coa.account_code = '1200'
+                GROUP BY je.entity_id
+            ) je_b ON c.id = je_b.customer_id
             ORDER BY c.name ASC
         ");
         return $this->db->resultSet();
@@ -44,7 +52,7 @@ class Customer {
         // Optimized pre-aggregated query that only returns records with a non-zero balance to prevent memory exhaustion
         $this->db->query("
             SELECT c.id, c.name,
-                   (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0)) AS outstanding_balance
+                   (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) AS outstanding_balance
             FROM customers c
             LEFT JOIN (
                 SELECT customer_id, 
@@ -64,6 +72,14 @@ class Customer {
                 FROM credit_notes
                 GROUP BY customer_id
             ) cn ON c.id = cn.customer_id
+            LEFT JOIN (
+                SELECT je.entity_id as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
+                FROM transactions t
+                JOIN journal_entries je ON t.journal_entry_id = je.id
+                JOIN chart_of_accounts coa ON t.account_id = coa.id
+                WHERE je.entity_type = 'Customer' AND je.status = 'Posted' AND coa.account_code = '1200'
+                GROUP BY je.entity_id
+            ) je_b ON c.id = je_b.customer_id
             HAVING outstanding_balance != 0
             ORDER BY c.name ASC
         ");
@@ -105,10 +121,19 @@ class Customer {
         $this->db->bind(':id', $id);
         $credited = $this->db->single();
 
+        $this->db->query("SELECT COALESCE(SUM(t.debit) - SUM(t.credit), 0) as total_je_balance 
+                          FROM transactions t 
+                          JOIN journal_entries je ON t.journal_entry_id = je.id 
+                          JOIN chart_of_accounts coa ON t.account_id = coa.id 
+                          WHERE je.entity_type = 'Customer' AND je.entity_id = :id AND je.status = 'Posted' AND coa.account_code = '1200'");
+        $this->db->bind(':id', $id);
+        $je = $this->db->single();
+
         $stats->total_paid = $paid->total_paid;
         $stats->total_credited = $credited->total_credited;
+        $stats->total_je_balance = $je->total_je_balance;
         $stats->opening_balance = $opening;
-        $stats->outstanding = $opening + $stats->total_billed - $stats->total_paid - $stats->total_credited;
+        $stats->outstanding = $opening + $stats->total_billed - $stats->total_paid - $stats->total_credited + $stats->total_je_balance;
         
         return $stats;
     }
@@ -135,6 +160,12 @@ class Customer {
             UNION ALL
             SELECT 'Payment Reversal' as type, id, CONCAT('Reversed: ', payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, DATE(reversed_at) as date, amount as debit, 0 as credit, reversed_at as created_at 
             FROM customer_payments WHERE customer_id = :c6 AND status = 'Reversed'
+            UNION ALL
+            SELECT 'Journal Entry' as type, je.id, je.reference as ref, je.entry_date as date, t.debit as debit, t.credit as credit, je.created_at 
+            FROM transactions t
+            JOIN journal_entries je ON t.journal_entry_id = je.id
+            JOIN chart_of_accounts coa ON t.account_id = coa.id
+            WHERE je.entity_type = 'Customer' AND je.entity_id = :c7 AND je.status = 'Posted' AND coa.account_code = '1200'
             ORDER BY date ASC, created_at ASC
         ";
         $this->db->query($sql);
@@ -144,6 +175,7 @@ class Customer {
         $this->db->bind(':c4', $id);
         $this->db->bind(':c5', $id);
         $this->db->bind(':c6', $id);
+        $this->db->bind(':c7', $id);
         $ledger = $this->db->resultSet();
 
         $balance = 0;
