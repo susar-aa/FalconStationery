@@ -74,6 +74,7 @@ class AccountingController extends Controller {
                     if (!empty($postData['account_code']) && !empty($postData['account_name'])) {
                         if ($this->coaModel->addAccount($postData)) { 
                             $data['success'] = 'Main Account added successfully.'; 
+                            $this->logActivity('Create Account', 'Chart of Accounts', "Created Main Account {$code} - {$name} ({$type})", null, null, $postData);
                             
                             // Handle Opening Balance
                             $openingBalance = floatval($_POST['opening_balance'] ?? 0);
@@ -133,6 +134,7 @@ class AccountingController extends Controller {
                         ];
                         if ($this->coaModel->addAccount($postData)) { 
                             $data['success'] = 'Sub-Account added successfully.'; 
+                            $this->logActivity('Create Sub-Account', 'Chart of Accounts', "Created Sub-Account {$code} - {$name} under Parent Account ID {$parent->id}", null, null, $postData);
                             
                             // Handle Opening Balance
                             $openingBalance = floatval($_POST['opening_balance'] ?? 0);
@@ -215,7 +217,10 @@ class AccountingController extends Controller {
                         'parent_id' => $parentId,
                         'is_active' => isset($_POST['is_active']) ? 1 : 0
                     ];
-                    if ($this->coaModel->updateAccount($postData)) { $data['success'] = 'Account updated successfully.'; } 
+                    if ($this->coaModel->updateAccount($postData)) { 
+                        $data['success'] = 'Account updated successfully.'; 
+                        $this->logActivity('Edit Account', 'Chart of Accounts', "Updated Account {$code} - {$name}", (int)$_POST['account_id'], null, $postData);
+                    } 
                     else { $data['error'] = 'Failed to update account.'; }
                 }
             }
@@ -643,6 +648,7 @@ class AccountingController extends Controller {
 
                     if ($recurringModel->createTemplate($templateData)) {
                         $data['success'] = 'Recurring journal template created successfully.';
+                        $this->logActivity('Create Template', 'Journal Entry', "Created recurring journal template '{$name}' ({$frequency})", null, null, $templateData);
                     } else {
                         $data['error'] = 'Failed to create recurring journal template.';
                     }
@@ -652,6 +658,7 @@ class AccountingController extends Controller {
                 $id = intval($_POST['template_id']);
                 if ($recurringModel->deleteTemplate($id)) {
                     $data['success'] = 'Recurring template deleted successfully.';
+                    $this->logActivity('Delete Template', 'Journal Entry', "Deleted recurring journal template #{$id}", $id);
                 } else {
                     $data['error'] = 'Failed to delete template.';
                 }
@@ -663,6 +670,7 @@ class AccountingController extends Controller {
                 $result = $recurringModel->postRecurringEntry($id, $date, $_SESSION['user_id']);
                 if ($result === true) {
                     $data['success'] = 'Journal Entry successfully generated and posted from template.';
+                    $this->logActivity('Post Recurring Entry', 'Journal Entry', "Posted journal entry from recurring template #{$id} for date {$date}", $id);
                 } else {
                     $data['error'] = $result;
                 }
@@ -685,6 +693,7 @@ class AccountingController extends Controller {
 
                     if ($postedCount > 0) {
                         $data['success'] = "Successfully posted {$postedCount} recurring journal entry(ies).";
+                        $this->logActivity('Post All Due Templates', 'Journal Entry', "Batch posted {$postedCount} due recurring journal entries.");
                     }
                     if (!empty($errors)) {
                         $data['error'] = 'Some errors occurred: ' . implode('; ', $errors);
@@ -753,6 +762,7 @@ class AccountingController extends Controller {
                 $result = $this->coaModel->addBalanceAdjustment($accountId, $type, $amount, $date, $reason, $_SESSION['user_id']);
                 if ($result === true) {
                     $data['success'] = 'Balance adjustment posted successfully.';
+                    $this->logActivity('Balance Adjustment', 'Accounting', "Posted balance adjustment of Rs. " . number_format($amount, 2) . " ({$type}) for account #{$accountId}. Reason: {$reason}", $accountId, null, ['amount' => $amount, 'type' => $type, 'reason' => $reason]);
                 } else {
                     $data['error'] = $result;
                 }

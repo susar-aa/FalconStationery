@@ -64,11 +64,11 @@ class AuditLog {
             $binds['user_id'] = intval($filters['user_id']);
         }
         if (!empty($filters['module'])) {
-            $sql .= " AND a.module = :module";
+            $sql .= " AND LOWER(a.module) = LOWER(:module)";
             $binds['module'] = $filters['module'];
         }
         if (!empty($filters['action'])) {
-            $sql .= " AND a.action = :action";
+            $sql .= " AND LOWER(a.action) = LOWER(:action)";
             $binds['action'] = $filters['action'];
         }
         if (!empty($filters['date_from'])) {
@@ -80,7 +80,7 @@ class AuditLog {
             $binds['date_to'] = $filters['date_to'];
         }
         if (!empty($filters['search'])) {
-            $sql .= " AND (a.description LIKE :search OR a.action LIKE :search OR u.username LIKE :search OR CAST(a.record_id AS CHAR) = :search_exact)";
+            $sql .= " AND (a.description LIKE :search OR a.action LIKE :search OR a.module LIKE :search OR u.username LIKE :search OR CAST(a.record_id AS CHAR) = :search_exact)";
             $binds['search'] = '%' . $filters['search'] . '%';
             $binds['search_exact'] = $filters['search'];
         }
@@ -99,11 +99,45 @@ class AuditLog {
 
     public function getUniqueModules() {
         $this->db->query("SELECT DISTINCT module FROM audit_logs WHERE module IS NOT NULL AND module != '' ORDER BY module ASC");
-        return $this->db->resultSet() ?: [];
+        $rows = $this->db->resultSet() ?: [];
+        $modules = [];
+        foreach ($rows as $r) {
+            $mod = trim($r->module);
+            if ($mod !== '' && !in_array($mod, $modules)) {
+                $modules[] = $mod;
+            }
+        }
+        $defaults = ['Journal Entry', 'Accounting', 'Chart of Accounts', 'Petty Cash', 'RepTracking', 'Vehicle', 'User', 'Sales', 'Purchases', 'Inventory', 'Payments', 'Security'];
+        foreach ($defaults as $d) {
+            $found = false;
+            foreach ($modules as $m) {
+                if (strcasecmp($m, $d) === 0) { $found = true; break; }
+            }
+            if (!$found) { $modules[] = $d; }
+        }
+        natcasesort($modules);
+        return array_values($modules);
     }
 
     public function getUniqueActions() {
         $this->db->query("SELECT DISTINCT action FROM audit_logs WHERE action IS NOT NULL AND action != '' ORDER BY action ASC");
-        return $this->db->resultSet() ?: [];
+        $rows = $this->db->resultSet() ?: [];
+        $actions = [];
+        foreach ($rows as $r) {
+            $act = trim($r->action);
+            if ($act !== '' && !in_array($act, $actions)) {
+                $actions[] = $act;
+            }
+        }
+        $defaults = ['POST', 'CREATE', 'UPDATE', 'DELETE', 'VOID', 'CLOSE_YEAR', 'REVERT_YEAR_CLOSE', 'ADJUSTMENT', 'LOGIN', 'LOGOUT'];
+        foreach ($defaults as $d) {
+            $found = false;
+            foreach ($actions as $a) {
+                if (strcasecmp($a, $d) === 0) { $found = true; break; }
+            }
+            if (!$found) { $actions[] = $d; }
+        }
+        natcasesort($actions);
+        return array_values($actions);
     }
 }

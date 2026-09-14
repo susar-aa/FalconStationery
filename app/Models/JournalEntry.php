@@ -1,11 +1,15 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/AuditLog.php';
+
 class JournalEntry {
     private Database $db;
+    private AuditLog $auditLog;
 
     public function __construct() {
         $this->db = new Database();
+        $this->auditLog = new AuditLog();
     }
 
     public function getAllEntries(?int $limit = null, ?int $offset = null, array $filters = []): array {
@@ -155,6 +159,25 @@ class JournalEntry {
             if (!$inTransaction) {
                 $this->db->commit();
             }
+
+            try {
+                $totalAmount = 0;
+                foreach ($lines as $l) {
+                    $totalAmount += floatval($l['debit'] ?? 0);
+                }
+                $refText = !empty($reference) ? "Ref: {$reference}" : "ID: #{$journalId}";
+                $auditDesc = "Posted Journal Entry ({$refText}, Date: {$date}, Lines: " . count($lines) . ", Total Amount: Rs. " . number_format($totalAmount, 2) . ") - {$description}";
+                $newSnapshot = [
+                    'id' => $journalId,
+                    'entry_date' => $date,
+                    'reference' => $reference,
+                    'description' => $description,
+                    'is_manual' => $isManual ? 1 : 0,
+                    'lines' => $lines
+                ];
+                $this->auditLog->logAction($userId, 'POST', 'Journal Entry', $auditDesc, (int)$journalId, null, $newSnapshot);
+            } catch (Throwable $t) {}
+
             return true;
         } catch (Exception $e) {
             if (!$inTransaction && $this->db->inTransaction()) {
@@ -268,6 +291,18 @@ class JournalEntry {
             $this->db->execute();
 
             $this->db->commit();
+
+            try {
+                $auditDesc = "Closed Financial Year ({$startDate} to {$endDate}) and posted Year-End closing entry #{$journalId}";
+                $this->auditLog->logAction($userId, 'CLOSE_YEAR', 'Journal Entry', $auditDesc, (int)$journalId, null, [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'retained_earnings_account_id' => $retainedEarningsAccId,
+                    'closing_journal_id' => $journalId,
+                    'net_income' => $netIncome
+                ]);
+            } catch (Throwable $t) {}
+
             return true;
         } catch (PDOException $e) {
             $this->db->rollBack();
@@ -321,6 +356,23 @@ class JournalEntry {
             $this->db->execute();
 
             $this->db->commit();
+
+            try {
+                $userId = $_SESSION['user_id'] ?? null;
+                $refText = !empty($entry->reference) ? "Ref: {$entry->reference}" : "ID: #{$id}";
+                $auditDesc = "Voided Journal Entry #{$id} ({$refText}, Date: {$entry->entry_date}) - {$entry->description}";
+                $oldSnapshot = [
+                    'id' => $id,
+                    'entry_date' => $entry->entry_date,
+                    'reference' => $entry->reference,
+                    'description' => $entry->description,
+                    'status' => $entry->status,
+                    'lines' => $lines
+                ];
+                $newSnapshot = ['status' => 'Voided'];
+                $this->auditLog->logAction($userId, 'VOID', 'Journal Entry', $auditDesc, $id, $oldSnapshot, $newSnapshot);
+            } catch (Throwable $t) {}
+
             return true;
         } catch (PDOException $e) {
             $this->db->rollBack();
@@ -392,6 +444,13 @@ class JournalEntry {
             $this->db->execute();
 
             $this->db->commit();
+
+            try {
+                $userId = $_SESSION['user_id'] ?? null;
+                $auditDesc = "Reverted Financial Year Close #{$fyId} ({$fy->start_date} to {$fy->end_date})";
+                $this->auditLog->logAction($userId, 'REVERT_YEAR_CLOSE', 'Journal Entry', $auditDesc, $fyId, (array)$fy, null);
+            } catch (Throwable $t) {}
+
             return true;
         } catch (PDOException $e) {
             if ($this->db->inTransaction()) {

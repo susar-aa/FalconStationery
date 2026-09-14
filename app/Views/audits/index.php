@@ -616,6 +616,21 @@ $stats = $data['stats'] ?? [
             </div>
         </div>
 
+        <!-- Quick Module Filter Bar -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center;">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--t-label); margin-right: 4px;">Quick Module Filter:</span>
+            <?php 
+            $quickModules = ['Journal Entry', 'Accounting', 'Chart of Accounts', 'Petty Cash', 'RepTracking', 'Vehicle', 'Payments', 'Security'];
+            $currMod = $filterModule;
+            ?>
+            <a href="<?= APP_URL ?>/audit" class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px; border-radius: var(--r-pill); <?= empty($currMod) ? 'background: var(--c-blue); color: #fff;' : '' ?>">All</a>
+            <?php foreach($quickModules as $qm): ?>
+                <a href="<?= APP_URL ?>/audit?module=<?= urlencode($qm) ?>" class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px; border-radius: var(--r-pill); <?= strcasecmp($currMod, $qm) === 0 ? 'background: var(--c-blue); color: #fff;' : '' ?>">
+                    <?= htmlspecialchars($qm) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+
         <!-- Filters Shelves -->
         <div class="filter-shelf">
             <form class="filter-grid" method="GET" action="<?= APP_URL ?>/audit">
@@ -641,9 +656,12 @@ $stats = $data['stats'] ?? [
                     <select id="module" name="module" class="filter-input">
                         <option value="">All Modules</option>
                         <?php foreach($data['modules'] as $mod): ?>
-                            <option value="<?= htmlspecialchars($mod->module) ?>" <?= $filterModule == $mod->module ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($mod->module) ?>
+                            <?php $mVal = is_object($mod) ? ($mod->module ?? '') : $mod; ?>
+                            <?php if(!empty($mVal)): ?>
+                            <option value="<?= htmlspecialchars($mVal) ?>" <?= strcasecmp((string)$filterModule, (string)$mVal) === 0 ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($mVal) ?>
                             </option>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -653,9 +671,12 @@ $stats = $data['stats'] ?? [
                     <select id="action" name="action" class="filter-input">
                         <option value="">All Actions</option>
                         <?php foreach($data['actions'] as $act): ?>
-                            <option value="<?= htmlspecialchars($act->action) ?>" <?= $filterAction == $act->action ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($act->action) ?>
+                            <?php $aVal = is_object($act) ? ($act->action ?? '') : $act; ?>
+                            <?php if(!empty($aVal)): ?>
+                            <option value="<?= htmlspecialchars($aVal) ?>" <?= strcasecmp((string)$filterAction, (string)$aVal) === 0 ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($aVal) ?>
                             </option>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     </select>
                 </div>
