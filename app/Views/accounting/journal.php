@@ -348,11 +348,13 @@ $endDate = $data['filters']['end_date'] ?? '';
                             <option value="Vendor">Supplier</option>
                         </select>
                     </div>
-                    <div class="form-group" style="flex: 2; display: none;" id="entityIdGroup">
-                        <label>Select Entity</label>
-                        <select name="entity_id" id="entityId" class="form-control">
-                            <option value="">-- Select --</option>
-                        </select>
+                    <div class="form-group" style="flex: 2; display: none; position: relative;" id="entityIdGroup">
+                        <label>Search Entity</label>
+                        <input type="hidden" name="entity_id" id="entityId">
+                        <input type="text" id="entitySearch" class="form-control" placeholder="Type to search..." autocomplete="off" onkeyup="filterEntities()" onfocus="showEntityDropdown()" onblur="hideEntityDropdown()">
+                        <div id="entityDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--c-surface); border: 1px solid var(--c-separator); border-radius: var(--r-sm); box-shadow: var(--shadow-md); z-index: 100; max-height: 200px; overflow-y: auto; margin-top: 5px;">
+                            <!-- Results go here -->
+                        </div>
                     </div>
                 </div>
 
@@ -592,26 +594,80 @@ $endDate = $data['filters']['end_date'] ?? '';
     const customersList = <?= json_encode($data['customers'] ?? []) ?>;
     const suppliersList = <?= json_encode($data['suppliers'] ?? []) ?>;
 
+    let currentEntityList = [];
+
     function toggleEntitySelect() {
         const type = document.getElementById('entityType').value;
         const group = document.getElementById('entityIdGroup');
-        const select = document.getElementById('entityId');
+        const searchInput = document.getElementById('entitySearch');
+        const hiddenInput = document.getElementById('entityId');
         
-        select.innerHTML = '<option value="">-- Select --</option>';
+        searchInput.value = '';
+        hiddenInput.value = '';
+        
         if (type === 'None' || type === '') {
             group.style.display = 'none';
-            select.required = false;
+            hiddenInput.required = false;
+            currentEntityList = [];
         } else {
             group.style.display = 'block';
-            select.required = true;
-            let list = type === 'Customer' ? customersList : suppliersList;
-            list.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.id;
-                opt.textContent = item.name;
-                select.appendChild(opt);
-            });
+            hiddenInput.required = true;
+            currentEntityList = type === 'Customer' ? customersList : suppliersList;
+            renderEntityDropdown(currentEntityList);
         }
+    }
+
+    function filterEntities() {
+        const q = document.getElementById('entitySearch').value.toLowerCase();
+        const filtered = currentEntityList.filter(item => item.name.toLowerCase().includes(q));
+        renderEntityDropdown(filtered);
+        document.getElementById('entityDropdown').style.display = 'block';
+    }
+
+    function renderEntityDropdown(list) {
+        const dd = document.getElementById('entityDropdown');
+        dd.innerHTML = '';
+        if (list.length === 0) {
+            dd.innerHTML = '<div style="padding: 10px 14px; color: var(--t-tertiary); font-size: 14px;">No results found.</div>';
+            return;
+        }
+        list.forEach(item => {
+            const div = document.createElement('div');
+            div.style.padding = '10px 14px';
+            div.style.cursor = 'pointer';
+            div.style.fontSize = '14px';
+            div.style.borderBottom = '0.5px solid var(--c-separator2)';
+            div.textContent = item.name;
+            div.onmousedown = function() { // mousedown fires before blur
+                selectEntity(item.id, item.name);
+            };
+            div.onmouseover = function() { div.style.background = 'var(--c-fill2)'; };
+            div.onmouseout = function() { div.style.background = 'transparent'; };
+            dd.appendChild(div);
+        });
+    }
+
+    function selectEntity(id, name) {
+        document.getElementById('entityId').value = id;
+        document.getElementById('entitySearch').value = name;
+        document.getElementById('entityDropdown').style.display = 'none';
+        
+        // Remove required validation if they selected something valid to prevent HTML5 form errors on hidden inputs
+        document.getElementById('entityId').required = false; 
+    }
+
+    function showEntityDropdown() {
+        if (currentEntityList.length > 0) {
+            filterEntities();
+            document.getElementById('entityDropdown').style.display = 'block';
+        }
+    }
+
+    function hideEntityDropdown() {
+        // Delay to allow click event to register
+        setTimeout(() => {
+            document.getElementById('entityDropdown').style.display = 'none';
+        }, 200);
     }
 
     function toggleCreatePanel() {
