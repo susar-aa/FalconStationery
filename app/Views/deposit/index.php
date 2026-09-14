@@ -106,9 +106,12 @@ if (!empty($data['deposits'])) {
 /* KPI Cards */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
     margin-bottom: 24px;
+}
+@media (max-width: 640px) {
+    .kpi-grid { grid-template-columns: 1fr; }
 }
 .kpi-card {
     background: var(--c-surface);
@@ -227,6 +230,45 @@ if (!empty($data['deposits'])) {
 .sf-table tr:last-child td { border-bottom: none; }
 .sf-table tr:hover td { background: var(--c-fill); }
 
+/* Pagination Styles */
+.sf-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--c-surface2);
+    border-top: 0.5px solid var(--c-separator);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.pg-info { font-size: 13px; color: var(--t-secondary); }
+.pg-right { display: flex; align-items: center; gap: 16px; }
+.pg-size-wrap { display: flex; align-items: center; gap: 8px; }
+.pg-size-lbl { font-size: 11px; font-weight: 700; color: var(--t-label); text-transform: uppercase; letter-spacing: 0.05em; }
+.pg-size-sel {
+    font-family: var(--f-system); font-size: 13px; font-weight: 600;
+    color: var(--t-primary); background: var(--c-surface);
+    border: 0.5px solid var(--c-separator); border-radius: var(--r-sm);
+    padding: 4px 8px; outline: none; cursor: pointer;
+}
+.pg-nav { display: flex; align-items: center; border: 0.5px solid var(--c-separator); border-radius: var(--r-sm); overflow: hidden; background: var(--c-surface); }
+.pg-btn {
+    width: 34px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--t-primary); font-size: 12px;
+    transition: background 0.18s ease;
+}
+.pg-btn:hover:not(:disabled) { background: var(--c-fill); }
+.pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.pg-current {
+    padding: 0 12px; font-size: 13px; font-weight: 600;
+    color: var(--t-secondary); font-family: var(--f-mono);
+    border-left: 0.5px solid var(--c-separator);
+    border-right: 0.5px solid var(--c-separator);
+    height: 32px; display: flex; align-items: center;
+}
+
 /* Badges */
 .sf-badge {
     display: inline-flex;
@@ -315,7 +357,7 @@ if (!empty($data['deposits'])) {
         </div>
     <?php endif; ?>
 
-    <!-- KPI Cards -->
+    <!-- KPI Cards (Drafts & In Transit only) -->
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-label" style="color: var(--t-secondary);">Draft Deposits</div>
@@ -326,11 +368,6 @@ if (!empty($data['deposits'])) {
             <div class="kpi-label" style="color: var(--c-blue);">In Transit (Sent to Bank)</div>
             <div class="kpi-val" style="color: var(--c-blue);">Rs: <?= number_format($totalTransitAmount, 2) ?></div>
             <div class="kpi-sub"><?= $totalTransitCount ?> Deposits awaiting bank clearance</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label" style="color: var(--c-green);">Completed / Realized</div>
-            <div class="kpi-val" style="color: var(--c-green);">Rs: <?= number_format($totalCompletedAmount, 2) ?></div>
-            <div class="kpi-sub"><?= $totalCompletedCount ?> Fully processed bank deposits</div>
         </div>
     </div>
 
@@ -435,11 +472,39 @@ if (!empty($data['deposits'])) {
                 <?php endforeach; endif; ?>
             </tbody>
         </table>
+
+        <!-- Pagination Bar -->
+        <div class="sf-pagination">
+            <div class="pg-info" id="pgInfo">Showing <strong>0</strong> – <strong>0</strong> of <strong>0</strong> deposits</div>
+            <div class="pg-right">
+                <div class="pg-size-wrap">
+                    <span class="pg-size-lbl">Show:</span>
+                    <select class="pg-size-sel" id="pgSizeSel" onchange="changePageSize(this.value)">
+                        <option value="10" selected>10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+                <div class="pg-nav" id="pgNav">
+                    <button class="pg-btn" id="btnPrev" onclick="navigatePage(-1)" title="Previous Page">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <div class="pg-current" id="pgCurrent">1 / 1</div>
+                    <button class="pg-btn" id="btnNext" onclick="navigatePage(1)" title="Next Page">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     let activeFilter = 'all';
+    let currentPage = 1;
+    let pageSize = 10;
+    let matchingRows = [];
 
     function filterTable(status, btn) {
         activeFilter = status;
@@ -450,20 +515,71 @@ if (!empty($data['deposits'])) {
 
     function searchDeposits() {
         const query = document.getElementById('depositSearch').value.toLowerCase().trim();
-        const rows = document.querySelectorAll('.deposit-row');
+        const rows = Array.from(document.querySelectorAll('.deposit-row'));
 
-        rows.forEach(row => {
+        matchingRows = rows.filter(row => {
             const status = row.getAttribute('data-status');
             const text = row.innerText.toLowerCase();
 
             const matchesStatus = (activeFilter === 'all') || (status === activeFilter);
             const matchesQuery = !query || text.includes(query);
 
-            if (matchesStatus && matchesQuery) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            return matchesStatus && matchesQuery;
         });
+
+        currentPage = 1;
+        renderPagination();
     }
+
+    function renderPagination() {
+        const rows = document.querySelectorAll('.deposit-row');
+        rows.forEach(r => r.style.display = 'none');
+
+        const totalItems = matchingRows.length;
+        const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+        const endIndex = Math.min(currentPage * pageSize, totalItems);
+
+        // Display page slice
+        const slice = matchingRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+        slice.forEach(r => r.style.display = '');
+
+        // Update info text
+        const pgInfo = document.getElementById('pgInfo');
+        if (pgInfo) {
+            pgInfo.innerHTML = totalItems > 0
+                ? `Showing <strong>${startIndex}</strong> – <strong>${endIndex}</strong> of <strong>${totalItems}</strong> deposits`
+                : `No matching deposit records found`;
+        }
+
+        // Update pagination controls
+        const pgCurrent = document.getElementById('pgCurrent');
+        if (pgCurrent) pgCurrent.innerText = `${currentPage} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btnPrev');
+        if (btnPrev) btnPrev.disabled = (currentPage <= 1);
+
+        const btnNext = document.getElementById('btnNext');
+        if (btnNext) btnNext.disabled = (currentPage >= totalPages);
+    }
+
+    function navigatePage(direction) {
+        currentPage += direction;
+        renderPagination();
+    }
+
+    function changePageSize(size) {
+        pageSize = parseInt(size) || 10;
+        currentPage = 1;
+        renderPagination();
+    }
+
+    // Initialize pagination on DOM ready
+    window.addEventListener('DOMContentLoaded', () => {
+        searchDeposits();
+    });
 </script>
