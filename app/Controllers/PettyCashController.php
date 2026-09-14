@@ -250,14 +250,21 @@ class PettyCashController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->validateCsrfOrDie();
 
+            $paymentMethod = trim($_POST['payment_method'] ?? 'Bank Transfer');
             $reimburseData = [
+                'payment_method' => $paymentMethod,
                 'bank_account_id' => intval($_POST['bank_account_id'] ?? 0),
                 'reimbursement_date' => $_POST['reimbursement_date'] ?? date('Y-m-d'),
-                'description' => trim($_POST['description'] ?? '')
+                'description' => trim($_POST['description'] ?? ''),
+                'cheque_number' => trim($_POST['cheque_number'] ?? ''),
+                'cheque_date' => $_POST['cheque_date'] ?? date('Y-m-d'),
+                'payee_name' => trim($_POST['payee_name'] ?? '')
             ];
 
-            if ($reimburseData['bank_account_id'] <= 0) {
+            if ($paymentMethod === 'Bank Transfer' && $reimburseData['bank_account_id'] <= 0) {
                 $_SESSION['flash_error'] = 'Please select a bank account to fund the reimbursement.';
+            } elseif ($paymentMethod === 'Cheque' && ($reimburseData['bank_account_id'] <= 0 || empty($reimburseData['cheque_number']))) {
+                $_SESSION['flash_error'] = 'Please select a bank account and enter a valid cheque number.';
             } else {
                 $result = $this->pcReimModel->createRequest($reimburseData, (int)$_SESSION['user_id']);
                 if ($result === true) {

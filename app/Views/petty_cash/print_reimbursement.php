@@ -216,14 +216,33 @@
                 </td>
             </tr>
             <tr>
-                <th>Bank / Funding Source</th>
-                <td><?= htmlspecialchars($data['reim']->bank_account_code) ?> - <?= htmlspecialchars($data['reim']->bank_account_name) ?></td>
+                <th>Payment Method</th>
+                <td><strong><?= htmlspecialchars(!empty($data['reim']->payment_method) ? $data['reim']->payment_method : 'Bank Transfer') ?></strong></td>
+                <th>Funding Source / Bank</th>
+                <td>
+                    <?php if ($data['reim']->payment_method === 'Cash'): ?>
+                        Cash in Hand Account
+                    <?php else: ?>
+                        <?= htmlspecialchars($data['reim']->bank_account_code) ?> - <?= htmlspecialchars($data['reim']->bank_account_name) ?>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php if ($data['reim']->payment_method === 'Cheque' || !empty($data['reim']->cheque_number)): ?>
+            <tr>
+                <th>Cheque Number</th>
+                <td><strong>#<?= htmlspecialchars($data['reim']->cheque_number) ?></strong></td>
+                <th>Cheque Date / Payee</th>
+                <td>
+                    <?= !empty($data['reim']->cheque_date) ? date('d-M-Y', strtotime($data['reim']->cheque_date)) : 'N/A' ?>
+                    <?= !empty($data['reim']->payee_name) ? ' (' . htmlspecialchars($data['reim']->payee_name) . ')' : '' ?>
+                </td>
+            </tr>
+            <?php endif; ?>
+            <tr>
                 <th>Journal Entry Ref</th>
                 <td><?= $data['reim']->journal_entry_id ? 'J/E ID: ' . $data['reim']->journal_entry_id : 'N/A' ?></td>
-            </tr>
-            <tr>
                 <th>Remarks / Description</th>
-                <td colspan="3"><?= htmlspecialchars($data['reim']->description ?: 'N/A') ?></td>
+                <td><?= htmlspecialchars($data['reim']->description ?: 'N/A') ?></td>
             </tr>
         </table>
 

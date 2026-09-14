@@ -875,8 +875,10 @@ declare(strict_types=1);
                     <tr>
                         <th>Date</th>
                         <th>Reimbursement ID</th>
+                        <th>Method</th>
                         <th>Remarks / Description</th>
-                        <th>Bank / Cash Source</th>
+                        <th>Source Account / Bank</th>
+                        <th>Cheque Details</th>
                         <th style="text-align: right;">Replenished Amount</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -885,7 +887,7 @@ declare(strict_types=1);
                 <tbody>
                     <?php if (empty($data['reimbursements'])): ?>
                         <tr>
-                            <td colspan="7">
+                            <td colspan="9">
                                 <div class="empty-state">
                                     <i class="ph ph-arrows-clockwise"></i>
                                     <p>No reimbursement requests have been created yet.</p>
@@ -896,8 +898,35 @@ declare(strict_types=1);
                         <tr>
                             <td><?= date('d-M-Y', strtotime($reim->reimbursement_date)) ?></td>
                             <td><strong>REIM-<?= $reim->id ?></strong></td>
+                            <td>
+                                <?php 
+                                $pm = !empty($reim->payment_method) ? $reim->payment_method : 'Bank Transfer';
+                                $badgeStyle = $pm === 'Cash' ? 'background:#e0e7ff; color:#3730a3;' : ($pm === 'Cheque' ? 'background:#fef3c7; color:#92400e;' : 'background:#e0f2fe; color:#0369a1;');
+                                ?>
+                                <span class="badge" style="<?= $badgeStyle ?> font-weight:600; padding:3px 8px; border-radius:4px; font-size:11px;">
+                                    <?= htmlspecialchars($pm) ?>
+                                </span>
+                            </td>
                             <td><?= htmlspecialchars($reim->description) ?></td>
-                            <td><?= $reim->bank_account_code ?> - <?= htmlspecialchars($reim->bank_account_name) ?></td>
+                            <td>
+                                <?php if ($reim->payment_method === 'Cash'): ?>
+                                    <span style="color:#059669; font-weight:500;">Cash in Hand</span>
+                                <?php else: ?>
+                                    <?= $reim->bank_account_code ?> - <?= htmlspecialchars($reim->bank_account_name) ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($reim->payment_method === 'Cheque' || !empty($reim->cheque_number)): ?>
+                                    <div style="font-size:12px;">
+                                        <strong>#<?= htmlspecialchars($reim->cheque_number) ?></strong>
+                                        <?php if (!empty($reim->cheque_date)): ?>
+                                            <br><span style="color:#64748b; font-size:11px;"><?= date('d-M-Y', strtotime($reim->cheque_date)) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <span style="color:#94a3b8;">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td style="text-align: right; font-weight: bold; color: #10b981;">Rs: <?= number_format((float)$reim->amount, 2) ?></td>
                             <td>
                                 <?php if ($reim->status === 'Approved'): ?>
@@ -924,49 +953,46 @@ declare(strict_types=1);
 
         <!-- Tab 3: Pending Expenses (ready to be reimbursed) -->
         <div id="pendingExpensesTab" class="tab-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <p style="font-size: 13.5px; color: var(--text-muted);">
-                    These approved expenses are paid out of Petty Cash and await replenishment from a bank account.
-                </p>
-                <?php if (!empty($data['pending_expenses'])): ?>
-                    <button class="btn btn-primary" onclick="window.openModal('reimburseModal')"><i class="ph ph-arrows-clockwise"></i> Generate Reimbursement Payout</button>
-                <?php endif; ?>
-            </div>
-
-            <table class="pc-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Reference</th>
-                        <th>Payee</th>
-                        <th>Description & Category</th>
-                        <th style="text-align: right;">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($data['pending_expenses'])): ?>
+            <?php if (empty($data['pending_expenses'])): ?>
+                <div class="empty-state">
+                    <i class="ph ph-check-circle" style="color: #10b981;"></i>
+                    <h3>All Approved Expenses Reimbursed</h3>
+                    <p>All approved expenses have been reimbursed. Petty Cash balance matches the physical float!</p>
+                </div>
+            <?php else: ?>
+                <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <p style="margin:0; font-size: 13.5px; color: var(--text-muted);">
+                        These approved expenses are paid out of Petty Cash and await replenishment from a bank account.
+                    </p>
+                    <button class="btn btn-primary" onclick="window.openModal('reimburseModal')">
+                        <i class="ph ph-arrows-clockwise"></i> Generate Reimbursement Request (Rs: <?= number_format((float)$data['pending_reimbursements'], 2) ?>)
+                    </button>
+                </div>
+                <table class="pc-table">
+                    <thead>
                         <tr>
-                            <td colspan="5">
-                                <div class="empty-state">
-                                    <i class="ph ph-check-circle" style="color: #10b981;"></i>
-                                    <p>All approved expenses have been reimbursed. Petty Cash balance matches the physical float!</p>
-                                </div>
-                            </td>
+                            <th>Date</th>
+                            <th>Voucher #</th>
+                            <th>Expense Account</th>
+                            <th>Paid To</th>
+                            <th>Description</th>
+                            <th style="text-align: right;">Amount</th>
                         </tr>
-                    <?php else: foreach ($data['pending_expenses'] as $pe): ?>
-                        <tr>
-                            <td><?= date('d-M-Y', strtotime($pe->transaction_date)) ?></td>
-                            <td><strong><?= htmlspecialchars($pe->reference) ?></strong></td>
-                            <td><?= htmlspecialchars($pe->paid_to ?: 'N/A') ?></td>
-                            <td>
-                                <?= htmlspecialchars($pe->description) ?>
-                                <br><span style="font-size: 11px; color: var(--text-accent);">Acct: <?= $pe->offset_account_code ?> - <?= $pe->offset_account_name ?></span>
-                            </td>
-                            <td style="text-align: right; font-weight: bold; color: #ef6868;">Rs: <?= number_format((float)$pe->amount, 2) ?></td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($data['pending_expenses'] as $pe): ?>
+                            <tr>
+                                <td><?= date('d-M-Y', strtotime($pe->transaction_date)) ?></td>
+                                <td><strong><?= htmlspecialchars($pe->voucher_number ?: 'PCV-' . str_pad((string)$pe->id, 5, '0', STR_PAD_LEFT)) ?></strong></td>
+                                <td><?= htmlspecialchars($pe->offset_account_code . ' - ' . $pe->offset_account_name) ?></td>
+                                <td><?= htmlspecialchars($pe->paid_to ?: 'N/A') ?></td>
+                                <td><?= htmlspecialchars($pe->description) ?></td>
+                                <td style="text-align: right; font-weight: bold; color: #ef4444;">Rs: <?= number_format((float)$pe->amount, 2) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -983,23 +1009,28 @@ declare(strict_types=1);
             <div class="modal-body">
                 <div class="form-group">
                     <label for="limit_amount">Petty Cash Limit (Float Amount) *</label>
-                    <input type="number" step="0.01" name="limit_amount" id="limit_amount" value="<?= ($data['config'] && isset($data['config']->limit_amount)) ? $data['config']->limit_amount : '50000.00' ?>" required>
+                    <input type="number" step="0.01" name="limit_amount" id="limit_amount" value="<?= $data['config_limit'] ?>" required>
                 </div>
-                <input type="hidden" name="custodian_id" value="<?= ($data['config'] && isset($data['config']->custodian_id)) ? (int)$data['config']->custodian_id : $_SESSION['user_id'] ?>">
                 <div class="form-group">
-                    <label for="default_funding_account_id">Default Funding Bank/Cash Account *</label>
-                    <select name="default_funding_account_id" id="default_funding_account_id" required>
-                        <option value="">-- Select Source Account --</option>
-                        <?php foreach ($data['funding_accounts'] as $fa): ?>
-                            <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
-                                <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
+                    <label for="custodian_id">Petty Cash Custodian *</label>
+                    <select name="custodian_id" id="custodian_id" required>
+                        <?php foreach ($data['users'] as $u): ?>
+                            <option value="<?= $u->id ?>" <?= ($data['config'] && (int)$data['config']->custodian_id === (int)$u->id) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($u->username) ?> (<?= htmlspecialchars($u->email) ?>)
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="reimbursement_threshold">Reimbursement Alert Threshold (Spent Amount) *</label>
-                    <input type="number" step="0.01" name="reimbursement_threshold" id="reimbursement_threshold" value="<?= ($data['config'] && isset($data['config']->reimbursement_threshold)) ? $data['config']->reimbursement_threshold : '10000.00' ?>" required>
+                    <label for="default_funding_account_id">Default Funding Account *</label>
+                    <select name="default_funding_account_id" id="default_funding_account_id" required>
+                        <option value="">-- Select Funding Account --</option>
+                        <?php foreach ($data['funding_accounts'] as $fa): ?>
+                            <option value="<?= $fa->id ?>" <?= ($data['config'] && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
+                                <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1021,30 +1052,30 @@ declare(strict_types=1);
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="alloc_amount">Allocation Amount (Rs:) *</label>
+                    <label for="alloc_amount">Allocation Amount (Rs) *</label>
                     <input type="number" step="0.01" name="amount" id="alloc_amount" placeholder="0.00" required>
                 </div>
                 <div class="form-group">
-                    <label for="bank_account_id">Source Bank/Cash Account *</label>
-                    <select name="bank_account_id" id="bank_account_id" required>
+                    <label for="alloc_bank_account_id">Source Bank/Cash Account *</label>
+                    <select name="bank_account_id" id="alloc_bank_account_id" required>
                         <option value="">-- Select Source Account --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
-                            <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
+                            <option value="<?= $fa->id ?>" <?= ($data['config'] && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
                                 <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="alloc_date">Transfer Date *</label>
+                    <label for="alloc_date">Transaction Date *</label>
                     <input type="date" name="transaction_date" id="alloc_date" value="<?= date('Y-m-d') ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="alloc_ref">Reference / Slip Number</label>
-                    <input type="text" name="reference" id="alloc_ref" placeholder="PC-AL-<?= time() ?>">
+                    <label for="alloc_ref">Reference (Cheque / Ref No)</label>
+                    <input type="text" name="reference" id="alloc_ref" placeholder="e.g. CHQ-10045">
                 </div>
                 <div class="form-group">
-                    <label for="alloc_desc">Remarks / Description</label>
+                    <label for="alloc_desc">Description</label>
                     <textarea name="description" id="alloc_desc" rows="3" placeholder="Establish/top-up petty cash float"></textarea>
                 </div>
             </div>
@@ -1067,33 +1098,37 @@ declare(strict_types=1);
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="exp_amount">Expense Amount (Rs:) *</label>
+                    <label for="exp_amount">Expense Amount (Rs) *</label>
                     <input type="number" step="0.01" name="amount" id="exp_amount" placeholder="0.00" required>
                 </div>
                 <div class="form-group">
-                    <label for="account_id">Expense Category Account *</label>
-                    <select name="account_id" id="account_id" required>
-                        <option value="">-- Select Category --</option>
+                    <label for="exp_account_id">Expense Category Account *</label>
+                    <select name="account_id" id="exp_account_id" required>
+                        <option value="">-- Select Expense Category --</option>
                         <?php foreach ($data['expense_accounts'] as $ea): ?>
                             <option value="<?= $ea->id ?>"><?= $ea->account_code ?> - <?= htmlspecialchars($ea->account_name) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="paid_to">Paid To (Payee) *</label>
-                    <input type="text" name="paid_to" id="paid_to" placeholder="Merchant or Employee Name" required>
+                    <label for="exp_paid_to">Paid To (Payee)</label>
+                    <input type="text" name="paid_to" id="exp_paid_to" placeholder="e.g. City Hardware / Staff Member">
                 </div>
                 <div class="form-group">
-                    <label for="exp_date">Expense Date *</label>
+                    <label for="exp_date">Transaction Date *</label>
                     <input type="date" name="transaction_date" id="exp_date" value="<?= date('Y-m-d') ?>" required>
                 </div>
                 <div class="form-group">
-                    <label for="exp_ref">Receipt / Reference Number</label>
+                    <label for="exp_ref">Voucher / Receipt Reference</label>
                     <input type="text" name="reference" id="exp_ref" placeholder="e.g. Bill #1234">
                 </div>
                 <div class="form-group">
                     <label for="exp_desc">Description *</label>
-                    <textarea name="description" id="exp_desc" rows="2" placeholder="Describe the item or service purchased" required></textarea>
+                    <textarea name="description" id="exp_desc" rows="3" placeholder="Details of the expense" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="exp_attachment">Receipt Attachment (PDF / Image)</label>
+                    <input type="file" name="attachment" id="exp_attachment" accept=".pdf,.png,.jpg,.jpeg">
                 </div>
             </div>
             <div class="modal-footer">
@@ -1127,7 +1162,16 @@ declare(strict_types=1);
                 </div>
 
                 <div class="form-group">
-                    <label for="reim_bank_account_id">Draw Funds From Bank Account *</label>
+                    <label for="reim_payment_method">Reimbursement Method *</label>
+                    <select name="payment_method" id="reim_payment_method" required onchange="toggleReimbursementFields(this.value)">
+                        <option value="Bank Transfer" selected>Bank Transfer</option>
+                        <option value="Cash">Cash in Hand</option>
+                        <option value="Cheque">Cheque</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="reim_bank_group">
+                    <label for="reim_bank_account_id">Source Bank Account *</label>
                     <select name="bank_account_id" id="reim_bank_account_id" required>
                         <option value="">-- Select Source Bank --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
@@ -1137,6 +1181,28 @@ declare(strict_types=1);
                         <?php endforeach; ?>
                     </select>
                 </div>
+
+                <div class="form-group hidden" id="reim_cash_info" style="background: rgba(16, 185, 129, 0.08); padding: 12px 15px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 15px;">
+                    <p style="margin: 0; font-size: 13px; color: #047857; font-weight: 500;">
+                        <i class="ph ph-money" style="margin-right: 4px;"></i> Funds will be automatically deducted from the <strong>Cash in Hand Account</strong> upon approval.
+                    </p>
+                </div>
+
+                <div id="reim_cheque_group" class="hidden" style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label for="reim_cheque_number">Cheque Number *</label>
+                        <input type="text" name="cheque_number" id="reim_cheque_number" placeholder="e.g. 331305">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="reim_cheque_date">Cheque Date / Banking Date *</label>
+                        <input type="date" name="cheque_date" id="reim_cheque_date" value="<?= date('Y-m-d') ?>">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="reim_payee_name">Payee Name (Optional)</label>
+                        <input type="text" name="payee_name" id="reim_payee_name" placeholder="e.g. Petty Cash Custodian">
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="reim_date">Reimbursement Date *</label>
                     <input type="date" name="reimbursement_date" id="reim_date" value="<?= date('Y-m-d') ?>" required>
@@ -1153,5 +1219,37 @@ declare(strict_types=1);
         </form>
     </div>
 </div>
+
+<script>
+function toggleReimbursementFields(method) {
+    const bankGroup = document.getElementById('reim_bank_group');
+    const cashInfo = document.getElementById('reim_cash_info');
+    const chequeGroup = document.getElementById('reim_cheque_group');
+    const bankSelect = document.getElementById('reim_bank_account_id');
+    const chequeInput = document.getElementById('reim_cheque_number');
+
+    if (!bankGroup || !cashInfo || !chequeGroup) return;
+
+    if (method === 'Cash') {
+        bankGroup.classList.add('hidden');
+        cashInfo.classList.remove('hidden');
+        chequeGroup.classList.add('hidden');
+        if (bankSelect) bankSelect.removeAttribute('required');
+        if (chequeInput) chequeInput.removeAttribute('required');
+    } else if (method === 'Cheque') {
+        bankGroup.classList.remove('hidden');
+        cashInfo.classList.add('hidden');
+        chequeGroup.classList.remove('hidden');
+        if (bankSelect) bankSelect.setAttribute('required', 'required');
+        if (chequeInput) chequeInput.setAttribute('required', 'required');
+    } else { // Bank Transfer
+        bankGroup.classList.remove('hidden');
+        cashInfo.classList.add('hidden');
+        chequeGroup.classList.add('hidden');
+        if (bankSelect) bankSelect.setAttribute('required', 'required');
+        if (chequeInput) chequeInput.removeAttribute('required');
+    }
+}
+</script>
 
 

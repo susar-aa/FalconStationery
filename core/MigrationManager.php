@@ -793,6 +793,11 @@ class MigrationManager {
                     'approved_by' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN approved_by INT NULL",
                     'approved_at' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN approved_at DATETIME NULL",
                     'journal_entry_id' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN journal_entry_id INT NULL",
+                    'payment_method' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN payment_method VARCHAR(50) NOT NULL DEFAULT 'Bank Transfer'",
+                    'cheque_number' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_number VARCHAR(100) NULL",
+                    'cheque_date' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_date DATE NULL",
+                    'payee_name' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN payee_name VARCHAR(255) NULL",
+                    'cheque_id' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_id INT NULL",
                     'created_at' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
                 ];
 
