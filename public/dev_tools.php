@@ -24,8 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $safe_dir = escapeshellarg(str_replace('\\', '/', $repo_dir));
             $commit_msg = !empty($_POST['commit_msg']) ? escapeshellarg($_POST['commit_msg']) : escapeshellarg("Automated web commit");
             
+            // Force Git to never prompt for credentials or hang
+            putenv("GCM_INTERACTIVE=false");
+            putenv("GIT_TERMINAL_PROMPT=0");
+            putenv("GIT_ASKPASS=echo");
+            
             $output = [];
-            $cwd = "set GCM_INTERACTIVE=false && set GIT_TERMINAL_PROMPT=0 && cd " . escapeshellarg($repo_dir) . " && ";
+            $cwd = "cd " . escapeshellarg($repo_dir) . " && ";
             exec($cwd . "git config --global --add safe.directory $safe_dir 2>&1", $output);
             exec($cwd . "git config user.email \"admin@falcon.trycurtiss.com\" 2>&1", $output);
             exec($cwd . "git config user.name \"ERP_Web_Tool\" 2>&1", $output);
