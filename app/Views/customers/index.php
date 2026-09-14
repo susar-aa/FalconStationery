@@ -1524,9 +1524,9 @@ foreach ($data['customers'] ?? [] as $cust) {
         const loader = document.getElementById('modal-loader');
         const content = document.getElementById('modal-profile-content');
         
-        modal.classList.remove('hidden');
-        loader.style.display = 'flex';
-        content.style.display = 'none';
+        if (modal) modal.classList.remove('hidden');
+        if (loader) loader.style.display = 'flex';
+        if (content) content.style.display = 'none';
         
         // Update URL
         let targetUrl = '<?= APP_URL ?>/customer/index/' + id;
@@ -1546,13 +1546,14 @@ foreach ($data['customers'] ?? [] as $cust) {
                 
                 const newContent = doc.getElementById('modal-profile-content-source');
                 const newHeader = doc.getElementById('modal-header-source');
+                const headerContainer = document.getElementById('modal-header-container');
                 
                 if (newContent && newHeader) {
-                    document.getElementById('modal-header-container').innerHTML = newHeader.innerHTML;
-                    content.innerHTML = newContent.innerHTML;
+                    if (headerContainer) headerContainer.innerHTML = newHeader.innerHTML;
+                    if (content) content.innerHTML = newContent.innerHTML;
                     
-                    loader.style.display = 'none';
-                    content.style.display = 'flex';
+                    if (loader) loader.style.display = 'none';
+                    if (content) content.style.display = 'flex';
 
                     if (tab) {
                         switchModalTab(tab);
@@ -1563,27 +1564,30 @@ foreach ($data['customers'] ?? [] as $cust) {
             })
             .catch(err => {
                 console.error(err);
-                content.innerHTML = `
-                    <div style="padding:40px; text-align:center; color:var(--c-red);">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:12px;"></i><br>
-                        Failed to load customer profile details.
-                    </div>`;
-                loader.style.display = 'none';
-                content.style.display = 'block';
+                if (content) {
+                    content.innerHTML = `
+                        <div style="padding:40px; text-align:center; color:var(--c-red);">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:12px;"></i><br>
+                            Failed to load customer profile details.
+                        </div>`;
+                    content.style.display = 'block';
+                }
+                if (loader) loader.style.display = 'none';
             });
     }
 
     function openPrepopulatedCustomerProfile(id) {
         const modal = document.getElementById('customerProfileModal');
         const content = document.getElementById('modal-profile-content');
+        const headerContainer = document.getElementById('modal-header-container');
         
         const headerSrc = document.getElementById('modal-header-source');
         const contentSrc = document.getElementById('modal-profile-content-source');
         
         if (headerSrc && contentSrc) {
-            document.getElementById('modal-header-container').innerHTML = headerSrc.innerHTML;
-            content.innerHTML = contentSrc.innerHTML;
-            modal.classList.remove('hidden');
+            if (headerContainer) headerContainer.innerHTML = headerSrc.innerHTML;
+            if (content) content.innerHTML = contentSrc.innerHTML;
+            if (modal) modal.classList.remove('hidden');
 
             const urlParams = new URLSearchParams(window.location.search);
             const tab = urlParams.get('tab');
