@@ -339,8 +339,6 @@ $endDate = $data['filters']['end_date'] ?? '';
                     </div>
                 </div>
 
-                </div>
-
                 <table class="journal-input-table" id="linesTable">
                     <thead>
                         <tr>
@@ -694,9 +692,15 @@ $endDate = $data['filters']['end_date'] ?? '';
 
     const accountOptions = `
         <option value="">Select Account...</option>
+        <optgroup label="Entities (AR / AP)">
+            <option value="Customer">Customer</option>
+            <option value="Vendor">Supplier</option>
+        </optgroup>
+        <optgroup label="Ledger Accounts">
         <?php foreach($data['accounts'] as $acc): ?>
             <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_code . ' - ' . $acc->account_name) ?></option>
         <?php endforeach; ?>
+        </optgroup>
     `;
 
     let previousState = null;
