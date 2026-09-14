@@ -302,7 +302,7 @@ $endDate = $data['filters']['end_date'] ?? '';
         </div>
 
         <!-- Create Journal Entry Panel (Hidden by default) -->
-        <div class="create-panel" id="createPanel">
+        <div class="create-panel" id="createPanel" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3>New Journal Entry</h3>
                 <button type="button" class="sf-btn neutral" onclick="toggleCreatePanel()"><i class="fa-solid fa-xmark"></i> Close</button>
