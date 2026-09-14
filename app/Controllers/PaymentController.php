@@ -214,11 +214,14 @@ class PaymentController extends Controller {
      * Reverse Payment
      */
     public function reverseSupplierPayment($id) {
+        $fromHistory = isset($_GET['from']) && $_GET['from'] === 'history';
+        $redirectUrl = APP_URL . ($fromHistory ? '/customerpayment/history' : '/payment');
+
         if ($this->paymentModel->reverseSupplierPayment(intval($id), $_SESSION['user_id'])) {
             $this->logActivity('Reverse Payment', 'Payments', "Reversed payment ID: {$id}");
-            header('Location: ' . APP_URL . '/payment?success=reversed');
+            header('Location: ' . $redirectUrl . '?success=reversed');
         } else {
-            header('Location: ' . APP_URL . '/payment?error=Failed to reverse payment.');
+            header('Location: ' . $redirectUrl . '?error=Failed to reverse payment.');
         }
         exit;
     }

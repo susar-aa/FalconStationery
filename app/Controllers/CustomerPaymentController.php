@@ -81,6 +81,9 @@ class CustomerPaymentController extends Controller {
     /**
      * Dedicated Customer Payment History Page
      */
+    /**
+     * Dedicated Unified Payment History Page
+     */
     public function history() {
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         if ($page < 1) $page = 1;
@@ -88,6 +91,7 @@ class CustomerPaymentController extends Controller {
         $offset = ($page - 1) * $limit;
 
         $filters = [
+            'entity_type' => $_GET['entity_type'] ?? '',
             'start_date' => $_GET['start_date'] ?? '',
             'end_date' => $_GET['end_date'] ?? '',
             'method' => $_GET['method'] ?? '',
@@ -97,18 +101,26 @@ class CustomerPaymentController extends Controller {
             'offset' => $offset
         ];
 
-        $paymentsHistory = $this->paymentModel->getCustomerPaymentHistory($filters);
-        $totalRecords = $this->paymentModel->countCustomerPaymentHistory($filters);
+        $paymentsHistory = $this->paymentModel->getUnifiedPaymentHistory($filters);
+        $totalRecords = $this->paymentModel->countUnifiedPaymentHistory($filters);
         $totalPages = ceil($totalRecords / $limit);
 
+        // Fetch Accounts for edit modal
+        $accounts = $this->coaModel->getAccounts() ?: [];
+        $assetAccounts = array_values(array_filter($accounts, function($a) {
+            return $a->account_type == 'Asset';
+        }));
+
         $data = [
-            'title' => 'Customer Payment History',
+            'title' => 'Payment History',
             'content_view' => 'customer_payments/history',
             'payments_history' => $paymentsHistory,
             'filters' => $filters,
             'page' => $page,
             'total_pages' => $totalPages,
             'total_records' => $totalRecords,
+            'asset_accounts' => $assetAccounts,
+            'accounts' => $accounts,
             'error' => $_GET['error'] ?? '',
             'success' => ''
         ];
@@ -116,10 +128,194 @@ class CustomerPaymentController extends Controller {
         if (isset($_GET['success'])) {
             if ($_GET['success'] === 'reversed') {
                 $data['success'] = 'Payment reversed successfully and ledger updated!';
+            } elseif ($_GET['success'] === 'edited') {
+                $data['success'] = 'Payment edited successfully! All accounts, ledgers, allocations, and audit trail updated.';
             }
         }
 
         $this->view('layouts/main', $data);
+    }
+
+    /**
+     * Fetch payment edit data in JSON
+     */
+    public function getEditPaymentDataJson($type = 'Customer', $id = 0) {
+        header('Content-Type: application/json');
+        $id = intval($id);
+        $db = new Database();
+
+        if ($type === 'Customer') {
+            $payment = $this->paymentModel->getCustomerPaymentById($id);
+            if (!$payment) {
+                echo json_encode(['success' => false, 'message' => 'Customer payment record not found.']);
+                exit;
+            }
+            $allocations = $this->paymentModel->getCustomerPaymentAllocations($id);
+            
+            $db->query("SELECT account_id, debit, credit FROM transactions WHERE journal_entry_id = :jid");
+            $db->bind(':jid', $payment->journal_entry_id);
+            $txs = $db->resultSet() ?: [];
+            
+            $assetAccountId = 0;
+            $arAccountId = 0;
+            foreach ($txs as $tx) {
+                if ($tx->debit > 0) $assetAccountId = $tx->account_id;
+                if ($tx->credit > 0) $arAccountId = $tx->account_id;
+            }
+
+            $cheque = null;
+            if ($payment->payment_method === 'Cheque') {
+                $db->query("SELECT bank_name, cheque_number, banking_date FROM cheques WHERE customer_id = :cid AND amount = :amt ORDER BY id DESC LIMIT 1");
+                $db->bind(':cid', $payment->customer_id);
+                $db->bind(':amt', $payment->amount);
+                $cheque = $db->single();
+            }
+
+            // Unpaid invoices for manual allocation view
+            $unpaidInvoices = $this->paymentModel->getCustomerUnpaidInvoices($payment->customer_id);
+
+            echo json_encode([
+                'success' => true,
+                'type' => 'Customer',
+                'payment' => $payment,
+                'allocations' => $allocations,
+                'asset_account_id' => $assetAccountId,
+                'ar_account_id' => $arAccountId,
+                'cheque' => $cheque,
+                'unpaid_invoices' => array_values($unpaidInvoices)
+            ]);
+            exit;
+        } else { // Supplier or Service Provider
+            $payment = $this->paymentModel->getSupplierPaymentById($id);
+            if (!$payment) {
+                echo json_encode(['success' => false, 'message' => 'Payment record not found.']);
+                exit;
+            }
+            $allocations = $this->paymentModel->getSupplierPaymentAllocations($id);
+            
+            $db->query("SELECT account_id, debit, credit FROM transactions WHERE journal_entry_id = :jid");
+            $db->bind(':jid', $payment->journal_entry_id);
+            $txs = $db->resultSet() ?: [];
+
+            $assetAccountId = $payment->bank_account_id ?? 0;
+            $apAccountId = 0;
+            foreach ($txs as $tx) {
+                if ($tx->debit > 0) $apAccountId = $tx->account_id;
+                if ($tx->credit > 0 && empty($assetAccountId)) $assetAccountId = $tx->account_id;
+            }
+
+            $cheque = null;
+            if ($payment->payment_method === 'Cheque') {
+                $db->query("SELECT bank_name, cheque_number, banking_date FROM cheques WHERE supplier_payment_id = :pid LIMIT 1");
+                $db->bind(':pid', $id);
+                $cheque = $db->single();
+            }
+
+            $entityType = (!empty($payment->service_provider_id) && $payment->service_provider_id > 0) ? 'Service Provider' : 'Supplier';
+
+            $unpaidGRNs = !empty($payment->vendor_id) 
+                ? $this->paymentModel->getSupplierUnpaidGRNs($payment->vendor_id) 
+                : $this->paymentModel->getServiceProviderUnpaidGRNs($payment->service_provider_id);
+
+            echo json_encode([
+                'success' => true,
+                'type' => $entityType,
+                'payment' => $payment,
+                'allocations' => $allocations,
+                'asset_account_id' => $assetAccountId,
+                'ap_account_id' => $apAccountId,
+                'cheque' => $cheque,
+                'unpaid_grns' => array_values($unpaidGRNs)
+            ]);
+            exit;
+        }
+    }
+
+    /**
+     * Submit Edit Payment
+     */
+    public function editPayment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . APP_URL . '/customerpayment/history');
+            exit;
+        }
+
+        $paymentId = intval($_POST['payment_id'] ?? 0);
+        $entityType = $_POST['entity_type'] ?? 'Customer';
+
+        if ($paymentId <= 0) {
+            header('Location: ' . APP_URL . '/customerpayment/history?error=Invalid payment ID.');
+            exit;
+        }
+
+        $amount = floatval($_POST['amount'] ?? 0);
+        if ($amount <= 0) {
+            header('Location: ' . APP_URL . '/customerpayment/history?error=Payment amount must be greater than zero.');
+            exit;
+        }
+
+        $method = $_POST['payment_method'] ?? 'Cash';
+        if ($method === 'Cheque') {
+            $chequeBank = trim($_POST['cheque_bank'] ?? '');
+            $chequeNumber = trim($_POST['cheque_number'] ?? '');
+            $chequeDate = $_POST['cheque_date'] ?? '';
+
+            if (empty($chequeBank) || empty($chequeNumber) || empty($chequeDate)) {
+                header('Location: ' . APP_URL . '/customerpayment/history?error=Cheque details are required.');
+                exit;
+            }
+            if (!preg_match('/^\d{6}$/', $chequeNumber)) {
+                header('Location: ' . APP_URL . '/customerpayment/history?error=Cheque number must be exactly 6 numeric digits.');
+                exit;
+            }
+        }
+
+        if ($entityType === 'Customer') {
+            $paymentData = [
+                'customer_id' => intval($_POST['customer_id'] ?? 0),
+                'amount' => $amount,
+                'date' => $_POST['payment_date'] ?? date('Y-m-d'),
+                'method' => $method,
+                'reference' => trim($_POST['reference'] ?? ''),
+                'notes' => trim($_POST['notes'] ?? ''),
+                'asset_account_id' => intval($_POST['asset_account_id'] ?? 0),
+                'ar_account_id' => intval($_POST['ar_account_id'] ?? 0),
+                'allocation_type' => $_POST['allocation_type'] ?? 'auto',
+                'allocations' => $_POST['allocations'] ?? [],
+                'cheque_bank' => trim($_POST['cheque_bank'] ?? ''),
+                'cheque_number' => trim($_POST['cheque_number'] ?? ''),
+                'cheque_date' => $_POST['cheque_date'] ?? ''
+            ];
+
+            $success = $this->paymentModel->editCustomerPayment($paymentId, $paymentData, $_SESSION['user_id']);
+        } else {
+            $paymentData = [
+                'supplier_id' => $entityType === 'Supplier' ? intval($_POST['supplier_id'] ?? 0) : 0,
+                'service_provider_id' => $entityType === 'Service Provider' ? intval($_POST['service_provider_id'] ?? 0) : 0,
+                'amount' => $amount,
+                'date' => $_POST['payment_date'] ?? date('Y-m-d'),
+                'method' => $method,
+                'reference' => trim($_POST['reference'] ?? ''),
+                'notes' => trim($_POST['notes'] ?? ''),
+                'asset_account_id' => intval($_POST['asset_account_id'] ?? 0),
+                'bank_account_id' => intval($_POST['asset_account_id'] ?? 0),
+                'ap_account_id' => intval($_POST['ap_account_id'] ?? 0),
+                'allocation_type' => $_POST['allocation_type'] ?? 'auto',
+                'allocations' => $_POST['allocations'] ?? [],
+                'cheque_bank' => trim($_POST['cheque_bank'] ?? ''),
+                'cheque_number' => trim($_POST['cheque_number'] ?? ''),
+                'cheque_date' => $_POST['cheque_date'] ?? ''
+            ];
+
+            $success = $this->paymentModel->editSupplierPayment($paymentId, $paymentData, $_SESSION['user_id']);
+        }
+
+        if ($success) {
+            header('Location: ' . APP_URL . '/customerpayment/history?success=edited');
+        } else {
+            header('Location: ' . APP_URL . '/customerpayment/history?error=Failed to edit payment record.');
+        }
+        exit;
     }
 
     /**

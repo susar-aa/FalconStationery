@@ -1036,53 +1036,55 @@ class Payment {
      * Get Unified Payment History
      */
     public function getUnifiedPaymentHistory($filters = []) {
-        // Customer payments query
         $sqlCustomer = "
-            SELECT 'Customer' as type, p.id, p.payment_date, p.payment_method, p.reference, p.amount, p.status, c.name as counterparty_name, u.username as creator_name
+            SELECT 'Customer' as entity_type, p.id, p.payment_date, p.payment_method, p.reference, p.amount, p.status, c.name as counterparty_name, u.username as creator_name, p.customer_id as entity_id, 'customer' as category
             FROM customer_payments p
             JOIN customers c ON p.customer_id = c.id
             LEFT JOIN users u ON p.created_by = u.id
-            WHERE 1=1
         ";
         
-        // Supplier payments query
         $sqlSupplier = "
-            SELECT 'Supplier' as type, p.id, p.payment_date, p.payment_method, p.reference, p.amount, p.status, COALESCE(v.name, sp.name) as counterparty_name, u.username as creator_name
+            SELECT IF(p.service_provider_id IS NOT NULL AND p.service_provider_id > 0, 'Service Provider', 'Supplier') as entity_type, p.id, p.payment_date, p.payment_method, p.reference, p.amount, p.status, COALESCE(v.name, sp.name) as counterparty_name, u.username as creator_name, COALESCE(p.vendor_id, p.service_provider_id) as entity_id, IF(p.service_provider_id IS NOT NULL AND p.service_provider_id > 0, 'service_provider', 'supplier') as category
             FROM supplier_payments p
             LEFT JOIN vendors v ON p.vendor_id = v.id
             LEFT JOIN service_providers sp ON p.service_provider_id = sp.id
             LEFT JOIN users u ON p.created_by = u.id
-            WHERE 1=1
         ";
 
+        $sql = "SELECT * FROM (($sqlCustomer) UNION ALL ($sqlSupplier)) as unified WHERE 1=1";
+
+        $binds = [];
+        if (!empty($filters['entity_type'])) {
+            $sql .= " AND unified.entity_type = :entity_type";
+            $binds['entity_type'] = $filters['entity_type'];
+        }
         if (!empty($filters['start_date'])) {
-            $sqlCustomer .= " AND p.payment_date >= :start_customer";
-            $sqlSupplier .= " AND p.payment_date >= :start_supplier";
+            $sql .= " AND unified.payment_date >= :start_date";
+            $binds['start_date'] = $filters['start_date'];
         }
         if (!empty($filters['end_date'])) {
-            $sqlCustomer .= " AND p.payment_date <= :end_customer";
-            $sqlSupplier .= " AND p.payment_date <= :end_supplier";
+            $sql .= " AND unified.payment_date <= :end_date";
+            $binds['end_date'] = $filters['end_date'];
         }
         if (!empty($filters['method'])) {
-            $sqlCustomer .= " AND p.payment_method = :method_customer";
-            $sqlSupplier .= " AND p.payment_method = :method_supplier";
+            $sql .= " AND unified.payment_method = :method";
+            $binds['method'] = $filters['method'];
+        }
+        if (!empty($filters['status'])) {
+            $sql .= " AND unified.status = :status";
+            $binds['status'] = $filters['status'];
+        }
+        if (!empty($filters['search'])) {
+            $sql .= " AND (unified.reference LIKE :search OR unified.counterparty_name LIKE :search2)";
+            $binds['search'] = '%' . $filters['search'] . '%';
+            $binds['search2'] = '%' . $filters['search'] . '%';
         }
 
-        $sql = "($sqlCustomer) UNION ALL ($sqlSupplier) ORDER BY payment_date DESC, id DESC LIMIT :limit OFFSET :offset";
+        $sql .= " ORDER BY unified.payment_date DESC, unified.id DESC LIMIT :limit OFFSET :offset";
 
         $this->db->query($sql);
-        
-        if (!empty($filters['start_date'])) {
-            $this->db->bind(':start_customer', $filters['start_date']);
-            $this->db->bind(':start_supplier', $filters['start_date']);
-        }
-        if (!empty($filters['end_date'])) {
-            $this->db->bind(':end_customer', $filters['end_date']);
-            $this->db->bind(':end_supplier', $filters['end_date']);
-        }
-        if (!empty($filters['method'])) {
-            $this->db->bind(':method_customer', $filters['method']);
-            $this->db->bind(':method_supplier', $filters['method']);
+        foreach ($binds as $k => $v) {
+            $this->db->bind(':' . $k, $v);
         }
 
         $limit = $filters['limit'] ?? 50;
@@ -1090,7 +1092,502 @@ class Payment {
         $this->db->bind(':limit', $limit, PDO::PARAM_INT);
         $this->db->bind(':offset', $offset, PDO::PARAM_INT);
 
-        return $this->db->resultSet();
+        return $this->db->resultSet() ?: [];
+    }
+
+    /**
+     * Count Unified Payment History for Pagination
+     */
+    public function countUnifiedPaymentHistory($filters = []) {
+        $sqlCustomer = "
+            SELECT 'Customer' as entity_type, p.id, p.payment_date, p.payment_method, p.reference, p.amount, p.status, c.name as counterparty_name
+            FROM customer_payments p
+            JOIN customers c ON p.customer_id = c.id
+        ";
+        
+        $sqlSupplier = "
+            SELECT IF(p.service_provider_id IS NOT NULL AND p.service_provider_id > 0, 'Service Provider', 'Supplier') as entity_type, p.id, p.payment_date, p.payment_method, p.reference, p.amount, p.status, COALESCE(v.name, sp.name) as counterparty_name
+            FROM supplier_payments p
+            LEFT JOIN vendors v ON p.vendor_id = v.id
+            LEFT JOIN service_providers sp ON p.service_provider_id = sp.id
+        ";
+
+        $sql = "SELECT COUNT(*) as total FROM (($sqlCustomer) UNION ALL ($sqlSupplier)) as unified WHERE 1=1";
+
+        $binds = [];
+        if (!empty($filters['entity_type'])) {
+            $sql .= " AND unified.entity_type = :entity_type";
+            $binds['entity_type'] = $filters['entity_type'];
+        }
+        if (!empty($filters['start_date'])) {
+            $sql .= " AND unified.payment_date >= :start_date";
+            $binds['start_date'] = $filters['start_date'];
+        }
+        if (!empty($filters['end_date'])) {
+            $sql .= " AND unified.payment_date <= :end_date";
+            $binds['end_date'] = $filters['end_date'];
+        }
+        if (!empty($filters['method'])) {
+            $sql .= " AND unified.payment_method = :method";
+            $binds['method'] = $filters['method'];
+        }
+        if (!empty($filters['status'])) {
+            $sql .= " AND unified.status = :status";
+            $binds['status'] = $filters['status'];
+        }
+        if (!empty($filters['search'])) {
+            $sql .= " AND (unified.reference LIKE :search OR unified.counterparty_name LIKE :search2)";
+            $binds['search'] = '%' . $filters['search'] . '%';
+            $binds['search2'] = '%' . $filters['search'] . '%';
+        }
+
+        $this->db->query($sql);
+        foreach ($binds as $k => $v) {
+            $this->db->bind(':' . $k, $v);
+        }
+
+        $row = $this->db->single();
+        return $row ? (int)$row->total : 0;
+    }
+
+    /**
+     * Edit Customer Payment
+     */
+    public function editCustomerPayment($id, $data, $userId) {
+        try {
+            $this->db->beginTransaction();
+
+            // 1. Fetch old payment details
+            $this->db->query("SELECT * FROM customer_payments WHERE id = :id");
+            $this->db->bind(':id', $id);
+            $oldPayment = $this->db->single();
+
+            if (!$oldPayment || $oldPayment->status === 'Reversed') {
+                throw new Exception("Payment record not found or is reversed.");
+            }
+
+            // 2. Fetch old transactions for the associated journal entry
+            $this->db->query("SELECT * FROM transactions WHERE journal_entry_id = :jid");
+            $this->db->bind(':jid', $oldPayment->journal_entry_id);
+            $oldTxs = $this->db->resultSet() ?: [];
+
+            // Reverse Chart of Accounts balance impact of old transactions
+            foreach ($oldTxs as $tx) {
+                $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
+                $this->db->bind(':id', $tx->account_id);
+                $acc = $this->db->single();
+                if ($acc) {
+                    $sql = "UPDATE chart_of_accounts SET balance = balance ";
+                    $sql .= in_array($acc->account_type, ['Asset', 'Expense']) ? "- :debit + :credit " : "+ :debit - :credit ";
+                    $sql .= "WHERE id = :id";
+                    $this->db->query($sql);
+                    $this->db->bind(':debit', $tx->debit);
+                    $this->db->bind(':credit', $tx->credit);
+                    $this->db->bind(':id', $tx->account_id);
+                    $this->db->execute();
+                }
+            }
+
+            // 3. Revert old allocations
+            $this->db->query("SELECT invoice_id FROM customer_payment_allocations WHERE customer_payment_id = :pid AND is_reversed = 0");
+            $this->db->bind(':pid', $id);
+            $oldAllocations = $this->db->resultSet() ?: [];
+
+            // Mark old allocations as reversed
+            $this->db->query("UPDATE customer_payment_allocations SET is_reversed = 1, reversed_by = :uid, reversed_at = CURRENT_TIMESTAMP() WHERE customer_payment_id = :pid AND is_reversed = 0");
+            $this->db->bind(':uid', $userId);
+            $this->db->bind(':pid', $id);
+            $this->db->execute();
+
+            // Reset status for affected invoices
+            foreach ($oldAllocations as $alloc) {
+                $this->db->query("UPDATE invoices SET status = 'Unpaid' WHERE id = :id");
+                $this->db->bind(':id', $alloc->invoice_id);
+                $this->db->execute();
+            }
+
+            // 4. Update Journal Entry
+            $desc = "Customer Payment (Edited): " . $data['method'] . " from Customer ID " . $data['customer_id'];
+            $this->db->query("UPDATE journal_entries SET entry_date = :date, reference = :ref, description = :desc WHERE id = :jid");
+            $this->db->bind(':date', $data['date']);
+            $this->db->bind(':ref', $data['reference']);
+            $this->db->bind(':desc', $desc);
+            $this->db->bind(':jid', $oldPayment->journal_entry_id);
+            $this->db->execute();
+
+            // Remove old transaction lines for this journal entry
+            $this->db->query("DELETE FROM transactions WHERE journal_entry_id = :jid");
+            $this->db->bind(':jid', $oldPayment->journal_entry_id);
+            $this->db->execute();
+
+            // Insert new transactions (Debit Asset, Credit AR)
+            $newLines = [
+                ['account_id' => $data['asset_account_id'], 'debit' => $data['amount'], 'credit' => 0],
+                ['account_id' => $data['ar_account_id'], 'debit' => 0, 'credit' => $data['amount']]
+            ];
+
+            foreach ($newLines as $line) {
+                $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit) VALUES (:jid, :aid, :deb, :cred)");
+                $this->db->bind(':jid', $oldPayment->journal_entry_id);
+                $this->db->bind(':aid', $line['account_id']);
+                $this->db->bind(':deb', $line['debit']);
+                $this->db->bind(':cred', $line['credit']);
+                $this->db->execute();
+
+                // Update Chart of Account Balance with new lines
+                $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
+                $this->db->bind(':id', $line['account_id']);
+                $acc = $this->db->single();
+                if ($acc) {
+                    $sql = "UPDATE chart_of_accounts SET balance = balance ";
+                    $sql .= in_array($acc->account_type, ['Asset', 'Expense']) ? "+ :debit - :credit " : "- :debit + :credit ";
+                    $sql .= "WHERE id = :id";
+                    $this->db->query($sql);
+                    $this->db->bind(':debit', $line['debit']);
+                    $this->db->bind(':credit', $line['credit']);
+                    $this->db->bind(':id', $line['account_id']);
+                    $this->db->execute();
+                }
+            }
+
+            // 5. Update customer_payments record
+            $this->db->query("UPDATE customer_payments 
+                              SET customer_id = :cid, amount = :amt, payment_date = :date, payment_method = :method, 
+                                  reference = :ref, notes = :notes 
+                              WHERE id = :id");
+            $this->db->bind(':cid', $data['customer_id']);
+            $this->db->bind(':amt', $data['amount']);
+            $this->db->bind(':date', $data['date']);
+            $this->db->bind(':method', $data['method']);
+            $this->db->bind(':ref', $data['reference']);
+            $this->db->bind(':notes', $data['notes'] ?? null);
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            // 6. Cheque details update/insert
+            if ($data['method'] === 'Cheque') {
+                $this->db->query("SELECT id FROM cheques WHERE customer_id = :cid AND amount = :amt ORDER BY id DESC LIMIT 1");
+                $this->db->bind(':cid', $oldPayment->customer_id);
+                $this->db->bind(':amt', $oldPayment->amount);
+                $chk = $this->db->single();
+
+                if ($chk) {
+                    $this->db->query("UPDATE cheques SET customer_id = :cid, bank_name = :bn, cheque_number = :cn, amount = :amt, banking_date = :bdate WHERE id = :id");
+                    $this->db->bind(':cid', $data['customer_id']);
+                    $this->db->bind(':bn', $data['cheque_bank']);
+                    $this->db->bind(':cn', $data['cheque_number']);
+                    $this->db->bind(':amt', $data['amount']);
+                    $this->db->bind(':bdate', $data['cheque_date']);
+                    $this->db->bind(':id', $chk->id);
+                    $this->db->execute();
+                } else {
+                    $this->db->query("INSERT INTO cheques (customer_id, bank_name, cheque_number, amount, banking_date, status, created_by) 
+                                      VALUES (:cid, :bn, :cn, :amt, :bdate, 'Pending', :uid)");
+                    $this->db->bind(':cid', $data['customer_id']);
+                    $this->db->bind(':bn', $data['cheque_bank']);
+                    $this->db->bind(':cn', $data['cheque_number']);
+                    $this->db->bind(':amt', $data['amount']);
+                    $this->db->bind(':bdate', $data['cheque_date']);
+                    $this->db->bind(':uid', $userId);
+                    $this->db->execute();
+                }
+            }
+
+            // 7. Handle New Allocations
+            $allocatedAmount = 0;
+            if (($data['allocation_type'] ?? 'auto') === 'auto') {
+                $unpaid = $this->getCustomerUnpaidInvoices($data['customer_id']);
+                $remaining = $data['amount'];
+                foreach ($unpaid as $inv) {
+                    if ($remaining <= 0.01) break;
+                    $allocAmt = min($remaining, $inv->balance_due);
+                    
+                    $this->db->query("INSERT INTO customer_payment_allocations (customer_payment_id, invoice_id, amount) VALUES (:pid, :inv_id, :amt)");
+                    $this->db->bind(':pid', $id);
+                    $this->db->bind(':inv_id', $inv->id);
+                    $this->db->bind(':amt', $allocAmt);
+                    $this->db->execute();
+
+                    $newPaidSum = $inv->amount_paid + $allocAmt;
+                    if ($newPaidSum >= $inv->total_amount - 0.01) {
+                        $this->db->query("UPDATE invoices SET status = 'Paid' WHERE id = :id");
+                        $this->db->bind(':id', $inv->id);
+                        $this->db->execute();
+                    }
+
+                    $allocatedAmount += $allocAmt;
+                    $remaining -= $allocAmt;
+                }
+            } elseif (($data['allocation_type'] ?? '') === 'manual' && !empty($data['allocations'])) {
+                $remaining = $data['amount'];
+                foreach ($data['allocations'] as $invoiceId => $allocAmt) {
+                    $allocAmt = floatval($allocAmt);
+                    if ($allocAmt <= 0) continue;
+                    if ($remaining <= 0.01) break;
+                    $allocAmt = min($remaining, $allocAmt);
+
+                    $this->db->query("INSERT INTO customer_payment_allocations (customer_payment_id, invoice_id, amount) VALUES (:pid, :inv_id, :amt)");
+                    $this->db->bind(':pid', $id);
+                    $this->db->bind(':inv_id', $invoiceId);
+                    $this->db->bind(':amt', $allocAmt);
+                    $this->db->execute();
+
+                    $this->db->query("
+                        SELECT 
+                            (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total,
+                            COALESCE((SELECT SUM(amount) FROM customer_payment_allocations WHERE invoice_id = :iid AND is_reversed = 0), 0) as paid
+                        FROM invoices WHERE id = :iid2
+                    ");
+                    $this->db->bind(':iid', $invoiceId);
+                    $this->db->bind(':iid2', $invoiceId);
+                    $invCheck = $this->db->single();
+
+                    if ($invCheck && $invCheck->paid >= $invCheck->total - 0.01) {
+                        $this->db->query("UPDATE invoices SET status = 'Paid' WHERE id = :id");
+                        $this->db->bind(':id', $invoiceId);
+                        $this->db->execute();
+                    }
+
+                    $allocatedAmount += $allocAmt;
+                    $remaining -= $allocAmt;
+                }
+            }
+
+            // Update unallocated amount
+            $unallocated = $data['amount'] - $allocatedAmount;
+            $this->db->query("UPDATE customer_payments SET unallocated_amount = :uamt WHERE id = :pid");
+            $this->db->bind(':uamt', $unallocated);
+            $this->db->bind(':pid', $id);
+            $this->db->execute();
+
+            // 8. Record Audit Log
+            $auditLog = new AuditLog();
+            $auditLog->logAction($userId, 'UPDATE', 'Payments', "Edited Customer Payment ID: {$id} (Ref: {$data['reference']}, Amount: {$data['amount']})", $id, $oldPayment, $data);
+
+            $this->db->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            error_log("editCustomerPayment Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Edit Supplier / Service Provider Payment
+     */
+    public function editSupplierPayment($id, $data, $userId) {
+        try {
+            $this->db->beginTransaction();
+
+            // 1. Fetch old payment details
+            $this->db->query("SELECT * FROM supplier_payments WHERE id = :id");
+            $this->db->bind(':id', $id);
+            $oldPayment = $this->db->single();
+
+            if (!$oldPayment || $oldPayment->status === 'Reversed') {
+                throw new Exception("Payment record not found or is reversed.");
+            }
+
+            // 2. Fetch old transactions for journal entry
+            $this->db->query("SELECT * FROM transactions WHERE journal_entry_id = :jid");
+            $this->db->bind(':jid', $oldPayment->journal_entry_id);
+            $oldTxs = $this->db->resultSet() ?: [];
+
+            // Reverse Chart of Accounts balance impact of old transactions
+            foreach ($oldTxs as $tx) {
+                $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
+                $this->db->bind(':id', $tx->account_id);
+                $acc = $this->db->single();
+                if ($acc) {
+                    $sql = "UPDATE chart_of_accounts SET balance = balance ";
+                    $sql .= in_array($acc->account_type, ['Asset', 'Expense']) ? "- :debit + :credit " : "+ :debit - :credit ";
+                    $sql .= "WHERE id = :id";
+                    $this->db->query($sql);
+                    $this->db->bind(':debit', $tx->debit);
+                    $this->db->bind(':credit', $tx->credit);
+                    $this->db->bind(':id', $tx->account_id);
+                    $this->db->execute();
+                }
+            }
+
+            // 3. Revert old allocations
+            $this->db->query("SELECT grn_id FROM supplier_payment_allocations WHERE supplier_payment_id = :pid AND is_reversed = 0");
+            $this->db->bind(':pid', $id);
+            $oldAllocations = $this->db->resultSet() ?: [];
+
+            // Mark old allocations as reversed
+            $this->db->query("UPDATE supplier_payment_allocations SET is_reversed = 1, reversed_by = :uid, reversed_at = CURRENT_TIMESTAMP() WHERE supplier_payment_id = :pid AND is_reversed = 0");
+            $this->db->bind(':uid', $userId);
+            $this->db->bind(':pid', $id);
+            $this->db->execute();
+
+            // Update GRN statuses for old allocations
+            foreach ($oldAllocations as $alloc) {
+                $this->updateGRNStatus($alloc->grn_id);
+            }
+
+            // 4. Update Journal Entry
+            $entityName = !empty($data['supplier_id']) ? "Supplier ID " . $data['supplier_id'] : "Service Provider ID " . $data['service_provider_id'];
+            $desc = "Payment (Edited): " . $data['method'] . " to " . $entityName;
+            $this->db->query("UPDATE journal_entries SET entry_date = :date, reference = :ref, description = :desc WHERE id = :jid");
+            $this->db->bind(':date', $data['date']);
+            $this->db->bind(':ref', $data['reference']);
+            $this->db->bind(':desc', $desc);
+            $this->db->bind(':jid', $oldPayment->journal_entry_id);
+            $this->db->execute();
+
+            // Delete old transaction lines
+            $this->db->query("DELETE FROM transactions WHERE journal_entry_id = :jid");
+            $this->db->bind(':jid', $oldPayment->journal_entry_id);
+            $this->db->execute();
+
+            // Credit account determination (2050 Outstanding Cheques if Cheque, or asset account)
+            $creditAccountId = ($data['method'] === 'Cheque') 
+                ? $this->getOutstandingChequesAccountId() 
+                : $data['asset_account_id'];
+
+            $newLines = [
+                ['account_id' => $data['ap_account_id'], 'debit' => $data['amount'], 'credit' => 0],
+                ['account_id' => $creditAccountId, 'debit' => 0, 'credit' => $data['amount']]
+            ];
+
+            foreach ($newLines as $line) {
+                $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit) VALUES (:jid, :aid, :deb, :cred)");
+                $this->db->bind(':jid', $oldPayment->journal_entry_id);
+                $this->db->bind(':aid', $line['account_id']);
+                $this->db->bind(':deb', $line['debit']);
+                $this->db->bind(':cred', $line['credit']);
+                $this->db->execute();
+
+                // Update Chart of Account Balance with new lines
+                $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
+                $this->db->bind(':id', $line['account_id']);
+                $acc = $this->db->single();
+                if ($acc) {
+                    $sql = "UPDATE chart_of_accounts SET balance = balance ";
+                    $sql .= in_array($acc->account_type, ['Asset', 'Expense']) ? "+ :debit - :credit " : "- :debit + :credit ";
+                    $sql .= "WHERE id = :id";
+                    $this->db->query($sql);
+                    $this->db->bind(':debit', $line['debit']);
+                    $this->db->bind(':credit', $line['credit']);
+                    $this->db->bind(':id', $line['account_id']);
+                    $this->db->execute();
+                }
+            }
+
+            // 5. Update supplier_payments record
+            $bankAccountId = !empty($data['bank_account_id']) ? intval($data['bank_account_id']) : (!empty($data['asset_account_id']) ? intval($data['asset_account_id']) : null);
+            $this->db->query("UPDATE supplier_payments 
+                              SET vendor_id = :vid, service_provider_id = :spid, amount = :amt, payment_date = :date, 
+                                  payment_method = :method, reference = :ref, notes = :notes, bank_account_id = :bank_account_id 
+                              WHERE id = :id");
+            $this->db->bind(':vid', !empty($data['supplier_id']) ? $data['supplier_id'] : null);
+            $this->db->bind(':spid', !empty($data['service_provider_id']) ? $data['service_provider_id'] : null);
+            $this->db->bind(':amt', $data['amount']);
+            $this->db->bind(':date', $data['date']);
+            $this->db->bind(':method', $data['method']);
+            $this->db->bind(':ref', $data['reference']);
+            $this->db->bind(':notes', $data['notes'] ?? null);
+            $this->db->bind(':bank_account_id', $bankAccountId);
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            // 6. Cheque details update/insert
+            if ($data['method'] === 'Cheque') {
+                $this->db->query("SELECT id FROM cheques WHERE supplier_payment_id = :pid LIMIT 1");
+                $this->db->bind(':pid', $id);
+                $chk = $this->db->single();
+
+                if ($chk) {
+                    $this->db->query("UPDATE cheques 
+                                      SET vendor_id = :vid, service_provider_id = :spid, bank_name = :bn, 
+                                          cheque_number = :cn, amount = :amt, banking_date = :bdate, bank_account_id = :bank_account_id 
+                                      WHERE id = :id");
+                    $this->db->bind(':vid', !empty($data['supplier_id']) ? $data['supplier_id'] : null);
+                    $this->db->bind(':spid', !empty($data['service_provider_id']) ? $data['service_provider_id'] : null);
+                    $this->db->bind(':bn', $data['cheque_bank']);
+                    $this->db->bind(':cn', $data['cheque_number']);
+                    $this->db->bind(':amt', $data['amount']);
+                    $this->db->bind(':bdate', $data['cheque_date']);
+                    $this->db->bind(':bank_account_id', $bankAccountId);
+                    $this->db->bind(':id', $chk->id);
+                    $this->db->execute();
+                } else {
+                    $this->db->query("INSERT INTO cheques (vendor_id, service_provider_id, customer_id, bank_name, cheque_number, amount, banking_date, status, bank_account_id, supplier_payment_id, created_by) 
+                                      VALUES (:vid, :spid, NULL, :bn, :cn, :amt, :bdate, 'Pending', :bank_account_id, :supplier_payment_id, :uid)");
+                    $this->db->bind(':vid', !empty($data['supplier_id']) ? $data['supplier_id'] : null);
+                    $this->db->bind(':spid', !empty($data['service_provider_id']) ? $data['service_provider_id'] : null);
+                    $this->db->bind(':bn', $data['cheque_bank']);
+                    $this->db->bind(':cn', $data['cheque_number']);
+                    $this->db->bind(':amt', $data['amount']);
+                    $this->db->bind(':bdate', $data['cheque_date']);
+                    $this->db->bind(':bank_account_id', $bankAccountId);
+                    $this->db->bind(':supplier_payment_id', $id);
+                    $this->db->bind(':uid', $userId);
+                    $this->db->execute();
+                }
+            }
+
+            // 7. Handle New Allocations
+            $allocatedAmount = 0;
+            if (($data['allocation_type'] ?? 'auto') === 'auto') {
+                $unpaid = !empty($data['supplier_id']) ? $this->getSupplierUnpaidGRNs($data['supplier_id']) : $this->getServiceProviderUnpaidGRNs($data['service_provider_id']);
+                $remaining = $data['amount'];
+                foreach ($unpaid as $g) {
+                    if ($remaining <= 0.01) break;
+                    $allocAmt = min($remaining, $g->balance_due);
+
+                    $this->db->query("INSERT INTO supplier_payment_allocations (supplier_payment_id, grn_id, amount) VALUES (:pid, :grn_id, :amt)");
+                    $this->db->bind(':pid', $id);
+                    $this->db->bind(':grn_id', $g->id);
+                    $this->db->bind(':amt', $allocAmt);
+                    $this->db->execute();
+
+                    $this->updateGRNStatus($g->id);
+
+                    $allocatedAmount += $allocAmt;
+                    $remaining -= $allocAmt;
+                }
+            } elseif (($data['allocation_type'] ?? '') === 'manual' && !empty($data['allocations'])) {
+                $remaining = $data['amount'];
+                foreach ($data['allocations'] as $grnId => $allocAmt) {
+                    $allocAmt = floatval($allocAmt);
+                    if ($allocAmt <= 0) continue;
+                    if ($remaining <= 0.01) break;
+                    $allocAmt = min($remaining, $allocAmt);
+
+                    $this->db->query("INSERT INTO supplier_payment_allocations (supplier_payment_id, grn_id, amount) VALUES (:pid, :grn_id, :amt)");
+                    $this->db->bind(':pid', $id);
+                    $this->db->bind(':grn_id', $grnId);
+                    $this->db->bind(':amt', $allocAmt);
+                    $this->db->execute();
+
+                    $this->updateGRNStatus($grnId);
+
+                    $allocatedAmount += $allocAmt;
+                    $remaining -= $allocAmt;
+                }
+            }
+
+            // Update unallocated amount
+            $unallocated = $data['amount'] - $allocatedAmount;
+            $this->db->query("UPDATE supplier_payments SET unallocated_amount = :uamt WHERE id = :pid");
+            $this->db->bind(':uamt', $unallocated);
+            $this->db->bind(':pid', $id);
+            $this->db->execute();
+
+            // 8. Audit Log
+            $auditLog = new AuditLog();
+            $auditLog->logAction($userId, 'UPDATE', 'Payments', "Edited Supplier/Service Provider Payment ID: {$id} (Ref: {$data['reference']}, Amount: {$data['amount']})", $id, $oldPayment, $data);
+
+            $this->db->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            error_log("editSupplierPayment Error: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**

@@ -45,7 +45,7 @@
 
     .filter-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 15px;
         align-items: end;
     }
@@ -128,6 +128,16 @@
     .data-table tbody tr:hover { background: var(--slate-50); }
 
     /* Badges */
+    .badge-entity {
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        font-size: 11px;
+        font-weight: 700;
+    }
+    .badge-entity-Customer { background: #dbeafe; color: #1e40af; }
+    .badge-entity-Supplier { background: #f3e8ff; color: #6b21a8; }
+    .badge-entity-ServiceProvider { background: #e0e7ff; color: #3730a3; }
+
     .badge-method {
         padding: 4px 8px;
         border-radius: var(--radius-sm);
@@ -167,6 +177,11 @@
         background: var(--slate-100);
         border-color: var(--slate-400);
     }
+    .btn-action-small.btn-edit {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    .btn-action-small.btn-edit:hover { background: #eff6ff; }
     .btn-action-small.btn-danger {
         border-color: var(--danger);
         color: var(--danger);
@@ -196,6 +211,66 @@
     }
     .page-btn:hover { background: var(--slate-50); border-color: var(--slate-400); }
     .page-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+    /* Modal Styling */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+    }
+    .modal-card {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        width: 100%;
+        max-width: 650px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border: 1px solid var(--slate-200);
+    }
+    .modal-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--slate-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--slate-800);
+    }
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: var(--slate-400);
+        cursor: pointer;
+    }
+    .modal-close:hover { color: var(--slate-700); }
+    .modal-body { padding: 20px; }
+    .modal-footer {
+        padding: 16px 20px;
+        border-top: 1px solid var(--slate-200);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: var(--slate-50);
+        border-bottom-left-radius: var(--radius-lg);
+        border-bottom-right-radius: var(--radius-lg);
+    }
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
 </style>
 
 <div class="history-wrapper">
@@ -217,8 +292,17 @@
         <form method="GET" action="<?= APP_URL ?>/customerpayment/history">
             <div class="filter-grid">
                 <div class="form-group">
+                    <label>Entity Type</label>
+                    <select name="entity_type" class="form-control">
+                        <option value="">All Entities</option>
+                        <option value="Customer" <?= ($data['filters']['entity_type'] ?? '') === 'Customer' ? 'selected' : '' ?>>Customer</option>
+                        <option value="Supplier" <?= ($data['filters']['entity_type'] ?? '') === 'Supplier' ? 'selected' : '' ?>>Supplier</option>
+                        <option value="Service Provider" <?= ($data['filters']['entity_type'] ?? '') === 'Service Provider' ? 'selected' : '' ?>>Service Provider</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Search</label>
-                    <input type="text" name="search" class="form-control" placeholder="Ref or Customer Name..." value="<?= htmlspecialchars($data['filters']['search']) ?>">
+                    <input type="text" name="search" class="form-control" placeholder="Ref or Party Name..." value="<?= htmlspecialchars($data['filters']['search']) ?>">
                 </div>
                 <div class="form-group">
                     <label>Start Date</label>
@@ -260,7 +344,8 @@
                 <tr>
                     <th>Date</th>
                     <th>Reference</th>
-                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Party / Name</th>
                     <th>Method</th>
                     <th>Amount</th>
                     <th>Status</th>
@@ -270,9 +355,17 @@
             <tbody>
                 <?php if (!empty($data['payments_history'])): ?>
                     <?php foreach($data['payments_history'] as $ph): ?>
+                    <?php 
+                        $entityClass = str_replace(' ', '', $ph->entity_type ?? 'Customer');
+                    ?>
                     <tr>
                         <td><?= htmlspecialchars($ph->payment_date ?? '') ?></td>
                         <td><strong><?= htmlspecialchars($ph->reference ?? '') ?></strong></td>
+                        <td>
+                            <span class="badge-entity badge-entity-<?= $entityClass ?>">
+                                <?= htmlspecialchars($ph->entity_type ?? 'Customer') ?>
+                            </span>
+                        </td>
                         <td><?= htmlspecialchars($ph->counterparty_name ?? '') ?></td>
                         <td>
                             <span class="badge-method method-<?= str_replace(' ', '', $ph->payment_method ?? '') ?>">
@@ -287,19 +380,29 @@
                         </td>
                         <td style="text-align: right;">
                             <?php if (($ph->status ?? '') === 'Active'): ?>
-                            <button type="button" class="btn-action-small btn-danger" onclick="triggerReversal(<?= $ph->id ?>, <?= $ph->amount ?>)">
+                            <button type="button" class="btn-action-small btn-edit" onclick="triggerEdit('<?= htmlspecialchars($ph->entity_type ?? 'Customer') ?>', <?= $ph->id ?>)">
+                                <i class="ph ph-pencil-simple"></i> Edit
+                            </button>
+                            <button type="button" class="btn-action-small btn-danger" onclick="triggerReversal('<?= htmlspecialchars($ph->entity_type ?? 'Customer') ?>', <?= $ph->id ?>, <?= $ph->amount ?>)">
                                 <i class="ph ph-arrow-u-up-left"></i> Reverse
                             </button>
                             <?php endif; ?>
-                            <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $ph->id ?>" target="_blank" class="btn-action-small">
+
+                            <?php if (($ph->entity_type ?? 'Customer') === 'Customer'): ?>
+                            <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $ph->id ?>" target="_blank" class="btn-action-small" title="Print Receipt">
                                 <i class="ph ph-printer"></i>
                             </a>
+                            <?php else: ?>
+                            <a href="<?= APP_URL ?>/payment/receipt/<?= $ph->id ?>" target="_blank" class="btn-action-small" title="Print Voucher">
+                                <i class="ph ph-printer"></i>
+                            </a>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7" style="text-align: center; color: var(--slate-500); padding: 40px;">No payments match your criteria.</td>
+                        <td colspan="8" style="text-align: center; color: var(--slate-500); padding: 40px;">No payment records match your criteria.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -313,10 +416,9 @@
             </div>
             <div class="page-controls">
                 <?php 
-                    // Build query string for pagination links
                     $queryParams = $_GET;
-                    unset($queryParams['url']); // remove router param
-                    unset($queryParams['page']); // we will append page manually
+                    unset($queryParams['url']);
+                    unset($queryParams['page']);
                     $qStr = http_build_query($queryParams);
                     $baseLink = APP_URL . '/customerpayment/history?' . ($qStr ? $qStr . '&' : '');
                 ?>
@@ -329,11 +431,197 @@
     </div>
 </div>
 
+<!-- Edit Payment Modal -->
+<div id="editPaymentModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3><i class="ph ph-pencil-simple" style="color: var(--primary);"></i> Edit Payment Record</h3>
+            <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form method="POST" action="<?= APP_URL ?>/customerpayment/editPayment" id="editPaymentForm">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+            <input type="hidden" name="payment_id" id="edit_payment_id" value="0">
+            <input type="hidden" name="entity_type" id="edit_entity_type" value="Customer">
+            <input type="hidden" name="customer_id" id="edit_customer_id" value="0">
+            <input type="hidden" name="supplier_id" id="edit_supplier_id" value="0">
+            <input type="hidden" name="service_provider_id" id="edit_service_provider_id" value="0">
+
+            <div class="modal-body">
+                <div class="grid-2" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>Category / Entity</label>
+                        <input type="text" id="edit_entity_display" class="form-control" readonly style="background: var(--slate-100); font-weight: 700;">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Date</label>
+                        <input type="date" name="payment_date" id="edit_payment_date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>Reference #</label>
+                        <input type="text" name="reference" id="edit_reference" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select name="payment_method" id="edit_payment_method" class="form-control" onchange="toggleChequeEditFields()" required>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cheque Details Section -->
+                <div id="edit_cheque_section" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; padding: 15px; border-radius: var(--radius-md); margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; color: #0369a1;"><i class="ph ph-bank"></i> Cheque Information</h4>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Bank Name</label>
+                            <input type="text" name="cheque_bank" id="edit_cheque_bank" class="form-control" placeholder="e.g. Commercial Bank">
+                        </div>
+                        <div class="form-group">
+                            <label>Cheque Number (6 digits)</label>
+                            <input type="text" name="cheque_number" id="edit_cheque_number" class="form-control" placeholder="123456" maxlength="6">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Cheque Date</label>
+                        <input type="date" name="cheque_date" id="edit_cheque_date" class="form-control">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label id="edit_asset_label">Bank / Asset Account</label>
+                        <select name="asset_account_id" id="edit_asset_account_id" class="form-control" required>
+                            <?php if (!empty($data['asset_accounts'])): ?>
+                                <?php foreach ($data['asset_accounts'] as $acc): ?>
+                                <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_code . ' - ' . $acc->account_name) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label id="edit_control_label">Control Account (AR / AP)</label>
+                        <select name="ar_account_id" id="edit_ar_account_id" class="form-control" required>
+                            <?php if (!empty($data['accounts'])): ?>
+                                <?php foreach ($data['accounts'] as $acc): ?>
+                                <option value="<?= $acc->id ?>"><?= htmlspecialchars($acc->account_code . ' - ' . $acc->account_name) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Amount (Rs)</label>
+                    <input type="number" step="0.01" name="amount" id="edit_amount" class="form-control" style="font-size: 16px; font-weight: 700; font-family: monospace;" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Notes / Memo</label>
+                    <textarea name="notes" id="edit_notes" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="ph ph-check"></i> Save Changes & Update Accounts</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-function triggerReversal(id, amount) {
-    const msg = `Are you absolutely sure you want to REVERSE this customer payment of Rs ${parseFloat(amount).toLocaleString()}?\n\nThis will restore the unpaid balance of the allocated invoices, bounce associated cheques, and create reversing journal entries in the General Ledger.`;
+function triggerReversal(entityType, id, amount) {
+    const msg = `Are you absolutely sure you want to REVERSE this ${entityType} payment of Rs ${parseFloat(amount).toLocaleString()}?\n\nThis will restore unpaid balances, reverse ledger/CoA entries, and void associated cheque records.`;
     if (confirm(msg)) {
-        window.location.href = `<?= APP_URL ?>/customerpayment/reverseCustomerPayment/${id}?from=history`;
+        if (entityType === 'Customer') {
+            window.location.href = `<?= APP_URL ?>/customerpayment/reverseCustomerPayment/${id}?from=history`;
+        } else {
+            window.location.href = `<?= APP_URL ?>/payment/reverseSupplierPayment/${id}?from=history`;
+        }
     }
+}
+
+function triggerEdit(entityType, id) {
+    fetch(`<?= APP_URL ?>/customerpayment/getEditPaymentDataJson/${encodeURIComponent(entityType)}/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert(data.message || 'Failed to load payment details.');
+                return;
+            }
+            populateEditModal(data);
+        })
+        .catch(err => {
+            console.error(err);
+            alert('An error occurred while fetching payment data.');
+        });
+}
+
+function populateEditModal(data) {
+    const p = data.payment;
+    document.getElementById('edit_payment_id').value = p.id;
+    document.getElementById('edit_entity_type').value = data.type;
+    document.getElementById('edit_entity_display').value = `${data.type}: ${p.counterparty_name || 'N/A'}`;
+    
+    if (data.type === 'Customer') {
+        document.getElementById('edit_customer_id').value = p.customer_id;
+        document.getElementById('edit_supplier_id').value = 0;
+        document.getElementById('edit_service_provider_id').value = 0;
+        document.getElementById('edit_control_label').innerText = 'Accounts Receivable Account (AR)';
+        document.getElementById('edit_ar_account_id').name = 'ar_account_id';
+        if (data.ar_account_id) document.getElementById('edit_ar_account_id').value = data.ar_account_id;
+    } else {
+        document.getElementById('edit_customer_id').value = 0;
+        document.getElementById('edit_supplier_id').value = p.vendor_id || 0;
+        document.getElementById('edit_service_provider_id').value = p.service_provider_id || 0;
+        document.getElementById('edit_control_label').innerText = 'Accounts Payable Account (AP)';
+        document.getElementById('edit_ar_account_id').name = 'ap_account_id';
+        if (data.ap_account_id) document.getElementById('edit_ar_account_id').value = data.ap_account_id;
+    }
+
+    document.getElementById('edit_payment_date').value = p.payment_date;
+    document.getElementById('edit_reference').value = p.reference;
+    document.getElementById('edit_payment_method').value = p.payment_method;
+    document.getElementById('edit_amount').value = p.amount;
+    document.getElementById('edit_notes').value = p.notes || '';
+
+    if (data.asset_account_id) {
+        document.getElementById('edit_asset_account_id').value = data.asset_account_id;
+    }
+
+    // Cheque fields
+    if (data.cheque) {
+        document.getElementById('edit_cheque_bank').value = data.cheque.bank_name || '';
+        document.getElementById('edit_cheque_number').value = data.cheque.cheque_number || '';
+        document.getElementById('edit_cheque_date').value = data.cheque.banking_date || '';
+    } else {
+        document.getElementById('edit_cheque_bank').value = '';
+        document.getElementById('edit_cheque_number').value = '';
+        document.getElementById('edit_cheque_date').value = '';
+    }
+
+    toggleChequeEditFields();
+
+    // Show modal
+    document.getElementById('editPaymentModal').style.display = 'flex';
+}
+
+function toggleChequeEditFields() {
+    const method = document.getElementById('edit_payment_method').value;
+    const sec = document.getElementById('edit_cheque_section');
+    if (method === 'Cheque') {
+        sec.style.display = 'block';
+    } else {
+        sec.style.display = 'none';
+    }
+}
+
+function closeEditModal() {
+    document.getElementById('editPaymentModal').style.display = 'none';
 }
 </script>
