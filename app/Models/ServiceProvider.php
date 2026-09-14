@@ -168,7 +168,7 @@ class ServiceProvider {
 
     public function getActivityLedger($id) {
         $sql = "
-            SELECT 'GRN' as type, grn.id, grn.grn_number as ref, grn.grn_date as date,
+            SELECT 'SRN' as type, grn.id, grn.grn_number as ref, grn.grn_date as date,
                    0 as debit, 
                    COALESCE(grn.total_amount, (SELECT COALESCE(SUM(total), 0) FROM grn_items WHERE grn_id = grn.id)) as credit, 
                    grn.created_at

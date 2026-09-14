@@ -669,7 +669,7 @@
             searchLabel.innerText = 'Search Service Provider *';
             contactLabel.innerText = 'Provider Contact Info';
             searchInput.placeholder = 'Type to search service provider by name, phone, address...';
-            if (welcomeText) welcomeText.innerText = 'Select a service provider above to load GRN balances.';
+            if (welcomeText) welcomeText.innerText = 'Select a service provider above to load SRN balances.';
             if (welcomeIcon) {
                 welcomeIcon.className = 'ph ph-truck';
                 welcomeIcon.style.color = 'var(--primary)';

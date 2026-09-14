@@ -6,7 +6,7 @@ $provider = $data['provider'];
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Service Bill <?= htmlspecialchars($bill->grn_number) ?></title>
+    <title>Service Bill (SRN) <?= htmlspecialchars((strpos($bill->grn_number, 'SRN') === 0 ? '' : 'SRN-') . $bill->grn_number) ?></title>
     <style>
         @media print { 
             @page { margin: 0mm; size: auto; } 
@@ -51,13 +51,13 @@ $provider = $data['provider'];
     <div class="po-box">
         <div class="header">
             <div>
-                <h2 style="margin:0; color:#333;">Service Bill Invoice</h2>
+                <h2 style="margin:0; color:#333;">Service Bill Invoice (SRN)</h2>
                 <div style="font-size: 13px; color: #666; margin-top: 5px;">
                     Category: <strong><?= htmlspecialchars($provider->service_category ?: 'General') ?></strong>
                 </div>
             </div>
             <div style="text-align: right;">
-                <h1 class="title"><?= htmlspecialchars($bill->grn_number) ?></h1>
+                <h1 class="title"><?= htmlspecialchars((strpos($bill->grn_number, 'SRN') === 0 ? '' : 'SRN-') . $bill->grn_number) ?></h1>
                 <div style="font-size: 14px;">
                     <strong>Bill Date:</strong> <?= date('F j, Y', strtotime($bill->grn_date)) ?><br>
                     <strong>Due Date:</strong> <?= date('F j, Y', strtotime($bill->due_date)) ?><br>

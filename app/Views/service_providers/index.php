@@ -482,15 +482,15 @@ foreach ($data['service_providers'] ?? [] as $s) {
     <?php $sup = $data['selected_service_provider']; $stats = $data['stats']; ?>
     
     <div id="modal-header-source" class="hidden">
-        <div style="display: flex; gap: 15px; align-items: center; min-width: 0; flex: 1;">
-            <div class="avatar-circle" style="width: 40px; height: 40px; font-size: 16px; background: var(--c-blue-light); color: var(--c-blue); flex-shrink: 0;">
+        <div style="display: flex; gap: 15px; align-items: center; min-width: 0; flex: 1; margin-right: 15px;">
+            <div class="avatar-circle" style="width: 42px; height: 42px; font-size: 16px; background: var(--c-blue-light); color: var(--c-blue); flex-shrink: 0;">
                 <?= strtoupper(substr($sup->name ?? '', 0, 2)) ?>
             </div>
-            <div style="min-width: 0; max-width: 280px;">
-                <h3 class="modal-title" style="font-size: 16.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;" title="<?= htmlspecialchars($sup->name ?? '') ?>">
+            <div style="min-width: 0; flex: 1;">
+                <h3 class="modal-title" style="font-size: 17px; font-weight: 700; word-break: break-word; line-height: 1.2; margin: 0 0 3px 0;" title="<?= htmlspecialchars($sup->name ?? '') ?>">
                     <?= htmlspecialchars($sup->name ?? '') ?>
                 </h3>
-                <div style="font-size: 11px; color: var(--t-secondary); display: flex; gap: 10px; margin-top: 2px; white-space: nowrap; overflow: hidden; align-items: center;">
+                <div style="font-size: 11.5px; color: var(--t-secondary); display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
                     <span>📞 <?= !empty($sup->phone) ? htmlspecialchars($sup->phone) : '<span style="color:var(--c-red); font-weight:600;">Missing</span>' ?></span>
                     <span>✉️ <?= !empty($sup->email) ? htmlspecialchars($sup->email) : '<span style="color:var(--c-red); font-weight:600;">Missing</span>' ?></span>
                     <span style="color:var(--c-purple); font-weight:600;">⚡ <?= htmlspecialchars($sup->service_category ?: 'General') ?></span>
@@ -499,16 +499,16 @@ foreach ($data['service_providers'] ?? [] as $s) {
         </div>
         
         <!-- Header Statistics Cards -->
-        <div style="display: flex; gap: 8px; margin-right: 18px; flex-shrink: 0; align-items: center;">
-            <div style="background: var(--c-fill); padding: 5px 10px; border-radius: var(--r-sm); text-align: center; min-width: 95px;">
+        <div style="display: flex; gap: 8px; margin-right: 14px; flex-shrink: 0; align-items: center;">
+            <div style="background: var(--c-fill); padding: 5px 12px; border-radius: var(--r-sm); text-align: center; min-width: 95px;">
                 <div style="font-size: 8.5px; color: var(--t-label); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Total Billed</div>
                 <div style="font-size: 13px; font-weight: bold; color: var(--t-primary); margin-top: 1px; font-family: var(--f-mono);">Rs: <?= number_format($stats->total_billed, 2) ?></div>
             </div>
-            <div style="background: var(--c-green-light); padding: 5px 10px; border-radius: var(--r-sm); border: 0.5px solid rgba(52,199,89,0.2); text-align: center; min-width: 95px;">
+            <div style="background: var(--c-green-light); padding: 5px 12px; border-radius: var(--r-sm); border: 0.5px solid rgba(52,199,89,0.2); text-align: center; min-width: 95px;">
                 <div style="font-size: 8.5px; color: var(--c-green); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Total Paid</div>
                 <div style="font-size: 13px; font-weight: bold; color: var(--c-green); margin-top: 1px; font-family: var(--f-mono);">Rs: <?= number_format($stats->total_paid, 2) ?></div>
             </div>
-            <div style="background: <?= $stats->outstanding > 0 ? 'var(--c-red-light)' : 'var(--c-green-light)' ?>; padding: 5px 10px; border-radius: var(--r-sm); border: 0.5px solid <?= $stats->outstanding > 0 ? 'rgba(255,59,48,0.2)' : 'rgba(52,199,89,0.2)' ?>; text-align: center; min-width: 95px;">
+            <div style="background: <?= $stats->outstanding > 0 ? 'var(--c-red-light)' : 'var(--c-green-light)' ?>; padding: 5px 12px; border-radius: var(--r-sm); border: 0.5px solid <?= $stats->outstanding > 0 ? 'rgba(255,59,48,0.2)' : 'rgba(52,199,89,0.2)' ?>; text-align: center; min-width: 95px;">
                 <div style="font-size: 8.5px; color: <?= $stats->outstanding > 0 ? 'var(--c-red)' : 'var(--c-green)' ?>; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Outstanding</div>
                 <div style="font-size: 13px; font-weight: bold; color: <?= $stats->outstanding > 0 ? 'var(--c-red)' : 'var(--c-green)' ?>; margin-top: 1px; font-family: var(--f-mono);">Rs: <?= number_format($stats->outstanding, 2) ?></div>
             </div>
@@ -521,7 +521,7 @@ foreach ($data['service_providers'] ?? [] as $s) {
         <!-- Tab Navigation -->
         <div class="tabs">
             <button class="tab-btn active" onclick="switchModalTab('ledger')" id="mbtn_ledger">Activity Ledger</button>
-            <button class="tab-btn" onclick="switchModalTab('bills')" id="mbtn_bills">Service Bills</button>
+            <button class="tab-btn" onclick="switchModalTab('bills')" id="mbtn_bills">Service Bills (SRN)</button>
             <button class="tab-btn" onclick="switchModalTab('profile')" id="mbtn_profile">Profile & Settings</button>
         </div>
 
@@ -544,11 +544,15 @@ foreach ($data['service_providers'] ?? [] as $s) {
                     <?php else: foreach($data['ledger'] as $l): ?>
                         <tr>
                             <td style="color:var(--t-secondary); font-size:12px;"><?= date('M d, Y', strtotime($l->date)) ?></td>
-                            <td><strong><?= htmlspecialchars($l->type) ?></strong></td>
                             <td>
-                                <?php if($l->type == 'GRN' || $l->type == 'Service Bill'): ?>
-                                    <a href="<?= APP_URL ?>/serviceprovider/bill/<?= $l->id ?>" target="_blank" style="color:var(--c-blue); font-weight:bold; text-decoration:none;">
-                                        <?= htmlspecialchars($l->ref) ?> ↗
+                                <span class="sf-badge <?= ($l->type == 'SRN' || $l->type == 'GRN' || $l->type == 'Service Bill') ? 'badge-Sent' : ($l->type == 'Payment' ? 'badge-Received' : 'badge-Unpaid') ?>" style="font-size: 10px; padding: 2px 7px;">
+                                    <?= ($l->type == 'GRN' || $l->type == 'Service Bill') ? 'SRN' : htmlspecialchars($l->type) ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if($l->type == 'SRN' || $l->type == 'GRN' || $l->type == 'Service Bill'): ?>
+                                    <a href="<?= APP_URL ?>/serviceprovider/bill/<?= $l->id ?>" target="_blank" style="color:var(--c-blue); font-weight:bold; text-decoration:none; font-family:var(--f-mono);">
+                                        <?= (strpos($l->ref, 'SRN') === 0) ? htmlspecialchars($l->ref) : 'SRN-' . htmlspecialchars($l->ref) ?> ↗
                                     </a>
                                 <?php elseif($l->type == 'Supplier Return'): ?>
                                     <a href="<?= APP_URL ?>/supplier-return/show/<?= $l->id ?>" target="_blank" style="color:var(--c-red); font-weight:bold; text-decoration:none;">
@@ -572,7 +576,7 @@ foreach ($data['service_providers'] ?? [] as $s) {
         <!-- TAB 2: Service Bills -->
         <div id="mtab_bills" class="tab-content" style="padding: 22px; overflow-y: auto; flex: 1;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h4 style="margin:0; font-size:15px; font-weight:700; text-transform:uppercase; color:var(--t-secondary);">Service Bills History</h4>
+                <h4 style="margin:0; font-size:15px; font-weight:700; text-transform:uppercase; color:var(--t-secondary);">Service Bills (SRN) History</h4>
                 <button type="button" class="sf-btn success" onclick="openModal('addBillModal')">
                     <i class="fa-solid fa-plus"></i> Record Service Bill
                 </button>
@@ -581,7 +585,7 @@ foreach ($data['service_providers'] ?? [] as $s) {
                 <thead>
                     <tr>
                         <th>Bill Date</th>
-                        <th>Bill Number</th>
+                        <th>SRN Number</th>
                         <th>Service Period</th>
                         <th>Due Date</th>
                         <th>Status</th>
@@ -596,7 +600,7 @@ foreach ($data['service_providers'] ?? [] as $s) {
                     <?php else: foreach($data['bills'] as $b): ?>
                         <tr>
                             <td style="color:var(--t-secondary); font-size:12px;"><?= date('M d, Y', strtotime($b->grn_date)) ?></td>
-                            <td><strong style="color: var(--c-blue); font-family: var(--f-mono);"><?= htmlspecialchars($b->grn_number) ?></strong></td>
+                            <td><strong style="color: var(--c-blue); font-family: var(--f-mono);">SRN-<?= htmlspecialchars($b->grn_number) ?></strong></td>
                             <td><?= htmlspecialchars($b->service_period ?: 'N/A') ?></td>
                             <td style="color:var(--c-red); font-size:12px; font-weight:500;"><?= $b->due_date ? date('M d, Y', strtotime($b->due_date)) : 'N/A' ?></td>
                             <td>
@@ -618,27 +622,27 @@ foreach ($data['service_providers'] ?? [] as $s) {
         </div>
 
         <!-- TAB 3: Profile & Settings -->
-        <div id="mtab_profile" class="tab-content" style="padding: 22px; overflow-y: auto; flex: 1;">
-            <h4 style="margin:0 0 16px 0; border-bottom: 0.5px solid var(--c-separator); padding-bottom: 8px; font-size:14px; font-weight:700; text-transform:uppercase; color:var(--t-secondary);">
+        <div id="mtab_profile" class="tab-content" style="padding: 24px; overflow-y: auto; flex: 1;">
+            <h4 style="margin:0 0 20px 0; border-bottom: 0.5px solid var(--c-separator); padding-bottom: 10px; font-size:13px; font-weight:700; text-transform:uppercase; color:var(--t-secondary); letter-spacing:0.05em;">
                 Update Service Provider Details
             </h4>
             
-            <form action="<?= APP_URL ?>/serviceprovider/index/<?= $sup->id ?>" method="POST" style="max-width: 650px;">
+            <form action="<?= APP_URL ?>/serviceprovider/index/<?= $sup->id ?>" method="POST" style="width: 100%;">
                 <input type="hidden" name="action" value="update_service_provider">
                 <input type="hidden" name="service_provider_id" value="<?= $sup->id ?>">
                 
-                <div class="grid-2">
+                <div class="grid-2" style="gap: 20px;">
                     <div class="sf-group">
                         <label>Provider / Company Name *</label>
                         <input type="text" name="name" class="sf-input" value="<?= htmlspecialchars($sup->name) ?>" required>
                     </div>
                     <div class="sf-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" class="sf-input" value="<?= htmlspecialchars($sup->email) ?>">
+                        <input type="email" name="email" class="sf-input" value="<?= htmlspecialchars($sup->email) ?>" placeholder="e.g. info@company.lk">
                     </div>
                 </div>
 
-                <div class="grid-2">
+                <div class="grid-2" style="gap: 20px;">
                     <div class="sf-group">
                         <label>Phone Number</label>
                         <input type="text" name="phone" class="sf-input" value="<?= htmlspecialchars($sup->phone) ?>">
@@ -669,7 +673,7 @@ foreach ($data['service_providers'] ?? [] as $s) {
                     <input type="text" name="service_category_custom" class="sf-input" value="<?= $isOther ? htmlspecialchars($currentCat) : '' ?>">
                 </div>
 
-                <div class="grid-2">
+                <div class="grid-2" style="gap: 20px;">
                     <div class="sf-group">
                         <label>Status</label>
                         <select name="status" class="sf-input">
@@ -679,12 +683,14 @@ foreach ($data['service_providers'] ?? [] as $s) {
                     </div>
                     <div class="sf-group">
                         <label>Physical Address</label>
-                        <textarea name="address" class="sf-input" rows="2" style="resize:vertical; min-height:50px;"><?= htmlspecialchars($sup->address) ?></textarea>
+                        <textarea name="address" class="sf-input" rows="3" style="resize:vertical; min-height:42px;"><?= htmlspecialchars($sup->address) ?></textarea>
                     </div>
                 </div>
                 
-                <div style="text-align: right; margin-top: 14px;">
-                    <button type="submit" class="sf-btn primary">Save Changes</button>
+                <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 0.5px solid var(--c-separator);">
+                    <button type="submit" class="sf-btn primary" style="padding: 10px 32px; font-size: 14px; border-radius: var(--r-pill);">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
                 </div>
             </form>
         </div>
