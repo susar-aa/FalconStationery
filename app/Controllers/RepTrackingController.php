@@ -1001,6 +1001,7 @@ class RepTrackingController extends Controller {
             'delivery' => $delivery,
             'invoices' => $invoices,
             'credit_invoices' => $creditInvoices,
+            'credit_bills' => $creditInvoices,
             'balancing' => $balancing
         ]);
         exit;
