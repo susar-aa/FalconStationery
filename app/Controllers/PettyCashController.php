@@ -535,4 +535,81 @@ class PettyCashController extends Controller {
         header('Location: ' . APP_URL . '/pettycash');
         exit;
     }
+
+    public function export_excel() {
+        $this->checkPermission('petty_cash', 'view');
+
+        $filters = [
+            'type' => $_GET['type'] ?? '',
+            'status' => $_GET['status'] ?? '',
+            'date_from' => $_GET['date_from'] ?? '',
+            'date_to' => $_GET['date_to'] ?? '',
+            'search' => trim($_GET['search'] ?? ''),
+            'voucher_number' => trim($_GET['voucher_number'] ?? ''),
+            'paid_to' => trim($_GET['paid_to'] ?? ''),
+            'rep_route_id' => $_GET['rep_route_id'] ?? '',
+            'rep_user_id' => $_GET['rep_user_id'] ?? '',
+        ];
+
+        // Fetch all matching transactions (no limit)
+        $transactions = $this->pcTxModel->getTransactions($filters, 100000, 0);
+
+        $filename = 'Petty_Cash_Transactions_' . date('Ymd_His') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+
+        // Output UTF-8 BOM for Excel formatting
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        // Header row
+        fputcsv($output, [
+            'Voucher No',
+            'Date',
+            'Type',
+            'Category / Account',
+            'Paid To / Payee',
+            'Route',
+            'Rep Name',
+            'Amount (LKR)',
+            'Status',
+            'Created By',
+            'Description',
+            'Reference'
+        ]);
+
+        foreach ($transactions as $tx) {
+            $repName = !empty($tx->rep_first_name) ? trim($tx->rep_first_name . ' ' . $tx->rep_last_name) : '';
+            $category = '';
+            if ($tx->type === 'allocation') {
+                $category = 'Allocation';
+            } elseif ($tx->type === 'reimbursement') {
+                $category = 'Reimbursement';
+            } else {
+                $category = $tx->offset_account_name ?: 'Petty Cash Control';
+            }
+
+            $amtStr = ($tx->type === 'expense' ? '-' : '+') . number_format((float)$tx->amount, 2, '.', '');
+
+            fputcsv($output, [
+                $tx->voucher_number ?: 'PCV-PENDING',
+                date('Y-m-d', strtotime($tx->transaction_date)),
+                ucfirst($tx->type),
+                $category,
+                $tx->paid_to ?: 'N/A',
+                $tx->route_name ?: 'None',
+                $repName ?: 'N/A',
+                $amtStr,
+                $tx->status,
+                $tx->creator_name ?: 'System',
+                $tx->description ?: '',
+                $tx->reference ?: ''
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
 }

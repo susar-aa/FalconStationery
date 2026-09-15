@@ -68,6 +68,14 @@ if (!function_exists('buildPettyCashUrl')) {
             window.closeModal(event.target.id);
         }
     });
+
+    window.exportTransactionsExcel = function() {
+        var form = document.querySelector('#transactionsTab form.filter-card');
+        if (!form) return;
+        var formData = new FormData(form);
+        var params = new URLSearchParams(formData);
+        window.location.href = '<?= APP_URL ?>/pettycash/export_excel?' + params.toString();
+    };
 </script>
 
 <style>
@@ -611,6 +619,9 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                     <div class="filter-actions">
                         <button type="submit" class="sf-btn primary" style="height: 36px; padding: 0 16px;"><i class="fa-solid fa-filter"></i> Filter</button>
                         <a href="<?= APP_URL ?>/pettycash" class="sf-btn neutral" style="height: 36px; padding: 0 14px;"><i class="fa-solid fa-rotate-left"></i> Reset</a>
+                        <button type="button" onclick="window.exportTransactionsExcel()" class="sf-btn neutral" style="height: 36px; padding: 0 14px; color: #166534; border-color: #bbf7d0; background: #f0fdf4;" title="Export to Excel">
+                            <i class="fa-solid fa-file-excel"></i> Export Excel
+                        </button>
                     </div>
                 </form>
 
