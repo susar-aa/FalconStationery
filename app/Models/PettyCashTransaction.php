@@ -7,6 +7,16 @@ require_once __DIR__ . '/ChartOfAccount.php';
 
 class PettyCashTransaction {
 
+    public function getChequeInHandAccountId(): int {
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1010' OR (account_type = 'Asset' AND (account_name LIKE '%Cheque%' OR account_name LIKE '%Check%')) ORDER BY CASE WHEN account_code = '1010' THEN 1 ELSE 2 END LIMIT 1");
+        $row = $this->db->single();
+        if ($row) return (int)$row->id;
+
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_type = 'Asset' AND (account_name LIKE '%Cheque%' OR account_name LIKE '%Check%') LIMIT 1");
+        $row2 = $this->db->single();
+        return $row2 ? (int)$row2->id : $this->getCashInHandAccountId();
+    }
+
     public function getCashInHandAccountId(): int {
         $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1000' OR (account_type = 'Asset' AND (account_name LIKE '%Cash in Hand%' OR account_name LIKE '%Cash%')) ORDER BY CASE WHEN account_code = '1000' THEN 1 ELSE 2 END LIMIT 1");
         $row = $this->db->single();
@@ -237,10 +247,34 @@ class PettyCashTransaction {
                 return "Allocation amount must be greater than zero.";
             }
 
-            $sourceAccId = intval($data['bank_account_id']);
+            $paymentMethod = $data['payment_method'] ?? 'Bank Transfer';
+            $sourceAccId = intval($data['bank_account_id'] ?? 0);
+
+            if ($paymentMethod === 'Cash' || $sourceAccId <= 0) {
+                if ($paymentMethod === 'Cash') {
+                    $sourceAccId = $this->getCashInHandAccountId();
+                } elseif ($paymentMethod === 'Cheque') {
+                    $sourceAccId = $this->getChequeInHandAccountId();
+                }
+            }
+
             $pettyAccId = $this->getPettyCashAccountId();
             $date = $data['transaction_date'];
-            $desc = !empty($data['description']) ? $data['description'] : "Petty Cash Fund Allocation";
+            
+            $issuingBank = $data['issuing_bank'] ?? '';
+            $chequeNo = $data['cheque_number'] ?? '';
+            $chequeDate = $data['cheque_date'] ?? null;
+
+            $desc = !empty($data['description']) ? $data['description'] : "Petty Cash Fund Float Allocation ({$paymentMethod})";
+            if ($paymentMethod === 'Cheque') {
+                $chequeStr = " [Cheque";
+                if (!empty($chequeNo)) $chequeStr .= " #{$chequeNo}";
+                if (!empty($issuingBank)) $chequeStr .= " drawn on {$issuingBank}";
+                if (!empty($chequeDate)) $chequeStr .= " dt " . date('d-M-Y', strtotime($chequeDate));
+                $chequeStr .= "]";
+                $desc .= $chequeStr;
+            }
+
             $ref = !empty($data['reference']) ? $data['reference'] : '';
             if (empty($ref)) {
                 $this->db->query("SELECT id FROM petty_cash_transactions ORDER BY id DESC LIMIT 1");

@@ -55,11 +55,30 @@ class PettyCashController extends Controller {
         // Get Chart of Accounts for forms
         $accounts = $this->coaModel->getAccounts();
         
-        // Filter asset accounts for funding (exclude petty cash itself)
+        // Filter asset accounts for funding (specifically bank accounts for transfer)
         $pettyCashAccId = $this->pcTxModel->getPettyCashAccountId();
-        $fundingAccounts = array_filter($accounts, function($a) use ($pettyCashAccId) {
-            return $a->account_type == 'Asset' && (int)$a->id !== $pettyCashAccId;
+        $bankAccounts = array_filter($accounts, function($a) use ($pettyCashAccId) {
+            if ($a->account_type !== 'Asset' || (int)$a->id === $pettyCashAccId) {
+                return false;
+            }
+            $name = strtolower($a->account_name);
+            $cat = strtolower($a->account_category ?? '');
+            if (strpos($name, 'cash in hand') !== false || 
+                strpos($name, 'cheque') !== false || 
+                strpos($name, 'receivable') !== false || 
+                strpos($name, 'inventory') !== false || 
+                strpos($name, 'petty') !== false) {
+                return false;
+            }
+            return $cat === 'bank' || strpos($name, 'bank') !== false || strpos($name, 'account') !== false || strpos($name, 'boc') !== false || strpos($name, 'hnb') !== false || strpos($name, 'commercial') !== false || strpos($name, 'sampath') !== false;
         });
+
+        if (empty($bankAccounts)) {
+            $bankAccounts = array_filter($accounts, function($a) use ($pettyCashAccId) {
+                return $a->account_type == 'Asset' && (int)$a->id !== $pettyCashAccId;
+            });
+        }
+        $fundingAccounts = $bankAccounts;
 
         // Filter expense accounts
         $expenseAccounts = array_filter($accounts, function($a) {
@@ -154,12 +173,15 @@ class PettyCashController extends Controller {
 
             if ($paymentMethod === 'Cash') {
                 $bankAccountId = $this->pcTxModel->getCashInHandAccountId();
+            } elseif ($paymentMethod === 'Cheque') {
+                $bankAccountId = $this->pcTxModel->getChequeInHandAccountId();
             }
 
             $allocationData = [
                 'amount' => floatval($_POST['amount'] ?? 0),
                 'payment_method' => $paymentMethod,
                 'bank_account_id' => $bankAccountId,
+                'issuing_bank' => trim($_POST['issuing_bank'] ?? ''),
                 'cheque_number' => trim($_POST['cheque_number'] ?? ''),
                 'cheque_date' => $_POST['cheque_date'] ?? null,
                 'transaction_date' => $_POST['transaction_date'] ?? date('Y-m-d'),
@@ -169,8 +191,8 @@ class PettyCashController extends Controller {
 
             if ($allocationData['amount'] <= 0) {
                 $_SESSION['flash_error'] = 'Allocation amount must be greater than zero.';
-            } elseif ($allocationData['bank_account_id'] <= 0) {
-                $_SESSION['flash_error'] = 'Please select a valid source bank/cash account.';
+            } elseif ($paymentMethod === 'Bank Transfer' && $allocationData['bank_account_id'] <= 0) {
+                $_SESSION['flash_error'] = 'Please select a valid source bank account.';
             } else {
                 $result = $this->pcTxModel->recordAllocation($allocationData, (int)$_SESSION['user_id']);
                 if ($result === true) {
