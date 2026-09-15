@@ -630,3 +630,18 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 09/15/2026 21:41:19.95 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Payment.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/customer_payments/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/payments/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main acdbc27] Automated deployment update
+ 4 files changed, 114 insertions(+), 10 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   a1a2dde..acdbc27  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Tue 09/15/2026 22:06:57.55 
+=================================================== 
+Adding changes... 

@@ -3149,6 +3149,250 @@ class RepTrackingController extends Controller {
         }
     }
 
+    /**
+     * API to apply payment against attached credit bill from Rep Tracking panel
+     */
+    public function api_apply_credit_bill_payment() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid Request Method.']);
+            exit;
+        }
+
+        $this->validateCsrf();
+        $payload = json_decode(file_get_contents('php://input'), true);
+
+        $routeId = intval($payload['route_id'] ?? 0);
+        $invoiceId = intval($payload['invoice_id'] ?? 0);
+        $customerId = intval($payload['customer_id'] ?? 0);
+        $amount = floatval($payload['amount'] ?? 0);
+        $paymentMethod = trim($payload['payment_method'] ?? 'Cash');
+        $reference = trim($payload['reference'] ?? '');
+        $paymentDate = trim($payload['payment_date'] ?? date('Y-m-d'));
+        $assetAccountId = !empty($payload['asset_account_id']) ? intval($payload['asset_account_id']) : null;
+        $chequeBank = trim($payload['cheque_bank'] ?? '');
+        $chequeNumber = trim($payload['cheque_number'] ?? '');
+        $chequeDate = trim($payload['cheque_date'] ?? '');
+        $notes = trim($payload['notes'] ?? '');
+
+        if ($routeId <= 0 || $invoiceId <= 0 || $customerId <= 0) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid Route, Invoice or Customer ID.']);
+            exit;
+        }
+
+        if ($amount <= 0.01) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Payment amount must be greater than zero.']);
+            exit;
+        }
+
+        if ($paymentMethod === 'Cheque') {
+            if (empty($chequeBank) || empty($chequeNumber) || empty($chequeDate)) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Please fill in all Cheque details (Bank, Number, and Date).']);
+                exit;
+            }
+            if (!preg_match('/^\d{6}$/', $chequeNumber)) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Cheque number must be exactly 6 digits.']);
+                exit;
+            }
+        } elseif ($paymentMethod === 'Bank Transfer') {
+            if (!$assetAccountId) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Please select a destination Bank Account for Bank Transfer.']);
+                exit;
+            }
+        }
+
+        $userId = $_SESSION['user_id'] ?? 1;
+        $db = new Database();
+
+        try {
+            $db->beginTransaction();
+
+            // 1. Verify invoice details & remaining balance
+            $db->query("
+                SELECT i.id, i.invoice_number, i.customer_id, i.rep_route_id,
+                       (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as total_amount,
+                       COALESCE((SELECT SUM(amount) FROM customer_payment_allocations WHERE invoice_id = i.id AND is_reversed = 0), 0) as amount_paid
+                FROM invoices i
+                WHERE i.id = :iid AND i.status != 'Voided'
+            ");
+            $db->bind(':iid', $invoiceId);
+            $inv = $db->single();
+
+            if (!$inv) {
+                throw new Exception("Invoice not found or voided.");
+            }
+
+            $balanceDue = floatval($inv->total_amount) - floatval($inv->amount_paid);
+            if ($balanceDue <= 0.01) {
+                throw new Exception("Invoice " . $inv->invoice_number . " is already fully paid.");
+            }
+
+            $allocAmount = min($amount, $balanceDue);
+
+            // 2. Resolve Accounts for Double Entry Accounting
+            // Default Accounts Receivable Account (Code 1200)
+            $db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1200' LIMIT 1");
+            $arAcc = $db->single();
+            $arAccountId = $arAcc ? intval($arAcc->id) : 11;
+
+            // Resolve Asset (Debit) Account ID
+            if ($paymentMethod === 'Cash') {
+                $db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1000' LIMIT 1");
+                $cashAcc = $db->single();
+                $debitAccountId = $cashAcc ? intval($cashAcc->id) : 1;
+            } elseif ($paymentMethod === 'Cheque') {
+                $db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1010' LIMIT 1");
+                $chkAcc = $db->single();
+                $debitAccountId = $chkAcc ? intval($chkAcc->id) : 2;
+            } else {
+                // Bank Transfer
+                $debitAccountId = $assetAccountId;
+            }
+
+            if (!$debitAccountId) {
+                throw new Exception("Selected asset/bank account could not be found.");
+            }
+
+            // 3. Post Journal Entry (Double Entry: Debit Asset, Credit Accounts Receivable)
+            $refNum = !empty($reference) ? $reference : "RCPT-RT" . $routeId . "-" . time();
+            $desc = "Credit Bill Payment ({$paymentMethod}) for Invoice " . $inv->invoice_number . " via Route #" . $routeId;
+
+            $db->query("INSERT INTO journal_entries (entry_date, reference, description, entity_type, entity_id, created_by, status) 
+                        VALUES (:date, :ref, :desc, 'Customer', :cid, :uid, 'Posted')");
+            $db->bind(':date', $paymentDate);
+            $db->bind(':ref', $refNum);
+            $db->bind(':desc', $desc);
+            $db->bind(':cid', $customerId);
+            $db->bind(':uid', $userId);
+            $db->execute();
+            $journalId = $db->lastInsertId();
+
+            // Insert Ledger Transactions with Customer entity binding
+            $lines = [
+                ['account_id' => $debitAccountId, 'debit' => $amount, 'credit' => 0],
+                ['account_id' => $arAccountId, 'debit' => 0, 'credit' => $amount]
+            ];
+
+            foreach ($lines as $line) {
+                $db->query("INSERT INTO transactions (journal_entry_id, account_id, entity_type, entity_id, debit, credit) 
+                            VALUES (:jid, :aid, 'Customer', :cid, :deb, :cred)");
+                $db->bind(':jid', $journalId);
+                $db->bind(':aid', $line['account_id']);
+                $db->bind(':cid', $customerId);
+                $db->bind(':deb', $line['debit']);
+                $db->bind(':cred', $line['credit']);
+                $db->execute();
+
+                // Update Chart of Account Balance
+                $db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
+                $db->bind(':id', $line['account_id']);
+                $acc = $db->single();
+                $sql = "UPDATE chart_of_accounts SET balance = balance ";
+                $sql .= (in_array($acc->account_type, ['Asset', 'Expense'])) ? "+ :debit - :credit " : "- :debit + :credit ";
+                $sql .= "WHERE id = :id";
+                $db->query($sql);
+                $db->bind(':debit', $line['debit']);
+                $db->bind(':credit', $line['credit']);
+                $db->bind(':id', $line['account_id']);
+                $db->execute();
+            }
+
+            // 4. Record Customer Payment & Allocation
+            $db->query("INSERT INTO customer_payments (customer_id, amount, unallocated_amount, payment_date, payment_method, reference, notes, journal_entry_id, created_by, status) 
+                        VALUES (:cid, :amt, 0.00, :date, :method, :ref, :notes, :jid, :uid, 'Active')");
+            $db->bind(':cid', $customerId);
+            $db->bind(':amt', $amount);
+            $db->bind(':date', $paymentDate);
+            $db->bind(':method', $paymentMethod);
+            $db->bind(':ref', $refNum);
+            $db->bind(':notes', !empty($notes) ? $notes : "Applied to attached credit bill " . $inv->invoice_number);
+            $db->bind(':jid', $journalId);
+            $db->bind(':uid', $userId);
+            $db->execute();
+            $paymentId = $db->lastInsertId();
+
+            // Save Payment Allocation to the target Credit Invoice
+            $db->query("INSERT INTO customer_payment_allocations (customer_payment_id, invoice_id, amount) 
+                        VALUES (:pid, :inv_id, :amt)");
+            $db->bind(':pid', $paymentId);
+            $db->bind(':inv_id', $invoiceId);
+            $db->bind(':amt', $allocAmount);
+            $db->execute();
+
+            // If payment exceeds invoice balance, remaining is saved as unallocated
+            $unallocated = max(0, $amount - $allocAmount);
+            if ($unallocated > 0) {
+                $db->query("UPDATE customer_payments SET unallocated_amount = :uamt WHERE id = :pid");
+                $db->bind(':uamt', $unallocated);
+                $db->bind(':pid', $paymentId);
+                $db->execute();
+            }
+
+            // 5. Update Invoice Payment Status
+            $newPaidSum = floatval($inv->amount_paid) + $allocAmount;
+            if ($newPaidSum >= floatval($inv->total_amount) - 0.01) {
+                $db->query("UPDATE invoices SET status = 'Paid' WHERE id = :id");
+                $db->bind(':id', $invoiceId);
+                $db->execute();
+            } else {
+                $db->query("UPDATE invoices SET status = 'Partially Paid' WHERE id = :id");
+                $db->bind(':id', $invoiceId);
+                $db->execute();
+            }
+
+            // 6. Save Cheque details if applicable
+            if ($paymentMethod === 'Cheque') {
+                $db->query("INSERT INTO cheques (customer_id, bank_name, cheque_number, amount, banking_date, status, created_by) 
+                            VALUES (:cid, :bn, :cn, :amt, :bdate, 'Pending', :uid)");
+                $db->bind(':cid', $customerId);
+                $db->bind(':bn', $chequeBank);
+                $db->bind(':cn', $chequeNumber);
+                $db->bind(':amt', $amount);
+                $db->bind(':bdate', $chequeDate);
+                $db->bind(':uid', $userId);
+                $db->execute();
+            }
+
+            // 7. Write Audit Trail Log
+            $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            $db->query("INSERT INTO audit_logs (user_id, action, module, description, record_id, ip_address) 
+                        VALUES (:uid, 'CREDIT_BILL_PAYMENT', 'RepTracking', :desc, :ref, :ip)");
+            $db->bind(':uid', $userId);
+            $db->bind(':desc', "Applied {$paymentMethod} payment of Rs " . number_format($amount, 2) . " to attached credit bill " . $inv->invoice_number . " (Route #{$routeId})");
+            $db->bind(':ref', $paymentId);
+            $db->bind(':ip', $ip);
+            $db->execute();
+
+            $db->commit();
+
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Payment of Rs ' . number_format($amount, 2) . ' successfully applied to credit bill ' . $inv->invoice_number . '!',
+                'payment_id' => $paymentId
+            ]);
+            exit;
+        } catch (Throwable $e) {
+            if (isset($db) && $db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log("api_apply_credit_bill_payment error: " . $e->getMessage());
+
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Payment Processing Error: ' . $e->getMessage()
+            ]);
+            exit;
+        }
+    }
+
     public function print_market_return($id = null) {
         if (!$id) {
             die("Market Return ID is required.");
@@ -3188,3 +3432,4 @@ class RepTrackingController extends Controller {
         $this->view('rep-tracking/print_market_return', $data);
     }
 }
+

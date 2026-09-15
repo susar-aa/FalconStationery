@@ -1057,6 +1057,41 @@
                     </div>
 
                     <div id="tab10ContentContainer">
+                        <!-- Attached Credit Bills Payment Panel Card -->
+                        <div style="border:0.5px solid var(--c-separator); border-radius:var(--r-lg); padding:20px; background:var(--c-surface); box-shadow:var(--shadow-sm); margin-bottom:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                <h4 style="margin:0; color:var(--primary); font-size:15px; font-weight:bold; display:flex; align-items:center; gap:8px;">
+                                    <i class="ph ph-receipt" style="color: #0284c7;"></i> Attached Credit Bills & Payments
+                                </h4>
+                                <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:3px 10px; border-radius:12px; font-weight:700;">
+                                    Direct Credit Settlement
+                                </span>
+                            </div>
+                            <p style="margin:0 0 15px 0; font-size:12px; color:var(--t-secondary);">
+                                Outstanding credit bills attached to this route/delivery. Apply payments directly with Cash, Bank Transfer, or Cheque options.
+                            </p>
+                            <div style="overflow-x:auto;">
+                                <table class="data-table" style="margin-top:0; width:100%; font-size:12px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Customer</th>
+                                            <th>Invoice #</th>
+                                            <th>Invoice Date</th>
+                                            <th style="text-align:right;">Grand Total</th>
+                                            <th style="text-align:right;">Balance Due</th>
+                                            <th style="text-align:center;">Status</th>
+                                            <th style="text-align:center; width:130px;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tab10CreditBillsTbody">
+                                        <tr>
+                                            <td colspan="7" style="text-align:center; color:#888; padding:15px;">Loading attached credit bills...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!-- General Ledger account double entry mappings card -->
                         <div style="border:0.5px solid var(--c-separator); border-radius:var(--r-lg); padding:20px; background:var(--c-surface); box-shadow:var(--shadow-sm); margin-bottom:20px;">
                             <h4 style="margin:0 0 15px 0; color:var(--primary); font-size:15px; font-weight:bold;"><i class="ph ph-briefcase"></i> Account Mappings</h4>
@@ -1073,6 +1108,108 @@
 
                     </div>
                     <div id="tab10GuardContainer" style="display:none;"></div>
+
+                    <!-- Modal for Applying Payment to Attached Credit Bill -->
+                    <div class="modal-backdrop" id="applyCreditBillPaymentModal" style="display:none; z-index:2010;">
+                        <div class="modal-panel" style="max-width: 540px; width: 95%;">
+                            <div class="modal-header" style="background: #0284c7; color:#fff; padding: 16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                                <h3 style="margin:0; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;">
+                                    <i class="ph ph-currency-dollar"></i> Apply Payment to Credit Bill
+                                </h3>
+                                <button type="button" onclick="closeApplyCreditPaymentModal()" style="background:none; border:none; color:#fff; font-size:18px; font-weight:bold; cursor:pointer;">✕</button>
+                            </div>
+                            <form id="applyCreditBillPaymentForm" onsubmit="submitApplyCreditPayment(event)">
+                                <input type="hidden" id="acpInvoiceId">
+                                <input type="hidden" id="acpCustomerId">
+                                <div style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+                                    
+                                    <!-- Invoice Summary Box -->
+                                    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:6px; padding:12px; font-size:12px;">
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                            <span style="color:#0369a1; font-weight:600;">Customer:</span>
+                                            <strong id="acpCustName" style="color:#0f172a;">-</strong>
+                                        </div>
+                                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                            <span style="color:#0369a1; font-weight:600;">Invoice Number:</span>
+                                            <strong id="acpInvoiceNum" style="font-family:monospace; color:#0f172a;">-</strong>
+                                        </div>
+                                        <div style="display:flex; justify-content:space-between;">
+                                            <span style="color:#0369a1; font-weight:600;">Balance Due:</span>
+                                            <strong id="acpBalanceDue" style="font-family:monospace; color:#dc2626; font-size:13px;">Rs 0.00</strong>
+                                        </div>
+                                    </div>
+
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                                        <div>
+                                            <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:#475569; display:block; margin-bottom:4px;">Payment Method *</label>
+                                            <select id="acpPaymentMethod" onchange="toggleAcpPaymentFields()" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px;" required>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Bank Transfer">Bank Transfer</option>
+                                                <option value="Cheque">Cheque</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:#475569; display:block; margin-bottom:4px;">Payment Date *</label>
+                                            <input type="date" id="acpPaymentDate" value="<?= date('Y-m-d') ?>" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px;" required>
+                                        </div>
+                                    </div>
+
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                                        <div>
+                                            <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:#475569; display:block; margin-bottom:4px;">Payment Amount (Rs) *</label>
+                                            <input type="number" step="0.01" min="0.01" id="acpAmount" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; font-weight:700; color:#16a34a; font-family:monospace;" required>
+                                        </div>
+                                        <div>
+                                            <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:#475569; display:block; margin-bottom:4px;">Reference # / Receipt #</label>
+                                            <input type="text" id="acpReference" placeholder="Optional ref" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px;">
+                                        </div>
+                                    </div>
+
+                                    <!-- Bank Transfer Option: Bank Account Select -->
+                                    <div id="acpBankTransferBox" style="display:none;">
+                                        <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:#475569; display:block; margin-bottom:4px;">Destination Bank Account *</label>
+                                        <select id="acpAssetAccount" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px;">
+                                            <option value="">-- Select Bank Account --</option>
+                                            <?php foreach ($data['bank_accounts'] as $bAcc): ?>
+                                                <option value="<?= $bAcc->id ?>"><?= $bAcc->account_code ?> - <?= htmlspecialchars($bAcc->account_name) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+
+                                    <!-- Cheque Option: Cheque Details Box -->
+                                    <div id="acpChequeBox" style="display:none; background:#fffbeb; border:1.5px solid #f59e0b; border-radius:8px; padding:12px;">
+                                        <h5 style="margin:0 0 10px 0; font-size:11px; text-transform:uppercase; color:#b45309; font-weight:700;">Cheque Details</h5>
+                                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                            <div>
+                                                <label style="font-size:10px; font-weight:700; color:#92400e; display:block; margin-bottom:3px;">Bank Name *</label>
+                                                <input type="text" id="acpChequeBank" placeholder="e.g. Commercial Bank" style="width:100%; padding:6px 8px; border:1px solid #fcd34d; border-radius:4px; font-size:12px;">
+                                            </div>
+                                            <div>
+                                                <label style="font-size:10px; font-weight:700; color:#92400e; display:block; margin-bottom:3px;">Cheque Number *</label>
+                                                <input type="text" id="acpChequeNum" placeholder="6 digits" maxlength="6" pattern="\d{6}" style="width:100%; padding:6px 8px; border:1px solid #fcd34d; border-radius:4px; font-size:12px;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                            </div>
+                                        </div>
+                                        <div style="margin-top:10px;">
+                                            <label style="font-size:10px; font-weight:700; color:#92400e; display:block; margin-bottom:3px;">Banking Date *</label>
+                                            <input type="date" id="acpChequeDate" style="width:100%; padding:6px 8px; border:1px solid #fcd34d; border-radius:4px; font-size:12px;">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:#475569; display:block; margin-bottom:4px;">Memo / Notes</label>
+                                        <textarea id="acpNotes" rows="2" placeholder="Internal remarks..." style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:12px; resize:none;"></textarea>
+                                    </div>
+
+                                </div>
+                                <div style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; border-radius:0 0 12px 12px;">
+                                    <button type="button" onclick="closeApplyCreditPaymentModal()" style="padding:8px 16px; background:#e2e8f0; color:#475569; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">Cancel</button>
+                                    <button type="submit" id="btnSubmitCreditPayment" style="padding:8px 18px; background:#0284c7; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                        <i class="ph ph-check-circle"></i> Apply Payment
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- TAB 13: MARKET RETURNS -->

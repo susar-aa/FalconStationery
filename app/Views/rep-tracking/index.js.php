@@ -3132,9 +3132,196 @@
                     });
                 }
 
+                // Render attached credit bills table under Payments tab
+                renderTab10AttachedCreditBills(data);
+
                 checkSettleVerification();
             });
     }
+
+    let currentTab10AttachedBills = [];
+    function renderTab10AttachedCreditBills(data) {
+        const tbody = document.getElementById('tab10CreditBillsTbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+        currentTab10AttachedBills = data.credit_bills || [];
+
+        if (currentTab10AttachedBills.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#888; padding:15px;">No credit bills attached to this route/delivery.</td></tr>';
+            return;
+        }
+
+        const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
+
+        currentTab10AttachedBills.forEach(bill => {
+            const grandTotal = parseFloat(bill.true_grand_total || bill.total_amount || 0);
+            const amountPaid = parseFloat(bill.amount_paid || 0);
+            const balanceDue = Math.max(0, grandTotal - amountPaid);
+            
+            let statusBadge = '<span style="font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700; background:#fef3c7; color:#d97706;">Unpaid</span>';
+            if (balanceDue <= 0.01) {
+                statusBadge = '<span style="font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700; background:#dcfce7; color:#16a34a;">Paid</span>';
+            } else if (amountPaid > 0) {
+                statusBadge = '<span style="font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700; background:#e0f2fe; color:#0369a1;">Partially Paid</span>';
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${escapeHtml(bill.customer_name || 'N/A')}</strong></td>
+                <td><span style="font-family:monospace; font-weight:700; color:#0284c7;">${escapeHtml(bill.invoice_number)}</span></td>
+                <td>${bill.invoice_date || '-'}</td>
+                <td style="text-align:right; font-family:monospace;">Rs ${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="text-align:right; font-family:monospace; font-weight:700; color:${balanceDue > 0 ? '#dc2626' : '#16a34a'};">Rs ${balanceDue.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="text-align:center;">${statusBadge}</td>
+                <td style="text-align:center;">
+                    ${balanceDue > 0.01 && !isReadOnly ? `
+                        <button type="button" onclick="openApplyCreditPaymentModal(${bill.id})" style="padding:4px 10px; background:#0284c7; color:#fff; border:none; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                            <i class="ph ph-currency-dollar"></i> Apply Pay
+                        </button>
+                    ` : `
+                        <span style="font-size:11px; color:#94a3b8; font-style:italic;">${isReadOnly ? 'Read Only' : 'Settled'}</span>
+                    `}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openApplyCreditPaymentModal(invoiceId) {
+        const bill = currentTab10AttachedBills.find(b => parseInt(b.id) === parseInt(invoiceId));
+        if (!bill) {
+            alert("Credit bill details not found.");
+            return;
+        }
+
+        const grandTotal = parseFloat(bill.true_grand_total || bill.total_amount || 0);
+        const amountPaid = parseFloat(bill.amount_paid || 0);
+        const balanceDue = Math.max(0, grandTotal - amountPaid);
+
+        document.getElementById('acpInvoiceId').value = bill.id;
+        document.getElementById('acpCustomerId').value = bill.customer_id;
+        document.getElementById('acpCustName').innerText = bill.customer_name || 'N/A';
+        document.getElementById('acpInvoiceNum').innerText = bill.invoice_number || 'N/A';
+        document.getElementById('acpBalanceDue').innerText = 'Rs ' + balanceDue.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+        document.getElementById('acpAmount').value = balanceDue.toFixed(2);
+        document.getElementById('acpAmount').max = balanceDue.toFixed(2);
+        document.getElementById('acpPaymentMethod').value = 'Cash';
+        document.getElementById('acpReference').value = '';
+        document.getElementById('acpNotes').value = '';
+        document.getElementById('acpChequeBank').value = '';
+        document.getElementById('acpChequeNum').value = '';
+        document.getElementById('acpChequeDate').value = '';
+
+        toggleAcpPaymentFields();
+
+        const modal = document.getElementById('applyCreditBillPaymentModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeApplyCreditPaymentModal() {
+        const modal = document.getElementById('applyCreditBillPaymentModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function toggleAcpPaymentFields() {
+        const method = document.getElementById('acpPaymentMethod').value;
+        const bankBox = document.getElementById('acpBankTransferBox');
+        const chequeBox = document.getElementById('acpChequeBox');
+
+        if (method === 'Bank Transfer') {
+            bankBox.style.display = 'block';
+            chequeBox.style.display = 'none';
+        } else if (method === 'Cheque') {
+            bankBox.style.display = 'none';
+            chequeBox.style.display = 'block';
+        } else {
+            bankBox.style.display = 'none';
+            chequeBox.style.display = 'none';
+        }
+    }
+
+    function submitApplyCreditPayment(event) {
+        event.preventDefault();
+
+        const routeId = currentRouteId;
+        const invoiceId = parseInt(document.getElementById('acpInvoiceId').value);
+        const customerId = parseInt(document.getElementById('acpCustomerId').value);
+        const amount = parseFloat(document.getElementById('acpAmount').value);
+        const method = document.getElementById('acpPaymentMethod').value;
+        const paymentDate = document.getElementById('acpPaymentDate').value;
+        const reference = document.getElementById('acpReference').value;
+        const assetAccountId = document.getElementById('acpAssetAccount').value;
+        const chequeBank = document.getElementById('acpChequeBank').value;
+        const chequeNum = document.getElementById('acpChequeNum').value;
+        const chequeDate = document.getElementById('acpChequeDate').value;
+        const notes = document.getElementById('acpNotes').value;
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid payment amount.');
+            return;
+        }
+
+        if (method === 'Bank Transfer' && !assetAccountId) {
+            alert('Please select a destination bank account for Bank Transfer.');
+            return;
+        }
+
+        if (method === 'Cheque') {
+            if (!chequeBank || !chequeNum || !chequeDate) {
+                alert('Please fill in all Cheque details.');
+                return;
+            }
+            if (!/^\d{6}$/.test(chequeNum)) {
+                alert('Cheque number must be exactly 6 digits.');
+                return;
+            }
+        }
+
+        const btnSubmit = document.getElementById('btnSubmitCreditPayment');
+        btnSubmit.disabled = true;
+
+        const payload = {
+            route_id: routeId,
+            invoice_id: invoiceId,
+            customer_id: customerId,
+            amount: amount,
+            payment_method: method,
+            payment_date: paymentDate,
+            reference: reference,
+            asset_account_id: assetAccountId,
+            cheque_bank: chequeBank,
+            cheque_number: chequeNum,
+            cheque_date: chequeDate,
+            notes: notes
+        };
+
+        fetchSecure('<?= APP_URL ?>/RepTracking/api_apply_credit_bill_payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btnSubmit.disabled = false;
+            if (data.status === 'success') {
+                alert(data.message);
+                closeApplyCreditPaymentModal();
+                loadTab10Accounting(routeId);
+            } else {
+                alert(data.message || 'Failed to apply credit payment.');
+            }
+        })
+        .catch(err => {
+            btnSubmit.disabled = false;
+            alert('Error applying payment: ' + err.message);
+        });
+    }
+
+    window.openApplyCreditPaymentModal = openApplyCreditPaymentModal;
+    window.closeApplyCreditPaymentModal = closeApplyCreditPaymentModal;
+    window.toggleAcpPaymentFields = toggleAcpPaymentFields;
+    window.submitApplyCreditPayment = submitApplyCreditPayment;
 
     function applyFinalizeDefensiveGuard(routeId, delId) {
         const guardEl = document.getElementById('tab11GuardContainer');
