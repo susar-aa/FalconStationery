@@ -6,7 +6,11 @@ echo ===================================================
 echo.
 
 set /p commitMessage="Enter commit message (or press enter for default): "
-if "%commitMessage%"=="" set commitMessage=Automated deployment update
+if "%commitMessage%"=="" (
+    for /f "tokens=1-3 delims=/ " %%a in ("%date%") do set mydate=%%c-%%a-%%b
+    for /f "tokens=1-2 delims=: " %%a in ("%time%") do set mytime=%%a:%%b
+    set commitMessage=Auto update [%date% %time%]
+)
 
 set LOGFILE=deploy_log.txt
 echo =================================================== >> %LOGFILE%
@@ -37,4 +41,4 @@ echo the server will now automatically pull these files.
 echo Check deploy_log.txt for detailed output.
 echo ===================================================
 echo =================================================== >> %LOGFILE%
-pause
+exit /b 0
