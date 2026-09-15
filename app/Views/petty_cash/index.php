@@ -276,9 +276,11 @@ select.filter-control {
 /* ---- Table Panel & Table ---- */
 .table-panel {
     background: var(--c-surface);
-    overflow: hidden;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
-.inv-table { width: 100%; border-collapse: collapse; }
+.inv-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
 .inv-table thead th {
     padding: 13px 18px;
     font-size: 11px; font-weight: 700;
@@ -625,7 +627,7 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                                 <th>Status</th>
                                 <th>Created By</th>
                                 <th style="text-align: center;">Receipt</th>
-                                <th style="text-align: right;">Actions</th>
+                                <th style="text-align: right; min-width: 220px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -773,7 +775,7 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                                 <th>Cheque Details</th>
                                 <th style="text-align: right;">Replenished Amount</th>
                                 <th>Status</th>
-                                <th style="text-align: right;">Actions</th>
+                                <th style="text-align: right; min-width: 220px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
