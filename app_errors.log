@@ -139139,3 +139139,33 @@ SQL: ALTER TABLE stock_ledger ADD COLUMN stock_status VARCHAR(50) DEFAULT 'Good'
 #1 C:\xampp\htdocs\CURTISS\FalconStationery\scratch\find_cello_tape.php(4): Database->__construct()
 #2 {main}
 
+[2026-09-15 09:08:34] Uncaught Exception: session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php on line 138
+#0 [internal function]: global_error_handler(8, 'session_start()...', 'C:\\xampp\\htdocs...', 138)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php(138): session_start()
+#2 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\test_full.php(11): require_once('C:\\xampp\\htdocs...')
+#3 {main}
+
+[2026-09-15 09:08:54] Uncaught Exception: session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php on line 138
+#0 [internal function]: global_error_handler(8, 'session_start()...', 'C:\\xampp\\htdocs...', 138)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php(138): session_start()
+#2 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\test_full.php(11): require_once('C:\\xampp\\htdocs...')
+#3 {main}
+
+[2026-09-15 09:09:24] Uncaught Exception: require_once(../vendor/autoload.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php on line 145
+#0 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php(145): global_error_handler(2, 'require_once(.....', 'C:\\xampp\\htdocs...', 145)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php(145): require_once()
+#2 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\test_full.php(11): require_once('C:\\xampp\\htdocs...')
+#3 {main}
+
+[2026-09-15 09:11:17] Uncaught Exception: require_once(../vendor/autoload.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php on line 145
+#0 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php(145): global_error_handler(2, 'require_once(.....', 'C:\\xampp\\htdocs...', 145)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php(145): require_once()
+#2 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\test_full.php(11): require_once('C:\\xampp\\htdocs...')
+#3 {main}
+
+[2026-09-15 09:11:39] Uncaught Exception: session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php on line 138
+#0 [internal function]: global_error_handler(8, 'session_start()...', 'C:\\xampp\\htdocs...', 138)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\index.php(138): session_start()
+#2 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\test_full.php(12): require_once('C:\\xampp\\htdocs...')
+#3 {main}
+

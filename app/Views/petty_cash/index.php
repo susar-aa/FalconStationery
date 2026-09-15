@@ -33,6 +33,10 @@ declare(strict_types=1);
     window.openModal = function(modalId) {
         console.log('openModal called for ID:', modalId);
         var modal = document.getElementById(modalId);
+        if (!modal) {
+            // Fallback for weird DOM caching issues
+            modal = document.querySelector('[id="' + modalId + '"]');
+        }
         console.log('Found modal element:', modal);
         if (modal) {
             modal.style.display = 'flex';
@@ -41,8 +45,15 @@ declare(strict_types=1);
                 modal.classList.add('show');
                 console.log('Added show class. Current classList:', modal.classList.toString());
             }, 10);
+            
+            // Focus first input if any
+            var firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 100);
+            }
         } else {
             console.error('Modal element not found for ID:', modalId);
+            alert("Error: Modal '" + modalId + "' could not be loaded. Please refresh the page (Ctrl+F5) and try again.");
         }
     };
 

@@ -78,7 +78,7 @@ class PettyCashController extends Controller {
             'ledger_balance' => $this->pcTxModel->getLedgerBalance(),
             'config_limit' => $limitAmount,
             'available_balance' => $this->pcTxModel->getAvailableBalance(),
-            'pending_reimbursements' => $this->pcTxModel->getPendingReimbursementsTotal(),
+            'pending_reimbursements' => count($pendingExpenses),
             'transactions' => $transactions,
             'reimbursements' => $reimbursements,
             'pending_expenses' => $pendingExpenses,
