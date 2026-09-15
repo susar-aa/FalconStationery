@@ -6,6 +6,12 @@ require_once __DIR__ . '/AuditLog.php';
 require_once __DIR__ . '/ChartOfAccount.php';
 
 class PettyCashTransaction {
+
+    public function getCashInHandAccountId(): int {
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1000' OR (account_type = 'Asset' AND (account_name LIKE '%Cash in Hand%' OR account_name LIKE '%Cash%')) ORDER BY CASE WHEN account_code = '1000' THEN 1 ELSE 2 END LIMIT 1");
+        $row = $this->db->single();
+        return $row ? (int)$row->id : 1;
+    }
     private Database $db;
     private AuditLog $audit;
     private JournalEntry $journal;

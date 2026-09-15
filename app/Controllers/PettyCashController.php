@@ -149,9 +149,19 @@ class PettyCashController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->validateCsrfOrDie();
 
+            $paymentMethod = $_POST['payment_method'] ?? 'Bank Transfer';
+            $bankAccountId = intval($_POST['bank_account_id'] ?? 0);
+
+            if ($paymentMethod === 'Cash') {
+                $bankAccountId = $this->pcTxModel->getCashInHandAccountId();
+            }
+
             $allocationData = [
                 'amount' => floatval($_POST['amount'] ?? 0),
-                'bank_account_id' => intval($_POST['bank_account_id'] ?? 0),
+                'payment_method' => $paymentMethod,
+                'bank_account_id' => $bankAccountId,
+                'cheque_number' => trim($_POST['cheque_number'] ?? ''),
+                'cheque_date' => $_POST['cheque_date'] ?? null,
                 'transaction_date' => $_POST['transaction_date'] ?? date('Y-m-d'),
                 'description' => trim($_POST['description'] ?? ''),
                 'reference' => trim($_POST['reference'] ?? '')
@@ -160,11 +170,11 @@ class PettyCashController extends Controller {
             if ($allocationData['amount'] <= 0) {
                 $_SESSION['flash_error'] = 'Allocation amount must be greater than zero.';
             } elseif ($allocationData['bank_account_id'] <= 0) {
-                $_SESSION['flash_error'] = 'Please select a source bank/cash account.';
+                $_SESSION['flash_error'] = 'Please select a valid source bank/cash account.';
             } else {
                 $result = $this->pcTxModel->recordAllocation($allocationData, (int)$_SESSION['user_id']);
                 if ($result === true) {
-                    $_SESSION['flash_success'] = 'Funds allocated to Petty Cash successfully.';
+                    $_SESSION['flash_success'] = 'Funds allocated to Petty Cash float successfully via ' . htmlspecialchars($paymentMethod) . '.';
                 } else {
                     $_SESSION['flash_error'] = is_string($result) ? $result : 'Failed to record allocation.';
                 }
