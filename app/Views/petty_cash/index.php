@@ -31,20 +31,17 @@ declare(strict_types=1);
 
     // Modal control logic
     window.openModal = function(modalId) {
-        console.log('openModal called for ID:', modalId);
+        console.log('Attempting to open modal:', modalId);
         var modal = document.getElementById(modalId);
         if (!modal) {
-            // Fallback for weird DOM caching issues
             modal = document.querySelector('[id="' + modalId + '"]');
         }
-        console.log('Found modal element:', modal);
         if (modal) {
+            document.querySelectorAll('.modal [required]').forEach(el => el.removeAttribute('required'));
+            modal.querySelectorAll('input[data-required="true"], select[data-required="true"], textarea[data-required="true"]').forEach(el => el.setAttribute('required', 'required'));
             modal.style.display = 'flex';
-            console.log('Set style.display to flex');
-            setTimeout(function() {
-                modal.classList.add('show');
-                console.log('Added show class. Current classList:', modal.classList.toString());
-            }, 10);
+            void modal.offsetWidth; 
+            modal.classList.add('show');
             
             // Focus first input if any
             var firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
@@ -53,7 +50,15 @@ declare(strict_types=1);
             }
         } else {
             console.error('Modal element not found for ID:', modalId);
-            alert("Error: Modal '" + modalId + "' could not be loaded. Please refresh the page (Ctrl+F5) and try again.");
+            fetch('<?= APP_URL ?>/save_debug.php', {
+                method: 'POST',
+                body: document.documentElement.innerHTML
+            }).then(() => {
+                alert("Error logged. Please tell the agent the DOM was saved.");
+            }).catch((err) => {
+                console.error("Failed to save debug log:", err);
+                alert("Error logged, but failed to save debug. Error: Modal '" + modalId + "' could not be loaded.");
+            });
         }
     };
 
