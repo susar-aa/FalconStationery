@@ -36,12 +36,12 @@ class Customer {
                 GROUP BY customer_id
             ) cn ON c.id = cn.customer_id
             LEFT JOIN (
-                SELECT je.entity_id as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
+                SELECT COALESCE(t.entity_id, je.entity_id) as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
                 FROM transactions t
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
-                WHERE je.entity_type = 'Customer' AND je.status = 'Posted' AND coa.account_code = '1200'
-                GROUP BY je.entity_id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
+                GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
             ORDER BY c.name ASC
         ");
@@ -73,12 +73,12 @@ class Customer {
                 GROUP BY customer_id
             ) cn ON c.id = cn.customer_id
             LEFT JOIN (
-                SELECT je.entity_id as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
+                SELECT COALESCE(t.entity_id, je.entity_id) as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
                 FROM transactions t
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
-                WHERE je.entity_type = 'Customer' AND je.status = 'Posted' AND coa.account_code = '1200'
-                GROUP BY je.entity_id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
+                GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
             HAVING outstanding_balance != 0
             ORDER BY c.name ASC
@@ -125,7 +125,7 @@ class Customer {
                           FROM transactions t 
                           JOIN journal_entries je ON t.journal_entry_id = je.id 
                           JOIN chart_of_accounts coa ON t.account_id = coa.id 
-                          WHERE je.entity_type = 'Customer' AND je.entity_id = :id AND je.status = 'Posted' AND coa.account_code = '1200'");
+                          WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND (COALESCE(t.entity_id, je.entity_id) = :id) AND je.status = 'Posted' AND coa.account_code = '1200'");
         $this->db->bind(':id', $id);
         $je = $this->db->single();
 
@@ -161,11 +161,11 @@ class Customer {
             SELECT 'Payment Reversal' as type, id, CONCAT('Payment Reversed: ', payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, DATE(COALESCE(reversed_at, created_at)) as date, amount as debit, 0 as credit, COALESCE(reversed_at, created_at) as created_at 
             FROM customer_payments WHERE customer_id = :c6 AND status = 'Reversed'
             UNION ALL
-            SELECT 'Journal Entry' as type, je.id, je.reference as ref, je.entry_date as date, t.debit as debit, t.credit as credit, je.created_at 
+            SELECT 'Journal Entry' as type, je.id, IF(je.reference IS NOT NULL AND je.reference != '', CONCAT(je.reference, ' - ', COALESCE(t.description, je.description)), je.description) as ref, je.entry_date as date, t.debit as debit, t.credit as credit, je.created_at 
             FROM transactions t
             JOIN journal_entries je ON t.journal_entry_id = je.id
             JOIN chart_of_accounts coa ON t.account_id = coa.id
-            WHERE je.entity_type = 'Customer' AND je.entity_id = :c7 AND je.status = 'Posted' AND coa.account_code = '1200'
+            WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND (COALESCE(t.entity_id, je.entity_id) = :c7) AND je.status = 'Posted' AND coa.account_code = '1200'
             ORDER BY date ASC, created_at ASC
         ";
         $this->db->query($sql);

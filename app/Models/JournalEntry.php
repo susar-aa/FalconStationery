@@ -156,6 +156,24 @@ class JournalEntry {
                 $this->db->execute();
             }
 
+            // Sync first non-null entity_type and entity_id to journal_entries header
+            $firstEntityType = null;
+            $firstEntityId = null;
+            foreach ($lines as $l) {
+                if (!empty($l['entity_type']) && !empty($l['entity_id'])) {
+                    $firstEntityType = $l['entity_type'];
+                    $firstEntityId = intval($l['entity_id']);
+                    break;
+                }
+            }
+            if ($firstEntityType && $firstEntityId) {
+                $this->db->query("UPDATE journal_entries SET entity_type = :et, entity_id = :eid WHERE id = :id");
+                $this->db->bind(':et', $firstEntityType);
+                $this->db->bind(':eid', $firstEntityId);
+                $this->db->bind(':id', $journalId);
+                $this->db->execute();
+            }
+
             if (!$inTransaction) {
                 $this->db->commit();
             }

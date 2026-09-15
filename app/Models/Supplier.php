@@ -28,7 +28,10 @@ class Supplier {
                     FROM transactions t
                     JOIN journal_entries je ON t.journal_entry_id = je.id
                     JOIN chart_of_accounts coa ON t.account_id = coa.id
-                    WHERE je.entity_type = 'Vendor' AND je.entity_id = v.id AND je.status = 'Posted' AND coa.account_code = '2000') as total_je_balance
+                    WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier')) 
+                      AND (COALESCE(t.entity_id, je.entity_id) = v.id) 
+                      AND je.status = 'Posted' 
+                      AND coa.account_code = '2000') as total_je_balance
             FROM vendors v
             ORDER BY v.name ASC
         ");
@@ -158,7 +161,10 @@ class Supplier {
             FROM transactions t
             JOIN journal_entries je ON t.journal_entry_id = je.id
             JOIN chart_of_accounts coa ON t.account_id = coa.id
-            WHERE je.entity_type = 'Vendor' AND je.entity_id = :id AND je.status = 'Posted' AND coa.account_code = '2000'
+            WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier')) 
+              AND (COALESCE(t.entity_id, je.entity_id) = :id) 
+              AND je.status = 'Posted' 
+              AND coa.account_code = '2000'
         ");
         $this->db->bind(':id', $id);
         $je = $this->db->single();
@@ -225,14 +231,17 @@ class Supplier {
             FROM vendors
             WHERE id = :vid5 AND opening_balance > 0
             UNION ALL
-            SELECT 'Journal Entry' as type, je.id, je.reference as ref, je.entry_date as date,
+            SELECT 'Journal Entry' as type, je.id, IF(je.reference IS NOT NULL AND je.reference != '', CONCAT(je.reference, ' - ', COALESCE(t.description, je.description)), je.description) as ref, je.entry_date as date,
                    t.debit as debit,
                    t.credit as credit,
                    je.created_at
             FROM transactions t
             JOIN journal_entries je ON t.journal_entry_id = je.id
             JOIN chart_of_accounts coa ON t.account_id = coa.id
-            WHERE je.entity_type = 'Vendor' AND je.entity_id = :vid6 AND je.status = 'Posted' AND coa.account_code = '2000'
+            WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier')) 
+              AND (COALESCE(t.entity_id, je.entity_id) = :vid6) 
+              AND je.status = 'Posted' 
+              AND coa.account_code = '2000'
             ORDER BY date ASC, created_at ASC
         ";
         $this->db->query($sql);

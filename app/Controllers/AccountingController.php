@@ -408,6 +408,19 @@ class AccountingController extends Controller {
                     $aid = $ap_account ? $ap_account->id : 0;
                 } else {
                     $aid = intval($aid_raw);
+                    if (!empty($line_entity_types[$i])) {
+                        $let = $line_entity_types[$i];
+                    }
+                    if (empty($let) && !empty($leid)) {
+                        $accObj = $this->coaModel->getAccountById($aid);
+                        if ($accObj) {
+                            if ($accObj->account_code === '1200' || $accObj->account_type === 'Asset') {
+                                $let = 'Customer';
+                            } else {
+                                $let = 'Vendor';
+                            }
+                        }
+                    }
                 }
 
                 if ($deb < 0 || $cred < 0) {
