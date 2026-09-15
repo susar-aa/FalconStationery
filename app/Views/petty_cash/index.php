@@ -280,11 +280,11 @@ select.filter-control {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
-.inv-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+.inv-table { width: 100%; border-collapse: collapse; table-layout: auto; }
 .inv-table thead th {
-    padding: 13px 18px;
+    padding: 10px 10px;
     font-size: 11px; font-weight: 700;
-    letter-spacing: 0.06em; text-transform: uppercase;
+    letter-spacing: 0.04em; text-transform: uppercase;
     color: var(--t-label); background: var(--c-surface2);
     border-bottom: 0.5px solid var(--c-separator);
     white-space: nowrap; text-align: left;
@@ -296,25 +296,25 @@ select.filter-control {
 .inv-table tbody tr:last-child { border-bottom: none; }
 .inv-table tbody tr:hover { background: var(--c-fill2); }
 .inv-table td {
-    padding: 13px 18px;
-    font-size: 13.5px; color: var(--t-primary);
+    padding: 10px 10px;
+    font-size: 12.5px; color: var(--t-primary);
     vertical-align: middle;
 }
 
 /* Badges */
 .voucher-code {
-    font-family: var(--f-mono); font-size: 12px; font-weight: 700;
+    font-family: var(--f-mono); font-size: 11px; font-weight: 700;
     color: #0284c7; background: #f0f9ff;
-    padding: 3px 8px; border-radius: 6px; border: 0.5px solid #bae6fd;
-    display: inline-block;
+    padding: 2px 6px; border-radius: 6px; border: 0.5px solid #bae6fd;
+    display: inline-block; white-space: nowrap;
 }
 .sf-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 9px; border-radius: var(--r-pill);
-    font-size: 11px; font-weight: 700; letter-spacing: 0.01em;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 7px; border-radius: var(--r-pill);
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.01em;
     white-space: nowrap;
 }
-.sf-badge .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
+.sf-badge .dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
 .sf-badge.badge-active { background: var(--c-green-light); color: var(--c-green); }
 .sf-badge.badge-low    { background: var(--c-orange-light); color: var(--c-orange); }
 .sf-badge.badge-out    { background: var(--c-red-light); color: var(--c-red); }
@@ -326,11 +326,12 @@ select.filter-control {
 .txt-red   { color: var(--c-red) !important; font-family: var(--f-mono); font-weight: 700; }
 
 .act-pill {
-    padding: 4px 10px; border-radius: var(--r-pill);
-    font-size: 12px; font-weight: 600; text-decoration: none;
-    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: var(--r-sm);
+    font-size: 11px; font-weight: 600; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 3px;
     border: 0.5px solid var(--c-separator); background: var(--c-surface);
     color: var(--t-primary); transition: all var(--dur-fast);
+    white-space: nowrap;
 }
 .act-pill:hover { background: var(--c-fill); }
 .act-pill.print { color: #166534; border-color: #bbf7d0; background: #f0fdf4; }
@@ -627,7 +628,7 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                                 <th>Status</th>
                                 <th>Created By</th>
                                 <th style="text-align: center;">Receipt</th>
-                                <th style="text-align: right; min-width: 220px;">Actions</th>
+                                <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -772,16 +773,15 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                                 <th>Method</th>
                                 <th>Remarks / Description</th>
                                 <th>Source Account / Bank</th>
-                                <th>Cheque Details</th>
                                 <th style="text-align: right;">Replenished Amount</th>
                                 <th>Status</th>
-                                <th style="text-align: right; min-width: 220px;">Actions</th>
+                                <th style="text-align: right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($data['reimbursements'])): ?>
                                 <tr>
-                                    <td colspan="9">
+                                    <td colspan="8">
                                         <div class="tbl-empty">
                                             <div class="tbl-empty-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
                                             <div class="tbl-empty-title">No reimbursement requests</div>
@@ -807,18 +807,6 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                                             <span style="color: var(--c-green); font-weight: 600;">Cash in Hand</span>
                                         <?php else: ?>
                                             <span style="font-weight: 500; font-size: 13px;"><?= $reim->bank_account_code ?> - <?= htmlspecialchars((string)$reim->bank_account_name) ?></span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if ($reim->payment_method === 'Cheque' || !empty($reim->cheque_number)): ?>
-                                            <div style="font-size:12px;">
-                                                <strong style="font-family: var(--f-mono);">#<?= htmlspecialchars((string)$reim->cheque_number) ?></strong>
-                                                <?php if (!empty($reim->cheque_date)): ?>
-                                                    <br><span style="color: var(--t-tertiary); font-size:11px;"><?= date('d-M-Y', strtotime($reim->cheque_date)) ?></span>
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <span style="color: var(--t-tertiary); font-size: 12px;">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td style="text-align: right;"><span class="txt-green">Rs: <?= number_format((float)$reim->amount, 2) ?></span></td>
