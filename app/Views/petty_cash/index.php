@@ -999,13 +999,13 @@ declare(strict_types=1);
     <?php if (!empty($data['success'])): ?>
         <div class="alert alert-success">
             <i class="ph ph-check-circle"></i>
-            <span><?= htmlspecialchars($data['success']) ?></span>
+            <span><?= htmlspecialchars((string)$data['success']) ?></span>
         </div>
     <?php endif; ?>
     <?php if (!empty($data['error'])): ?>
         <div class="alert alert-danger">
             <i class="ph ph-warning-circle"></i>
-            <span><?= htmlspecialchars($data['error']) ?></span>
+            <span><?= htmlspecialchars((string)$data['error']) ?></span>
         </div>
     <?php endif; ?>
 
@@ -1028,7 +1028,7 @@ declare(strict_types=1);
             <div class="stat-info">
                 <div class="stat-lbl">Petty Cash Limit</div>
                 <div class="stat-num">Rs: <?= number_format((float)$data['config_limit'], 2) ?></div>
-                <div style="font-size: 11px; color: var(--t-tertiary); margin-top: 4px;">Custodian: <?= ($data['config'] && isset($data['config']->custodian_name)) ? htmlspecialchars($data['config']->custodian_name) : 'Not Assigned' ?></div>
+                <div style="font-size: 11px; color: var(--t-tertiary); margin-top: 4px;">Custodian: <?= ($data['config'] && isset($data['config']->custodian_name)) ? htmlspecialchars((string)$data['config']->custodian_name) : 'Not Assigned' ?></div>
             </div>
         </div>
 
@@ -1076,11 +1076,11 @@ declare(strict_types=1);
             <form method="GET" action="<?= APP_URL ?>/pettycash" class="filters-bar" style="display: flex; flex-wrap: wrap; gap: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
                 <div class="filter-group" style="flex: 1 1 180px;">
                     <label for="voucher_number">Voucher No</label>
-                    <input type="text" name="voucher_number" id="voucher_number" value="<?= htmlspecialchars($data['filters']['voucher_number']) ?>" placeholder="PCV-xxxxx" class="filter-input">
+                    <input type="text" name="voucher_number" id="voucher_number" value="<?= htmlspecialchars((string)$data['filters']['voucher_number']) ?>" placeholder="PCV-xxxxx" class="filter-input">
                 </div>
                 <div class="filter-group" style="flex: 1 1 180px;">
                     <label for="paid_to">Paid To / Payee</label>
-                    <input type="text" name="paid_to" id="paid_to" value="<?= htmlspecialchars($data['filters']['paid_to']) ?>" placeholder="Payee name..." class="filter-input">
+                    <input type="text" name="paid_to" id="paid_to" value="<?= htmlspecialchars((string)$data['filters']['paid_to']) ?>" placeholder="Payee name..." class="filter-input">
                 </div>
                 <div class="filter-group" style="flex: 1 1 150px;">
                     <label for="type">Type</label>
@@ -1105,7 +1105,7 @@ declare(strict_types=1);
                     <select name="rep_route_id" id="rep_route_id" class="filter-input">
                         <option value="">All Routes</option>
                         <?php foreach ($data['routes'] as $r): ?>
-                            <option value="<?= $r->id ?>" <?= $data['filters']['rep_route_id'] == $r->id ? 'selected' : '' ?>><?= htmlspecialchars($r->route_name) ?></option>
+                            <option value="<?= $r->id ?>" <?= $data['filters']['rep_route_id'] == $r->id ? 'selected' : '' ?>><?= htmlspecialchars((string)$r->route_name) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -1114,21 +1114,21 @@ declare(strict_types=1);
                     <select name="rep_user_id" id="rep_user_id" class="filter-input">
                         <option value="">All Reps</option>
                         <?php foreach ($data['users'] as $u): ?>
-                            <option value="<?= $u->id ?>" <?= $data['filters']['rep_user_id'] == $u->id ? 'selected' : '' ?>><?= htmlspecialchars($u->username) ?></option>
+                            <option value="<?= $u->id ?>" <?= $data['filters']['rep_user_id'] == $u->id ? 'selected' : '' ?>><?= htmlspecialchars((string)$u->username) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="filter-group" style="flex: 1 1 150px;">
                     <label for="date_from">From Date</label>
-                    <input type="date" name="date_from" id="date_from" value="<?= htmlspecialchars($data['filters']['date_from']) ?>" class="filter-input">
+                    <input type="date" name="date_from" id="date_from" value="<?= htmlspecialchars((string)$data['filters']['date_from']) ?>" class="filter-input">
                 </div>
                 <div class="filter-group" style="flex: 1 1 150px;">
                     <label for="date_to">To Date</label>
-                    <input type="date" name="date_to" id="date_to" value="<?= htmlspecialchars($data['filters']['date_to']) ?>" class="filter-input">
+                    <input type="date" name="date_to" id="date_to" value="<?= htmlspecialchars((string)$data['filters']['date_to']) ?>" class="filter-input">
                 </div>
                 <div class="filter-group" style="flex: 1 1 180px;">
                     <label for="search">Keyword</label>
-                    <input type="text" name="search" id="search" value="<?= htmlspecialchars($data['filters']['search']) ?>" placeholder="Desc, Ref..." class="filter-input">
+                    <input type="text" name="search" id="search" value="<?= htmlspecialchars((string)$data['filters']['search']) ?>" placeholder="Desc, Ref..." class="filter-input">
                 </div>
                 <div class="filter-group" style="flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px;">
                     <button type="submit" class="btn btn-secondary" style="height: 38px; display: inline-flex; align-items: center; justify-content: center;"><i class="ph ph-funnel" style="margin-right: 4px;"></i> Filter</button>
@@ -1166,7 +1166,7 @@ declare(strict_types=1);
                         <tr>
                             <td>
                                 <strong style="font-family: monospace; font-size: 13px; color: #1b5e20;">
-                                    <?= htmlspecialchars($tx->voucher_number ?: 'PCV-PENDING') ?>
+                                    <?= htmlspecialchars((string)$tx->voucher_number ?: 'PCV-PENDING') ?>
                                 </strong>
                             </td>
                             <td><?= date('d-M-Y', strtotime($tx->transaction_date)) ?></td>
@@ -1185,14 +1185,14 @@ declare(strict_types=1);
                                 <?php elseif ($tx->type === 'reimbursement'): ?>
                                     <span style="color: var(--text-muted); font-size: 11px;">Reimbursement</span>
                                 <?php else: ?>
-                                    <?= htmlspecialchars($tx->offset_account_name ?: 'Petty Cash Control') ?>
+                                    <?= htmlspecialchars((string)$tx->offset_account_name ?: 'Petty Cash Control') ?>
                                 <?php endif; ?>
                             </td>
-                            <td><?= htmlspecialchars($tx->paid_to ?: 'N/A') ?></td>
+                            <td><?= htmlspecialchars((string)$tx->paid_to ?: 'N/A') ?></td>
                             <td>
                                 <?php if (!empty($tx->route_name)): ?>
-                                    <span style="font-weight: 500; font-size: 12px; color: #0284c7;"><?= htmlspecialchars($tx->route_name) ?></span>
-                                    <br><span style="font-size: 11px; color: var(--text-muted);">Rep: <?= htmlspecialchars($tx->rep_first_name . ' ' . $tx->rep_last_name) ?></span>
+                                    <span style="font-weight: 500; font-size: 12px; color: #0284c7;"><?= htmlspecialchars((string)$tx->route_name) ?></span>
+                                    <br><span style="font-size: 11px; color: var(--text-muted);">Rep: <?= htmlspecialchars((string)$tx->rep_first_name . ' ' . $tx->rep_last_name) ?></span>
                                 <?php else: ?>
                                     <span style="color: var(--text-muted); font-size: 11px;">None</span>
                                 <?php endif; ?>
@@ -1209,7 +1209,7 @@ declare(strict_types=1);
                                     <span class="badge badge-danger">Rejected</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= htmlspecialchars($tx->creator_name ?: 'System') ?></td>
+                            <td><?= htmlspecialchars((string)$tx->creator_name ?: 'System') ?></td>
                             <td style="text-align: center;">
                                 <?php if ($tx->attachment_path): ?>
                                     <a href="<?= APP_URL ?>/<?= $tx->attachment_path ?>" target="_blank" class="btn btn-outline btn-sm" style="padding: 4px 8px;"><i class="ph ph-file-pdf"></i> View</a>
@@ -1288,21 +1288,21 @@ declare(strict_types=1);
                                 $badgeStyle = $pm === 'Cash' ? 'background:#e0e7ff; color:#3730a3;' : ($pm === 'Cheque' ? 'background:#fef3c7; color:#92400e;' : 'background:#e0f2fe; color:#0369a1;');
                                 ?>
                                 <span class="badge" style="<?= $badgeStyle ?> font-weight:600; padding:3px 8px; border-radius:4px; font-size:11px;">
-                                    <?= htmlspecialchars($pm) ?>
+                                    <?= htmlspecialchars((string)$pm) ?>
                                 </span>
                             </td>
-                            <td><?= htmlspecialchars($reim->description) ?></td>
+                            <td><?= htmlspecialchars((string)$reim->description) ?></td>
                             <td>
                                 <?php if ($reim->payment_method === 'Cash'): ?>
                                     <span style="color:#059669; font-weight:500;">Cash in Hand</span>
                                 <?php else: ?>
-                                    <?= $reim->bank_account_code ?> - <?= htmlspecialchars($reim->bank_account_name) ?>
+                                    <?= $reim->bank_account_code ?> - <?= htmlspecialchars((string)$reim->bank_account_name) ?>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($reim->payment_method === 'Cheque' || !empty($reim->cheque_number)): ?>
                                     <div style="font-size:12px;">
-                                        <strong>#<?= htmlspecialchars($reim->cheque_number) ?></strong>
+                                        <strong>#<?= htmlspecialchars((string)$reim->cheque_number) ?></strong>
                                         <?php if (!empty($reim->cheque_date)): ?>
                                             <br><span style="color:#64748b; font-size:11px;"><?= date('d-M-Y', strtotime($reim->cheque_date)) ?></span>
                                         <?php endif; ?>
@@ -1367,10 +1367,10 @@ declare(strict_types=1);
                         <?php foreach ($data['pending_expenses'] as $pe): ?>
                             <tr>
                                 <td><?= date('d-M-Y', strtotime($pe->transaction_date)) ?></td>
-                                <td><strong><?= htmlspecialchars($pe->voucher_number ?: 'PCV-' . str_pad((string)$pe->id, 5, '0', STR_PAD_LEFT)) ?></strong></td>
-                                <td><?= htmlspecialchars($pe->offset_account_code . ' - ' . $pe->offset_account_name) ?></td>
-                                <td><?= htmlspecialchars($pe->paid_to ?: 'N/A') ?></td>
-                                <td><?= htmlspecialchars($pe->description) ?></td>
+                                <td><strong><?= htmlspecialchars((string)$pe->voucher_number ?: 'PCV-' . str_pad((string)$pe->id, 5, '0', STR_PAD_LEFT)) ?></strong></td>
+                                <td><?= htmlspecialchars((string)$pe->offset_account_code . ' - ' . $pe->offset_account_name) ?></td>
+                                <td><?= htmlspecialchars((string)$pe->paid_to ?: 'N/A') ?></td>
+                                <td><?= htmlspecialchars((string)$pe->description) ?></td>
                                 <td style="text-align: right; font-weight: bold; color: #ef4444;">Rs: <?= number_format((float)$pe->amount, 2) ?></td>
                             </tr>
                         <?php endforeach; ?>
@@ -1406,7 +1406,7 @@ declare(strict_types=1);
                     <select name="custodian_id" id="custodian_id" required>
                         <?php foreach ($data['users'] as $u): ?>
                             <option value="<?= $u->id ?>" <?= ($data['config'] && isset($data['config']->custodian_id) && (int)$data['config']->custodian_id === (int)$u->id) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($u->username) ?> (<?= htmlspecialchars($u->email) ?>)
+                                <?= htmlspecialchars((string)$u->username) ?> (<?= htmlspecialchars((string)$u->email) ?>)
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -1417,7 +1417,7 @@ declare(strict_types=1);
                         <option value="">-- Select Funding Account --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
                             <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
-                                <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
+                                <?= $fa->account_code ?> - <?= htmlspecialchars((string)$fa->account_name) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -1451,7 +1451,7 @@ declare(strict_types=1);
                         <option value="">-- Select Source Account --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
                             <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
-                                <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
+                                <?= $fa->account_code ?> - <?= htmlspecialchars((string)$fa->account_name) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -1496,7 +1496,7 @@ declare(strict_types=1);
                     <select name="account_id" id="exp_account_id" required>
                         <option value="">-- Select Expense Category --</option>
                         <?php foreach ($data['expense_accounts'] as $ea): ?>
-                            <option value="<?= $ea->id ?>"><?= $ea->account_code ?> - <?= htmlspecialchars($ea->account_name) ?></option>
+                            <option value="<?= $ea->id ?>"><?= $ea->account_code ?> - <?= htmlspecialchars((string)$ea->account_name) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -1566,7 +1566,7 @@ declare(strict_types=1);
                         <option value="">-- Select Source Bank --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
                             <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
-                                <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
+                                <?= $fa->account_code ?> - <?= htmlspecialchars((string)$fa->account_name) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
