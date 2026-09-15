@@ -49,6 +49,12 @@ git push origin main >> %LOGFILE% 2>&1
 type %LOGFILE%
 
 echo.
+echo Executing local schema_update.sql if pending...
+if exist schema_update.sql (
+    c:\xampp\php\php.exe -r "$f='schema_update.sql'; if(file_exists($f)){ $sql=trim(preg_replace('/--.*$/m','',file_get_contents($f))); if(!empty($sql)){ require_once 'config/database.php'; require_once 'core/Database.php'; try { $db=new Database(); foreach(array_filter(array_map('trim',explode(';',$sql))) as $s){ if(!empty($s)){ $db->query($s); $db->execute(); } } echo \"Local DB Migration Complete.\n\"; } catch(Exception $e){ echo \"Local DB Migration Error: \".$e->getMessage().\"\n\"; } } file_put_contents($f, \"-- Copy & paste SQL queries here before running deploy.bat\n-- After deployment, the server will execute these queries once and automatically wipe this file clean.\n\"); }"
+)
+
+echo.
 echo ===================================================
 echo Success! Changes have been pushed to GitHub.
 echo If your aaPanel webhook is set up correctly,
