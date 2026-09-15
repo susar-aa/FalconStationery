@@ -139134,3 +139134,8 @@ SQL: ALTER TABLE item_variation_options ADD COLUMN damaged_qty DECIMAL(15,2) DEF
 [2026-09-13 21:25:33] Migration 'stock_ledger_stock_status' failed: SQLSTATE[HY000]: General error: 2014 Cannot execute queries while other unbuffered queries are active.  Consider using PDOStatement::fetchAll().  Alternatively, if your code is only ever going to run against mysql, you may enable query buffering by setting the PDO::MYSQL_ATTR_USE_BUFFERED_QUERY attribute.
 SQL: ALTER TABLE stock_ledger ADD COLUMN stock_status VARCHAR(50) DEFAULT 'Good'
 
+[2026-09-15 07:47:36] Database initialization failed: SQLSTATE[HY000] [1045] Access denied for user 'curtiss_erp'@'localhost' (using password: YES)
+#0 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\core\Database.php(27): PDO->__construct('mysql:host=127....', 'curtiss_erp', 'Susara@20061100...', Array)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\scratch\find_cello_tape.php(4): Database->__construct()
+#2 {main}
+

@@ -307,6 +307,7 @@ class CreditNote {
                             $this->db->bind(':qty', $item['qty']);
                             $this->db->bind(':id', $item['var_opt_id']);
                             $this->db->execute();
+                            $itemModel->syncVariationsJsonColumn($item['item_id']);
                         }
 
                         $fifo->recordReceipt($item['item_id'], $item['var_opt_id'], null, $item['qty'], $costPrice);
@@ -336,6 +337,7 @@ class CreditNote {
                             $this->db->bind(':qty', $item['qty']);
                             $this->db->bind(':id', $item['var_opt_id']);
                             $this->db->execute();
+                            $itemModel->syncVariationsJsonColumn($item['item_id']);
                         }
 
                         // Log Damaged Stock Movement in Stock Ledger
@@ -426,6 +428,7 @@ class CreditNote {
                             $this->db->bind(':qty', $item->quantity);
                             $this->db->bind(':id', $item->variation_option_id);
                             $this->db->execute();
+                            $itemModel->syncVariationsJsonColumn($item->item_id);
                         }
                     } else {
                         $this->db->query("UPDATE items SET damaged_qty = damaged_qty - :qty WHERE id = :id");
@@ -437,6 +440,7 @@ class CreditNote {
                             $this->db->bind(':qty', $item->quantity);
                             $this->db->bind(':id', $item->variation_option_id);
                             $this->db->execute();
+                            $itemModel->syncVariationsJsonColumn($item->item_id);
                         }
                     }
                 }

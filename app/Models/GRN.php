@@ -246,6 +246,11 @@ class GRN {
                 $itemRow = $this->db->single();
                 $whId = $itemRow ? $itemRow->warehouse_id : null;
                 $ledger->logMovement($item->item_id, $item->item_variation_option_id, $item->quantity, 0, 'GRN', $grn->grn_number, $whId, $userId, 'GRN Approved Stock Receipt', $item->unit_cost);
+                
+                // 3.6 Sync variations_json to reflect updated prices/stock
+                require_once __DIR__ . '/Item.php';
+                $itemModel = new Item();
+                $itemModel->syncVariationsJsonColumn($item->item_id);
             }
 
             // 4. Record Double-Entry Accounting Journal Entry

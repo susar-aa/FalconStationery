@@ -663,6 +663,7 @@ class Delivery {
                             $this->db->bind(':loadedQty', $loadedQty);
                             $this->db->bind(':id', $varId);
                             $this->db->execute();
+                            $itemModel->syncVariationsJsonColumn($itemId);
                         }
 
                         $fifo->revertDepletion($item->id, null);
@@ -767,6 +768,7 @@ class Delivery {
                                 $this->db->bind(':adj', $adjustment);
                                 $this->db->bind(':id', $varId);
                                 $this->db->execute();
+                                $itemModel->syncVariationsJsonColumn($itemId);
                             }
 
                             // Log stock movement in ledger (counted returns adjustment)

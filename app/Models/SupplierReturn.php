@@ -195,6 +195,10 @@ class SupplierReturn {
                     $this->db->bind(':qty', $item['qty']);
                     $this->db->bind(':vid', $item['var_opt_id']);
                     $this->db->execute();
+                    
+                    require_once __DIR__ . '/Item.php';
+                    $itemModel = new Item();
+                    $itemModel->syncVariationsJsonColumn($item['item_id']);
                 }
 
                 // Log Stock Movement in Ledger

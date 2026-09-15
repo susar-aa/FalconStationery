@@ -165,6 +165,7 @@ class RepVarianceService {
                             require_once dirname(__DIR__) . '/Models/Item.php';
                             $itemModel = new Item();
                             $itemModel->updateStockDelta($itemId, -$diff);
+                            $itemModel->syncVariationsJsonColumn($itemId);
                         } else {
                             require_once dirname(__DIR__) . '/Models/Item.php';
                             $itemModel = new Item();
@@ -247,6 +248,7 @@ class RepVarianceService {
                                 require_once dirname(__DIR__) . '/Models/Item.php';
                                 $itemModel = new Item();
                                 $itemModel->updateStockDelta($itemId, -$newQty);
+                                $itemModel->syncVariationsJsonColumn($itemId);
                             } else {
                                 require_once dirname(__DIR__) . '/Models/Item.php';
                                 $itemModel = new Item();

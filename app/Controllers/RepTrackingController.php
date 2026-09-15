@@ -1961,6 +1961,7 @@ class RepTrackingController extends Controller {
                         $db->bind(':qty', $qty);
                         $db->bind(':id', $varId);
                         $db->execute();
+                        $itemModel->syncVariationsJsonColumn($itemId);
                     }
 
                     require_once dirname(__DIR__) . '/Models/FIFO.php';
@@ -1990,6 +1991,7 @@ class RepTrackingController extends Controller {
                         $db->bind(':qty', $qty);
                         $db->bind(':id', $varId);
                         $db->execute();
+                        $itemModel->syncVariationsJsonColumn($itemId);
                     }
 
                     // Log movement in stock ledger

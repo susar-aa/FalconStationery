@@ -225,6 +225,10 @@ class PurchaseOrder {
                     $this->db->bind(':qty', $qty);
                     $this->db->bind(':vid', $varOptId);
                     $this->db->execute();
+                    
+                    require_once __DIR__ . '/Item.php';
+                    $itemModel = new Item();
+                    $itemModel->syncVariationsJsonColumn($itemId);
                 }
             }
 

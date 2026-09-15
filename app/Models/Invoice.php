@@ -259,6 +259,7 @@ class Invoice {
                     $this->db->bind(':qty', $item['quantity']);
                     $this->db->bind(':id', $varId);
                     $this->db->execute();
+                    $itemModel->syncVariationsJsonColumn($itemId);
                 }
 
                 // Deplete via FIFO batches & capture unit cost
@@ -362,6 +363,7 @@ class Invoice {
                     $this->db->bind(':qty', $oldItem->quantity);
                     $this->db->bind(':id', $varId);
                     $this->db->execute();
+                    $itemModel->syncVariationsJsonColumn($itemId);
                 }
 
                 // Revert FIFO batch allocations
@@ -635,6 +637,7 @@ class Invoice {
                     $this->db->bind(':qty', $item['quantity']);
                     $this->db->bind(':id', $varId);
                     $this->db->execute();
+                    $itemModel->syncVariationsJsonColumn($itemId);
                 }
 
                 // Deplete new items via FIFO batches & capture unit cost
@@ -732,6 +735,7 @@ class Invoice {
                     $this->db->bind(':qty', $oldItem->quantity);
                     $this->db->bind(':id', $varId);
                     $this->db->execute();
+                    $itemModel->syncVariationsJsonColumn($itemId);
                 }
 
                 $fifo->revertDepletion($oldItem->id, null);

@@ -150,6 +150,7 @@ class DriverInvoice {
                 $this->db->bind(':diff', $diffQty);
                 $this->db->bind(':id', $item->variation_option_id);
                 $this->db->execute();
+                $itemModel->syncVariationsJsonColumn($item->item_id);
             }
 
             // 4. Update the item
@@ -205,6 +206,7 @@ class DriverInvoice {
                 $this->db->bind(':diff', $oldQty);
                 $this->db->bind(':id', $item->variation_option_id);
                 $this->db->execute();
+                $itemModel->syncVariationsJsonColumn($item->item_id);
             }
 
             // 3. Update quantity and total to 0 to preserve audit trail for returns
@@ -540,6 +542,7 @@ class DriverInvoice {
                                 $this->db->bind(':qty', $deliveredQty);
                                 $this->db->bind(':id', $varId);
                                 $this->db->execute();
+                                $itemModel->syncVariationsJsonColumn($itemId);
                             } else {
                                 require_once '../app/Models/Item.php';
                                 $itemModel = new Item();
@@ -561,6 +564,7 @@ class DriverInvoice {
                                 $this->db->bind(':qty', $loadedQty);
                                 $this->db->bind(':id', $varId);
                                 $this->db->execute();
+                                $itemModel->syncVariationsJsonColumn($itemId);
                             } else {
                                 $this->db->query("UPDATE items SET quantity_reserved = GREATEST(0, CAST(quantity_reserved AS SIGNED) - :qty) WHERE id = :id");
                                 $this->db->bind(':qty', $loadedQty);

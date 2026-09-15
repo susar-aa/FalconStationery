@@ -277,3 +277,20 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Mon 09/14/2026 21:02:42.19 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/PettyCashController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/PettyCashReimbursement.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/petty_cash/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/petty_cash/print_reimbursement.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'core/MigrationManager.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main fef0ff3] Automated deployment update
+ 6 files changed, 332 insertions(+), 93 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   e18cb35..fef0ff3  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Tue 09/15/2026 12:14:59.27 
+=================================================== 
+Adding changes... 
