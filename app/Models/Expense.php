@@ -12,6 +12,29 @@ class Expense {
     public function __construct() {
         $this->db = new Database();
         $this->auditLog = new AuditLog();
+        $this->selfHealSchema();
+    }
+
+    private function selfHealSchema(): void {
+        try {
+            $columns = [
+                'payment_method' => "ALTER TABLE expenses ADD COLUMN payment_method VARCHAR(50) DEFAULT 'Cash' AFTER amount",
+                'expense_account_id' => "ALTER TABLE expenses ADD COLUMN expense_account_id INT NULL AFTER payment_method",
+                'payment_account_id' => "ALTER TABLE expenses ADD COLUMN payment_account_id INT NULL AFTER expense_account_id",
+                'petty_cash_transaction_id' => "ALTER TABLE expenses ADD COLUMN petty_cash_transaction_id INT NULL AFTER journal_entry_id"
+            ];
+
+            foreach ($columns as $col => $alterSql) {
+                $this->db->query("SHOW COLUMNS FROM expenses LIKE '$col'");
+                $exists = $this->db->single();
+                if (!$exists) {
+                    $this->db->query($alterSql);
+                    $this->db->execute();
+                }
+            }
+        } catch (Exception $e) {
+            // Log or ignore schema healing errors
+        }
     }
 
     public function getAllExpenses(array $filters = []): array {

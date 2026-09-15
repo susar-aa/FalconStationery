@@ -146,8 +146,33 @@ require_once '../vendor/autoload.php';
 require_once '../config/database.php';
 require_once '../core/Cache.php';
 require_once '../core/Database.php';
-require_once '../core/Controller.php';
-require_once '../core/App.php';
+// Auto-run schema_update.sql if pending, then clear file
+$schemaFile = dirname(__DIR__) . '/schema_update.sql';
+if (file_exists($schemaFile)) {
+    $rawSql = trim(file_get_contents($schemaFile));
+    // Remove comments and whitespace
+    $cleanSql = preg_replace('/--.*$/m', '', $rawSql);
+    $cleanSql = trim($cleanSql);
+    
+    if (!empty($cleanSql)) {
+        try {
+            $dbMigration = new Database();
+            // Split into individual SQL statements
+            $statements = array_filter(array_map('trim', explode(';', $cleanSql)));
+            foreach ($statements as $stmt) {
+                if (!empty($stmt)) {
+                    $dbMigration->query($stmt);
+                    $dbMigration->execute();
+                }
+            }
+            // Successfully executed: Clear the schema file so it won't run again
+            $defaultHeader = "-- Copy & paste SQL queries here before running deploy.bat\n-- After deployment, the server will execute these queries once and automatically wipe this file clean.\n";
+            @file_put_contents($schemaFile, $defaultHeader);
+        } catch (Exception $e) {
+            @file_put_contents(dirname(__DIR__) . '/app_errors.log', "[" . date('Y-m-d H:i:s') . "] Migration Error: " . $e->getMessage() . "\n", FILE_APPEND);
+        }
+    }
+}
 
 $app = new App();
 

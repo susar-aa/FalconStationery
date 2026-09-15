@@ -735,3 +735,16 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 09/15/2026 22:28:12.12 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Views/expenses/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 2d6acae] Update: app/Controllers/ExpensesController.php, app/Models/Expense.php, app/Views/expenses/index.php, deploy_log.txt
+ 4 files changed, 930 insertions(+), 200 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   7a169c1..2d6acae  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Tue 09/15/2026 22:38:26.33 
+=================================================== 
+Adding changes... 
