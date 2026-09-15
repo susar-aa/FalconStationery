@@ -50,15 +50,8 @@ declare(strict_types=1);
             }
         } else {
             console.error('Modal element not found for ID:', modalId);
-            fetch('<?= APP_URL ?>/save_debug.php', {
-                method: 'POST',
-                body: document.documentElement.innerHTML
-            }).then(() => {
-                alert("Error logged. Please tell the agent the DOM was saved.");
-            }).catch((err) => {
-                console.error("Failed to save debug log:", err);
-                alert("Error logged, but failed to save debug. Error: Modal '" + modalId + "' could not be loaded.");
-            });
+            let availableModals = Array.from(document.querySelectorAll('.modal')).map(m => m.id).join(', ');
+            alert("Error: Modal '" + modalId + "' not found. Available modals in DOM: " + availableModals);
         }
     };
 
