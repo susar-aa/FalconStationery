@@ -902,7 +902,7 @@ $invoiceBalance = max(0, $thisInvoiceGrandTotal - $estimatePaidAmount);
         <div class="print-controls">
             <button onclick="exportToExcel()" class="btn-action btn-excel"><i class="ph ph-file-xls"></i> Excel</button>
             <?php if(!empty($data['estimate']->id) && is_numeric($data['estimate']->id)): ?>
-                <a href="<?= APP_URL ?>/sales/download_pdf/<?= $data['estimate']->id ?>" class="btn-action btn-pdf"><i class="ph ph-file-pdf"></i> PDF</a>
+                <a href="<?= APP_URL ?>/estimate/download_pdf/<?= $data['estimate']->id ?>" class="btn-action btn-pdf"><i class="ph ph-file-pdf"></i> PDF</a>
             <?php endif; ?>
             <button onclick="window.print()" class="btn-action"><i class="ph ph-printer"></i> Print</button>
         </div>
@@ -1141,7 +1141,7 @@ $invoiceBalance = max(0, $thisInvoiceGrandTotal - $estimatePaidAmount);
                                 <?= htmlspecialchars($data['company']->company_name ?? 'CURTISS ERP') ?>
                             </td>
                             <td colspan="2" style="font-size: 24pt; font-weight: bold; text-align: right; text-transform: uppercase;">
-                                INVOICE
+                                ESTIMATE
                             </td>
                         </tr>
                         <tr>
