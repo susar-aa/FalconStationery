@@ -5,11 +5,26 @@ echo       GitHub Push ^& aaPanel Auto-Deploy Tool
 echo ===================================================
 echo.
 
-set /p commitMessage="Enter commit message (or press enter for default): "
+set /p commitMessage="Enter commit message (or press enter for summary): "
 if "%commitMessage%"=="" (
-    for /f "tokens=1-3 delims=/ " %%a in ("%date%") do set mydate=%%c-%%a-%%b
-    for /f "tokens=1-2 delims=: " %%a in ("%time%") do set mytime=%%a:%%b
-    set commitMessage=Auto update [%date% %time%]
+    setlocal enabledelayedexpansion
+    set "fileList="
+    for /f "tokens=1,* delims= " %%i in ('git status --short') do (
+        if not "%%j"=="" (
+            set "filename=%%j"
+            set "filename=!filename:\=/!"
+            if defined fileList (
+                set "fileList=!fileList!, !filename!"
+            ) else (
+                set "fileList=!filename!"
+            )
+        )
+    )
+    if "!fileList!"=="" (
+        set "commitMessage=Update [%date% %time%]"
+    ) else (
+        set "commitMessage=Update: !fileList!"
+    )
 )
 
 set LOGFILE=deploy_log.txt
@@ -25,7 +40,7 @@ git add . >> %LOGFILE% 2>&1
 echo.
 echo Committing changes...
 echo Committing changes... >> %LOGFILE%
-git commit -m "%commitMessage%" >> %LOGFILE% 2>&1
+git commit -m "!commitMessage!" >> %LOGFILE% 2>&1
 
 echo.
 echo Pushing to GitHub...
