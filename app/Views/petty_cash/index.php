@@ -1,5 +1,12 @@
 <?php
 declare(strict_types=1);
+
+if (!function_exists('buildPettyCashUrl')) {
+    function buildPettyCashUrl(array $overrides = []): string {
+        $params = array_merge($_GET, $overrides);
+        return APP_URL . '/pettycash?' . http_build_query($params);
+    }
+}
 ?>
 
 <script>
@@ -976,6 +983,141 @@ declare(strict_types=1);
 .variation-item-row td:first-child {
     border-left: 4px solid var(--c-blue) !important;
 }
+
+/* Filter Bar Modern Styles */
+.filter-card {
+    background: var(--c-surface2);
+    border-bottom: 0.5px solid var(--c-separator);
+    padding: 16px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+}
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 140px;
+    min-width: 130px;
+}
+.filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--t-label);
+}
+.filter-control {
+    width: 100%;
+    height: 36px;
+    padding: 0 10px;
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--f-system);
+    color: var(--t-primary);
+    outline: none;
+    transition: all var(--dur-fast);
+}
+.filter-control:focus {
+    border-color: var(--c-blue);
+    box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
+}
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+.btn-filter-submit {
+    height: 36px;
+    padding: 0 16px;
+    background: var(--c-blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background var(--dur-fast);
+}
+.btn-filter-submit:hover {
+    background: #0066cc;
+}
+.btn-filter-reset {
+    height: 36px;
+    padding: 0 14px;
+    background: var(--c-fill);
+    color: var(--t-primary);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background var(--dur-fast);
+}
+.btn-filter-reset:hover {
+    background: var(--c-fill2);
+}
+
+/* Badge Tweaks */
+.voucher-code {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: #0284c7;
+    background: #f0f9ff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 0.5px solid #bae6fd;
+    display: inline-block;
+}
+.sf-badge.badge-blue { background: var(--c-blue-light); color: var(--c-blue); }
+.sf-badge.badge-blue .dot { background: var(--c-blue); }
+.sf-badge.badge-teal { background: var(--c-teal-light); color: #0284c7; }
+.sf-badge.badge-teal .dot { background: var(--c-teal); }
+.sf-badge.badge-orange { background: var(--c-orange-light); color: #d97706; }
+.sf-badge.badge-orange .dot { background: var(--c-orange); }
+
+.txt-green { color: var(--c-green) !important; }
+.txt-red { color: var(--c-red) !important; }
+
+/* Table Action Pill Buttons */
+.act-pill {
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 0.5px solid var(--c-separator);
+    background: var(--c-surface);
+    color: var(--t-primary);
+    transition: all var(--dur-fast);
+}
+.act-pill:hover {
+    background: var(--c-fill);
+}
+.act-pill.print { color: #166534; border-color: #bbf7d0; background: #f0fdf4; }
+.act-pill.print:hover { background: #dcfce7; }
+.act-pill.pdf { color: #991b1b; border-color: #fecaca; background: #fef2f2; }
+.act-pill.pdf:hover { background: #fee2e2; }
+.act-pill.approve { color: #065f46; border-color: #a7f3d0; background: #ecfdf5; }
+.act-pill.approve:hover { background: #d1fae5; }
+.act-pill.reject { color: #991b1b; border-color: #fecaca; background: #fef2f2; }
+.act-pill.reject:hover { background: #fee2e2; }
+.act-pill.danger { color: #991b1b; border-color: #fecaca; background: #fef2f2; }
+.act-pill.danger:hover { background: #fee2e2; }
 </style>
 
 <div class="inv-root">
@@ -1073,188 +1215,221 @@ declare(strict_types=1);
         <!-- Tab 1: Transactions -->
         <div id="transactionsTab" class="tab-content active">
             <!-- Filter Form -->
-            <form method="GET" action="<?= APP_URL ?>/pettycash" class="filters-bar" style="display: flex; flex-wrap: wrap; gap: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                <div class="filter-group" style="flex: 1 1 180px;">
-                    <label for="voucher_number">Voucher No</label>
-                    <input type="text" name="voucher_number" id="voucher_number" value="<?= htmlspecialchars((string)$data['filters']['voucher_number']) ?>" placeholder="PCV-xxxxx" class="filter-input">
+            <form method="GET" action="<?= APP_URL ?>/pettycash" class="filter-card">
+                <input type="hidden" name="limit" value="<?= htmlspecialchars((string)($data['limit'] ?? 20)) ?>">
+                <div class="filter-field">
+                    <label class="filter-label" for="voucher_number">Voucher No</label>
+                    <input type="text" name="voucher_number" id="voucher_number" value="<?= htmlspecialchars((string)$data['filters']['voucher_number']) ?>" placeholder="PCV-xxxxx" class="filter-control">
                 </div>
-                <div class="filter-group" style="flex: 1 1 180px;">
-                    <label for="paid_to">Paid To / Payee</label>
-                    <input type="text" name="paid_to" id="paid_to" value="<?= htmlspecialchars((string)$data['filters']['paid_to']) ?>" placeholder="Payee name..." class="filter-input">
+                <div class="filter-field">
+                    <label class="filter-label" for="paid_to">Paid To / Payee</label>
+                    <input type="text" name="paid_to" id="paid_to" value="<?= htmlspecialchars((string)$data['filters']['paid_to']) ?>" placeholder="Payee name..." class="filter-control">
                 </div>
-                <div class="filter-group" style="flex: 1 1 150px;">
-                    <label for="type">Type</label>
-                    <select name="type" id="type" class="filter-input">
+                <div class="filter-field">
+                    <label class="filter-label" for="type">Type</label>
+                    <select name="type" id="type" class="filter-control">
                         <option value="">All Types</option>
                         <option value="allocation" <?= $data['filters']['type'] === 'allocation' ? 'selected' : '' ?>>Allocation</option>
                         <option value="expense" <?= $data['filters']['type'] === 'expense' ? 'selected' : '' ?>>Expense</option>
                         <option value="reimbursement" <?= $data['filters']['type'] === 'reimbursement' ? 'selected' : '' ?>>Reimbursement</option>
                     </select>
                 </div>
-                <div class="filter-group" style="flex: 1 1 150px;">
-                    <label for="status">Status</label>
-                    <select name="status" id="status" class="filter-input">
+                <div class="filter-field">
+                    <label class="filter-label" for="status">Status</label>
+                    <select name="status" id="status" class="filter-control">
                         <option value="">All Statuses</option>
                         <option value="Pending" <?= $data['filters']['status'] === 'Pending' ? 'selected' : '' ?>>Pending</option>
                         <option value="Approved" <?= $data['filters']['status'] === 'Approved' ? 'selected' : '' ?>>Approved</option>
                         <option value="Rejected" <?= $data['filters']['status'] === 'Rejected' ? 'selected' : '' ?>>Rejected</option>
                     </select>
                 </div>
-                <div class="filter-group" style="flex: 1 1 180px;">
-                    <label for="rep_route_id">Related Route</label>
-                    <select name="rep_route_id" id="rep_route_id" class="filter-input">
+                <div class="filter-field">
+                    <label class="filter-label" for="rep_route_id">Route</label>
+                    <select name="rep_route_id" id="rep_route_id" class="filter-control">
                         <option value="">All Routes</option>
                         <?php foreach ($data['routes'] as $r): ?>
                             <option value="<?= $r->id ?>" <?= $data['filters']['rep_route_id'] == $r->id ? 'selected' : '' ?>><?= htmlspecialchars((string)$r->route_name) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="filter-group" style="flex: 1 1 180px;">
-                    <label for="rep_user_id">Related Rep</label>
-                    <select name="rep_user_id" id="rep_user_id" class="filter-input">
+                <div class="filter-field">
+                    <label class="filter-label" for="rep_user_id">Rep</label>
+                    <select name="rep_user_id" id="rep_user_id" class="filter-control">
                         <option value="">All Reps</option>
                         <?php foreach ($data['users'] as $u): ?>
                             <option value="<?= $u->id ?>" <?= $data['filters']['rep_user_id'] == $u->id ? 'selected' : '' ?>><?= htmlspecialchars((string)$u->username) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="filter-group" style="flex: 1 1 150px;">
-                    <label for="date_from">From Date</label>
-                    <input type="date" name="date_from" id="date_from" value="<?= htmlspecialchars((string)$data['filters']['date_from']) ?>" class="filter-input">
+                <div class="filter-field" style="max-width: 140px;">
+                    <label class="filter-label" for="date_from">From Date</label>
+                    <input type="date" name="date_from" id="date_from" value="<?= htmlspecialchars((string)$data['filters']['date_from']) ?>" class="filter-control">
                 </div>
-                <div class="filter-group" style="flex: 1 1 150px;">
-                    <label for="date_to">To Date</label>
-                    <input type="date" name="date_to" id="date_to" value="<?= htmlspecialchars((string)$data['filters']['date_to']) ?>" class="filter-input">
+                <div class="filter-field" style="max-width: 140px;">
+                    <label class="filter-label" for="date_to">To Date</label>
+                    <input type="date" name="date_to" id="date_to" value="<?= htmlspecialchars((string)$data['filters']['date_to']) ?>" class="filter-control">
                 </div>
-                <div class="filter-group" style="flex: 1 1 180px;">
-                    <label for="search">Keyword</label>
-                    <input type="text" name="search" id="search" value="<?= htmlspecialchars((string)$data['filters']['search']) ?>" placeholder="Desc, Ref..." class="filter-input">
+                <div class="filter-field">
+                    <label class="filter-label" for="search">Keyword</label>
+                    <input type="text" name="search" id="search" value="<?= htmlspecialchars((string)$data['filters']['search']) ?>" placeholder="Desc, Ref..." class="filter-control">
                 </div>
-                <div class="filter-group" style="flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px;">
-                    <button type="submit" class="btn btn-secondary" style="height: 38px; display: inline-flex; align-items: center; justify-content: center;"><i class="ph ph-funnel" style="margin-right: 4px;"></i> Filter</button>
-                    <a href="<?= APP_URL ?>/pettycash" class="btn btn-outline" style="height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid #ccc; background: #fff; text-decoration: none; box-sizing: border-box; border-radius: 4px; color: #333;"><i class="ph ph-arrow-counter-clockwise" style="margin-right: 4px;"></i> Reset</a>
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter-submit"><i class="fa fa-filter"></i> Filter</button>
+                    <a href="<?= APP_URL ?>/pettycash" class="btn-filter-reset"><i class="fa fa-undo"></i> Reset</a>
                 </div>
             </form>
 
-            <table class="pc-table">
-                <thead>
-                    <tr>
-                        <th>Voucher No</th>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Category</th>
-                        <th>Paid To / Payee</th>
-                        <th>Route / Rep</th>
-                        <th style="text-align: right;">Amount</th>
-                        <th>Status</th>
-                        <th>Created By</th>
-                        <th style="text-align: center;">Receipt</th>
-                        <th style="text-align: right;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($data['transactions'])): ?>
+            <div class="table-panel">
+                <table class="inv-table">
+                    <thead>
                         <tr>
-                            <td colspan="11">
-                                <div class="empty-state">
-                                    <i class="ph ph-receipt"></i>
-                                    <p>No transactions found matching the filters.</p>
-                                </div>
-                            </td>
+                            <th>Voucher No</th>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Paid To / Payee</th>
+                            <th>Route / Rep</th>
+                            <th style="text-align: right;">Amount</th>
+                            <th>Status</th>
+                            <th>Created By</th>
+                            <th style="text-align: center;">Receipt</th>
+                            <th style="text-align: right;">Actions</th>
                         </tr>
-                    <?php else: foreach ($data['transactions'] as $tx): ?>
-                        <tr>
-                            <td>
-                                <strong style="font-family: monospace; font-size: 13px; color: #1b5e20;">
-                                    <?= htmlspecialchars((string)$tx->voucher_number ?: 'PCV-PENDING') ?>
-                                </strong>
-                            </td>
-                            <td><?= date('d-M-Y', strtotime($tx->transaction_date)) ?></td>
-                            <td>
-                                <?php if ($tx->type === 'allocation'): ?>
-                                    <span class="badge badge-info">Allocation</span>
-                                <?php elseif ($tx->type === 'reimbursement'): ?>
-                                    <span class="badge badge-success">Reimburse</span>
-                                <?php else: ?>
-                                    <span class="badge badge-warning">Expense</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($tx->type === 'allocation'): ?>
-                                    <span style="color: var(--text-muted); font-size: 11px;">Allocation</span>
-                                <?php elseif ($tx->type === 'reimbursement'): ?>
-                                    <span style="color: var(--text-muted); font-size: 11px;">Reimbursement</span>
-                                <?php else: ?>
-                                    <?= htmlspecialchars((string)$tx->offset_account_name ?: 'Petty Cash Control') ?>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= htmlspecialchars((string)$tx->paid_to ?: 'N/A') ?></td>
-                            <td>
-                                <?php if (!empty($tx->route_name)): ?>
-                                    <span style="font-weight: 500; font-size: 12px; color: #0284c7;"><?= htmlspecialchars((string)$tx->route_name) ?></span>
-                                    <br><span style="font-size: 11px; color: var(--text-muted);">Rep: <?= htmlspecialchars((string)$tx->rep_first_name . ' ' . $tx->rep_last_name) ?></span>
-                                <?php else: ?>
-                                    <span style="color: var(--text-muted); font-size: 11px;">None</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="text-align: right; font-weight: bold; color: <?= $tx->type === 'expense' ? '#ef6868' : '#10b981' ?>;">
-                                <?= $tx->type === 'expense' ? '-' : '+' ?>Rs: <?= number_format((float)$tx->amount, 2) ?>
-                            </td>
-                            <td>
-                                <?php if ($tx->status === 'Approved'): ?>
-                                    <span class="badge badge-success">Approved</span>
-                                <?php elseif ($tx->status === 'Pending'): ?>
-                                    <span class="badge badge-warning">Pending</span>
-                                <?php else: ?>
-                                    <span class="badge badge-danger">Rejected</span>
-                                <?php endif; ?>
-                            </td>
-                            <td><?= htmlspecialchars((string)$tx->creator_name ?: 'System') ?></td>
-                            <td style="text-align: center;">
-                                <?php if ($tx->attachment_path): ?>
-                                    <a href="<?= APP_URL ?>/<?= $tx->attachment_path ?>" target="_blank" class="btn btn-outline btn-sm" style="padding: 4px 8px;"><i class="ph ph-file-pdf"></i> View</a>
-                                <?php else: ?>
-                                    <span style="color: var(--text-muted); font-size: 11px;">None</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="text-align: right; white-space: nowrap;">
-                                <a href="<?= APP_URL ?>/pettycash/print_voucher/<?= $tx->id ?>" target="_blank" class="btn btn-outline btn-sm" style="padding: 4px 8px; border: 1px solid #1b5e20; color: #1b5e20;" title="Print Voucher"><i class="ph ph-printer"></i> Print</a>
-                                <a href="<?= APP_URL ?>/pettycash/download_pdf/<?= $tx->id ?>" class="btn btn-outline btn-sm" style="padding: 4px 8px; border: 1px solid #d32f2f; color: #d32f2f;" title="Download PDF"><i class="ph ph-file-pdf"></i> PDF</a>
-                                <?php if ($tx->status === 'Pending' && $tx->type === 'expense'): ?>
-                                    <a href="<?= APP_URL ?>/pettycash/approve_expense/<?= $tx->id ?>" class="btn btn-primary btn-sm"><i class="ph ph-check"></i> Approve</a>
-                                    <a href="<?= APP_URL ?>/pettycash/reject_expense/<?= $tx->id ?>" class="btn btn-danger btn-sm" onclick="return confirm('Reject this expense?')"><i class="ph ph-x"></i> Reject</a>
-                                <?php endif; ?>
-                                <?php 
-                                require_once __DIR__ . '/../../../core/RbacService.php';
-                                if (RbacService::getInstance()->check($_SESSION['user_id'], 'petty_cash', 'delete') && empty($tx->reimbursement_id) && $tx->type !== 'reimbursement'): 
-                                ?>
-                                    <a href="<?= APP_URL ?>/pettycash/delete/<?= $tx->id ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this transaction? This will completely undo the transaction and reverse its journal entries.')" style="margin-left: 4px;"><i class="ph ph-trash"></i> Delete</a>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; endif; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($data['transactions'])): ?>
+                            <tr>
+                                <td colspan="11">
+                                    <div class="tbl-empty">
+                                        <div class="tbl-empty-icon"><i class="fa fa-receipt"></i></div>
+                                        <div class="tbl-empty-title">No transactions found</div>
+                                        <div class="tbl-empty-sub">Try resetting filters or adjusting search keywords.</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php else: foreach ($data['transactions'] as $tx): ?>
+                            <tr>
+                                <td>
+                                    <span class="voucher-code">
+                                        <?= htmlspecialchars((string)($tx->voucher_number ?: 'PCV-PENDING')) ?>
+                                    </span>
+                                </td>
+                                <td><span class="num"><?= date('d-M-Y', strtotime($tx->transaction_date)) ?></span></td>
+                                <td>
+                                    <?php if ($tx->type === 'allocation'): ?>
+                                        <span class="sf-badge badge-blue"><span class="dot"></span>Allocation</span>
+                                    <?php elseif ($tx->type === 'reimbursement'): ?>
+                                        <span class="sf-badge badge-teal"><span class="dot"></span>Reimburse</span>
+                                    <?php else: ?>
+                                        <span class="sf-badge badge-orange"><span class="dot"></span>Expense</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($tx->type === 'allocation'): ?>
+                                        <span style="color: var(--t-tertiary); font-size: 12px;">Allocation</span>
+                                    <?php elseif ($tx->type === 'reimbursement'): ?>
+                                        <span style="color: var(--t-tertiary); font-size: 12px;">Reimbursement</span>
+                                    <?php else: ?>
+                                        <span style="font-weight: 500; font-size: 13px;"><?= htmlspecialchars((string)($tx->offset_account_name ?: 'Petty Cash Control')) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><span style="font-weight: 500;"><?= htmlspecialchars((string)($tx->paid_to ?: 'N/A')) ?></span></td>
+                                <td>
+                                    <?php if (!empty($tx->route_name)): ?>
+                                        <span style="font-weight: 600; font-size: 12px; color: var(--c-blue);"><?= htmlspecialchars((string)$tx->route_name) ?></span>
+                                        <br><span style="font-size: 11px; color: var(--t-tertiary);">Rep: <?= htmlspecialchars((string)($tx->rep_first_name . ' ' . $tx->rep_last_name)) ?></span>
+                                    <?php else: ?>
+                                        <span style="color: var(--t-tertiary); font-size: 12px;">None</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: right;">
+                                    <span class="num <?= $tx->type === 'expense' ? 'txt-red' : 'txt-green' ?>">
+                                        <?= $tx->type === 'expense' ? '-' : '+' ?>Rs: <?= number_format((float)$tx->amount, 2) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if ($tx->status === 'Approved'): ?>
+                                        <span class="sf-badge badge-active"><span class="dot"></span>Approved</span>
+                                    <?php elseif ($tx->status === 'Pending'): ?>
+                                        <span class="sf-badge badge-low"><span class="dot"></span>Pending</span>
+                                    <?php else: ?>
+                                        <span class="sf-badge badge-out"><span class="dot"></span>Rejected</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><span style="font-size: 12px; color: var(--t-secondary);"><?= htmlspecialchars((string)($tx->creator_name ?: 'System')) ?></span></td>
+                                <td style="text-align: center;">
+                                    <?php if ($tx->attachment_path): ?>
+                                        <a href="<?= APP_URL ?>/<?= $tx->attachment_path ?>" target="_blank" class="act-pill pdf" title="View Attachment"><i class="fa fa-file-pdf"></i> View</a>
+                                    <?php else: ?>
+                                        <span style="color: var(--t-tertiary); font-size: 12px;">None</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: right; white-space: nowrap;">
+                                    <div style="display: inline-flex; gap: 4px; justify-content: flex-end;">
+                                        <a href="<?= APP_URL ?>/pettycash/print_voucher/<?= $tx->id ?>" target="_blank" class="act-pill print" title="Print Voucher"><i class="fa fa-print"></i> Print</a>
+                                        <a href="<?= APP_URL ?>/pettycash/download_pdf/<?= $tx->id ?>" class="act-pill pdf" title="Download PDF"><i class="fa fa-file-pdf"></i> PDF</a>
+                                        <?php if ($tx->status === 'Pending' && $tx->type === 'expense'): ?>
+                                            <a href="<?= APP_URL ?>/pettycash/approve_expense/<?= $tx->id ?>" class="act-pill approve"><i class="fa fa-check"></i> Approve</a>
+                                            <a href="<?= APP_URL ?>/pettycash/reject_expense/<?= $tx->id ?>" class="act-pill reject" onclick="return confirm('Reject this expense?')"><i class="fa fa-times"></i> Reject</a>
+                                        <?php endif; ?>
+                                        <?php 
+                                        require_once __DIR__ . '/../../../core/RbacService.php';
+                                        if (RbacService::getInstance()->check($_SESSION['user_id'], 'petty_cash', 'delete') && empty($tx->reimbursement_id) && $tx->type !== 'reimbursement'): 
+                                        ?>
+                                            <a href="<?= APP_URL ?>/pettycash/delete/<?= $tx->id ?>" class="act-pill danger" onclick="return confirm('Are you sure you want to delete this transaction? This will completely undo the transaction and reverse its journal entries.')" title="Delete"><i class="fa fa-trash"></i></a>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; endif; ?>
+                    </tbody>
+                </table></div>
 
-            <!-- Pagination -->
-            <?php if ($data['total_pages'] > 1): ?>
-                <div class="pagination">
-                    <span style="font-size: 13px; color: var(--text-muted);">Page <?= $data['page'] ?> of <?= $data['total_pages'] ?></span>
-                    <div style="display: flex; gap: 6px;">
-                        <?php if ($data['page'] > 1): ?>
-                            <a href="?page=<?= $data['page'] - 1 ?>&type=<?= $data['filters']['type'] ?>&status=<?= $data['filters']['status'] ?>&date_from=<?= $data['filters']['date_from'] ?>&date_to=<?= $data['filters']['date_to'] ?>&search=<?= urlencode($data['filters']['search']) ?>" class="btn btn-secondary btn-sm">Prev</a>
-                        <?php endif; ?>
-                        <?php if ($data['page'] < $data['total_pages']): ?>
-                            <a href="?page=<?= $data['page'] + 1 ?>&type=<?= $data['filters']['type'] ?>&status=<?= $data['filters']['status'] ?>&date_from=<?= $data['filters']['date_from'] ?>&date_to=<?= $data['filters']['date_to'] ?>&search=<?= urlencode($data['filters']['search']) ?>" class="btn btn-secondary btn-sm">Next</a>
-                        <?php endif; ?>
+                <!-- Pagination Block -->
+                <div class="sf-pagination">
+                    <div class="pg-info">
+                        <?php 
+                        $totalTx = $data['total_transactions'] ?? 0;
+                        $curPage = $data['page'] ?? 1;
+                        $perPage = $data['limit'] ?? 20;
+                        $start = max(1, ($curPage - 1) * $perPage + 1);
+                        $end = min($totalTx, $curPage * $perPage);
+                        ?>
+                        Showing <strong><?= $totalTx > 0 ? $start : 0 ?></strong> – <strong><?= $end ?></strong> of <strong><?= $totalTx ?></strong> transactions
+                    </div>
+                    <div class="pg-right">
+                        <div class="pg-size-wrap">
+                            <span class="pg-size-lbl">Per page</span>
+                            <select class="pg-size-sel" onchange="window.location.href='<?= buildPettyCashUrl(['page' => 1]) ?>&limit=' + this.value">
+                                <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10</option>
+                                <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20</option>
+                                <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50</option>
+                                <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100</option>
+                            </select>
+                        </div>
+                        <div class="pg-nav">
+                            <?php if ($curPage > 1): ?>
+                                <a href="<?= buildPettyCashUrl(['page' => $curPage - 1]) ?>" class="pg-btn" title="Previous Page"><i class="fa fa-chevron-left"></i></a>
+                            <?php else: ?>
+                                <button type="button" class="pg-btn" disabled><i class="fa fa-chevron-left"></i></button>
+                            <?php endif; ?>
+
+                            <div class="pg-current"><?= $curPage ?> / <?= $data['total_pages'] ?? 1 ?></div>
+
+                            <?php if ($curPage < ($data['total_pages'] ?? 1)): ?>
+                                <a href="<?= buildPettyCashUrl(['page' => $curPage + 1]) ?>" class="pg-btn" title="Next Page"><i class="fa fa-chevron-right"></i></a>
+                            <?php else: ?>
+                                <button type="button" class="pg-btn" disabled><i class="fa fa-chevron-right"></i></button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
         </div>
 
         <!-- Tab 2: Reimbursements -->
         <div id="reimbursementsTab" class="tab-content">
-            <table class="pc-table">
+            <div class="table-panel"><table class="inv-table">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -1332,7 +1507,7 @@ declare(strict_types=1);
                         </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
-            </table>
+            </table></div>
         </div>
 
         <!-- Tab 3: Pending Expenses (ready to be reimbursed) -->
@@ -1352,7 +1527,7 @@ declare(strict_types=1);
                         <i class="ph ph-arrows-clockwise"></i> Generate Reimbursement Request (Rs: <?= number_format((float)$data['pending_reimbursements'], 2) ?>)
                     </button>
                 </div>
-                <table class="pc-table">
+                <div class="table-panel"><table class="inv-table">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -1375,7 +1550,7 @@ declare(strict_types=1);
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
-                </table>
+                </table></div>
             <?php endif; ?>
         </div>
     </div>

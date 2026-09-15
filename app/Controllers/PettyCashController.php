@@ -41,8 +41,8 @@ class PettyCashController extends Controller {
         ];
 
         // Pagination for transactions
+        $limit = isset($_GET['limit']) ? max(5, min(500, intval($_GET['limit']))) : 20;
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-        $limit = 20;
         $offset = ($page - 1) * $limit;
 
         $totalTransactions = $this->pcTxModel->getTransactionsCount($filters);
@@ -88,6 +88,8 @@ class PettyCashController extends Controller {
             'routes' => $routes,
             'filters' => $filters,
             'page' => $page,
+            'limit' => $limit,
+            'total_transactions' => $totalTransactions,
             'total_pages' => $totalPages,
             'csrf_token' => $this->generateCsrfToken(),
             'error' => '',
