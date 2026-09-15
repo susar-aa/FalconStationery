@@ -954,9 +954,17 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                     <input type="number" step="0.01" name="amount" id="alloc_amount" placeholder="0.00" class="sf-input" required>
                 </div>
                 <div class="sf-group">
-                    <label for="alloc_bank_account_id">Source Bank/Cash Account *</label>
+                    <label for="alloc_payment_method">Payment Method *</label>
+                    <select name="payment_method" id="alloc_payment_method" class="sf-input" required onchange="toggleAllocFields(this.value)">
+                        <option value="Bank Transfer" selected>Bank Transfer</option>
+                        <option value="Cash">Cash in Hand</option>
+                        <option value="Cheque">Cheque</option>
+                    </select>
+                </div>
+                <div class="sf-group" id="alloc_bank_group">
+                    <label for="alloc_bank_account_id">Source Bank Account *</label>
                     <select name="bank_account_id" id="alloc_bank_account_id" class="sf-input" required>
-                        <option value="">-- Select Source Account --</option>
+                        <option value="">-- Select Source Bank --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
                             <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
                                 <?= $fa->account_code ?> - <?= htmlspecialchars((string)$fa->account_name) ?>
@@ -964,13 +972,28 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="sf-group hidden" id="alloc_cash_info" style="background: var(--c-green-light); padding: 12px 14px; border-radius: var(--r-md); border: 0.5px solid rgba(52,199,89,0.3);">
+                    <p style="margin: 0; font-size: 13px; color: var(--c-green); font-weight: 500;">
+                        <i class="fa-solid fa-money-bill-wave" style="margin-right: 4px;"></i> Funds will be transferred directly from the <strong>Cash in Hand Account (COA 1000)</strong>.
+                    </p>
+                </div>
+                <div id="alloc_cheque_group" class="hidden" style="background: var(--c-surface2); padding: 14px; border-radius: var(--r-md); border: 0.5px solid var(--c-separator); margin-bottom: 16px;">
+                    <div class="sf-group">
+                        <label for="alloc_cheque_number">Cheque Number *</label>
+                        <input type="text" name="cheque_number" id="alloc_cheque_number" placeholder="e.g. CHQ-88231" class="sf-input">
+                    </div>
+                    <div class="sf-group">
+                        <label for="alloc_cheque_date">Cheque Date *</label>
+                        <input type="date" name="cheque_date" id="alloc_cheque_date" value="<?= date('Y-m-d') ?>" class="sf-input">
+                    </div>
+                </div>
                 <div class="sf-group">
                     <label for="alloc_date">Transaction Date *</label>
                     <input type="date" name="transaction_date" id="alloc_date" value="<?= date('Y-m-d') ?>" class="sf-input" required>
                 </div>
                 <div class="sf-group">
-                    <label for="alloc_ref">Reference (Cheque / Ref No)</label>
-                    <input type="text" name="reference" id="alloc_ref" placeholder="e.g. CHQ-10045" class="sf-input">
+                    <label for="alloc_ref">Reference / Voucher No</label>
+                    <input type="text" name="reference" id="alloc_ref" placeholder="e.g. Ref #10045" class="sf-input">
                 </div>
                 <div class="sf-group">
                     <label for="alloc_desc">Description</label>
@@ -1119,6 +1142,36 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
 </div>
 
 <script>
+function toggleAllocFields(method) {
+    const bankGroup = document.getElementById('alloc_bank_group');
+    const cashInfo = document.getElementById('alloc_cash_info');
+    const chequeGroup = document.getElementById('alloc_cheque_group');
+    const bankSelect = document.getElementById('alloc_bank_account_id');
+    const chequeInput = document.getElementById('alloc_cheque_number');
+
+    if (!bankGroup || !cashInfo || !chequeGroup) return;
+
+    if (method === 'Cash') {
+        bankGroup.classList.add('hidden');
+        cashInfo.classList.remove('hidden');
+        chequeGroup.classList.add('hidden');
+        if (bankSelect) bankSelect.removeAttribute('required');
+        if (chequeInput) chequeInput.removeAttribute('required');
+    } else if (method === 'Cheque') {
+        bankGroup.classList.remove('hidden');
+        cashInfo.classList.add('hidden');
+        chequeGroup.classList.remove('hidden');
+        if (bankSelect) bankSelect.setAttribute('required', 'required');
+        if (chequeInput) chequeInput.setAttribute('required', 'required');
+    } else { // Bank Transfer
+        bankGroup.classList.remove('hidden');
+        cashInfo.classList.add('hidden');
+        chequeGroup.classList.add('hidden');
+        if (bankSelect) bankSelect.setAttribute('required', 'required');
+        if (chequeInput) chequeInput.removeAttribute('required');
+    }
+}
+
 function toggleReimbursementFields(method) {
     const bankGroup = document.getElementById('reim_bank_group');
     const cashInfo = document.getElementById('reim_cash_info');
