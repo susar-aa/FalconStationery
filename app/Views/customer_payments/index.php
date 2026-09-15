@@ -790,7 +790,8 @@
             name: <?= json_encode((string)($c->name ?? '')) ?>,
             phone: <?= json_encode((string)($c->phone ?? '')) ?>,
             address: <?= json_encode((string)($c->address ?? '')) ?>,
-            outstanding: <?= floatval($c->outstanding_balance ?? 0) ?>
+            outstanding: <?= floatval($c->outstanding_balance ?? 0) ?>,
+            opening_balance: <?= floatval($c->opening_balance ?? 0) ?>
         },
         <?php endforeach; ?>
     ];
@@ -945,6 +946,26 @@
                 document.getElementById('ar-welcome').classList.add('hidden');
                 document.getElementById('ar-workspace-fields').classList.remove('hidden');
                 
+                // Update Invoice Allocation Strategy dropdown options for Opening Balance
+                const allocSelect = document.getElementById('cust-allocation-type');
+                let obOpt = allocSelect.querySelector('option[value="opening_balance"]');
+                const opBal = parseFloat(cust.opening_balance) || 0;
+                
+                if (opBal > 0) {
+                    const formattedOb = opBal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    if (!obOpt) {
+                        obOpt = document.createElement('option');
+                        obOpt.value = 'opening_balance';
+                        allocSelect.appendChild(obOpt);
+                    }
+                    obOpt.textContent = `Allocate to Opening Balance (Rs ${formattedOb})`;
+                } else {
+                    if (obOpt) {
+                        if (allocSelect.value === 'opening_balance') allocSelect.value = 'auto';
+                        obOpt.remove();
+                    }
+                }
+
                 document.getElementById('cust-amount-input').value = '';
                 document.getElementById('cust-allocation-type').value = 'auto';
                 toggleAllocationGrid('cust');

@@ -11,7 +11,7 @@ class Payment {
      */
     public function getCustomerOutstandingList() {
         $this->db->query("
-            SELECT c.id, c.name, c.phone, c.email,
+            SELECT c.id, c.name, c.phone, c.email, c.opening_balance,
                    c.opening_balance + 
                    (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE customer_id = c.id AND status != 'Voided') 
                    - 
@@ -31,7 +31,7 @@ class Payment {
      */
     public function getSupplierOutstandingList() {
         $this->db->query("
-            SELECT v.id, v.name, v.phone, v.email,
+            SELECT v.id, v.name, v.phone, v.email, v.opening_balance,
                    (SELECT COALESCE(SUM(gri.total), 0) 
                     FROM grn_items gri 
                     JOIN goods_receipt_notes grn ON gri.grn_id = grn.id 
@@ -52,7 +52,7 @@ class Payment {
         ");
         $suppliers = $this->db->resultSet();
         foreach ($suppliers as $s) {
-            $s->outstanding_balance = $s->total_billed - $s->total_paid - $s->total_returned;
+            $s->outstanding_balance = floatval($s->opening_balance ?? 0) + $s->total_billed - $s->total_paid - $s->total_returned;
         }
         
         // Sort by outstanding balance desc
@@ -68,7 +68,7 @@ class Payment {
      */
     public function getServiceProviderOutstandingList() {
         $this->db->query("
-            SELECT sp.id, sp.name, sp.phone, sp.email,
+            SELECT sp.id, sp.name, sp.phone, sp.email, sp.opening_balance,
                    (SELECT COALESCE(SUM(gri.total), 0) 
                     FROM grn_items gri 
                     JOIN goods_receipt_notes grn ON gri.grn_id = grn.id 
@@ -89,7 +89,7 @@ class Payment {
         ");
         $serviceProviders = $this->db->resultSet();
         foreach ($serviceProviders as $s) {
-            $s->outstanding_balance = $s->total_billed - $s->total_paid - $s->total_returned;
+            $s->outstanding_balance = floatval($s->opening_balance ?? 0) + $s->total_billed - $s->total_paid - $s->total_returned;
         }
         
         // Sort by outstanding balance desc
@@ -250,7 +250,23 @@ class Payment {
 
             // 5. Handle Allocations
             $allocatedAmount = 0;
-            if ($data['allocation_type'] === 'auto') {
+            if ($data['allocation_type'] === 'opening_balance') {
+                // Deduct from customer's opening balance
+                $this->db->query("SELECT opening_balance FROM customers WHERE id = :cid");
+                $this->db->bind(':cid', $data['customer_id']);
+                $cRow = $this->db->single();
+                $curOB = floatval($cRow->opening_balance ?? 0);
+                
+                $allocAmt = min($data['amount'], $curOB);
+                $newOB = max(0, $curOB - $allocAmt);
+                
+                $this->db->query("UPDATE customers SET opening_balance = :nob WHERE id = :cid");
+                $this->db->bind(':nob', $newOB);
+                $this->db->bind(':cid', $data['customer_id']);
+                $this->db->execute();
+                
+                $allocatedAmount = $allocAmt;
+            } elseif ($data['allocation_type'] === 'auto') {
                 // Auto FIFO Clear
                 $unpaid = $this->getCustomerUnpaidInvoices($data['customer_id']);
                 $remaining = $data['amount'];
@@ -435,7 +451,39 @@ class Payment {
 
             // 5. Handle Allocations
             $allocatedAmount = 0;
-            if ($data['allocation_type'] === 'auto') {
+            if ($data['allocation_type'] === 'opening_balance') {
+                if (!empty($data['supplier_id'])) {
+                    $this->db->query("SELECT opening_balance FROM vendors WHERE id = :vid");
+                    $this->db->bind(':vid', $data['supplier_id']);
+                    $vRow = $this->db->single();
+                    $curOB = floatval($vRow->opening_balance ?? 0);
+                    
+                    $allocAmt = min($data['amount'], $curOB);
+                    $newOB = max(0, $curOB - $allocAmt);
+                    
+                    $this->db->query("UPDATE vendors SET opening_balance = :nob WHERE id = :vid");
+                    $this->db->bind(':nob', $newOB);
+                    $this->db->bind(':vid', $data['supplier_id']);
+                    $this->db->execute();
+                    
+                    $allocatedAmount = $allocAmt;
+                } elseif (!empty($data['service_provider_id'])) {
+                    $this->db->query("SELECT opening_balance FROM service_providers WHERE id = :spid");
+                    $this->db->bind(':spid', $data['service_provider_id']);
+                    $spRow = $this->db->single();
+                    $curOB = floatval($spRow->opening_balance ?? 0);
+                    
+                    $allocAmt = min($data['amount'], $curOB);
+                    $newOB = max(0, $curOB - $allocAmt);
+                    
+                    $this->db->query("UPDATE service_providers SET opening_balance = :nob WHERE id = :spid");
+                    $this->db->bind(':nob', $newOB);
+                    $this->db->bind(':spid', $data['service_provider_id']);
+                    $this->db->execute();
+                    
+                    $allocatedAmount = $allocAmt;
+                }
+            } elseif ($data['allocation_type'] === 'auto') {
                 $unpaid = !empty($data['supplier_id']) ? $this->getSupplierUnpaidGRNs($data['supplier_id']) : $this->getServiceProviderUnpaidGRNs($data['service_provider_id']);
                 $remaining = $data['amount'];
                 foreach ($unpaid as $g) {

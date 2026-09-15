@@ -630,7 +630,8 @@
             name: <?= json_encode((string)($s->name ?? '')) ?>,
             phone: <?= json_encode((string)($s->phone ?? '')) ?>,
             address: <?= json_encode((string)($s->address ?? '')) ?>,
-            outstanding: <?= floatval($s->outstanding_balance ?? 0) ?>
+            outstanding: <?= floatval($s->outstanding_balance ?? 0) ?>,
+            opening_balance: <?= floatval($s->opening_balance ?? 0) ?>
         },
         <?php endforeach; ?>
     ];
@@ -643,7 +644,8 @@
             name: <?= json_encode((string)($sp->name ?? '')) ?>,
             phone: <?= json_encode((string)($sp->phone ?? '')) ?>,
             address: <?= json_encode((string)($sp->address ?? '')) ?>,
-            outstanding: <?= floatval($sp->outstanding_balance ?? 0) ?>
+            outstanding: <?= floatval($sp->outstanding_balance ?? 0) ?>,
+            opening_balance: <?= floatval($sp->opening_balance ?? 0) ?>
         },
         <?php endforeach; ?>
     ];
@@ -848,6 +850,26 @@
                 document.getElementById('ap-welcome').classList.add('hidden');
                 document.getElementById('ap-workspace-fields').classList.remove('hidden');
                 
+                // Update Allocation Strategy dropdown options for Opening Balance
+                const allocSelect = document.getElementById('supp-allocation-type');
+                let obOpt = allocSelect.querySelector('option[value="opening_balance"]');
+                const opBal = parseFloat(supp.opening_balance) || 0;
+                
+                if (opBal > 0) {
+                    const formattedOb = opBal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    if (!obOpt) {
+                        obOpt = document.createElement('option');
+                        obOpt.value = 'opening_balance';
+                        allocSelect.appendChild(obOpt);
+                    }
+                    obOpt.textContent = `Allocate to Opening Balance (Rs ${formattedOb})`;
+                } else {
+                    if (obOpt) {
+                        if (allocSelect.value === 'opening_balance') allocSelect.value = 'auto';
+                        obOpt.remove();
+                    }
+                }
+
                 document.getElementById('supp-amount-input').value = '';
                 document.getElementById('supp-allocation-type').value = 'auto';
                 toggleAllocationGrid('supp');
