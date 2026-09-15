@@ -683,3 +683,17 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 09/15/2026 22:18:29.17 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/EstimateController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/estimates/show.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 242408f] Automated deployment update
+ 3 files changed, 248 insertions(+), 2 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   9aaab43..242408f  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Tue 09/15/2026 22:19:16.01 
+=================================================== 
+Adding changes... 
