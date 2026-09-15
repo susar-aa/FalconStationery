@@ -318,7 +318,7 @@
                                         }
                                     ?>
                                         <tr style="background: none;">
-                                            <td style="border: 1px solid #000; padding: 4px; font-weight: bold;"><?= htmlspecialchars($bill->customer_name) ?></td>
+                                            <td style="border: 1px solid #000; padding: 4px; font-weight: bold;"><?= htmlspecialchars($bill->customer_name) ?><?= !empty($bill->invoice_number) ? ' (' . htmlspecialchars($bill->invoice_number) . ')' : '' ?></td>
                                             <td style="border: 1px solid #000; padding: 4px; text-align: right; font-family: monospace; font-weight: bold;"><?= number_format($bill->true_grand_total, 2) ?></td>
                                             <td style="border: 1px solid #000; padding: 4px; text-align: center;"><?= $term ?></td>
                                             <td style="border: 1px solid #000; padding: 4px;"></td>
