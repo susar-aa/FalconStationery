@@ -199,7 +199,19 @@ class PettyCashReimbursement {
             $bankAccId = (int)$reim->bank_account_id;
             $paymentMethod = !empty($reim->payment_method) ? $reim->payment_method : 'Bank Transfer';
             $pettyAccId = $this->pcTx->getPettyCashAccountId();
-            $ref = 'PC-REIM-' . str_pad((string)$reim->id, 5, '0', STR_PAD_LEFT);
+            $baseRef = 'PC-REIM-' . str_pad((string)$reim->id, 5, '0', STR_PAD_LEFT);
+            $ref = $baseRef;
+            $suffix = 1;
+            while (true) {
+                $this->db->query("SELECT COUNT(*) as cnt FROM journal_entries WHERE reference = :ref");
+                $this->db->bind(':ref', $ref);
+                $chk = $this->db->single();
+                if (!$chk || (int)$chk->cnt === 0) {
+                    break;
+                }
+                $ref = $baseRef . '-' . $suffix;
+                $suffix++;
+            }
 
             // Check if period is closed/locked
             $this->db->query("SELECT COUNT(*) as cnt FROM financial_years WHERE :entry_date BETWEEN start_date AND end_date");

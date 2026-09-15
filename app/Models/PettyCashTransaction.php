@@ -272,12 +272,24 @@ class PettyCashTransaction {
                 $desc .= $chequeStr;
             }
 
-            $ref = !empty($data['reference']) ? $data['reference'] : '';
-            if (empty($ref)) {
+            $baseRef = !empty($data['reference']) ? $data['reference'] : '';
+            if (empty($baseRef)) {
                 $this->db->query("SELECT id FROM petty_cash_transactions ORDER BY id DESC LIMIT 1");
                 $lastRow = $this->db->single();
                 $nextId = $lastRow ? ($lastRow->id + 1) : 1;
-                $ref = 'PC-AL-' . str_pad((string)$nextId, 5, '0', STR_PAD_LEFT);
+                $baseRef = 'PC-AL-' . str_pad((string)$nextId, 5, '0', STR_PAD_LEFT);
+            }
+            $ref = $baseRef;
+            $suffix = 1;
+            while (true) {
+                $this->db->query("SELECT COUNT(*) as cnt FROM journal_entries WHERE reference = :ref");
+                $this->db->bind(':ref', $ref);
+                $chk = $this->db->single();
+                if (!$chk || (int)$chk->cnt === 0) {
+                    break;
+                }
+                $ref = $baseRef . '-' . $suffix;
+                $suffix++;
             }
 
             // Check if period is closed/locked
@@ -491,7 +503,19 @@ class PettyCashTransaction {
             }
 
             $date = $tx->transaction_date;
-            $ref = $tx->reference ?: 'PC-EXP-' . $tx->id;
+            $baseRef = $tx->reference ?: 'PC-EXP-' . $tx->id;
+            $ref = $baseRef;
+            $suffix = 1;
+            while (true) {
+                $this->db->query("SELECT COUNT(*) as cnt FROM journal_entries WHERE reference = :ref");
+                $this->db->bind(':ref', $ref);
+                $chk = $this->db->single();
+                if (!$chk || (int)$chk->cnt === 0) {
+                    break;
+                }
+                $ref = $baseRef . '-' . $suffix;
+                $suffix++;
+            }
             $desc = "Approved Petty Cash Expense: " . $tx->description;
             $pettyAccId = $this->getPettyCashAccountId();
             $expenseAccId = (int)$tx->account_id;
