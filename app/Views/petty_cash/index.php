@@ -50,8 +50,7 @@ declare(strict_types=1);
             }
         } else {
             console.error('Modal element not found for ID:', modalId);
-            let availableModals = Array.from(document.querySelectorAll('.modal')).map(m => m.id).join(', ');
-            alert("Error: Modal '" + modalId + "' not found. Available modals in DOM: " + availableModals);
+            alert("Error: Modal '" + modalId + "' could not be loaded. Please refresh the page (Ctrl+F5) and try again.");
         }
     };
 
@@ -1024,7 +1023,7 @@ declare(strict_types=1);
                     <label for="custodian_id">Petty Cash Custodian *</label>
                     <select name="custodian_id" id="custodian_id" required>
                         <?php foreach ($data['users'] as $u): ?>
-                            <option value="<?= $u->id ?>" <?= ($data['config'] && (int)$data['config']->custodian_id === (int)$u->id) ? 'selected' : '' ?>>
+                            <option value="<?= $u->id ?>" <?= ($data['config'] && isset($data['config']->custodian_id) && (int)$data['config']->custodian_id === (int)$u->id) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($u->username) ?> (<?= htmlspecialchars($u->email) ?>)
                             </option>
                         <?php endforeach; ?>
@@ -1035,7 +1034,7 @@ declare(strict_types=1);
                     <select name="default_funding_account_id" id="default_funding_account_id" required>
                         <option value="">-- Select Funding Account --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
-                            <option value="<?= $fa->id ?>" <?= ($data['config'] && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
+                            <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
                                 <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
                             </option>
                         <?php endforeach; ?>
@@ -1069,7 +1068,7 @@ declare(strict_types=1);
                     <select name="bank_account_id" id="alloc_bank_account_id" required>
                         <option value="">-- Select Source Account --</option>
                         <?php foreach ($data['funding_accounts'] as $fa): ?>
-                            <option value="<?= $fa->id ?>" <?= ($data['config'] && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
+                            <option value="<?= $fa->id ?>" <?= ($data['config'] && isset($data['config']->default_funding_account_id) && (int)$data['config']->default_funding_account_id === (int)$fa->id) ? 'selected' : '' ?>>
                                 <?= $fa->account_code ?> - <?= htmlspecialchars($fa->account_name) ?>
                             </option>
                         <?php endforeach; ?>
