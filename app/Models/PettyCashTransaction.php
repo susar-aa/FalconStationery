@@ -250,12 +250,8 @@ class PettyCashTransaction {
             $paymentMethod = $data['payment_method'] ?? 'Bank Transfer';
             $sourceAccId = intval($data['bank_account_id'] ?? 0);
 
-            if ($paymentMethod === 'Cash' || $sourceAccId <= 0) {
-                if ($paymentMethod === 'Cash') {
-                    $sourceAccId = $this->getCashInHandAccountId();
-                } elseif ($paymentMethod === 'Cheque') {
-                    $sourceAccId = $this->getChequeInHandAccountId();
-                }
+            if ($paymentMethod === 'Cash' && $sourceAccId <= 0) {
+                $sourceAccId = $this->getCashInHandAccountId();
             }
 
             $pettyAccId = $this->getPettyCashAccountId();
@@ -264,6 +260,7 @@ class PettyCashTransaction {
             $issuingBank = $data['issuing_bank'] ?? '';
             $chequeNo = $data['cheque_number'] ?? '';
             $chequeDate = $data['cheque_date'] ?? null;
+            $payeeName = $data['payee_name'] ?? 'Petty Cash Custodian';
 
             $desc = !empty($data['description']) ? $data['description'] : "Petty Cash Fund Float Allocation ({$paymentMethod})";
             if ($paymentMethod === 'Cheque') {
@@ -294,7 +291,7 @@ class PettyCashTransaction {
             // Create Journal entry: Debit Petty Cash, Credit Source Account
             $lines = [
                 ['account_id' => $pettyAccId, 'debit' => $amount, 'credit' => 0.0, 'description' => $desc],
-                ['account_id' => $sourceAccId, 'debit' => 0.0, 'credit' => $amount, 'description' => $desc]
+                ['account_id' => $sourceAccId > 0 ? $sourceAccId : $pettyAccId, 'debit' => 0.0, 'credit' => $amount, 'description' => $desc]
             ];
 
             $postResult = $this->journal->postEntry($date, $ref, $desc, $lines, $userId);
@@ -329,9 +326,31 @@ class PettyCashTransaction {
 
             $txId = intval($this->db->lastInsertId());
 
-            $this->db->commit();
+            // If Cheque payment, also record entry in `cheques` table for Cheque Management
+            if ($paymentMethod === 'Cheque') {
+                $bankNameStr = !empty($issuingBank) ? $issuingBank : 'Bank';
+                if ($sourceAccId > 0) {
+                    $this->db->query("SELECT account_name FROM chart_of_accounts WHERE id = :id");
+                    $this->db->bind(':id', $sourceAccId);
+                    $bAcc = $this->db->single();
+                    if ($bAcc && !empty($bAcc->account_name)) {
+                        $bankNameStr = $bAcc->account_name;
+                    }
+                }
 
-            // Log action in audit trail
+                $this->db->query("INSERT INTO cheques (payee_name, bank_name, cheque_number, amount, banking_date, created_by, bank_account_id, status) 
+                                  VALUES (:payee, :bank, :cnum, :amt, :bdate, :uid, :bank_acc_id, 'Pending')");
+                $this->db->bind(':payee', $payeeName);
+                $this->db->bind(':bank', $bankNameStr);
+                $this->db->bind(':cnum', !empty($chequeNo) ? $chequeNo : $voucherNum);
+                $this->db->bind(':amt', $amount);
+                $this->db->bind(':bdate', !empty($chequeDate) ? $chequeDate : $date);
+                $this->db->bind(':uid', $userId);
+                $this->db->bind(':bank_acc_id', $sourceAccId > 0 ? $sourceAccId : null);
+                $this->db->execute();
+            }
+
+            $this->db->commit();
             $auditDesc = "Allocated {$amount} to Petty Cash from Bank Account ID {$sourceAccId}. Ref: {$ref}";
             $this->audit->logAction($userId, 'CREATE', 'accounting', $auditDesc, $txId, null, $data);
 

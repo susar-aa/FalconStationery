@@ -169,21 +169,35 @@ class PettyCashController extends Controller {
             $this->validateCsrfOrDie();
 
             $paymentMethod = $_POST['payment_method'] ?? 'Bank Transfer';
-            $bankAccountId = intval($_POST['bank_account_id'] ?? 0);
-
+            
             if ($paymentMethod === 'Cash') {
                 $bankAccountId = $this->pcTxModel->getCashInHandAccountId();
             } elseif ($paymentMethod === 'Cheque') {
-                $bankAccountId = $this->pcTxModel->getChequeInHandAccountId();
+                $bankAccountId = intval($_POST['cheque_bank_id'] ?? 0);
+                if ($bankAccountId <= 0) {
+                    $bankAccountId = $this->pcTxModel->getChequeInHandAccountId();
+                }
+            } else { // Bank Transfer
+                $bankAccountId = intval($_POST['bank_account_id'] ?? 0);
+            }
+
+            // Get bank name if account selected
+            $issuingBankName = trim($_POST['issuing_bank'] ?? '');
+            if (empty($issuingBankName) && $bankAccountId > 0) {
+                $acc = $this->coaModel->getAccountById($bankAccountId);
+                if ($acc) {
+                    $issuingBankName = $acc->account_name;
+                }
             }
 
             $allocationData = [
                 'amount' => floatval($_POST['amount'] ?? 0),
                 'payment_method' => $paymentMethod,
                 'bank_account_id' => $bankAccountId,
-                'issuing_bank' => trim($_POST['issuing_bank'] ?? ''),
+                'issuing_bank' => $issuingBankName,
                 'cheque_number' => trim($_POST['cheque_number'] ?? ''),
                 'cheque_date' => $_POST['cheque_date'] ?? null,
+                'payee_name' => trim($_POST['payee_name'] ?? 'Petty Cash Float'),
                 'transaction_date' => $_POST['transaction_date'] ?? date('Y-m-d'),
                 'description' => trim($_POST['description'] ?? ''),
                 'reference' => trim($_POST['reference'] ?? '')

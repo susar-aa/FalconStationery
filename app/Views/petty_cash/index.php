@@ -979,19 +979,32 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                 </div>
                 <div id="alloc_cheque_group" class="hidden" style="background: var(--c-surface2); padding: 14px; border-radius: var(--r-md); border: 0.5px solid var(--c-separator); margin-bottom: 16px;">
                     <div class="sf-group">
-                        <label for="alloc_issuing_bank">Issuing Bank Name *</label>
+                        <label for="alloc_cheque_bank_id">Issuing Bank Account *</label>
+                        <select name="cheque_bank_id" id="alloc_cheque_bank_id" class="sf-input">
+                            <option value="">-- Select Issuing Bank --</option>
+                            <?php foreach (($data['bank_accounts'] ?? $data['funding_accounts']) as $ba): ?>
+                                <option value="<?= $ba->id ?>"><?= $ba->account_code ?> - <?= htmlspecialchars((string)$ba->account_name) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="sf-group">
+                        <label for="alloc_issuing_bank">Bank Name (If not in list)</label>
                         <input type="text" name="issuing_bank" id="alloc_issuing_bank" placeholder="e.g. Commercial Bank / BOC / HNB" class="sf-input">
                     </div>
                     <div class="sf-group">
                         <label for="alloc_cheque_number">Cheque Number *</label>
-                        <input type="text" name="cheque_number" id="alloc_cheque_number" placeholder="e.g. CHQ-88231" class="sf-input">
+                        <input type="text" name="cheque_number" id="alloc_cheque_number" placeholder="e.g. 331405" class="sf-input">
                     </div>
                     <div class="sf-group">
-                        <label for="alloc_cheque_date">Cheque Date *</label>
+                        <label for="alloc_cheque_date">Cheque Date / Banking Date *</label>
                         <input type="date" name="cheque_date" id="alloc_cheque_date" value="<?= date('Y-m-d') ?>" class="sf-input">
                     </div>
-                    <p style="margin: 6px 0 0 0; font-size: 12px; color: var(--t-secondary);">
-                        <i class="fa-solid fa-circle-info" style="margin-right: 3px;"></i> Journal entry will automatically credit the <strong>Cheque in Hand Account</strong>.
+                    <div class="sf-group">
+                        <label for="alloc_payee_name">Payee Name</label>
+                        <input type="text" name="payee_name" id="alloc_payee_name" value="Petty Cash Float" placeholder="e.g. Petty Cash Float" class="sf-input">
+                    </div>
+                    <p style="margin: 6px 0 0 0; font-size: 12px; color: var(--c-blue); font-weight: 500;">
+                        <i class="fa-solid fa-circle-info" style="margin-right: 3px;"></i> Cheque will automatically register in <strong>Cheque Management</strong> and credit <strong>Cheque in Hand Account</strong>.
                     </p>
                 </div>
                 <div class="sf-group">
@@ -1154,8 +1167,8 @@ function toggleAllocFields(method) {
     const cashInfo = document.getElementById('alloc_cash_info');
     const chequeGroup = document.getElementById('alloc_cheque_group');
     const bankSelect = document.getElementById('alloc_bank_account_id');
+    const chequeBankSelect = document.getElementById('alloc_cheque_bank_id');
     const chequeInput = document.getElementById('alloc_cheque_number');
-    const issuingBankInput = document.getElementById('alloc_issuing_bank');
 
     if (!bankGroup || !cashInfo || !chequeGroup) return;
 
@@ -1164,22 +1177,22 @@ function toggleAllocFields(method) {
         cashInfo.classList.remove('hidden');
         chequeGroup.classList.add('hidden');
         if (bankSelect) bankSelect.removeAttribute('required');
+        if (chequeBankSelect) chequeBankSelect.removeAttribute('required');
         if (chequeInput) chequeInput.removeAttribute('required');
-        if (issuingBankInput) issuingBankInput.removeAttribute('required');
     } else if (method === 'Cheque') {
         bankGroup.classList.add('hidden');
         cashInfo.classList.add('hidden');
         chequeGroup.classList.remove('hidden');
         if (bankSelect) bankSelect.removeAttribute('required');
+        if (chequeBankSelect) chequeBankSelect.setAttribute('required', 'required');
         if (chequeInput) chequeInput.setAttribute('required', 'required');
-        if (issuingBankInput) issuingBankInput.setAttribute('required', 'required');
     } else { // Bank Transfer
         bankGroup.classList.remove('hidden');
         cashInfo.classList.add('hidden');
         chequeGroup.classList.add('hidden');
         if (bankSelect) bankSelect.setAttribute('required', 'required');
+        if (chequeBankSelect) chequeBankSelect.removeAttribute('required');
         if (chequeInput) chequeInput.removeAttribute('required');
-        if (issuingBankInput) issuingBankInput.removeAttribute('required');
     }
 }
 
