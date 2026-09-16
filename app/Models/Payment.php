@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/AuditLog.php';
+
 class Payment {
     private $db;
     public $lastError = null;
