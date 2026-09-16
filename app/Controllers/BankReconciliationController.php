@@ -15,17 +15,19 @@ class BankReconciliationController extends Controller {
     public function index() {
         $reconciliations = $this->recModel->getAllReconciliations();
         $data = [
+            'content_view' => 'bank_reconciliation/index',
             'reconciliations' => $reconciliations
         ];
-        $this->view('bank_reconciliation/index', $data);
+        $this->view('layouts/main', $data);
     }
 
     public function create() {
         $bankAccounts = $this->recModel->getBankAccounts();
         $data = [
+            'content_view' => 'bank_reconciliation/create',
             'bankAccounts' => $bankAccounts
         ];
-        $this->view('bank_reconciliation/create', $data);
+        $this->view('layouts/main', $data);
     }
 
     public function store() {
@@ -66,12 +68,13 @@ class BankReconciliationController extends Controller {
         $accounts = $this->coaModel->getAccounts();
 
         $data = [
+            'content_view' => 'bank_reconciliation/reconcile',
             'reconciliation' => $reconciliation,
             'items' => $items,
             'accounts' => $accounts
         ];
 
-        $this->view('bank_reconciliation/reconcile', $data);
+        $this->view('layouts/main', $data);
     }
 
     public function match_ajax() {
