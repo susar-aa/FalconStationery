@@ -4,11 +4,24 @@ class Customer {
 
     public function __construct() {
         $this->db = new Database();
+        $this->selfHealSchema();
     }
 
-    public function getAllCustomers() {
+    private function selfHealSchema() {
+        try {
+            $this->db->query("SHOW COLUMNS FROM customers LIKE 'status'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE customers ADD COLUMN status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active' AFTER opening_balance_date");
+                $this->db->execute();
+            }
+        } catch (Exception $e) {
+            error_log("Customer selfHealSchema Error: " . $e->getMessage());
+        }
+    }
+
+    public function getAllCustomers($activeOnly = false) {
         // Optimized to use pre-aggregated subqueries to prevent N+1 performance bottlenecks and memory exhaustion
-        $this->db->query("
+        $sql = "
             SELECT c.*, m.name as mca_name,
                    u.username as created_by_username,
                    ru.username as reviewed_by_username,
@@ -43,14 +56,23 @@ class Customer {
                 WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
-            ORDER BY c.name ASC
-        ");
+        ";
+        if ($activeOnly) {
+            $sql .= " WHERE c.status = 'Active' ";
+        }
+        $sql .= " ORDER BY c.name ASC";
+
+        $this->db->query($sql);
         return $this->db->resultSet();
     }
 
-    public function getOutstandingCustomers() {
+    public function getActiveCustomers() {
+        return $this->getAllCustomers(true);
+    }
+
+    public function getOutstandingCustomers($activeOnly = true) {
         // Optimized pre-aggregated query that only returns records with a non-zero balance to prevent memory exhaustion
-        $this->db->query("
+        $sql = "
             SELECT c.id, c.name,
                    (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) AS outstanding_balance
             FROM customers c
@@ -80,9 +102,13 @@ class Customer {
                 WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
-            HAVING outstanding_balance != 0
-            ORDER BY c.name ASC
-        ");
+        ";
+        if ($activeOnly) {
+            $sql .= " WHERE c.status = 'Active' ";
+        }
+        $sql .= " HAVING outstanding_balance != 0 ORDER BY c.name ASC";
+
+        $this->db->query($sql);
         return $this->db->resultSet();
     }
 
@@ -198,9 +224,10 @@ class Customer {
         $createdByUserId = $data['created_by_user_id'] ?? null;
         $reviewedByUserId = $data['reviewed_by_user_id'] ?? null;
         $reviewedAt = $data['reviewed_at'] ?? null;
+        $status = isset($data['status']) && in_array($data['status'], ['Active', 'Inactive']) ? $data['status'] : 'Active';
 
-        $this->db->query("INSERT INTO customers (name, email, phone, whatsapp, address, latitude, longitude, mca_id, territory, credit_limit, customer_type, notes, uuid, vat_number, opening_balance, opening_balance_date, review_status, created_by_user_id, reviewed_by_user_id, reviewed_at) 
-                          VALUES (:name, :email, :phone, :whatsapp, :address, :lat, :lng, :mca_id, :territory, :credit_limit, :customer_type, :notes, :uuid, :vat_number, :opening_balance, :opening_balance_date, :review_status, :created_by_user_id, :reviewed_by_user_id, :reviewed_at)");
+        $this->db->query("INSERT INTO customers (name, email, phone, whatsapp, address, latitude, longitude, mca_id, territory, credit_limit, customer_type, notes, uuid, vat_number, opening_balance, opening_balance_date, review_status, created_by_user_id, reviewed_by_user_id, reviewed_at, status) 
+                          VALUES (:name, :email, :phone, :whatsapp, :address, :lat, :lng, :mca_id, :territory, :credit_limit, :customer_type, :notes, :uuid, :vat_number, :opening_balance, :opening_balance_date, :review_status, :created_by_user_id, :reviewed_by_user_id, :reviewed_at, :status)");
         $this->db->bind(':name', $data['name']);
         $this->db->bind(':email', $data['email'] ?: null);
         $this->db->bind(':phone', $data['phone'] ?: null);
@@ -221,6 +248,7 @@ class Customer {
         $this->db->bind(':created_by_user_id', $createdByUserId);
         $this->db->bind(':reviewed_by_user_id', $reviewedByUserId);
         $this->db->bind(':reviewed_at', $reviewedAt);
+        $this->db->bind(':status', $status);
         return $this->db->execute();
     }
 
@@ -245,6 +273,9 @@ class Customer {
         if (array_key_exists('reviewed_at', $data)) {
             $sql .= ", reviewed_at = :reviewed_at";
         }
+        if (array_key_exists('status', $data)) {
+            $sql .= ", status = :status";
+        }
         
         $sql .= " WHERE id = :id";
         
@@ -258,6 +289,10 @@ class Customer {
         $this->db->bind(':lat', $data['lat'] ?: null);
         $this->db->bind(':lng', $data['lng'] ?: null);
         $this->db->bind(':mca_id', $data['mca_id'] ?: null);
+        if (array_key_exists('status', $data)) {
+            $status = in_array($data['status'], ['Active', 'Inactive']) ? $data['status'] : 'Active';
+            $this->db->bind(':status', $status);
+        }
         $this->db->bind(':territory', $data['territory'] ?: null);
         $this->db->bind(':credit_limit', $data['credit_limit'] ?? 0.00);
         $this->db->bind(':customer_type', $data['customer_type'] ?? 'Standard');

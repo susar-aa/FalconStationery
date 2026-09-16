@@ -330,14 +330,15 @@ foreach ($data['service_providers'] ?? [] as $s) {
                         <th>Service Provider / Company</th>
                         <th>Category & Contact</th>
                         <th class="txt-right">Outstanding Balance</th>
-                        <th>Status</th>
+                        <th>Ledger Status</th>
+                        <th>Account Status</th>
                         <th style="width:120px;" class="txt-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="spList">
                     <?php if (empty($data['service_providers'])): ?>
                         <tr>
-                            <td colspan="5" style="text-align:center; padding:40px; color:var(--t-secondary);">
+                            <td colspan="6" style="text-align:center; padding:40px; color:var(--t-secondary);">
                                 <i class="fa-solid fa-bolt" style="font-size:28px; margin-bottom:8px; color:var(--t-tertiary);"></i><br>
                                 No service providers registered yet.
                             </td>
@@ -346,8 +347,9 @@ foreach ($data['service_providers'] ?? [] as $s) {
                         <?php foreach($data['service_providers'] as $s): ?>
                             <?php 
                             $bal = floatval($s->outstanding_balance); 
-                            $badgeCls = $bal > 0 ? 'badge-owed' : ($s->status === 'Inactive' ? 'badge-inactive' : 'badge-active');
-                            $badgeTxt = $bal > 0 ? 'Owed' : ($s->status === 'Inactive' ? 'Inactive' : 'Active');
+                            $badgeCls = $bal > 0 ? 'badge-owed' : 'badge-active';
+                            $badgeTxt = $bal > 0 ? 'Owed' : 'Cleared';
+                            $accountStatus = $s->status ?? 'Active';
                             ?>
                             <tr class="provider-row" 
                                 onclick="openServiceProviderModalPopup(<?= $s->id ?>)"
@@ -391,6 +393,11 @@ foreach ($data['service_providers'] ?? [] as $s) {
                                             <span class="dot"></span><?= $badgeTxt ?>
                                         </span>
                                     </div>
+                                </td>
+                                <td>
+                                    <span class="sf-badge <?= $accountStatus === 'Active' ? 'badge-active' : 'badge-owed' ?>">
+                                        <span class="dot"></span><?= $accountStatus ?>
+                                    </span>
                                 </td>
                                 <td>
                                     <div style="display:flex; justify-content:center; gap:6px;" onclick="event.stopPropagation()">

@@ -24,6 +24,7 @@ class Payment {
                    AS outstanding_balance,
                    (SELECT MAX(payment_date) FROM customer_payments WHERE customer_id = c.id AND status = 'Active') as last_payment_date
             FROM customers c
+            WHERE c.status = 'Active'
             ORDER BY outstanding_balance DESC, c.name ASC
         ");
         return $this->db->resultSet();
@@ -69,8 +70,8 @@ class Payment {
     /**
      * Get list of service providers with their outstanding payables
      */
-    public function getServiceProviderOutstandingList() {
-        $this->db->query("
+    public function getServiceProviderOutstandingList($activeOnly = true) {
+        $sql = "
             SELECT sp.id, sp.name, sp.phone, sp.email, sp.opening_balance,
                    (SELECT COALESCE(SUM(gri.total), 0) 
                     FROM grn_items gri 
@@ -88,19 +89,24 @@ class Payment {
                     WHERE service_provider_id = sp.id) as total_returned,
                    (SELECT MAX(payment_date) FROM supplier_payments WHERE service_provider_id = sp.id AND status = 'Active') as last_payment_date
             FROM service_providers sp
-            ORDER BY sp.name ASC
-        ");
-        $serviceProviders = $this->db->resultSet();
-        foreach ($serviceProviders as $s) {
-            $s->outstanding_balance = floatval($s->opening_balance ?? 0) + $s->total_billed - $s->total_paid - $s->total_returned;
+        ";
+        if ($activeOnly) {
+            $sql .= " WHERE sp.status = 'Active' ";
         }
-        
+        $sql .= " ORDER BY sp.name ASC";
+
+        $this->db->query($sql);
+        $providers = $this->db->resultSet();
+        foreach ($providers as $p) {
+            $p->outstanding_balance = floatval($p->opening_balance ?? 0) + $p->total_billed - $p->total_paid - $p->total_returned;
+        }
+
         // Sort by outstanding balance desc
-        usort($serviceProviders, function($a, $b) {
+        usort($providers, function($a, $b) {
             return $b->outstanding_balance <=> $a->outstanding_balance;
         });
 
-        return $serviceProviders;
+        return $providers;
     }
 
     /**

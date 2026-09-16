@@ -111,6 +111,7 @@ $db->query("SELECT c.*, m.name as mca_name,
                AS outstanding_balance
             FROM customers c 
             LEFT JOIN mca_areas m ON c.mca_id = m.id 
+            WHERE c.status = 'Active'
             ORDER BY c.name ASC");
 $customers = $db->resultSet();
 

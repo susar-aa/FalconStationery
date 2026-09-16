@@ -4,10 +4,23 @@ class ServiceProvider {
 
     public function __construct() {
         $this->db = new Database();
+        $this->selfHealSchema();
     }
 
-    public function getAllServiceProviders() {
-        $this->db->query("
+    private function selfHealSchema() {
+        try {
+            $this->db->query("SHOW COLUMNS FROM service_providers LIKE 'status'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE service_providers ADD COLUMN status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active' AFTER expense_account_id");
+                $this->db->execute();
+            }
+        } catch (Exception $e) {
+            error_log("ServiceProvider selfHealSchema Error: " . $e->getMessage());
+        }
+    }
+
+    public function getAllServiceProviders($activeOnly = false) {
+        $sql = "
             SELECT sp.*,
                    (SELECT COALESCE(SUM(COALESCE(grn.total_amount, 0)), 0) 
                     FROM goods_receipt_notes grn 
@@ -28,13 +41,22 @@ class ServiceProvider {
                     FROM supplier_returns 
                     WHERE service_provider_id = sp.id) as total_returned
             FROM service_providers sp
-            ORDER BY sp.name ASC
-        ");
+        ";
+        if ($activeOnly) {
+            $sql .= " WHERE sp.status = 'Active' ";
+        }
+        $sql .= " ORDER BY sp.name ASC";
+
+        $this->db->query($sql);
         $serviceProviders = $this->db->resultSet();
         foreach ($serviceProviders as $s) {
             $s->outstanding_balance = $s->total_billed - $s->total_paid - $s->total_returned;
         }
         return $serviceProviders;
+    }
+
+    public function getActiveServiceProviders() {
+        return $this->getAllServiceProviders(true);
     }
 
     public function getServiceProviderById($id) {

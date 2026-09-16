@@ -770,14 +770,15 @@ foreach ($data['customers'] ?? [] as $cust) {
                         <th>Customer / Company</th>
                         <th>Contact Details</th>
                         <th class="txt-right">Outstanding Balance</th>
-                        <th>Status</th>
+                        <th>Ledger Status</th>
+                        <th>Account Status</th>
                         <th style="width:120px;" class="txt-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="custList">
                     <?php if (empty($data['customers'])): ?>
                         <tr>
-                            <td colspan="5" style="text-align:center; padding:40px; color:var(--t-secondary);">
+                            <td colspan="6" style="text-align:center; padding:40px; color:var(--t-secondary);">
                                 <i class="fa-solid fa-building" style="font-size:28px; margin-bottom:8px; color:var(--t-tertiary);"></i><br>
                                 No customers registered yet.
                             </td>
@@ -788,6 +789,7 @@ foreach ($data['customers'] ?? [] as $cust) {
                             $bal = floatval($c->outstanding_balance); 
                             $badgeCls = $bal > 0 ? 'badge-owed' : 'badge-active';
                             $badgeTxt = $bal > 0 ? 'Owed' : 'Cleared';
+                            $accountStatus = $c->status ?? 'Active';
                             ?>
                             <tr class="customer-row" 
                                 onclick="showCustomerProfile(<?= $c->id ?>)"
@@ -804,7 +806,7 @@ foreach ($data['customers'] ?? [] as $cust) {
                                         <div class="avatar-circle"><?= strtoupper(substr($c->name ?? '', 0, 2)) ?></div>
                                         <div>
                                             <strong style="font-size:14.5px; font-weight:600; color:var(--t-primary);"><?= htmlspecialchars($c->name ?? '') ?></strong>
-                                            <span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;" class="truncate-text">
+                                            <span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;">
                                                 🏠 <?= !empty($c->address) ? htmlspecialchars($c->address) : '<span style="color:var(--c-red); font-weight:600;">Missing Address</span>' ?>
                                             </span>
                                         </div>
@@ -827,6 +829,13 @@ foreach ($data['customers'] ?? [] as $cust) {
                                     <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
                                         <span class="sf-badge <?= $badgeCls ?>">
                                             <span class="dot"></span><?= $badgeTxt ?>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                                        <span class="sf-badge <?= $accountStatus === 'Active' ? 'badge-active' : 'badge-owed' ?>">
+                                            <span class="dot"></span><?= $accountStatus ?>
                                         </span>
                                         <?php if (isset($c->review_status) && $c->review_status === 'New'): ?>
                                             <span class="sf-badge badge-new">
@@ -1169,6 +1178,14 @@ foreach ($data['customers'] ?? [] as $cust) {
                                 <input type="text" name="longitude" class="sf-input" value="<?= htmlspecialchars($c->longitude ?? '') ?>">
                             </div>
                         </div>
+
+                        <div class="sf-group">
+                            <label>Account Status</label>
+                            <select name="status" class="sf-input" style="font-weight:600;">
+                                <option value="Active" <?= ($c->status ?? 'Active') === 'Active' ? 'selected' : '' ?>>Active (Visible everywhere)</option>
+                                <option value="Inactive" <?= ($c->status ?? 'Active') === 'Inactive' ? 'selected' : '' ?>>Inactive (Hidden from selectors)</option>
+                            </select>
+                        </div>
                         
                         <div style="text-align: right; margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px;">
                             <?php if (isset($c->review_status) && $c->review_status === 'New'): ?>
@@ -1199,16 +1216,21 @@ foreach ($data['customers'] ?? [] as $cust) {
                 <!-- GPS Map View -->
                 <div>
                     <h4 style="margin:0 0 14px 0; border-bottom: 0.5px solid var(--c-separator); padding-bottom: 6px; font-size:14px; font-weight:700; text-transform:uppercase; color:var(--t-secondary);">Map Location</h4>
-                    <div class="map-box">
-                        <?php if($c->latitude && $c->longitude): ?>
-                            <iframe width="100%" height="100%" frameborder="0" style="border:0;" src="https://maps.google.com/maps?q=<?= $c->latitude ?>,<?= $c->longitude ?>&hl=en&z=14&output=embed"></iframe>
-                        <?php else: ?>
-                            <div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--t-tertiary); font-size:13px; flex-direction:column; gap:6px;">
-                                <i class="fa-solid fa-map-location-dot" style="font-size: 28px;"></i>
-                                No GPS coordinates registered.
-                            </div>
-                        <?php endif; ?>
-                    </div>
+                    <?php if (!empty($c->latitude) && !empty($c->longitude)): ?>
+                        <div class="map-box">
+                            <iframe width="100%" height="100%" frameborder="0" style="border:0;" 
+                                    src="https://maps.google.com/maps?q=<?= $c->latitude ?>,<?= $c->longitude ?>&hl=es&z=14&output=embed">
+                            </iframe>
+                        </div>
+                        <div style="margin-top: 8px; font-size: 12px; color: var(--t-secondary); text-align: center;">
+                            GPS Coordinates: <code><?= htmlspecialchars($c->latitude) ?>, <?= htmlspecialchars($c->longitude) ?></code>
+                        </div>
+                    <?php else: ?>
+                        <div class="map-box" style="display:flex; align-items:center; justify-content:center; flex-direction:column; color:var(--t-tertiary);">
+                            <i class="fa-solid fa-map-location-dot" style="font-size:32px; margin-bottom:8px;"></i>
+                            <span style="font-size:13px; font-weight:500;">No GPS Location Captured</span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -1236,27 +1258,27 @@ foreach ($data['customers'] ?? [] as $cust) {
 <?php endif; ?>
 
 <!-- ============================================================
-     MODAL: CONFIRM CUSTOMER DELETE (WITH PASSWORD VERIFICATION)
+     MODAL: DELETE CONFIRMATION
      ============================================================ -->
 <div class="modal-veil hidden" id="deleteCustomerModal" onclick="if(event.target === this) closeModal('deleteCustomerModal')">
-    <div class="sf-modal" style="width: 400px;">
+    <div class="sf-modal" style="width: 440px;">
         <div class="modal-head" style="border-bottom: none; padding-bottom: 0;">
-            <h3 class="modal-title" style="color: var(--c-red); display: flex; align-items: center; gap: 8px; font-size: 16px;">
-                <i class="fa-solid fa-triangle-exclamation"></i> Delete Customer
-            </h3>
+            <h3 class="modal-title" style="color: var(--c-red);"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> Delete Customer</h3>
             <button type="button" class="modal-close" onclick="closeModal('deleteCustomerModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form id="deleteCustomerForm" onsubmit="submitDeleteCustomer(event)">
-            <div class="modal-body" style="padding-top: 12px; padding-bottom: 12px;">
-                <p style="font-size: 13px; color: var(--t-secondary); line-height: 1.5; margin: 0 0 16px 0;">
-                    Are you sure you want to delete <strong id="delete-customer-name" style="color: var(--t-primary);"></strong>?<br>
-                    Please enter your logged-in user password to confirm this action:
+        <form action="<?= APP_URL ?>/customer/delete" method="POST">
+            <div class="modal-body" style="padding-top: 12px;">
+                <input type="hidden" name="customer_id" id="delete_customer_id" value="">
+                <p style="font-size: 14px; color: var(--t-primary); margin: 0 0 16px 0;">
+                    Are you sure you want to delete <strong id="delete_customer_name" style="color: var(--t-primary);"></strong>?
                 </p>
-                <input type="hidden" id="delete-customer-id" value="">
-                <div class="sf-group" style="margin: 0;">
-                    <label>Your Account Password *</label>
-                    <input type="password" id="delete-confirm-password" class="sf-input" placeholder="Enter your password" required autocomplete="current-password">
-                    <div id="delete-error-msg" style="color: var(--c-red); font-size: 11.5px; font-weight: 600; margin-top: 6px; display: none;"></div>
+                <div style="background: var(--c-red-light); border-left: 3.5px solid var(--c-red); border-radius: var(--r-sm); padding: 12px; font-size: 12.5px; color: var(--c-red); margin-bottom: 16px;">
+                    <i class="fa-solid fa-shield-halved" style="margin-right: 4px;"></i>
+                    This action will check for linked transactions (Invoices, Payments, Cheques) to prevent database corruption.
+                </div>
+                <div class="sf-group">
+                    <label style="color: var(--c-red); font-weight: 700;">Manager Password Required *</label>
+                    <input type="password" name="password" class="sf-input" style="border-color: var(--c-red);" placeholder="Enter admin/manager password" required>
                 </div>
             </div>
             <div class="modal-foot" style="border-top: none; padding-top: 0; display: flex; justify-content: flex-end; gap: 10px; padding-bottom: 24px; background: transparent;">
@@ -1314,6 +1336,14 @@ foreach ($data['customers'] ?? [] as $cust) {
                         <label>Credit Limit (Rs)</label>
                         <input type="number" step="0.01" name="credit_limit" class="sf-input" placeholder="0.00" value="0.00">
                     </div>
+                </div>
+                
+                <div class="sf-group">
+                    <label>Account Status</label>
+                    <select name="status" class="sf-input" style="font-weight:600;">
+                        <option value="Active" selected>Active (Visible everywhere)</option>
+                        <option value="Inactive">Inactive (Hidden from selectors)</option>
+                    </select>
                 </div>
                 
                 <div class="sf-group">

@@ -84,7 +84,8 @@ class CustomerController extends Controller {
                     'credit_limit' => isset($_POST['credit_limit']) ? floatval($_POST['credit_limit']) : 0.00,
                     'opening_balance' => isset($_POST['opening_balance']) ? floatval($_POST['opening_balance']) : 0.00,
                     'opening_balance_date' => !empty($_POST['opening_balance_date']) ? $_POST['opening_balance_date'] : date('Y-m-d'),
-                    'vat_number' => trim($_POST['vat_number'] ?? '')
+                    'vat_number' => trim($_POST['vat_number'] ?? ''),
+                    'status' => trim($_POST['status'] ?? 'Active')
                 ];
 
                 if (!empty($addData['name'])) {
@@ -120,7 +121,8 @@ class CustomerController extends Controller {
                     'credit_limit' => isset($_POST['credit_limit']) ? floatval($_POST['credit_limit']) : 0.00,
                     'opening_balance' => isset($_POST['opening_balance']) ? floatval($_POST['opening_balance']) : 0.00,
                     'opening_balance_date' => !empty($_POST['opening_balance_date']) ? $_POST['opening_balance_date'] : date('Y-m-d'),
-                    'vat_number' => trim($_POST['vat_number'] ?? '')
+                    'vat_number' => trim($_POST['vat_number'] ?? ''),
+                    'status' => trim($_POST['status'] ?? 'Active')
                 ];
 
                 if (!empty($updateData['name'])) {
