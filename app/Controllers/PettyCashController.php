@@ -315,20 +315,46 @@ class PettyCashController extends Controller {
                 'payee_name' => trim($_POST['payee_name'] ?? '')
             ];
 
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || (isset($_POST['is_ajax']) && $_POST['is_ajax'] == '1');
+
             if ($paymentMethod === 'Bank Transfer' && $reimburseData['bank_account_id'] <= 0) {
-                $_SESSION['flash_error'] = 'Please select a bank account to fund the reimbursement.';
+                $errMsg = 'Please select a bank account to fund the reimbursement.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => $errMsg]);
+                    exit;
+                }
+                $_SESSION['flash_error'] = $errMsg;
             } elseif ($paymentMethod === 'Cheque' && ($reimburseData['bank_account_id'] <= 0 || empty($reimburseData['cheque_number']))) {
-                $_SESSION['flash_error'] = 'Please select a bank account and enter a valid cheque number.';
+                $errMsg = 'Please select a bank account and enter a valid cheque number.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => $errMsg]);
+                    exit;
+                }
+                $_SESSION['flash_error'] = $errMsg;
             } else {
                 $result = $this->pcReimModel->createRequest($reimburseData, (int)$_SESSION['user_id']);
                 if ($result === true) {
-                    $_SESSION['flash_success'] = 'Reimbursement request generated successfully.';
+                    $succMsg = 'Reimbursement request generated successfully.';
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => true, 'message' => $succMsg, 'redirect' => APP_URL . '/pettycash?tab=reimbursementsTab']);
+                        exit;
+                    }
+                    $_SESSION['flash_success'] = $succMsg;
                 } else {
-                    $_SESSION['flash_error'] = is_string($result) ? $result : 'Failed to create reimbursement request.';
+                    $errMsg = is_string($result) ? $result : 'Failed to create reimbursement request.';
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'error' => $errMsg]);
+                        exit;
+                    }
+                    $_SESSION['flash_error'] = $errMsg;
                 }
             }
         }
-        header('Location: ' . APP_URL . '/pettycash');
+        header('Location: ' . APP_URL . '/pettycash?tab=reimbursementsTab');
         exit;
     }
 
@@ -343,7 +369,7 @@ class PettyCashController extends Controller {
             $_SESSION['flash_error'] = is_string($result) ? $result : 'Failed to approve reimbursement request.';
         }
         
-        header('Location: ' . APP_URL . '/pettycash');
+        header('Location: ' . APP_URL . '/pettycash?tab=reimbursementsTab');
         exit;
     }
 
@@ -358,7 +384,7 @@ class PettyCashController extends Controller {
             $_SESSION['flash_error'] = is_string($result) ? $result : 'Failed to reject reimbursement request.';
         }
         
-        header('Location: ' . APP_URL . '/pettycash');
+        header('Location: ' . APP_URL . '/pettycash?tab=reimbursementsTab');
         exit;
     }
 

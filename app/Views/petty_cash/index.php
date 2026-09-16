@@ -1231,18 +1231,59 @@ function toggleReimbursementFields(method) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.group('--- Petty Cash Page Initialized ---');
+    console.log('Current URL:', window.location.href);
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    console.log('URL Tab Parameter:', tabParam);
+    if (tabParam) {
+        const targetBtn = document.querySelector(`.tab-btn[onclick*="${tabParam}"]`);
+        if (targetBtn) {
+            console.log('Activating Tab from URL:', tabParam);
+            targetBtn.click();
+        }
+    }
+    console.groupEnd();
+
     const reimForm = document.getElementById('reimbursementForm');
     if (reimForm) {
         reimForm.addEventListener('submit', function(e) {
-            console.group('--- Petty Cash Reimbursement Form Submission ---');
+            e.preventDefault();
+            console.group('--- Petty Cash Reimbursement Form Submission (AJAX) ---');
             console.log('Timestamp:', new Date().toISOString());
             console.log('Target Action:', reimForm.action);
-            console.log('HTTP Method:', reimForm.method);
             const formData = new FormData(reimForm);
+            formData.append('is_ajax', '1');
             for (let [key, val] of formData.entries()) {
                 console.log(`  ${key} =`, val);
             }
             console.groupEnd();
+
+            const submitBtn = reimForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            fetch(reimForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('Reimbursement Response:', data);
+                if (data.success) {
+                    window.location.href = data.redirect || '<?= APP_URL ?>/pettycash?tab=reimbursementsTab';
+                } else {
+                    if (submitBtn) submitBtn.disabled = false;
+                    alert('Reimbursement Request Info:\n' + (data.error || 'Failed to create request'));
+                    console.error('Reimbursement Server Error:', data.error);
+                }
+            })
+            .catch(err => {
+                console.warn('AJAX submit failed, performing native form submit:', err);
+                reimForm.submit();
+            });
         });
     }
 
