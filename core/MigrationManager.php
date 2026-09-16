@@ -1209,6 +1209,22 @@ class MigrationManager {
                     $dbh->exec("ALTER TABLE petty_cash_transactions ADD COLUMN reimbursement_id INT NULL AFTER voucher_number");
                 }
                 return true;
+            },
+            'cheques_entity_linking_v3' => function(PDO $dbh) {
+                $cols = [
+                    'type' => "ALTER TABLE cheques ADD COLUMN type ENUM('Received', 'Issued') DEFAULT 'Received'",
+                    'customer_id' => "ALTER TABLE cheques ADD COLUMN customer_id INT NULL DEFAULT NULL",
+                    'vendor_id' => "ALTER TABLE cheques ADD COLUMN vendor_id INT NULL DEFAULT NULL",
+                    'service_provider_id' => "ALTER TABLE cheques ADD COLUMN service_provider_id INT NULL DEFAULT NULL",
+                    'payee_name' => "ALTER TABLE cheques ADD COLUMN payee_name VARCHAR(255) NULL DEFAULT NULL"
+                ];
+                foreach ($cols as $col => $sql) {
+                    $q = $dbh->query("SHOW COLUMNS FROM cheques LIKE '{$col}'");
+                    if (!$q || !$q->fetch()) {
+                        try { $dbh->exec($sql); } catch (Exception $e) {}
+                    }
+                }
+                return true;
             }
         ];
 

@@ -5,11 +5,14 @@ class ChequeController extends Controller {
     private $supplierModel;
     private $companyModel;
 
+    private $serviceProviderModel;
+
     public function __construct() {
         // auth bypassed
         $this->chequeModel = $this->model('Cheque');
         $this->customerModel = $this->model('Customer');
         $this->supplierModel = $this->model('Supplier');
+        $this->serviceProviderModel = $this->model('ServiceProvider');
         $this->companyModel = $this->model('Company');
         $this->coaModel = $this->model('ChartOfAccount');
     }
@@ -37,11 +40,11 @@ class ChequeController extends Controller {
             
             $groupedAllCheques[$dateKey][] = $chk;
 
-            if (!empty($chk->bank_account_id)) {
-                // If it has a drawn bank_account_id, it's a payment/issued cheque.
+            if ($chk->type === 'Issued' || !empty($chk->bank_account_id) || !empty($chk->vendor_id) || !empty($chk->service_provider_id)) {
+                // Payments / Issued cheques
                 $groupedIssuedCheques[$dateKey][] = $chk;
             } else {
-                // Collections don't have a drawn bank_account_id.
+                // Collections / Received cheques
                 $groupedReceivedCheques[$dateKey][] = $chk;
             }
 
@@ -69,8 +72,9 @@ class ChequeController extends Controller {
             'search' => $search,
             'customers' => $this->customerModel->getAllCustomers() ?: [],
             'suppliers' => $this->supplierModel->getAllSuppliers() ?: [],
+            'service_providers' => $this->serviceProviderModel->getAllServiceProviders() ?: [],
             'bank_accounts' => $bankAccounts,
-            'company_name' => $company->company_name,
+            'company_name' => $company->company_name ?? 'Company',
             'kpi_pending' => $totalPending,
             'kpi_cleared' => $totalCleared,
             'kpi_next_date' => $nextBankingDate,
@@ -82,14 +86,19 @@ class ChequeController extends Controller {
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             if ($_POST['action'] == 'add_cheque') {
+                $chequeType = ($_POST['cheque_type'] ?? '') === 'issued' ? 'Issued' : 'Received';
                 $chkData = [
-                    'payee_name' => trim($_POST['payee_name']),
-                    'bank_name' => trim($_POST['bank_name']),
-                    'cheque_number' => trim($_POST['cheque_number']),
-                    'amount' => floatval($_POST['amount']),
-                    'banking_date' => $_POST['banking_date'],
-                    'bank_account_id' => ($_POST['cheque_type'] == 'issued' && !empty($_POST['bank_account_id'])) ? intval($_POST['bank_account_id']) : null,
-                    'created_by' => $_SESSION['user_id']
+                    'type' => $chequeType,
+                    'payee_name' => trim($_POST['payee_name'] ?? ''),
+                    'customer_id' => !empty($_POST['customer_id']) ? intval($_POST['customer_id']) : null,
+                    'vendor_id' => !empty($_POST['vendor_id']) ? intval($_POST['vendor_id']) : null,
+                    'service_provider_id' => !empty($_POST['service_provider_id']) ? intval($_POST['service_provider_id']) : null,
+                    'bank_name' => trim($_POST['bank_name'] ?? ''),
+                    'cheque_number' => trim($_POST['cheque_number'] ?? ''),
+                    'amount' => floatval($_POST['amount'] ?? 0),
+                    'banking_date' => $_POST['banking_date'] ?? date('Y-m-d'),
+                    'bank_account_id' => ($chequeType === 'Issued' && !empty($_POST['bank_account_id'])) ? intval($_POST['bank_account_id']) : null,
+                    'created_by' => $_SESSION['user_id'] ?? 1
                 ];
                 if ($this->chequeModel->addCheque($chkData)) {
                     header('Location: ' . APP_URL . '/cheque?success=added'); exit;
@@ -97,15 +106,20 @@ class ChequeController extends Controller {
                     $data['error'] = 'Failed to add cheque.';
                 }
             } elseif ($_POST['action'] == 'edit_cheque') {
+                $chequeType = ($_POST['cheque_type'] ?? '') === 'issued' ? 'Issued' : 'Received';
                 $chkData = [
-                    'id' => $_POST['cheque_id'],
-                    'payee_name' => trim($_POST['payee_name']),
-                    'bank_name' => trim($_POST['bank_name']),
-                    'cheque_number' => trim($_POST['cheque_number']),
-                    'amount' => floatval($_POST['amount']),
-                    'banking_date' => $_POST['banking_date'],
-                    'bank_account_id' => ($_POST['cheque_type'] == 'issued' && !empty($_POST['bank_account_id'])) ? intval($_POST['bank_account_id']) : null,
-                    'status' => $_POST['status']
+                    'id' => intval($_POST['cheque_id']),
+                    'type' => $chequeType,
+                    'payee_name' => trim($_POST['payee_name'] ?? ''),
+                    'customer_id' => !empty($_POST['customer_id']) ? intval($_POST['customer_id']) : null,
+                    'vendor_id' => !empty($_POST['vendor_id']) ? intval($_POST['vendor_id']) : null,
+                    'service_provider_id' => !empty($_POST['service_provider_id']) ? intval($_POST['service_provider_id']) : null,
+                    'bank_name' => trim($_POST['bank_name'] ?? ''),
+                    'cheque_number' => trim($_POST['cheque_number'] ?? ''),
+                    'amount' => floatval($_POST['amount'] ?? 0),
+                    'banking_date' => $_POST['banking_date'] ?? date('Y-m-d'),
+                    'status' => $_POST['status'] ?? 'Pending',
+                    'bank_account_id' => ($chequeType === 'Issued' && !empty($_POST['bank_account_id'])) ? intval($_POST['bank_account_id']) : null
                 ];
                 if ($this->chequeModel->updateCheque($chkData)) {
                     header('Location: ' . APP_URL . '/cheque?success=updated'); exit;

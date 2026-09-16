@@ -2,7 +2,106 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-<<style>
+<style>
+/* ============================================================
+   SF PRO + APPLE DESIGN LANGUAGE — CHEQUE MANAGEMENT
+   ============================================================ */
+
+:root {
+    --c-bg:           #f2f2f7;
+    --c-surface:      #ffffff;
+    --c-surface2:     #f9f9fb;
+    --c-fill:         rgba(120,120,128,0.12);
+    --c-fill2:        rgba(120,120,128,0.16);
+    --c-separator:    rgba(60,60,67,0.12);
+    --c-separator2:   rgba(60,60,67,0.06);
+
+    --c-blue:         #007aff;
+    --c-blue-light:   #e5f2ff;
+    --c-blue-mid:     #b3d6ff;
+    --c-green:        #34c759;
+    --c-green-light:  #e6f9ec;
+    --c-orange:       #ff9500;
+    --c-orange-light: #fff4e5;
+    --c-red:          #ff3b30;
+    --c-red-light:    #fff0ef;
+    --c-purple:       #af52de;
+    --c-purple-light: #f5eeff;
+
+    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
+    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
+
+    --t-primary:   #1c1c1e;
+    --t-secondary: #636366;
+    --t-tertiary:  #aeaeb2;
+    --t-label:     #8e8e93;
+
+    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
+    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
+
+    --r-xs: 6px;
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-xl: 26px;
+    --r-pill: 999px;
+
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-ios:    cubic-bezier(0.25, 0.1, 0.25, 1);
+    --dur-fast:    0.18s;
+    --dur-mid:     0.28s;
+    --dur-slow:    0.42s;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --c-bg:           #121212;
+        --c-surface:      #1e1e2e;
+        --c-surface2:     #161622;
+        --c-fill:         rgba(255,255,255,0.08);
+        --c-fill2:        rgba(255,255,255,0.12);
+        --c-separator:    rgba(255,255,255,0.15);
+        --c-separator2:   rgba(255,255,255,0.08);
+        --t-primary:   #f5f5f7;
+        --t-secondary: #a1a1aa;
+        --t-tertiary:  #71717a;
+        --t-label:     #52525b;
+    }
+}
+
+.sf-container {
+    font-family: var(--f-system);
+    font-size: 15px;
+    color: var(--t-primary);
+    background: var(--c-bg);
+    padding: 24px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.sf-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+}
+
+.sf-page-title h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--t-primary);
+    margin: 0;
+}
+
+.sf-page-title p {
+    font-size: 14px;
+    color: var(--t-secondary);
+    margin: 4px 0 0 0;
+}
+
 /* KPI Grid */
 .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
 .kpi-card {
@@ -24,6 +123,36 @@
     display: flex; justify-content: space-between;
 }
 .date-group.overdue { background: var(--c-red-light); color: var(--c-red); border-color: rgba(255,59,48,0.2); }
+
+/* Table styling */
+.table-panel {
+    background: var(--c-surface);
+    border-radius: var(--r-md);
+    border: 0.5px solid var(--c-separator);
+    box-shadow: var(--shadow-xs);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.table-responsive { width: 100%; overflow-x: auto; }
+
+.sf-table {
+    width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;
+}
+
+.sf-table th {
+    background: var(--c-surface2); color: var(--t-secondary);
+    font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 12px 16px; border-bottom: 0.5px solid var(--c-separator);
+}
+
+.sf-table td {
+    padding: 14px 16px; border-bottom: 0.5px solid var(--c-separator2);
+    vertical-align: middle; color: var(--t-primary);
+}
+
+.sf-table tr:last-child td { border-bottom: none; }
+.sf-table tr:hover td { background: var(--c-fill); }
 
 /* Badges */
 .sf-badge {
@@ -97,13 +226,44 @@
 }
 .sf-modal.open { display: flex; opacity: 1; }
 .sf-modal-box {
-    background: var(--c-surface); width: 540px; max-height: 90vh; overflow-y: auto;
+    background: var(--c-surface); width: 560px; max-height: 90vh; overflow-y: auto;
     border-radius: var(--r-xl); padding: 32px;
     box-shadow: var(--shadow-xl); border: 0.5px solid var(--c-separator);
     transform: scale(0.95); transition: transform var(--dur-fast) var(--ease-spring);
 }
 .sf-modal.open .sf-modal-box { transform: scale(1); }
 .sf-modal-box h3 { margin-top: 0; font-size: 22px; margin-bottom: 20px; color: var(--t-primary); }
+
+.sf-form-group { margin-bottom: 16px; }
+.sf-form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--t-secondary); margin-bottom: 6px; }
+.sf-input {
+    width: 100%; padding: 10px 14px; font-size: 14px; font-family: var(--f-system);
+    background: var(--c-surface2); border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-sm); color: var(--t-primary); outline: none;
+    transition: border-color var(--dur-fast); box-sizing: border-border;
+}
+.sf-input:focus { border-color: var(--c-blue); background: var(--c-surface); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.sf-modal-acts { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.sf-btn {
+    padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: var(--r-pill);
+    border: none; cursor: pointer; transition: all var(--dur-fast); font-family: var(--f-system);
+}
+.sf-btn-ghost { background: var(--c-fill); color: var(--t-primary); }
+.sf-btn-primary { background: var(--c-blue); color: #fff; }
+.sf-btn-danger { background: var(--c-red); color: #fff; }
+
+/* Alerts */
+.sf-alert {
+    padding: 14px 18px; border-radius: var(--r-md); margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 12px; font-size: 14px;
+}
+.sf-alert.success { background: var(--c-green-light); color: #1a7f3c; border: 0.5px solid rgba(52,199,89,0.3); }
+.sf-alert.error { background: var(--c-red-light); color: var(--c-red); border: 0.5px solid rgba(255,59,48,0.3); }
+.sf-alert-icon { font-size: 18px; margin-top: 2px; }
+.sf-alert-title { font-weight: 700; margin-bottom: 2px; }
 
 /* Cheque Viewer Modal */
 .cheque-paper {
@@ -134,7 +294,7 @@
     <div class="sf-page-header">
         <div class="sf-page-title">
             <h1>Cheque Management</h1>
-            <p>Track issuing and receiving of company cheques</p>
+            <p>Track issuing and receiving of company cheques linked with Customer & Supplier profiles</p>
         </div>
     </div>
 
@@ -209,7 +369,7 @@
                             <table class="sf-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 25%;">Payee / Customer</th>
+                                    <th style="width: 25%;">Payee / Customer / Supplier</th>
                                     <th style="width: 20%;">Bank details</th>
                                     <th style="width: 15%;">Cheque Number</th>
                                     <th style="width: 12%;">Status</th>
@@ -219,16 +379,23 @@
                             </thead>
                             <tbody>
                                 <?php foreach($cheques as $chk): 
-                                    $isIssued = !empty($chk->bank_account_id);
+                                    $isIssued = ($chk->type === 'Issued') || !empty($chk->bank_account_id) || !empty($chk->vendor_id) || !empty($chk->service_provider_id);
                                     $typeTag = $isIssued ? 'issued' : 'received';
+                                    $displayName = $chk->customer_name ?: ($chk->vendor_name ?: ($chk->service_provider_name ?: ($chk->payee_name ?: '-')));
                                 ?>
                                 <tr>
                                     <td>
-                                        <strong style="font-weight:600;"><?= htmlspecialchars($chk->payee_name ?: '-') ?></strong>
-                                        <?php if ($isIssued): ?>
-                                            <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Supplier Payment</div>
+                                        <strong style="font-weight:600;"><?= htmlspecialchars($displayName) ?></strong>
+                                        <?php if (!empty($chk->customer_name)): ?>
+                                            <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Customer: <?= htmlspecialchars($chk->customer_name) ?></div>
+                                        <?php elseif (!empty($chk->vendor_name)): ?>
+                                            <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-truck-field"></i> Supplier: <?= htmlspecialchars($chk->vendor_name) ?></div>
+                                        <?php elseif (!empty($chk->service_provider_name)): ?>
+                                            <div style="font-size:11px; color:var(--c-purple); font-weight:600; margin-top:2px;"><i class="fa-solid fa-handshake"></i> Service Provider: <?= htmlspecialchars($chk->service_provider_name) ?></div>
+                                        <?php elseif ($isIssued): ?>
+                                            <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Issued Cheque</div>
                                         <?php else: ?>
-                                            <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center"></i> Customer Collection</div>
+                                            <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-arrow-down-left-and-arrow-up-right-to-center"></i> Received Cheque</div>
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -254,10 +421,10 @@
                                     </td>
                                     <td>
                                         <div class="row-acts">
-                                            <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
+                                            <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
                                                 <i class="fa-regular fa-eye"></i>
                                             </button>
-                                            <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, '<?= $typeTag ?>')">
+                                            <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, '<?= $typeTag ?>', <?= $chk->customer_id ?: 'null' ?>, <?= $chk->vendor_id ?: 'null' ?>, <?= $chk->service_provider_id ?: 'null' ?>)">
                                                 <i class="fa-solid fa-pen"></i>
                                             </button>
                                             <button class="act-btn delete" title="Delete" onclick="openDeleteModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
@@ -305,11 +472,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach($cheques as $chk): ?>
+                                    <?php foreach($cheques as $chk): 
+                                        $displayName = $chk->customer_name ?: ($chk->payee_name ?: '-');
+                                    ?>
                                     <tr>
                                         <td>
-                                            <strong style="font-weight:600;"><?= htmlspecialchars($chk->payee_name ?: '-') ?></strong>
-                                            <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;">Customer Receipt</div>
+                                            <strong style="font-weight:600;"><?= htmlspecialchars($displayName) ?></strong>
+                                            <?php if (!empty($chk->customer_name)): ?>
+                                                <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Customer Profile</div>
+                                            <?php else: ?>
+                                                <div style="font-size:11px; color:var(--t-secondary); font-weight:600; margin-top:2px;">Custom Payee</div>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <div style="font-weight:500;"><?= htmlspecialchars($chk->bank_name) ?></div>
@@ -334,10 +507,10 @@
                                         </td>
                                         <td>
                                             <div class="row-acts">
-                                                <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
+                                                <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
                                                     <i class="fa-regular fa-eye"></i>
                                                 </button>
-                                                <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, 'received')">
+                                                <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, 'received', <?= $chk->customer_id ?: 'null' ?>, null, null)">
                                                     <i class="fa-solid fa-pen"></i>
                                                 </button>
                                                 <button class="act-btn delete" title="Delete" onclick="openDeleteModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
@@ -355,6 +528,7 @@
                 <?php endif; ?>
             </div>
 
+            <!-- SECTION: ISSUED CHEQUES -->
             <div id="section-issued" class="chq-section">
                 <?php if(empty($data['grouped_issued_cheques'])): ?>
                     <div class="table-panel" style="padding: 60px; text-align: center; color: var(--t-secondary);">
@@ -385,11 +559,19 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach($cheques as $chk): ?>
+                                    <?php foreach($cheques as $chk): 
+                                        $displayName = $chk->vendor_name ?: ($chk->service_provider_name ?: ($chk->payee_name ?: '-'));
+                                    ?>
                                     <tr>
                                         <td>
-                                            <strong style="font-weight:600;"><?= htmlspecialchars($chk->payee_name ?: '-') ?></strong>
-                                            <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;">Supplier Payment</div>
+                                            <strong style="font-weight:600;"><?= htmlspecialchars($displayName) ?></strong>
+                                            <?php if (!empty($chk->vendor_name)): ?>
+                                                <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-truck-field"></i> Supplier</div>
+                                            <?php elseif (!empty($chk->service_provider_name)): ?>
+                                                <div style="font-size:11px; color:var(--c-purple); font-weight:600; margin-top:2px;"><i class="fa-solid fa-handshake"></i> Service Provider</div>
+                                            <?php else: ?>
+                                                <div style="font-size:11px; color:var(--t-secondary); font-weight:600; margin-top:2px;">Custom Payee</div>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <div style="font-weight:500;"><?= htmlspecialchars($chk->bank_name) ?></div>
@@ -414,10 +596,10 @@
                                         </td>
                                         <td>
                                             <div class="row-acts">
-                                                <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
+                                                <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
                                                     <i class="fa-regular fa-eye"></i>
                                                 </button>
-                                                <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, 'issued')">
+                                                <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, 'issued', null, <?= $chk->vendor_id ?: 'null' ?>, <?= $chk->service_provider_id ?: 'null' ?>)">
                                                     <i class="fa-solid fa-pen"></i>
                                                 </button>
                                                 <button class="act-btn delete" title="Delete" onclick="openDeleteModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
@@ -455,21 +637,63 @@
 <!-- Add Modal -->
 <div class="sf-modal" id="addModal">
     <div class="sf-modal-box">
-        <h3>Record Received / Paid Cheque</h3>
+        <h3>Record Received / Issued Cheque</h3>
         <form action="<?= APP_URL ?>/cheque" method="POST">
             <input type="hidden" name="action" value="add_cheque">
+            
             <div class="sf-form-group">
                 <label>Cheque Type *</label>
-                <select name="cheque_type" id="add_cheque_type" class="sf-input" required onchange="toggleAddBankAcc()">
-                    <option value="">-- Select Type --</option>
-                    <option value="received">Collection (Received Cheque)</option>
-                    <option value="issued">Payment (Issued Cheque)</option>
+                <select name="cheque_type" id="add_cheque_type" class="sf-input" required onchange="toggleAddFields()">
+                    <option value="">-- Select Cheque Type --</option>
+                    <option value="received">Received Cheque (Collection from Customer)</option>
+                    <option value="issued">Issued Cheque (Payment to Supplier / Service Provider)</option>
                 </select>
             </div>
-            <div class="sf-form-group">
-                <label>Drawer / Payee Name *</label>
-                <input type="text" name="payee_name" class="sf-input" placeholder="e.g. John Doe" required>
+
+            <!-- Entity Linking Options -->
+            <div id="add_received_entity_group" style="display:none;" class="sf-form-group">
+                <label style="color: var(--c-green); font-weight:700;"><i class="fa-solid fa-user-check"></i> Link to Customer Profile</label>
+                <select name="customer_id" id="add_customer_id" class="sf-input" onchange="syncAddPayeeName('customer')">
+                    <option value="">-- Select Customer (Optional) --</option>
+                    <?php foreach($data['customers'] as $c): ?>
+                        <option value="<?= $c->id ?>" data-name="<?= htmlspecialchars($c->name) ?>"><?= htmlspecialchars($c->name) ?> <?= !empty($c->phone) ? '('.$c->phone.')' : '' ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
+
+            <div id="add_issued_entity_group" style="display:none;">
+                <div class="sf-form-group">
+                    <label style="color: var(--c-orange); font-weight:700;"><i class="fa-solid fa-building"></i> Select Entity Category</label>
+                    <select id="add_issued_category" class="sf-input" onchange="toggleIssuedCategory('add')">
+                        <option value="vendor">Supplier / Vendor</option>
+                        <option value="service_provider">Service Provider</option>
+                    </select>
+                </div>
+                <div class="sf-form-group" id="add_vendor_select_group">
+                    <label style="color: var(--c-orange);"><i class="fa-solid fa-truck-field"></i> Link to Supplier / Vendor</label>
+                    <select name="vendor_id" id="add_vendor_id" class="sf-input" onchange="syncAddPayeeName('vendor')">
+                        <option value="">-- Select Supplier (Optional) --</option>
+                        <?php foreach($data['suppliers'] as $v): ?>
+                            <option value="<?= $v->id ?>" data-name="<?= htmlspecialchars($v->name) ?>"><?= htmlspecialchars($v->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="sf-form-group" id="add_sp_select_group" style="display:none;">
+                    <label style="color: var(--c-purple);"><i class="fa-solid fa-handshake"></i> Link to Service Provider</label>
+                    <select name="service_provider_id" id="add_service_provider_id" class="sf-input" onchange="syncAddPayeeName('sp')">
+                        <option value="">-- Select Service Provider (Optional) --</option>
+                        <?php foreach($data['service_providers'] as $sp): ?>
+                            <option value="<?= $sp->id ?>" data-name="<?= htmlspecialchars($sp->name) ?>"><?= htmlspecialchars($sp->name) ?> (<?= htmlspecialchars($sp->service_category) ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sf-form-group">
+                <label>Payee / Drawer Name *</label>
+                <input type="text" name="payee_name" id="add_payee_name" class="sf-input" placeholder="e.g. John Doe or Company Name" required>
+            </div>
+
             <div class="sf-form-group" id="add_bank_acc_group" style="display:none;">
                 <label>Drawn Bank Account (Required for Issued Cheques)</label>
                 <select name="bank_account_id" id="add_bank_account_id" class="sf-input">
@@ -479,14 +703,16 @@
                     <?php endforeach; ?>
                 </select>
             </div>
+
             <div class="grid-2">
                 <div class="sf-form-group"><label>Bank Name *</label><input type="text" name="bank_name" class="sf-input" placeholder="e.g. Commercial Bank" required></div>
-                <div class="sf-form-group"><label>Cheque Number *</label><input type="text" name="cheque_number" class="sf-input" required></div>
+                <div class="sf-form-group"><label>Cheque Number *</label><input type="text" name="cheque_number" class="sf-input" placeholder="e.g. 100234" required></div>
             </div>
             <div class="grid-2">
-                <div class="sf-form-group"><label>Banking Date *</label><input type="date" name="banking_date" class="sf-input" required></div>
-                <div class="sf-form-group"><label>Amount (Rs:) *</label><input type="number" name="amount" step="0.01" class="sf-input" required></div>
+                <div class="sf-form-group"><label>Banking Date *</label><input type="date" name="banking_date" class="sf-input" value="<?= date('Y-m-d') ?>" required></div>
+                <div class="sf-form-group"><label>Amount (Rs:) *</label><input type="number" name="amount" step="0.01" class="sf-input" placeholder="0.00" required></div>
             </div>
+
             <div class="sf-modal-acts">
                 <button type="button" class="sf-btn sf-btn-ghost" onclick="closeModal('addModal')">Cancel</button>
                 <button type="submit" class="sf-btn sf-btn-primary">Save Cheque</button>
@@ -505,13 +731,53 @@
             
             <div class="sf-form-group">
                 <label>Cheque Type *</label>
-                <select name="cheque_type" id="edit_cheque_type" class="sf-input" required onchange="toggleEditBankAcc()">
+                <select name="cheque_type" id="edit_cheque_type" class="sf-input" required onchange="toggleEditFields()">
                     <option value="received">Collection (Received Cheque)</option>
                     <option value="issued">Payment (Issued Cheque)</option>
                 </select>
             </div>
+
+            <!-- Entity Linking Options -->
+            <div id="edit_received_entity_group" style="display:none;" class="sf-form-group">
+                <label style="color: var(--c-green); font-weight:700;"><i class="fa-solid fa-user-check"></i> Link to Customer Profile</label>
+                <select name="customer_id" id="edit_customer_id" class="sf-input" onchange="syncEditPayeeName('customer')">
+                    <option value="">-- Select Customer (Optional) --</option>
+                    <?php foreach($data['customers'] as $c): ?>
+                        <option value="<?= $c->id ?>" data-name="<?= htmlspecialchars($c->name) ?>"><?= htmlspecialchars($c->name) ?> <?= !empty($c->phone) ? '('.$c->phone.')' : '' ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div id="edit_issued_entity_group" style="display:none;">
+                <div class="sf-form-group">
+                    <label style="color: var(--c-orange); font-weight:700;"><i class="fa-solid fa-building"></i> Select Entity Category</label>
+                    <select id="edit_issued_category" class="sf-input" onchange="toggleIssuedCategory('edit')">
+                        <option value="vendor">Supplier / Vendor</option>
+                        <option value="service_provider">Service Provider</option>
+                    </select>
+                </div>
+                <div class="sf-form-group" id="edit_vendor_select_group">
+                    <label style="color: var(--c-orange);"><i class="fa-solid fa-truck-field"></i> Link to Supplier / Vendor</label>
+                    <select name="vendor_id" id="edit_vendor_id" class="sf-input" onchange="syncEditPayeeName('vendor')">
+                        <option value="">-- Select Supplier (Optional) --</option>
+                        <?php foreach($data['suppliers'] as $v): ?>
+                            <option value="<?= $v->id ?>" data-name="<?= htmlspecialchars($v->name) ?>"><?= htmlspecialchars($v->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="sf-form-group" id="edit_sp_select_group" style="display:none;">
+                    <label style="color: var(--c-purple);"><i class="fa-solid fa-handshake"></i> Link to Service Provider</label>
+                    <select name="service_provider_id" id="edit_service_provider_id" class="sf-input" onchange="syncEditPayeeName('sp')">
+                        <option value="">-- Select Service Provider (Optional) --</option>
+                        <?php foreach($data['service_providers'] as $sp): ?>
+                            <option value="<?= $sp->id ?>" data-name="<?= htmlspecialchars($sp->name) ?>"><?= htmlspecialchars($sp->name) ?> (<?= htmlspecialchars($sp->service_category) ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
             <div class="sf-form-group">
-                <label>Drawer / Payee Name *</label>
+                <label>Payee / Drawer Name *</label>
                 <input type="text" name="payee_name" id="edit_payee_name" class="sf-input" required>
             </div>
             <div class="sf-form-group" id="edit_bank_acc_group" style="display:none;">
@@ -591,35 +857,115 @@
         document.getElementById(id).classList.remove('open');
     }
 
-    function toggleAddBankAcc() {
+    function toggleAddFields() {
         const type = document.getElementById('add_cheque_type').value;
-        const group = document.getElementById('add_bank_acc_group');
-        const select = document.getElementById('add_bank_account_id');
+        const bankGroup = document.getElementById('add_bank_acc_group');
+        const bankSelect = document.getElementById('add_bank_account_id');
+        const rcvGroup = document.getElementById('add_received_entity_group');
+        const issGroup = document.getElementById('add_issued_entity_group');
+
         if (type === 'issued') {
-            group.style.display = 'block';
-            select.setAttribute('required', 'required');
+            bankGroup.style.display = 'block';
+            bankSelect.setAttribute('required', 'required');
+            rcvGroup.style.display = 'none';
+            issGroup.style.display = 'block';
+            document.getElementById('add_customer_id').value = '';
+        } else if (type === 'received') {
+            bankGroup.style.display = 'none';
+            bankSelect.removeAttribute('required');
+            bankSelect.value = '';
+            rcvGroup.style.display = 'block';
+            issGroup.style.display = 'none';
+            document.getElementById('add_vendor_id').value = '';
+            document.getElementById('add_service_provider_id').value = '';
         } else {
-            group.style.display = 'none';
-            select.removeAttribute('required');
-            select.value = '';
+            bankGroup.style.display = 'none';
+            rcvGroup.style.display = 'none';
+            issGroup.style.display = 'none';
         }
     }
 
-    function toggleEditBankAcc() {
+    function toggleEditFields() {
         const type = document.getElementById('edit_cheque_type').value;
-        const group = document.getElementById('edit_bank_acc_group');
-        const select = document.getElementById('edit_bank_account_id');
+        const bankGroup = document.getElementById('edit_bank_acc_group');
+        const bankSelect = document.getElementById('edit_bank_account_id');
+        const rcvGroup = document.getElementById('edit_received_entity_group');
+        const issGroup = document.getElementById('edit_issued_entity_group');
+
         if (type === 'issued') {
-            group.style.display = 'block';
-            select.setAttribute('required', 'required');
+            bankGroup.style.display = 'block';
+            bankSelect.setAttribute('required', 'required');
+            rcvGroup.style.display = 'none';
+            issGroup.style.display = 'block';
+        } else if (type === 'received') {
+            bankGroup.style.display = 'none';
+            bankSelect.removeAttribute('required');
+            bankSelect.value = '';
+            rcvGroup.style.display = 'block';
+            issGroup.style.display = 'none';
         } else {
-            group.style.display = 'none';
-            select.removeAttribute('required');
-            select.value = '';
+            bankGroup.style.display = 'none';
+            rcvGroup.style.display = 'none';
+            issGroup.style.display = 'none';
         }
     }
 
-    function openEditModal(id, payee, bank, cnum, amt, date, status, bankAccId, type) {
+    function toggleIssuedCategory(prefix) {
+        const cat = document.getElementById(prefix + '_issued_category').value;
+        const vGroup = document.getElementById(prefix + '_vendor_select_group');
+        const spGroup = document.getElementById(prefix + '_sp_select_group');
+        if (cat === 'service_provider') {
+            vGroup.style.display = 'none';
+            spGroup.style.display = 'block';
+            document.getElementById(prefix + '_vendor_id').value = '';
+        } else {
+            vGroup.style.display = 'block';
+            spGroup.style.display = 'none';
+            document.getElementById(prefix + '_service_provider_id').value = '';
+        }
+    }
+
+    function syncAddPayeeName(type) {
+        let name = '';
+        if (type === 'customer') {
+            const sel = document.getElementById('add_customer_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+        } else if (type === 'vendor') {
+            const sel = document.getElementById('add_vendor_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+        } else if (type === 'sp') {
+            const sel = document.getElementById('add_service_provider_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+        }
+        if (name) {
+            document.getElementById('add_payee_name').value = name;
+        }
+    }
+
+    function syncEditPayeeName(type) {
+        let name = '';
+        if (type === 'customer') {
+            const sel = document.getElementById('edit_customer_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+        } else if (type === 'vendor') {
+            const sel = document.getElementById('edit_vendor_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+        } else if (type === 'sp') {
+            const sel = document.getElementById('edit_service_provider_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+        }
+        if (name) {
+            document.getElementById('edit_payee_name').value = name;
+        }
+    }
+
+    function openEditModal(id, payee, bank, cnum, amt, date, status, bankAccId, type, customerId, vendorId, spId) {
         document.getElementById('edit_id').value = id;
         document.getElementById('edit_cheque_type').value = type;
         document.getElementById('edit_payee_name').value = payee;
@@ -629,7 +975,20 @@
         document.getElementById('edit_date').value = date;
         document.getElementById('edit_status').value = status;
         document.getElementById('edit_bank_account_id').value = bankAccId || '';
-        toggleEditBankAcc();
+
+        document.getElementById('edit_customer_id').value = customerId || '';
+        document.getElementById('edit_vendor_id').value = vendorId || '';
+        document.getElementById('edit_service_provider_id').value = spId || '';
+
+        if (spId) {
+            document.getElementById('edit_issued_category').value = 'service_provider';
+            toggleIssuedCategory('edit');
+        } else {
+            document.getElementById('edit_issued_category').value = 'vendor';
+            toggleIssuedCategory('edit');
+        }
+
+        toggleEditFields();
         openModal('editModal');
     }
 
@@ -638,7 +997,6 @@
         document.getElementById('del_cnum').innerText = cnum;
         openModal('deleteModal');
     }
-
 
     function numberToWords(amount) {
         const num = parseFloat(amount);
@@ -695,18 +1053,12 @@
 
     function viewCheque(bank, date, amount, drawer, cnum) {
         document.getElementById('view_bank').innerText = bank;
-        
-        // Format Date nicely
         const d = new Date(date);
         document.getElementById('view_date').innerText = d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth()+1).toString().padStart(2, '0') + '/' + d.getFullYear();
-        
         document.getElementById('view_amount').innerText = parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
         document.getElementById('view_words').innerText = numberToWords(amount);
         document.getElementById('view_payee').innerText = drawer + " (Auth Signatory)";
-        
-        // Randomize MICR looking numbers using the actual cheque number as base
         document.getElementById('view_cnum').innerText = cnum.padStart(6, '0');
-        
         openModal('viewModal');
     }
 
@@ -714,18 +1066,15 @@
 
     function switchChequeTab(tab) {
         activeTab = tab;
-        // Update Buttons
         document.querySelectorAll('.sf-seg-btn').forEach(btn => btn.classList.remove('active'));
         const btn = document.getElementById('tab-' + tab);
         if (btn) btn.classList.add('active');
         
-        // Update Sections
         document.querySelectorAll('.chq-section').forEach(sec => sec.classList.remove('active'));
         const sec = document.getElementById('section-' + tab);
         if (sec) sec.classList.add('active');
     }
 
-    // AJAX Search implementation
     let searchTimeout = null;
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -745,8 +1094,6 @@
             const newContainer = doc.getElementById('tableContainer');
             if (newContainer) {
                 document.getElementById('tableContainer').innerHTML = newContainer.innerHTML;
-                
-                // Restore Tab state after replacing the container contents
                 switchChequeTab(activeTab);
             }
             window.history.pushState({}, '', url);
