@@ -54,8 +54,7 @@ class Deposit {
         $this->db->query("SELECT ch.*, COALESCE(NULLIF(TRIM(c.name), ''), NULLIF(TRIM(ch.payee_name), ''), 'Manual Collection') as customer_name 
                           FROM cheques ch 
                           LEFT JOIN customers c ON ch.customer_id = c.id 
-                          WHERE (ch.status = 'Pending' OR ch.status = 'Received' OR ch.status = 'In Hand' OR ch.status = 'Pending Deposit')
-                            AND (ch.type IS NULL OR ch.type = '' OR ch.type = 'Received' OR ch.type = 'Incoming')
+                          WHERE ch.status IN ('Pending', 'Received', 'In Hand', 'Pending Deposit')
                           ORDER BY ch.banking_date ASC, ch.id ASC");
         return $this->db->resultSet() ?: [];
     }
