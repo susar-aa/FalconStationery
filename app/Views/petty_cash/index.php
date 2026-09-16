@@ -1087,7 +1087,7 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
 <!-- MODAL 4: REQUEST REIMBURSEMENT -->
 <div id="reimburseModal" class="modal modal-veil hidden">
     <div class="sf-modal">
-        <form method="POST" action="<?= APP_URL ?>/pettycash/reimburse">
+        <form id="reimbursementForm" method="POST" action="<?= APP_URL ?>/pettycash/reimburse">
             <input type="hidden" name="csrf_token" value="<?= $data['csrf_token'] ?>">
             <div class="modal-head">
                 <h3><i class="fa-solid fa-arrows-rotate"></i> Generate Reimbursement Request</h3>
@@ -1229,4 +1229,29 @@ function toggleReimbursementFields(method) {
         if (chequeInput) chequeInput.removeAttribute('required');
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const reimForm = document.getElementById('reimbursementForm');
+    if (reimForm) {
+        reimForm.addEventListener('submit', function(e) {
+            console.group('--- Petty Cash Reimbursement Form Submission ---');
+            console.log('Timestamp:', new Date().toISOString());
+            console.log('Target Action:', reimForm.action);
+            console.log('HTTP Method:', reimForm.method);
+            const formData = new FormData(reimForm);
+            for (let [key, val] of formData.entries()) {
+                console.log(`  ${key} =`, val);
+            }
+            console.groupEnd();
+        });
+    }
+
+    window.addEventListener('error', function(e) {
+        console.error('[Petty Cash Page Error]:', e.message, 'at', e.filename, 'line', e.lineno, e.error);
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+        console.error('[Petty Cash Unhandled Rejection]:', e.reason);
+    });
+});
 </script>
