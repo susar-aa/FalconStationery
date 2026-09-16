@@ -363,6 +363,18 @@ class Payment {
         return intval($this->db->lastInsertId());
     }
 
+    private function getAccountsPayableAccountId() {
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '2000' OR account_code = '2100' OR (account_type = 'Liability' AND account_name LIKE '%Payable%') ORDER BY CASE WHEN account_code = '2000' THEN 1 ELSE 2 END LIMIT 1");
+        $row = $this->db->single();
+        return $row ? intval($row->id) : null;
+    }
+
+    private function getAccountsReceivableAccountId() {
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1200' OR (account_type = 'Asset' AND account_name LIKE '%Receivable%') ORDER BY CASE WHEN account_code = '1200' THEN 1 ELSE 2 END LIMIT 1");
+        $row = $this->db->single();
+        return $row ? intval($row->id) : null;
+    }
+
     /**
      * Record a Supplier Payment (AP Payout)
      */
@@ -1269,9 +1281,12 @@ class Payment {
             $this->db->execute();
 
             // Insert new transactions (Debit Asset, Credit AR)
+            $assetAccountId = !empty($data['asset_account_id']) ? intval($data['asset_account_id']) : $this->getChequeInHandAccountId();
+            $arAccountId = !empty($data['ar_account_id']) ? intval($data['ar_account_id']) : $this->getAccountsReceivableAccountId();
+
             $newLines = [
-                ['account_id' => $data['asset_account_id'], 'debit' => $data['amount'], 'credit' => 0],
-                ['account_id' => $data['ar_account_id'], 'debit' => 0, 'credit' => $data['amount']]
+                ['account_id' => $assetAccountId, 'debit' => $data['amount'], 'credit' => 0],
+                ['account_id' => $arAccountId, 'debit' => 0, 'credit' => $data['amount']]
             ];
 
             foreach ($newLines as $line) {
@@ -1415,7 +1430,11 @@ class Payment {
             $this->db->commit();
             return true;
         } catch (Throwable $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            $err = "[" . date('Y-m-d H:i:s') . "] editCustomerPayment Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\nTrace: " . $e->getTraceAsString() . "\nData: " . json_encode($data) . "\n";
+            @file_put_contents(dirname(__DIR__, 2) . '/app_errors.log', $err, FILE_APPEND);
             error_log("editCustomerPayment Error: " . $e->getMessage());
             return false;
         }
@@ -1491,12 +1510,15 @@ class Payment {
             $this->db->execute();
 
             // Credit account determination (2050 Outstanding Cheques if Cheque, or asset account)
+            $assetAccId = !empty($data['asset_account_id']) ? intval($data['asset_account_id']) : $this->getChequeInHandAccountId();
             $creditAccountId = ($data['method'] === 'Cheque') 
                 ? $this->getOutstandingChequesAccountId() 
-                : $data['asset_account_id'];
+                : $assetAccId;
+
+            $apAccountId = !empty($data['ap_account_id']) ? intval($data['ap_account_id']) : $this->getAccountsPayableAccountId();
 
             $newLines = [
-                ['account_id' => $data['ap_account_id'], 'debit' => $data['amount'], 'credit' => 0],
+                ['account_id' => $apAccountId, 'debit' => $data['amount'], 'credit' => 0],
                 ['account_id' => $creditAccountId, 'debit' => 0, 'credit' => $data['amount']]
             ];
 
@@ -1632,7 +1654,11 @@ class Payment {
             $this->db->commit();
             return true;
         } catch (Throwable $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            $err = "[" . date('Y-m-d H:i:s') . "] editSupplierPayment Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\nTrace: " . $e->getTraceAsString() . "\nData: " . json_encode($data) . "\n";
+            @file_put_contents(dirname(__DIR__, 2) . '/app_errors.log', $err, FILE_APPEND);
             error_log("editSupplierPayment Error: " . $e->getMessage());
             return false;
         }

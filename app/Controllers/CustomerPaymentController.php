@@ -201,7 +201,15 @@ class CustomerPaymentController extends Controller {
             $apAccountId = 0;
             foreach ($txs as $tx) {
                 if ($tx->debit > 0) $apAccountId = $tx->account_id;
-                if ($tx->credit > 0 && empty($assetAccountId)) $assetAccountId = $tx->account_id;
+                if ($tx->credit > 0 && empty($assetAccountId)) {
+                    // Make sure credit account is an Asset account, not 2050 Outstanding Cheques
+                    $db->query("SELECT account_type FROM chart_of_accounts WHERE id = :aid");
+                    $db->bind(':aid', $tx->account_id);
+                    $accTypeRow = $db->single();
+                    if ($accTypeRow && $accTypeRow->account_type === 'Asset') {
+                        $assetAccountId = $tx->account_id;
+                    }
+                }
             }
 
             $cheque = null;
