@@ -53,6 +53,7 @@ class PettyCashReimbursement {
             $this->db->execute();
 
             $cols = [
+                'bank_account_id' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN bank_account_id INT NULL DEFAULT NULL AFTER amount",
                 'payment_method' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN payment_method VARCHAR(50) DEFAULT 'Bank Transfer' AFTER bank_account_id",
                 'cheque_number' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_number VARCHAR(100) NULL AFTER payment_method",
                 'cheque_date' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_date DATE NULL AFTER cheque_number",
@@ -65,6 +66,13 @@ class PettyCashReimbursement {
                     $this->db->query($sql);
                     $this->db->execute();
                 }
+            }
+
+            // Ensure funding_account_id is NULLABLE if present
+            $this->db->query("SHOW COLUMNS FROM petty_cash_reimbursements LIKE 'funding_account_id'");
+            if ($this->db->single()) {
+                $this->db->query("ALTER TABLE petty_cash_reimbursements MODIFY COLUMN funding_account_id INT NULL DEFAULT NULL");
+                $this->db->execute();
             }
 
             $this->db->query("SHOW COLUMNS FROM petty_cash_transactions LIKE 'reimbursement_id'");
@@ -98,7 +106,7 @@ class PettyCashReimbursement {
                           FROM petty_cash_reimbursements r
                           LEFT JOIN users u ON r.created_by = u.id
                           LEFT JOIN users app ON r.approved_by = app.id
-                          LEFT JOIN chart_of_accounts a ON r.bank_account_id = a.id
+                          LEFT JOIN chart_of_accounts a ON COALESCE(r.bank_account_id, r.funding_account_id) = a.id
                           ORDER BY r.reimbursement_date DESC, r.id DESC");
         return $this->db->resultSet() ?: [];
     }
@@ -108,7 +116,7 @@ class PettyCashReimbursement {
                           FROM petty_cash_reimbursements r
                           LEFT JOIN users u ON r.created_by = u.id
                           LEFT JOIN users app ON r.approved_by = app.id
-                          LEFT JOIN chart_of_accounts a ON r.bank_account_id = a.id
+                          LEFT JOIN chart_of_accounts a ON COALESCE(r.bank_account_id, r.funding_account_id) = a.id
                           WHERE r.id = :id");
         $this->db->bind(':id', $id);
         return $this->db->single() ?: null;
@@ -193,11 +201,18 @@ class PettyCashReimbursement {
                 return "Please enter a valid cheque number for cheque reimbursement.";
             }
 
+            $this->db->query("SHOW COLUMNS FROM petty_cash_reimbursements LIKE 'funding_account_id'");
+            $hasFundingAccCol = (bool)$this->db->single();
+
             $this->db->beginTransaction();
 
-            // Insert reimbursement header
-            $this->db->query("INSERT INTO petty_cash_reimbursements (reimbursement_date, amount, bank_account_id, payment_method, cheque_number, cheque_date, payee_name, status, description, created_by) 
-                              VALUES (:date, :amount, :bank_id, :pmethod, :cnum, :cdate, :payee, 'Pending', :desc, :uid)");
+            if ($hasFundingAccCol) {
+                $this->db->query("INSERT INTO petty_cash_reimbursements (reimbursement_date, amount, bank_account_id, funding_account_id, payment_method, cheque_number, cheque_date, payee_name, status, description, created_by) 
+                                  VALUES (:date, :amount, :bank_id, :bank_id, :pmethod, :cnum, :cdate, :payee, 'Pending', :desc, :uid)");
+            } else {
+                $this->db->query("INSERT INTO petty_cash_reimbursements (reimbursement_date, amount, bank_account_id, payment_method, cheque_number, cheque_date, payee_name, status, description, created_by) 
+                                  VALUES (:date, :amount, :bank_id, :pmethod, :cnum, :cdate, :payee, 'Pending', :desc, :uid)");
+            }
             $this->db->bind(':date', $date);
             $this->db->bind(':amount', $totalAmount);
             $this->db->bind(':bank_id', $bankAccountId);
