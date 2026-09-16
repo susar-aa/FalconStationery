@@ -1,244 +1,414 @@
+<!-- Inter Font & FontAwesome Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
 <?php 
 $rec = $data['reconciliation']; 
 $isFinalized = ($rec->status === 'Finalized');
 ?>
 
-<div class="container-fluid py-4">
-    <!-- Top Bar -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div>
-            <div class="d-flex align-items-center gap-2">
-                <h2 class="h3 mb-0 text-gray-800 font-weight-bold">Reconciliation Workspace</h2>
+<style>
+:root {
+    --c-bg:           #f2f2f7;
+    --c-surface:      #ffffff;
+    --c-surface2:     #f9f9fb;
+    --c-fill:         rgba(120,120,128,0.12);
+    --c-fill2:        rgba(120,120,128,0.16);
+    --c-separator:    rgba(60,60,67,0.12);
+
+    --c-blue:         #007aff;
+    --c-blue-light:   #e5f2ff;
+    --c-green:        #34c759;
+    --c-green-light:  #e6f9ec;
+    --c-orange:       #ff9500;
+    --c-red:          #ff3b30;
+    --c-red-light:    #fff0ef;
+
+    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', sans-serif;
+    --t-primary:   #1c1c1e;
+    --t-secondary: #636366;
+    --t-label:     #8e8e93;
+
+    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
+    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06);
+    --shadow-md:  0 8px 24px rgba(0,0,0,0.08);
+
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-pill: 999px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --c-bg:           #121212;
+        --c-surface:      #1e1e2e;
+        --c-surface2:     #161622;
+        --c-fill:         rgba(255,255,255,0.08);
+        --c-fill2:        rgba(255,255,255,0.12);
+        --c-separator:    rgba(255,255,255,0.15);
+        --t-primary:   #f5f5f7;
+        --t-secondary: #a1a1aa;
+        --t-label:     #52525b;
+    }
+}
+
+.rec-workspace {
+    font-family: var(--f-system);
+    font-size: 14px;
+    color: var(--t-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+.sf-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.sf-page-title h1 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.02em;
+}
+.sf-page-title p {
+    margin: 0;
+    color: var(--t-secondary);
+    font-size: 13px;
+}
+
+/* KPI Summary Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+@media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.kpi-card {
+    background: var(--c-surface);
+    border-radius: var(--r-md);
+    padding: 18px 20px;
+    border: 0.5px solid var(--c-separator);
+    box-shadow: var(--shadow-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.kpi-card.highlight { background: var(--c-blue); color: #fff; border-color: var(--c-blue); }
+.kpi-card.highlight .kpi-label, .kpi-card.highlight .kpi-sub { color: rgba(255,255,255,0.8); }
+.kpi-card.highlight .kpi-val { color: #fff; }
+
+.kpi-card.danger { background: var(--c-red-light); border-color: rgba(255,59,48,0.3); }
+.kpi-card.danger .kpi-val { color: var(--c-red); }
+.kpi-card.success { background: var(--c-green-light); border-color: rgba(52,199,89,0.3); }
+.kpi-card.success .kpi-val { color: #15803d; }
+
+.kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t-secondary); }
+.kpi-val { font-size: 22px; font-weight: 800; color: var(--t-primary); }
+.kpi-sub { font-size: 12px; color: var(--t-label); }
+
+/* Toolbar */
+.toolbar-panel {
+    background: var(--c-surface);
+    border-radius: var(--r-md);
+    border: 0.5px solid var(--c-separator);
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.search-input {
+    padding: 8px 14px;
+    border-radius: var(--r-pill);
+    border: 0.5px solid var(--c-separator);
+    background: var(--c-surface2);
+    color: var(--t-primary);
+    font-size: 13px;
+    outline: none;
+    flex: 1;
+    min-width: 200px;
+}
+.filter-select {
+    padding: 8px 14px;
+    border-radius: var(--r-pill);
+    border: 0.5px solid var(--c-separator);
+    background: var(--c-surface2);
+    color: var(--t-primary);
+    font-size: 13px;
+    outline: none;
+}
+
+/* Table */
+.table-panel {
+    background: var(--c-surface);
+    border-radius: var(--r-lg);
+    border: 0.5px solid var(--c-separator);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.sf-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13.5px;
+}
+.sf-table th {
+    background: var(--c-surface2);
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--t-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 0.5px solid var(--c-separator);
+}
+.sf-table td {
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--c-separator);
+    vertical-align: middle;
+}
+.sf-table tr:hover td { background: var(--c-fill); }
+
+.btn-sf {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--r-pill);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: all 0.18s ease;
+}
+.btn-sf-primary { background: var(--c-blue); color: #fff; }
+.btn-sf-primary:hover { opacity: 0.9; color: #fff; }
+.btn-sf-secondary { background: var(--c-fill); color: var(--t-primary); }
+.btn-sf-success { background: var(--c-green); color: #fff; }
+.btn-sf-success:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Modal */
+.modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+    background: var(--c-surface); width: 480px;
+    border-radius: var(--r-lg); padding: 24px;
+    border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-md);
+}
+.modal-box h3 { margin: 0 0 16px 0; font-size: 18px; font-weight: 700; }
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: var(--t-secondary); }
+.form-control-sf {
+    width: 100%; padding: 8px 12px; font-size: 13px;
+    background: var(--c-surface2); border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-sm); color: var(--t-primary); outline: none; box-sizing: border-box;
+}
+</style>
+
+<div class="rec-workspace">
+    <!-- Page Header -->
+    <div class="sf-page-header">
+        <div class="sf-page-title">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <h1>Reconciliation Workspace</h1>
                 <?php if ($isFinalized): ?>
-                    <span class="badge badge-success px-3 py-1 rounded-pill">Finalized & Locked</span>
+                    <span style="background: var(--c-green-light); color: #15803d; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--r-pill);">FINALIZED & LOCKED</span>
                 <?php else: ?>
-                    <span class="badge badge-warning px-3 py-1 rounded-pill text-dark">Draft Mode</span>
+                    <span style="background: var(--c-fill2); color: var(--t-secondary); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--r-pill);">DRAFT MODE</span>
                 <?php endif; ?>
             </div>
-            <p class="text-muted small mb-0">
-                <strong>Account:</strong> <?php echo htmlspecialchars($rec->account_code . ' - ' . $rec->account_name); ?> | 
-                <strong>Period:</strong> <?php echo date('M d, Y', strtotime($rec->statement_date_start)); ?> to <?php echo date('M d, Y', strtotime($rec->statement_date_end)); ?> | 
-                <strong>Ref:</strong> <?php echo htmlspecialchars($rec->reconciliation_number); ?>
+            <p>
+                <strong>Account:</strong> <?= htmlspecialchars($rec->account_code . ' - ' . $rec->account_name) ?> | 
+                <strong>Period:</strong> <?= date('M d, Y', strtotime($rec->statement_date_start)) ?> to <?= date('M d, Y', strtotime($rec->statement_date_end)) ?> | 
+                <strong>Ref:</strong> <?= htmlspecialchars($rec->reconciliation_number) ?>
             </p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="<?php echo URLROOT; ?>/bankreconciliation/report/<?php echo $rec->id; ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3" target="_blank">
-                <i class="fas fa-print mr-1"></i> Print Statement
+        <div style="display: flex; gap: 8px;">
+            <a href="<?= APP_URL ?>/bankreconciliation/report/<?= $rec->id ?>" class="btn-sf btn-sf-secondary" target="_blank">
+                <i class="fa-solid fa-print"></i> Print Statement
             </a>
             <?php if (!$isFinalized): ?>
-                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" data-toggle="modal" data-target="#bankOnlyModal">
-                    <i class="fas fa-plus-circle mr-1"></i> Add Bank-Only Entry
+                <button type="button" class="btn-sf btn-sf-secondary" onclick="openBankOnlyModal()">
+                    <i class="fa-solid fa-plus"></i> Bank-Only Entry
                 </button>
-                <button type="button" class="btn btn-success btn-sm rounded-pill px-4 shadow-sm" id="btnFinalize" <?php echo (abs($rec->difference) > 0.009) ? 'disabled' : ''; ?>>
-                    <i class="fas fa-check-circle mr-1"></i> Finalize Reconciliation
+                <button type="button" class="btn-sf btn-sf-success" id="btnFinalize" <?= (abs($rec->difference) > 0.009) ? 'disabled' : '' ?>>
+                    <i class="fa-solid fa-check"></i> Finalize
                 </button>
             <?php endif; ?>
         </div>
     </div>
 
-    <!-- Summary Dashboard Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg bg-primary text-white h-100">
-                <div class="card-body py-3">
-                    <div class="text-uppercase small font-weight-bold opacity-75">Statement Closing Balance</div>
-                    <div class="h3 font-weight-bold mb-0">LKR <?php echo number_format($rec->statement_closing_balance, 2); ?></div>
-                </div>
-            </div>
+    <!-- KPI Summary Grid -->
+    <div class="kpi-grid">
+        <div class="kpi-card highlight">
+            <div class="kpi-label">Statement Closing</div>
+            <div class="kpi-val">LKR <?= number_format($rec->statement_closing_balance, 2) ?></div>
+            <div class="kpi-sub">Bank Statement</div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg bg-info text-white h-100">
-                <div class="card-body py-3">
-                    <div class="text-uppercase small font-weight-bold opacity-75">Adjusted Bank Balance</div>
-                    <div class="h3 font-weight-bold mb-0">LKR <?php echo number_format($rec->adjusted_bank_balance, 2); ?></div>
-                    <small class="opacity-75">Stmt + Deposits in Transit - Outstanding Cheques</small>
-                </div>
-            </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Adjusted Bank</div>
+            <div class="kpi-val">LKR <?= number_format($rec->adjusted_bank_balance, 2) ?></div>
+            <div class="kpi-sub">Stmt + Transit - Outstanding</div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg bg-dark text-white h-100">
-                <div class="card-body py-3">
-                    <div class="text-uppercase small font-weight-bold opacity-75">Adjusted Book / GL Balance</div>
-                    <div class="h3 font-weight-bold mb-0">LKR <?php echo number_format($rec->adjusted_book_balance, 2); ?></div>
-                </div>
-            </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Adjusted Book / GL</div>
+            <div class="kpi-val">LKR <?= number_format($rec->adjusted_book_balance, 2) ?></div>
+            <div class="kpi-sub">General Ledger Balance</div>
         </div>
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm rounded-lg <?php echo (abs($rec->difference) > 0.009) ? 'bg-danger' : 'bg-success'; ?> text-white h-100">
-                <div class="card-body py-3">
-                    <div class="text-uppercase small font-weight-bold opacity-75">Difference</div>
-                    <div class="h3 font-weight-bold mb-0">LKR <?php echo number_format($rec->difference, 2); ?></div>
-                    <small class="opacity-75"><?php echo (abs($rec->difference) > 0.009) ? 'Unbalanced' : 'Balanced & Ready'; ?></small>
-                </div>
-            </div>
+        <div class="kpi-card <?= (abs($rec->difference) > 0.009) ? 'danger' : 'success' ?>">
+            <div class="kpi-label">Difference</div>
+            <div class="kpi-val">LKR <?= number_format($rec->difference, 2) ?></div>
+            <div class="kpi-sub"><?= (abs($rec->difference) > 0.009) ? 'Unbalanced' : 'Balanced' ?></div>
         </div>
     </div>
 
-    <!-- Filter & Search Toolbar -->
-    <div class="card border-0 shadow-sm rounded-lg mb-4">
-        <div class="card-body py-2 px-3">
-            <div class="row align-items-center">
-                <div class="col-md-4 my-1">
-                    <input type="text" id="searchTerm" class="form-control form-control-sm rounded-pill" placeholder="Search reference, description, amount...">
-                </div>
-                <div class="col-md-3 my-1">
-                    <select id="filterMatch" class="form-control form-control-sm rounded-pill">
-                        <option value="all">All Transactions</option>
-                        <option value="matched">Matched Only</option>
-                        <option value="unmatched">Unmatched Only (Outstanding)</option>
-                    </select>
-                </div>
-                <div class="col-md-3 my-1">
-                    <select id="filterType" class="form-control form-control-sm rounded-pill">
-                        <option value="all">All Types (Deposits & Payments)</option>
-                        <option value="debit">Deposits / Credits (Debit to Bank)</option>
-                        <option value="credit">Payments / Cheques (Credit to Bank)</option>
-                    </select>
-                </div>
-                <div class="col-md-2 my-1 text-right">
-                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3" onclick="resetFilters()">Reset</button>
-                </div>
-            </div>
-        </div>
+    <!-- Toolbar Filters -->
+    <div class="toolbar-panel">
+        <input type="text" id="searchTerm" class="search-input" placeholder="Search reference, description, amount...">
+        <select id="filterMatch" class="filter-select">
+            <option value="all">All Transactions</option>
+            <option value="matched">Matched Only</option>
+            <option value="unmatched">Unmatched Only (Outstanding)</option>
+        </select>
+        <select id="filterType" class="filter-select">
+            <option value="all">All Types (Deposits & Payments)</option>
+            <option value="debit">Deposits / Credits (Debit to Bank)</option>
+            <option value="credit">Payments / Cheques (Credit to Bank)</option>
+        </select>
+        <button type="button" class="btn-sf btn-sf-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="resetFilters()">Reset</button>
     </div>
 
-    <!-- Transactions Matching Table -->
-    <div class="card border-0 shadow-sm rounded-lg">
-        <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 font-weight-bold text-gray-800">Transactions Ledger Matching</h5>
-            <small class="text-muted">Check items that appear on your Bank Statement</small>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="txTable">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="border-0 px-4 text-center" style="width: 60px;">Match</th>
-                            <th class="border-0">Date</th>
-                            <th class="border-0">Ref / Cheque #</th>
-                            <th class="border-0">Description</th>
-                            <th class="border-0">Type</th>
-                            <th class="border-0 text-right">Deposit (Dr)</th>
-                            <th class="border-0 text-right">Payment (Cr)</th>
+    <!-- Matching Table -->
+    <div class="table-panel">
+        <table class="sf-table">
+            <thead>
+                <tr>
+                    <th style="text-align: center; width: 60px;">Match</th>
+                    <th>Date</th>
+                    <th>Ref / Cheque #</th>
+                    <th>Description</th>
+                    <th>Type</th>
+                    <th style="text-align: right;">Deposit (Dr)</th>
+                    <th style="text-align: right;">Payment (Cr)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($data['items'])): ?>
+                    <?php foreach ($data['items'] as $item): ?>
+                        <tr class="tx-row" 
+                            data-matched="<?= $item->is_matched ? 'matched' : 'unmatched' ?>" 
+                            data-type="<?= ($item->debit > 0) ? 'debit' : 'credit' ?>"
+                            data-search="<?= strtolower(htmlspecialchars(($item->reference ?? '') . ' ' . ($item->description ?? '') . ' ' . $item->debit . ' ' . $item->credit)) ?>">
+                            <td style="text-align: center;">
+                                <input type="checkbox" 
+                                       class="match-checkbox" 
+                                       data-item-id="<?= $item->id ?>" 
+                                       <?= $item->is_matched ? 'checked' : '' ?>
+                                       <?= $isFinalized ? 'disabled' : '' ?> 
+                                       style="transform: scale(1.3); cursor: pointer;">
+                            </td>
+                            <td><?= date('Y-m-d', strtotime($item->transaction_date)) ?></td>
+                            <td style="font-weight: 700;"><?= htmlspecialchars($item->reference ?? '-') ?></td>
+                            <td>
+                                <div><?= htmlspecialchars($item->description) ?></div>
+                                <?php if ($item->transaction_type === 'BANK_ONLY'): ?>
+                                    <span style="font-size: 10px; font-weight: 700; color: var(--c-blue); background: var(--c-blue-light); padding: 2px 6px; border-radius: 4px;">Bank Entry</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($item->debit > 0): ?>
+                                    <span style="color: #15803d; font-weight: 700; font-size: 11px;">Deposit / Inflow</span>
+                                <?php else: ?>
+                                    <span style="color: var(--t-secondary); font-weight: 700; font-size: 11px;">Payment / Outflow</span>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: <?= ($item->debit > 0) ? 'var(--c-green)' : 'var(--t-label)' ?>;">
+                                <?= ($item->debit > 0) ? 'LKR ' . number_format($item->debit, 2) : '-' ?>
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: <?= ($item->credit > 0) ? 'var(--c-red)' : 'var(--t-label)' ?>;">
+                                <?= ($item->credit > 0) ? 'LKR ' . number_format($item->credit, 2) : '-' ?>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($data['items'])): ?>
-                            <?php foreach ($data['items'] as $item): ?>
-                                <tr class="tx-row" 
-                                    data-matched="<?php echo $item->is_matched ? 'matched' : 'unmatched'; ?>" 
-                                    data-type="<?php echo ($item->debit > 0) ? 'debit' : 'credit'; ?>"
-                                    data-search="<?php echo strtolower(htmlspecialchars(($item->reference ?? '') . ' ' . ($item->description ?? '') . ' ' . $item->debit . ' ' . $item->credit)); ?>">
-                                    <td class="px-4 text-center">
-                                        <input type="checkbox" 
-                                               class="match-checkbox" 
-                                               data-item-id="<?php echo $item->id; ?>" 
-                                               <?php echo $item->is_matched ? 'checked' : ''; ?>
-                                               <?php echo $isFinalized ? 'disabled' : ''; ?> 
-                                               style="transform: scale(1.3); cursor: pointer;">
-                                    </td>
-                                    <td><?php echo date('Y-m-d', strtotime($item->transaction_date)); ?></td>
-                                    <td class="font-weight-bold text-dark"><?php echo htmlspecialchars($item->reference ?? '-'); ?></td>
-                                    <td>
-                                        <div><?php echo htmlspecialchars($item->description); ?></div>
-                                        <?php if ($item->transaction_type === 'BANK_ONLY'): ?>
-                                            <span class="badge badge-light border text-primary">Bank Entry</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if ($item->debit > 0): ?>
-                                            <span class="badge badge-success px-2">Deposit / Inflow</span>
-                                        <?php else: ?>
-                                            <span class="badge badge-secondary px-2">Payment / Outflow</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-right font-weight-bold <?php echo ($item->debit > 0) ? 'text-success' : 'text-muted'; ?>">
-                                        <?php echo ($item->debit > 0) ? 'LKR ' . number_format($item->debit, 2) : '-'; ?>
-                                    </td>
-                                    <td class="text-right font-weight-bold <?php echo ($item->credit > 0) ? 'text-danger' : 'text-muted'; ?>">
-                                        <?php echo ($item->credit > 0) ? 'LKR ' . number_format($item->credit, 2) : '-'; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">No ledger transactions found for this account and period.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--t-secondary);">No ledger transactions found for this account and period.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
 <!-- Modal for Bank-Only Entries -->
 <?php if (!$isFinalized): ?>
-<div class="modal fade" id="bankOnlyModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content border-0 shadow-lg rounded-lg">
-            <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title font-weight-bold"><i class="fas fa-plus-circle mr-2"></i>Add Bank-Only Adjustment</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+<div class="modal-overlay" id="bankOnlyModal">
+    <div class="modal-box">
+        <h3>Add Bank-Only Adjustment</h3>
+        <form id="bankOnlyForm">
+            <input type="hidden" name="reconciliation_id" value="<?= $rec->id ?>">
+            <div class="form-group">
+                <label>Transaction Type <span style="color: var(--c-red);">*</span></label>
+                <select name="type" class="form-control-sf" required>
+                    <option value="CHARGE">Bank Charges / Fees (Expense)</option>
+                    <option value="INTEREST">Bank Interest Earned (Income)</option>
+                    <option value="DIRECT_DEPOSIT">Direct Bank Deposit / Credit</option>
+                    <option value="DIRECT_DEBIT">Direct Bank Withdrawal / Debit</option>
+                </select>
             </div>
-            <form id="bankOnlyForm">
-                <input type="hidden" name="reconciliation_id" value="<?php echo $rec->id; ?>">
-                <div class="modal-body p-4">
-                    <div class="form-group mb-3">
-                        <label class="font-weight-bold mb-1">Transaction Type <span class="text-danger">*</span></label>
-                        <select name="type" class="form-control rounded-lg" required>
-                            <option value="CHARGE">Bank Charges / Fees (Expense)</option>
-                            <option value="INTEREST">Bank Interest Earned (Income)</option>
-                            <option value="DIRECT_DEPOSIT">Direct Bank Deposit / Credit</option>
-                            <option value="DIRECT_DEBIT">Direct Bank Withdrawal / Debit</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="font-weight-bold mb-1">Date <span class="text-danger">*</span></label>
-                        <input type="date" name="transaction_date" class="form-control rounded-lg" value="<?php echo date('Y-m-d'); ?>" required>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="font-weight-bold mb-1">Amount (LKR) <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" name="amount" class="form-control rounded-lg" placeholder="0.00" required>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="font-weight-bold mb-1">Corresponding GL Account <span class="text-danger">*</span></label>
-                        <select name="opposite_account_id" class="form-control rounded-lg" required>
-                            <option value="">-- Choose Account --</option>
-                            <?php foreach ($data['accounts'] as $acc): ?>
-                                <option value="<?php echo $acc->id; ?>">
-                                    <?php echo htmlspecialchars($acc->account_code . ' - ' . $acc->account_name); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="font-weight-bold mb-1">Reference / Advice #</label>
-                        <input type="text" name="reference" class="form-control rounded-lg" placeholder="e.g. BC-202609">
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="font-weight-bold mb-1">Description</label>
-                        <input type="text" name="description" class="form-control rounded-lg" placeholder="e.g. Monthly Bank Service Charge">
-                    </div>
-                </div>
-                <div class="modal-footer bg-light border-0">
-                    <button type="button" class="btn btn-light rounded-pill px-4" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Save & Post Entry</button>
-                </div>
-            </form>
-        </div>
+            <div class="form-group">
+                <label>Date <span style="color: var(--c-red);">*</span></label>
+                <input type="date" name="transaction_date" class="form-control-sf" value="<?= date('Y-m-d') ?>" required>
+            </div>
+            <div class="form-group">
+                <label>Amount (LKR) <span style="color: var(--c-red);">*</span></label>
+                <input type="number" step="0.01" name="amount" class="form-control-sf" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label>Corresponding GL Account <span style="color: var(--c-red);">*</span></label>
+                <select name="opposite_account_id" class="form-control-sf" required>
+                    <option value="">-- Choose Account --</option>
+                    <?php foreach ($data['accounts'] as $acc): ?>
+                        <option value="<?= $acc->id; ?>">
+                            <?= htmlspecialchars($acc->account_code . ' - ' . $acc->account_name); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Reference / Advice #</label>
+                <input type="text" name="reference" class="form-control-sf" placeholder="e.g. BC-202609">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="description" class="form-control-sf" placeholder="e.g. Monthly Bank Service Charge">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn-sf btn-sf-secondary" onclick="closeBankOnlyModal()">Cancel</button>
+                <button type="submit" class="btn-sf btn-sf-primary">Save & Post Entry</button>
+            </div>
+        </form>
     </div>
 </div>
 <?php endif; ?>
 
 <script>
+function openBankOnlyModal() { document.getElementById('bankOnlyModal').classList.add('open'); }
+function closeBankOnlyModal() { document.getElementById('bankOnlyModal').classList.remove('open'); }
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchTerm');
     const filterMatch = document.getElementById('filterMatch');
@@ -258,11 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let matchesMatch = (matchVal === 'all') || (rowMatched === matchVal);
             let matchesType = (typeVal === 'all') || (rowType === typeVal);
 
-            if (matchesQuery && matchesMatch && matchesType) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            row.style.display = (matchesQuery && matchesMatch && matchesType) ? '' : 'none';
         });
     }
 
@@ -287,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('item_id', itemId);
             formData.append('is_matched', isMatched);
 
-            fetch('<?php echo URLROOT; ?>/bankreconciliation/match_ajax', {
+            fetch('<?= APP_URL ?>/bankreconciliation/match_ajax', {
                 method: 'POST',
                 body: formData
             })
@@ -315,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData(this);
 
-            fetch('<?php echo URLROOT; ?>/bankreconciliation/bank_only_ajax', {
+            fetch('<?= APP_URL ?>/bankreconciliation/bank_only_ajax', {
                 method: 'POST',
                 body: formData
             })
@@ -343,9 +509,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const formData = new FormData();
-            formData.append('reconciliation_id', '<?php echo $rec->id; ?>');
+            formData.append('reconciliation_id', '<?= $rec->id ?>');
 
-            fetch('<?php echo URLROOT; ?>/bankreconciliation/finalize_ajax', {
+            fetch('<?= APP_URL ?>/bankreconciliation/finalize_ajax', {
                 method: 'POST',
                 body: formData
             })
