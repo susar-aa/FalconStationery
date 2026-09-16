@@ -1693,6 +1693,13 @@ if (!function_exists('hasPermission')) {
                                 <div class="desc">Accounts and recons</div>
                             </div>
                         </a>
+                        <a href="<?= APP_URL ?>/bankreconciliation" class="mega-list-item text-primary">
+                            <div class="icon-wrapper text-primary"><i class="ph ph-scales"></i></div>
+                            <div class="mega-list-item-content">
+                                <div class="title text-primary">Bank Reconciliation</div>
+                                <div class="desc">Reconcile statements with GL</div>
+                            </div>
+                        </a>
                         <a href="<?= APP_URL ?>/loan" class="mega-list-item">
                             <div class="icon-wrapper text-info"><i class="ph ph-vault"></i></div>
                             <div class="mega-list-item-content">
