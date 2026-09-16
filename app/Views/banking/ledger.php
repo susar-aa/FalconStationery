@@ -4,7 +4,8 @@ $totalTransactions = 0;
 $clearedCount = 0;
 $unclearedCount = 0;
 foreach ($data['transactions'] ?? [] as $t) {
-    if (($t->status ?? '') === 'Voided') {
+    $st = $t->status ?? $t->entry_status ?? '';
+    if ($st === 'Voided') {
         continue;
     }
     $totalTransactions++;
@@ -271,7 +272,8 @@ foreach ($data['transactions'] ?? [] as $t) {
                                 </td>
                             </tr>
                         <?php else: foreach($data['transactions'] as $t): 
-                            $isVoided = (($t->status ?? '') === 'Voided');
+                            $st = $t->status ?? $t->entry_status ?? '';
+                            $isVoided = ($st === 'Voided');
                         ?>
                             <tr style="<?= $isVoided ? 'opacity: 0.6; background: rgba(255, 59, 48, 0.05);' : '' ?>">
                                 <td class="td-date"><?= date('M d, Y', strtotime($t->entry_date)) ?></td>
