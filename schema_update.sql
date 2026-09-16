@@ -18,12 +18,9 @@ CREATE TABLE IF NOT EXISTS petty_cash_reimbursements (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Add any missing columns to existing petty_cash_reimbursements table:
 ALTER TABLE petty_cash_reimbursements ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Bank Transfer' AFTER bank_account_id;
 ALTER TABLE petty_cash_reimbursements ADD COLUMN IF NOT EXISTS cheque_number VARCHAR(100) NULL AFTER payment_method;
 ALTER TABLE petty_cash_reimbursements ADD COLUMN IF NOT EXISTS cheque_date DATE NULL AFTER cheque_number;
 ALTER TABLE petty_cash_reimbursements ADD COLUMN IF NOT EXISTS payee_name VARCHAR(255) NULL AFTER cheque_date;
 ALTER TABLE petty_cash_reimbursements ADD COLUMN IF NOT EXISTS cheque_id INT NULL AFTER journal_entry_id;
-
--- Ensure reimbursement_id column exists on petty_cash_transactions:
 ALTER TABLE petty_cash_transactions ADD COLUMN IF NOT EXISTS reimbursement_id INT NULL AFTER voucher_number;
