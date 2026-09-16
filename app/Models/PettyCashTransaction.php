@@ -32,6 +32,16 @@ class PettyCashTransaction {
         $this->journal = new JournalEntry();
     }
 
+    private function logError(string $message, Throwable $t = null): void {
+        $logFile = dirname(__DIR__, 2) . '/app_errors.log';
+        $entry = "[" . date('Y-m-d H:i:s') . "] " . $message;
+        if ($t) {
+            $entry .= " Exception: " . $t->getMessage() . " in " . $t->getFile() . ":" . $t->getLine() . "\nTrace: " . $t->getTraceAsString();
+        }
+        $entry .= "\n";
+        @file_put_contents($logFile, $entry, FILE_APPEND);
+    }
+
     /**
     /**
      * Generate the next unique and sequential Petty Cash Voucher number
@@ -485,6 +495,7 @@ class PettyCashTransaction {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            $this->logError("PettyCashTransaction error", $e);
             return "Error: " . $e->getMessage();
         }
     }

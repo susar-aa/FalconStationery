@@ -19,6 +19,16 @@ class PettyCashReimbursement {
         $this->ensureTableSchema();
     }
 
+    private function logError(string $message, Throwable $t = null): void {
+        $logFile = dirname(__DIR__, 2) . '/app_errors.log';
+        $entry = "[" . date('Y-m-d H:i:s') . "] " . $message;
+        if ($t) {
+            $entry .= " Exception: " . $t->getMessage() . " in " . $t->getFile() . ":" . $t->getLine() . "\nTrace: " . $t->getTraceAsString();
+        }
+        $entry .= "\n";
+        @file_put_contents($logFile, $entry, FILE_APPEND);
+    }
+
     public function ensureTableSchema(): void {
         try {
             $this->db->query("CREATE TABLE IF NOT EXISTS petty_cash_reimbursements (
@@ -63,7 +73,7 @@ class PettyCashReimbursement {
                 $this->db->execute();
             }
         } catch (Throwable $e) {
-            // Ignore if schema checks fail or already present
+            $this->logError("PettyCashReimbursement::ensureTableSchema failed", $e);
         }
     }
 
@@ -226,6 +236,7 @@ class PettyCashReimbursement {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            $this->logError("PettyCashReimbursement::createRequest failed", $e);
             return "Error: " . $e->getMessage();
         }
     }
@@ -366,6 +377,7 @@ class PettyCashReimbursement {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            $this->logError("PettyCashReimbursement::approveRequest failed", $e);
             return "Error: " . $e->getMessage();
         }
     }
@@ -411,6 +423,7 @@ class PettyCashReimbursement {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            $this->logError("PettyCashReimbursement::rejectRequest failed", $e);
             return "Error: " . $e->getMessage();
         }
     }
