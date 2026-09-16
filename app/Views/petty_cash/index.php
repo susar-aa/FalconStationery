@@ -9,6 +9,10 @@ if (!function_exists('buildPettyCashUrl')) {
 }
 ?>
 
+<!-- Inter Font & FontAwesome Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
 <script>
     // Tab switching logic
     window.switchTab = function(evt, tabId) {
@@ -716,15 +720,17 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
                                         <div style="display: inline-flex; gap: 4px; justify-content: flex-end;">
                                             <a href="<?= APP_URL ?>/pettycash/print_voucher/<?= $tx->id ?>" target="_blank" class="act-pill print" title="Print Voucher"><i class="fa-solid fa-print"></i> Print</a>
                                             <a href="<?= APP_URL ?>/pettycash/download_pdf/<?= $tx->id ?>" class="act-pill pdf" title="Download PDF"><i class="fa-solid fa-file-pdf"></i> PDF</a>
+                                            <?php if ($tx->type === 'expense' && empty($tx->reimbursement_id)): ?>
+                                                <button type="button" class="act-pill edit" title="Edit Expense" onclick="openEditExpenseModal(<?= $tx->id ?>, '<?= $tx->amount ?>', '<?= $tx->account_id ?>', '<?= htmlspecialchars(addslashes($tx->paid_to ?: '')) ?>', '<?= $tx->transaction_date ?>', '<?= htmlspecialchars(addslashes($tx->reference ?: '')) ?>', '<?= htmlspecialchars(addslashes($tx->description ?: '')) ?>')">
+                                                    <i class="fa-solid fa-pen"></i> Edit
+                                                </button>
+                                            <?php endif; ?>
                                             <?php if ($tx->status === 'Pending' && $tx->type === 'expense'): ?>
                                                 <a href="<?= APP_URL ?>/pettycash/approve_expense/<?= $tx->id ?>" class="act-pill approve"><i class="fa-solid fa-check"></i> Approve</a>
                                                 <a href="<?= APP_URL ?>/pettycash/reject_expense/<?= $tx->id ?>" class="act-pill reject" onclick="return confirm('Reject this expense?')"><i class="fa-solid fa-xmark"></i> Reject</a>
                                             <?php endif; ?>
-                                            <?php 
-                                            require_once __DIR__ . '/../../../core/RbacService.php';
-                                            if (RbacService::getInstance()->check($_SESSION['user_id'], 'petty_cash', 'delete') && empty($tx->reimbursement_id) && $tx->type !== 'reimbursement'): 
-                                            ?>
-                                                <a href="<?= APP_URL ?>/pettycash/delete/<?= $tx->id ?>" class="act-pill danger" onclick="return confirm('Are you sure you want to delete this transaction? This will completely undo the transaction and reverse its journal entries.')" title="Delete"><i class="fa-solid fa-trash"></i></a>
+                                            <?php if (empty($tx->reimbursement_id) && $tx->type !== 'reimbursement'): ?>
+                                                <a href="<?= APP_URL ?>/pettycash/delete/<?= $tx->id ?>" class="act-pill danger" onclick="return confirm('Are you sure you want to delete this transaction? This will completely undo the transaction and reverse its journal entries.')" title="Delete"><i class="fa-solid fa-trash"></i> Delete</a>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -1084,6 +1090,59 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
     </div>
 </div>
 
+<!-- MODAL 3B: EDIT EXPENSE -->
+<div id="editExpenseModal" class="modal modal-veil hidden">
+    <div class="sf-modal">
+        <form method="POST" action="<?= APP_URL ?>/pettycash/edit_expense" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?= $data['csrf_token'] ?>">
+            <input type="hidden" name="transaction_id" id="edit_exp_id">
+            <div class="modal-head">
+                <h3><i class="fa-solid fa-pen"></i> Edit Petty Cash Expense</h3>
+                <button type="button" class="modal-close" onclick="window.closeModal('editExpenseModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="sf-group">
+                    <label for="edit_exp_amount">Expense Amount (Rs) *</label>
+                    <input type="number" step="0.01" name="amount" id="edit_exp_amount" class="sf-input" required>
+                </div>
+                <div class="sf-group">
+                    <label for="edit_exp_account_id">Expense Category Account *</label>
+                    <select name="account_id" id="edit_exp_account_id" class="sf-input" required>
+                        <option value="">-- Select Expense Category --</option>
+                        <?php foreach ($data['expense_accounts'] as $ea): ?>
+                            <option value="<?= $ea->id ?>"><?= $ea->account_code ?> - <?= htmlspecialchars((string)$ea->account_name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="sf-group">
+                    <label for="edit_exp_paid_to">Paid To (Payee)</label>
+                    <input type="text" name="paid_to" id="edit_exp_paid_to" class="sf-input">
+                </div>
+                <div class="sf-group">
+                    <label for="edit_exp_date">Transaction Date *</label>
+                    <input type="date" name="transaction_date" id="edit_exp_date" class="sf-input" required>
+                </div>
+                <div class="sf-group">
+                    <label for="edit_exp_ref">Voucher / Receipt Reference</label>
+                    <input type="text" name="reference" id="edit_exp_ref" class="sf-input">
+                </div>
+                <div class="sf-group">
+                    <label for="edit_exp_desc">Description *</label>
+                    <textarea name="description" id="edit_exp_desc" rows="3" class="sf-input" required></textarea>
+                </div>
+                <div class="sf-group">
+                    <label for="edit_exp_attachment">Receipt Attachment (PDF / Image)</label>
+                    <input type="file" name="attachment" id="edit_exp_attachment" accept=".pdf,.png,.jpg,.jpeg" class="sf-input">
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="sf-btn neutral" onclick="window.closeModal('editExpenseModal')">Cancel</button>
+                <button type="submit" class="sf-btn primary">Update Expense</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- MODAL 4: REQUEST REIMBURSEMENT -->
 <div id="reimburseModal" class="modal modal-veil hidden">
     <div class="sf-modal">
@@ -1228,6 +1287,17 @@ function toggleReimbursementFields(method) {
         if (bankSelect) bankSelect.setAttribute('required', 'required');
         if (chequeInput) chequeInput.removeAttribute('required');
     }
+}
+
+function openEditExpenseModal(id, amount, accountId, paidTo, date, ref, desc) {
+    document.getElementById('edit_exp_id').value = id;
+    document.getElementById('edit_exp_amount').value = amount;
+    document.getElementById('edit_exp_account_id').value = accountId;
+    document.getElementById('edit_exp_paid_to').value = paidTo;
+    document.getElementById('edit_exp_date').value = date;
+    document.getElementById('edit_exp_ref').value = ref;
+    document.getElementById('edit_exp_desc').value = desc;
+    window.openModal('editExpenseModal');
 }
 
 document.addEventListener('DOMContentLoaded', function() {

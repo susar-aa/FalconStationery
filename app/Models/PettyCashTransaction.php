@@ -695,4 +695,103 @@ class PettyCashTransaction {
             return "Error: " . $e->getMessage();
         }
     }
+
+    /**
+     * Update/Edit an existing Petty Cash Expense
+     */
+    public function updateExpense(array $data, int $userId): string|bool {
+        try {
+            $id = intval($data['id']);
+            $tx = $this->getTransactionById($id);
+            if (!$tx) {
+                return "Expense transaction not found.";
+            }
+
+            if (!empty($tx->reimbursement_id)) {
+                return "Cannot edit a transaction that has already been reimbursed.";
+            }
+
+            $amount = floatval($data['amount']);
+            if ($amount <= 0) {
+                return "Expense amount must be greater than zero.";
+            }
+
+            $expenseAccId = intval($data['account_id']);
+            $date = $data['transaction_date'];
+            $desc = $data['description'];
+            $paidTo = $data['paid_to'] ?? '';
+            $ref = !empty($data['reference']) ? $data['reference'] : $tx->reference;
+            $attachment = $data['attachment_path'] ?? $tx->attachment_path;
+
+            $this->db->beginTransaction();
+
+            $oldAmount = floatval($tx->amount);
+            $oldAccount = intval($tx->account_id);
+
+            // If the transaction is approved, adjust ledger account balances & journal entries
+            if ($tx->status === 'Approved') {
+                $pettyAccId = $this->getPettyCashAccountId();
+
+                // Reverse old ledger entry: credit old expense account, debit petty cash by oldAmount
+                $this->db->updateAccountBalance($oldAccount, 0.0, $oldAmount);
+                $this->db->updateAccountBalance($pettyAccId, $oldAmount, 0.0);
+
+                // Apply new ledger entry: debit new expense account, credit petty cash by new amount
+                $this->db->updateAccountBalance($expenseAccId, $amount, 0.0);
+                $this->db->updateAccountBalance($pettyAccId, 0.0, $amount);
+
+                // Update journal entry lines if journal_entry_id exists
+                if (!empty($tx->journal_entry_id)) {
+                    $jid = intval($tx->journal_entry_id);
+                    $this->db->query("UPDATE journal_entries SET entry_date = :edate, description = :desc WHERE id = :jid");
+                    $this->db->bind(':edate', $date);
+                    $this->db->bind(':desc', "Petty Cash Expense: " . $desc);
+                    $this->db->bind(':jid', $jid);
+                    $this->db->execute();
+
+                    // Update debit line (Expense account)
+                    $this->db->query("UPDATE transactions SET account_id = :acc_id, debit = :amt, description = :desc WHERE journal_entry_id = :jid AND debit > 0");
+                    $this->db->bind(':acc_id', $expenseAccId);
+                    $this->db->bind(':amt', $amount);
+                    $this->db->bind(':desc', "Expense: " . $desc);
+                    $this->db->bind(':jid', $jid);
+                    $this->db->execute();
+
+                    // Update credit line (Petty Cash account)
+                    $this->db->query("UPDATE transactions SET credit = :amt, description = :desc WHERE journal_entry_id = :jid AND credit > 0");
+                    $this->db->bind(':amt', $amount);
+                    $this->db->bind(':desc', "Petty Cash Payment for " . $desc);
+                    $this->db->bind(':jid', $jid);
+                    $this->db->execute();
+                }
+            }
+
+            // Update transaction record
+            $this->db->query("UPDATE petty_cash_transactions 
+                              SET transaction_date = :date, amount = :amount, account_id = :acc_id, 
+                                  description = :desc, paid_to = :paid_to, reference = :ref, attachment_path = :attach 
+                              WHERE id = :id");
+            $this->db->bind(':date', $date);
+            $this->db->bind(':amount', $amount);
+            $this->db->bind(':acc_id', $expenseAccId);
+            $this->db->bind(':desc', $desc);
+            $this->db->bind(':paid_to', $paidTo);
+            $this->db->bind(':ref', $ref);
+            $this->db->bind(':attach', $attachment);
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            $this->db->commit();
+
+            $auditDesc = "Updated Petty Cash expense ID {$id} to amount {$amount}.";
+            $this->audit->logAction($userId, 'UPDATE', 'accounting', $auditDesc, $id, (array)$tx, $data);
+
+            return true;
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return "Error: " . $e->getMessage();
+        }
+    }
 }

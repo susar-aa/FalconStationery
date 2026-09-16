@@ -269,6 +269,56 @@ class PettyCashController extends Controller {
         exit;
     }
 
+    public function edit_expense() {
+        $this->checkPermission('petty_cash', 'create_edit');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->validateCsrfOrDie();
+
+            $attachmentPath = null;
+            if (!empty($_FILES['attachment']['name'])) {
+                $fileName = time() . '_' . basename($_FILES['attachment']['name']);
+                $targetDir = '../public/uploads/petty_cash/';
+                if (!is_dir($targetDir)) {
+                    mkdir($targetDir, 0777, true);
+                }
+                $targetFile = $targetDir . $fileName;
+                if (move_uploaded_file($_FILES['attachment']['tmp_name'], $targetFile)) {
+                    $attachmentPath = 'uploads/petty_cash/' . $fileName;
+                }
+            }
+
+            $expenseData = [
+                'id' => intval($_POST['transaction_id'] ?? 0),
+                'amount' => floatval($_POST['amount'] ?? 0),
+                'account_id' => intval($_POST['account_id'] ?? 0),
+                'transaction_date' => $_POST['transaction_date'] ?? date('Y-m-d'),
+                'description' => trim($_POST['description'] ?? ''),
+                'paid_to' => trim($_POST['paid_to'] ?? ''),
+                'reference' => trim($_POST['reference'] ?? '')
+            ];
+            if ($attachmentPath) {
+                $expenseData['attachment_path'] = $attachmentPath;
+            }
+
+            if ($expenseData['id'] <= 0) {
+                $_SESSION['flash_error'] = 'Invalid expense transaction ID.';
+            } elseif ($expenseData['amount'] <= 0) {
+                $_SESSION['flash_error'] = 'Expense amount must be greater than zero.';
+            } elseif ($expenseData['account_id'] <= 0) {
+                $_SESSION['flash_error'] = 'Please select a valid expense category account.';
+            } else {
+                $result = $this->pcTxModel->updateExpense($expenseData, (int)$_SESSION['user_id']);
+                if ($result === true) {
+                    $_SESSION['flash_success'] = 'Expense updated successfully.';
+                } else {
+                    $_SESSION['flash_error'] = is_string($result) ? $result : 'Failed to update expense.';
+                }
+            }
+        }
+        header('Location: ' . APP_URL . '/pettycash');
+        exit;
+    }
+
     public function approve_expense($id) {
         $this->checkPermission('petty_cash', 'create_edit');
         
