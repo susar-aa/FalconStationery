@@ -156,7 +156,7 @@
         text-transform: uppercase;
     }
     .status-Active { background: var(--success-light); color: var(--success); }
-    .status-Reversed { background: var(--danger-light); color: var(--danger); }
+    .status-Reversed, .status-Voided { background: var(--danger-light); color: var(--danger); }
 
     .btn-action-small {
         padding: 5px 10px;

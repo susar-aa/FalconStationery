@@ -202,8 +202,14 @@ $endDate = $data['filters']['end_date'] ?? '';
 .sf-btn.primary { background: var(--c-blue); color: #fff; }
 .sf-btn.neutral { background: var(--c-surface); border-color: var(--c-separator); color: var(--t-primary); box-shadow: var(--shadow-xs); }
 .sf-btn.neutral:hover { background: var(--c-surface2); }
-.sf-btn.danger { background: var(--c-red-light); color: var(--c-red); border-color: transparent;}
-.sf-btn.danger:hover { background: var(--c-red); color: #fff;}
+.sf-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--r-pill); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+.sf-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+.badge-posted { background: var(--c-green-light); color: var(--c-green); }
+.badge-posted .dot { background: var(--c-green); }
+.badge-voided { background: var(--c-red-light); color: var(--c-red); }
+.badge-voided .dot { background: var(--c-red); }
+.badge-draft { background: var(--c-orange-light); color: var(--c-orange); }
+.badge-draft .dot { background: var(--c-orange); }
 
 /* ---- Command Bar ---- */
 .cmd-bar { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: rgba(28, 28, 30, 0.92); backdrop-filter: saturate(180%) blur(28px); -webkit-backdrop-filter: saturate(180%) blur(28px); border: 0.5px solid rgba(255,255,255,0.12); border-radius: var(--r-pill); padding: 7px 10px; display: flex; align-items: center; gap: 4px; box-shadow: var(--shadow-xl), 0 0 0 0.5px rgba(0,0,0,0.3); z-index: 100; }

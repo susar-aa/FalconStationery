@@ -165,8 +165,8 @@
 .badge-Pending .dot { background: var(--c-orange); }
 .badge-Cleared { background: var(--c-green-light); color: #1a7f3c; }
 .badge-Cleared .dot { background: var(--c-green); }
-.badge-Bounced, .badge-Returned, .badge-Rejected { background: var(--c-red-light); color: var(--c-red); }
-.badge-Bounced .dot, .badge-Returned .dot, .badge-Rejected .dot { background: var(--c-red); }
+.badge-Bounced, .badge-Returned, .badge-Rejected, .badge-Voided, .badge-Reversed { background: var(--c-red-light); color: var(--c-red); }
+.badge-Bounced .dot, .badge-Returned .dot, .badge-Rejected .dot, .badge-Voided .dot, .badge-Reversed .dot { background: var(--c-red); }
 .badge-Deposited { background: var(--c-blue-light); color: var(--c-blue); }
 .badge-Deposited .dot { background: var(--c-blue); }
 
