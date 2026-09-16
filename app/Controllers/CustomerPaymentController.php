@@ -321,7 +321,8 @@ class CustomerPaymentController extends Controller {
         if ($success) {
             header('Location: ' . APP_URL . '/customerpayment/history?success=edited');
         } else {
-            header('Location: ' . APP_URL . '/customerpayment/history?error=Failed to edit payment record.');
+            $errMsg = $this->paymentModel->lastError ? ('Failed to edit payment: ' . $this->paymentModel->lastError) : 'Failed to edit payment record.';
+            header('Location: ' . APP_URL . '/customerpayment/history?error=' . urlencode($errMsg));
         }
         exit;
     }

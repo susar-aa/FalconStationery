@@ -1,6 +1,7 @@
 <?php
 class Payment {
     private $db;
+    public $lastError = null;
 
     public function __construct() {
         $this->db = new Database();
@@ -1433,6 +1434,7 @@ class Payment {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            $this->lastError = $e->getMessage();
             $err = "[" . date('Y-m-d H:i:s') . "] editCustomerPayment Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\nTrace: " . $e->getTraceAsString() . "\nData: " . json_encode($data) . "\n";
             @file_put_contents(dirname(__DIR__, 2) . '/app_errors.log', $err, FILE_APPEND);
             error_log("editCustomerPayment Error: " . $e->getMessage());
@@ -1657,6 +1659,7 @@ class Payment {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
+            $this->lastError = $e->getMessage();
             $err = "[" . date('Y-m-d H:i:s') . "] editSupplierPayment Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\nTrace: " . $e->getTraceAsString() . "\nData: " . json_encode($data) . "\n";
             @file_put_contents(dirname(__DIR__, 2) . '/app_errors.log', $err, FILE_APPEND);
             error_log("editSupplierPayment Error: " . $e->getMessage());

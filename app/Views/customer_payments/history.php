@@ -624,4 +624,49 @@ function toggleChequeEditFields() {
 function closeEditModal() {
     document.getElementById('editPaymentModal').style.display = 'none';
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Log any server-side errors passed in URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMsg = urlParams.get('error');
+    const successMsg = urlParams.get('success');
+
+    if (errorMsg) {
+        console.group('%c[Payment History Error Notification]', 'color: #ef4444; font-weight: bold; font-size: 14px;');
+        console.error('Error Details:', errorMsg);
+        console.info('Current URL Params:', Object.fromEntries(urlParams.entries()));
+        console.groupEnd();
+    }
+
+    if (successMsg) {
+        console.log('%c[Payment History Success]', 'color: #10b981; font-weight: bold;', successMsg);
+    }
+
+    // Add submit logging to editPaymentForm
+    const editForm = document.getElementById('editPaymentForm');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            const formData = new FormData(editForm);
+            const payload = {};
+            formData.forEach((val, key) => payload[key] = val);
+
+            console.group('%c[Edit Payment Submission]', 'color: #2563eb; font-weight: bold; font-size: 13px;');
+            console.log('Target URL:', editForm.action);
+            console.log('HTTP Method:', editForm.method);
+            console.table(payload);
+
+            // Validate cheque fields client-side with explicit console warnings
+            if (payload.payment_method === 'Cheque') {
+                if (!payload.cheque_bank || !payload.cheque_number || !payload.cheque_date) {
+                    console.error('Cheque Validation Failed: Missing required bank, number, or date.', payload);
+                } else if (!/^\d{6}$/.test(payload.cheque_number)) {
+                    console.error('Cheque Validation Failed: Cheque number must be 6 numeric digits.', { cheque_number: payload.cheque_number });
+                } else {
+                    console.log('Cheque Validation Passed.');
+                }
+            }
+            console.groupEnd();
+        });
+    }
+});
 </script>
