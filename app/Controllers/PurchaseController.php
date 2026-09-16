@@ -45,7 +45,7 @@ class PurchaseController extends Controller {
             'title' => 'Procurement Dashboard',
             'content_view' => 'purchases/index',
             'pos' => $pos,
-            'vendors' => $this->vendorModel->getAllVendors(),
+            'vendors' => $this->vendorModel->getActiveVendors(),
             'search' => $search,
             'filters' => $filters,
             'page' => $page,
@@ -209,7 +209,7 @@ class PurchaseController extends Controller {
         $data = [
             'title' => 'Create Purchase Order',
             'content_view' => 'purchases/create',
-            'vendors' => $this->vendorModel->getAllVendors(),
+            'vendors' => $this->vendorModel->getActiveVendors(),
             'catalog_items' => $catalogItems,
             'item_supplier_mappings' => $itemSupplierMappings,
             'po_number' => str_pad((string)$nextId, 5, '0', STR_PAD_LEFT),

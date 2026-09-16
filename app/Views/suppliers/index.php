@@ -285,14 +285,15 @@ foreach ($data['suppliers'] ?? [] as $s) {
                         <th>Supplier / Company</th>
                         <th>Contact Details</th>
                         <th class="txt-right">Outstanding Balance</th>
-                        <th>Status</th>
+                        <th>Ledger Status</th>
+                        <th>Account Status</th>
                         <th style="width:120px;" class="txt-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="supList">
                     <?php if (empty($data['suppliers'])): ?>
                         <tr>
-                            <td colspan="5" style="text-align:center; padding:40px; color:var(--t-secondary);">
+                            <td colspan="6" style="text-align:center; padding:40px; color:var(--t-secondary);">
                                 <i class="fa-solid fa-building" style="font-size:28px; margin-bottom:8px; color:var(--t-tertiary);"></i><br>
                                 No suppliers registered yet.
                             </td>
@@ -303,6 +304,7 @@ foreach ($data['suppliers'] ?? [] as $s) {
                             $bal = floatval($s->outstanding_balance); 
                             $badgeCls = $bal > 0 ? 'badge-owed' : 'badge-active';
                             $badgeTxt = $bal > 0 ? 'Owed' : 'Cleared';
+                            $accountStatus = $s->status ?? 'Active';
                             ?>
                             <tr class="supplier-row" 
                                 onclick="openSupplierModalPopup(<?= $s->id ?>)"
@@ -342,6 +344,11 @@ foreach ($data['suppliers'] ?? [] as $s) {
                                             <span class="dot"></span><?= $badgeTxt ?>
                                         </span>
                                     </div>
+                                </td>
+                                <td>
+                                    <span class="sf-badge <?= $accountStatus === 'Active' ? 'badge-active' : 'badge-Voided' ?>">
+                                        <span class="dot"></span><?= $accountStatus ?>
+                                    </span>
                                 </td>
                                 <td>
                                     <div style="display:flex; justify-content:center; gap:6px;" onclick="event.stopPropagation()">
@@ -622,6 +629,14 @@ foreach ($data['suppliers'] ?? [] as $s) {
                         <input type="date" name="opening_balance_date" class="sf-input" value="<?= htmlspecialchars($sup->opening_balance_date ?? date('Y-m-d')) ?>">
                     </div>
                 </div>
+
+                <div class="sf-group">
+                    <label>Account Status</label>
+                    <select name="status" class="sf-input" style="font-weight:600;">
+                        <option value="Active" <?= ($sup->status ?? 'Active') === 'Active' ? 'selected' : '' ?>>Active (Visible everywhere)</option>
+                        <option value="Inactive" <?= ($sup->status ?? 'Active') === 'Inactive' ? 'selected' : '' ?>>Inactive (Hidden from selectors)</option>
+                    </select>
+                </div>
                 
                 <div style="text-align: right; margin-top: 10px;">
                     <button type="submit" class="sf-btn primary">Save Changes</button>
@@ -668,6 +683,13 @@ foreach ($data['suppliers'] ?? [] as $s) {
                         <label>As of Date</label>
                         <input type="date" name="opening_balance_date" class="sf-input" value="<?= date('Y-m-d') ?>">
                     </div>
+                </div>
+                <div class="sf-group">
+                    <label>Account Status</label>
+                    <select name="status" class="sf-input" style="font-weight:600;">
+                        <option value="Active" selected>Active (Visible everywhere)</option>
+                        <option value="Inactive">Inactive (Hidden from selectors)</option>
+                    </select>
                 </div>
             </div>
             <div class="modal-foot">

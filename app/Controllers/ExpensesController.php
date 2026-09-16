@@ -35,7 +35,7 @@ class ExpensesController extends Controller {
             'content_view' => 'expenses/index',
             'expenses' => $this->expenseModel->getAllExpenses($filters),
             'stats' => $this->expenseModel->getExpenseStats(),
-            'vendors' => $this->vendorModel->getAllVendors(),
+            'vendors' => $this->vendorModel->getActiveVendors(),
             'expense_accounts' => $expense_accounts,
             'bank_accounts' => $bank_accounts,
             'cash_in_hand_acc' => $cashInHandAcc,

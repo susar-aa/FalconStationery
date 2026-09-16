@@ -71,7 +71,7 @@ class ChequeController extends Controller {
             'grouped_issued_cheques' => $groupedIssuedCheques,
             'search' => $search,
             'customers' => $this->customerModel->getAllCustomers() ?: [],
-            'suppliers' => $this->supplierModel->getAllSuppliers() ?: [],
+            'suppliers' => $this->supplierModel->getActiveSuppliers() ?: [],
             'service_providers' => $this->serviceProviderModel->getAllServiceProviders() ?: [],
             'bank_accounts' => $bankAccounts,
             'company_name' => $company->company_name ?? 'Company',

@@ -4,11 +4,24 @@ class Supplier {
 
     public function __construct() {
         $this->db = new Database();
+        $this->selfHealSchema();
     }
 
-    public function getAllSuppliers() {
+    private function selfHealSchema() {
+        try {
+            $this->db->query("SHOW COLUMNS FROM vendors LIKE 'status'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE vendors ADD COLUMN status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active' AFTER opening_balance_date");
+                $this->db->execute();
+            }
+        } catch (Exception $e) {
+            error_log("Supplier selfHealSchema Error: " . $e->getMessage());
+        }
+    }
+
+    public function getAllSuppliers($activeOnly = false) {
         // Calculates the billed (GRNs), paid (Expenses/Payments), and returned (Supplier Returns) to determine outstanding balance
-        $this->db->query("
+        $sql = "
             SELECT v.*,
                    (SELECT COALESCE(SUM(gri.total), 0) 
                     FROM grn_items gri 
@@ -33,13 +46,22 @@ class Supplier {
                       AND je.status = 'Posted' 
                       AND coa.account_code = '2000') as total_je_balance
             FROM vendors v
-            ORDER BY v.name ASC
-        ");
+        ";
+        if ($activeOnly) {
+            $sql .= " WHERE v.status = 'Active' ";
+        }
+        $sql .= " ORDER BY v.name ASC";
+
+        $this->db->query($sql);
         $suppliers = $this->db->resultSet();
         foreach ($suppliers as $s) {
             $s->outstanding_balance = floatval($s->opening_balance ?? 0) + $s->total_billed - $s->total_paid - $s->total_returned + floatval($s->total_je_balance ?? 0);
         }
         return $suppliers;
+    }
+
+    public function getActiveSuppliers() {
+        return $this->getAllSuppliers(true);
     }
 
     public function getSupplierById($id) {
@@ -49,13 +71,15 @@ class Supplier {
     }
 
     public function addSupplier($data) {
-        $this->db->query("INSERT INTO vendors (name, email, phone, address, opening_balance, opening_balance_date) VALUES (:name, :email, :phone, :address, :opening_balance, :opening_balance_date)");
+        $status = isset($data['status']) && in_array($data['status'], ['Active', 'Inactive']) ? $data['status'] : 'Active';
+        $this->db->query("INSERT INTO vendors (name, email, phone, address, opening_balance, opening_balance_date, status) VALUES (:name, :email, :phone, :address, :opening_balance, :opening_balance_date, :status)");
         $this->db->bind(':name', $data['name']);
         $this->db->bind(':email', $data['email']);
         $this->db->bind(':phone', $data['phone']);
         $this->db->bind(':address', $data['address']);
         $this->db->bind(':opening_balance', $data['opening_balance'] ?? 0.00);
         $this->db->bind(':opening_balance_date', $data['opening_balance_date'] ?? null);
+        $this->db->bind(':status', $status);
         $result = $this->db->execute();
         
         if ($result && isset($data['opening_balance']) && floatval($data['opening_balance']) > 0) {
@@ -66,7 +90,8 @@ class Supplier {
     }
 
     public function updateSupplier($data) {
-        $this->db->query("UPDATE vendors SET name = :name, email = :email, phone = :phone, address = :address, opening_balance = :opening_balance, opening_balance_date = :opening_balance_date WHERE id = :id");
+        $status = isset($data['status']) && in_array($data['status'], ['Active', 'Inactive']) ? $data['status'] : 'Active';
+        $this->db->query("UPDATE vendors SET name = :name, email = :email, phone = :phone, address = :address, opening_balance = :opening_balance, opening_balance_date = :opening_balance_date, status = :status WHERE id = :id");
         $this->db->bind(':id', $data['id']);
         $this->db->bind(':name', $data['name']);
         $this->db->bind(':email', $data['email']);
@@ -74,6 +99,7 @@ class Supplier {
         $this->db->bind(':address', $data['address']);
         $this->db->bind(':opening_balance', $data['opening_balance'] ?? 0.00);
         $this->db->bind(':opening_balance_date', $data['opening_balance_date'] ?? null);
+        $this->db->bind(':status', $status);
         $result = $this->db->execute();
         
         if ($result && isset($data['opening_balance'])) {

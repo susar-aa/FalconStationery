@@ -66,7 +66,8 @@ class SupplierController extends Controller {
                     'phone' => trim($_POST['phone'] ?? ''),
                     'address' => trim($_POST['address'] ?? ''),
                     'opening_balance' => isset($_POST['opening_balance']) ? floatval($_POST['opening_balance']) : 0.00,
-                    'opening_balance_date' => !empty($_POST['opening_balance_date']) ? $_POST['opening_balance_date'] : date('Y-m-d')
+                    'opening_balance_date' => !empty($_POST['opening_balance_date']) ? $_POST['opening_balance_date'] : date('Y-m-d'),
+                    'status' => trim($_POST['status'] ?? 'Active')
                 ];
                 if (!empty($supplierData['name'])) {
                     if ($this->supplierModel->addSupplier($supplierData)) {
@@ -86,7 +87,8 @@ class SupplierController extends Controller {
                     'phone' => trim($_POST['phone'] ?? ''),
                     'address' => trim($_POST['address'] ?? ''),
                     'opening_balance' => isset($_POST['opening_balance']) ? floatval($_POST['opening_balance']) : 0.00,
-                    'opening_balance_date' => !empty($_POST['opening_balance_date']) ? $_POST['opening_balance_date'] : date('Y-m-d')
+                    'opening_balance_date' => !empty($_POST['opening_balance_date']) ? $_POST['opening_balance_date'] : date('Y-m-d'),
+                    'status' => trim($_POST['status'] ?? 'Active')
                 ];
 
                 if (!empty($updateData['name'])) {

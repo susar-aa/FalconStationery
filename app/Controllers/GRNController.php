@@ -43,7 +43,7 @@ class GRNController extends Controller {
             'title' => 'Goods Receipt Notes (GRN)',
             'content_view' => 'grns/index',
             'grns' => $this->grnModel->getGRNsPaginated($search, $limit, $offset, $filters),
-            'vendors' => $this->vendorModel->getAllVendors(),
+            'vendors' => $this->vendorModel->getActiveVendors(),
             'search' => $search,
             'filters' => $filters,
             'page' => $page,
@@ -94,7 +94,7 @@ class GRNController extends Controller {
         $data = [
             'title' => 'Create Goods Receipt Note (GRN)',
             'content_view' => 'grns/create',
-            'vendors' => $this->vendorModel->getAllVendors(),
+            'vendors' => $this->vendorModel->getActiveVendors(),
             'catalog_items' => $catalogItems,
             'item_supplier_mappings' => $itemSupplierMappings,
             'grn_number' => str_pad((string)$nextId, 5, '0', STR_PAD_LEFT),

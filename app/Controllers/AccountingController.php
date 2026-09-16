@@ -345,11 +345,11 @@ class AccountingController extends Controller {
         $entries = $this->journalModel->getAllEntries($limit, $offset, $filters);
 
         $data = [
-            'title' => 'General Journal',
-            'content_view' => 'accounting/journal',
+            'title' => 'Journal Entries',
+            'content_view' => 'accounting/journal_entries',
             'accounts' => $this->coaModel->getAccounts(),
             'customers' => $this->model('Customer')->getAllCustomers(),
-            'suppliers' => $this->model('Supplier')->getAllSuppliers(),
+            'suppliers' => $this->model('Supplier')->getActiveSuppliers(),
             'entries' => $entries,
             'page' => $page,
             'total_pages' => $totalPages,
