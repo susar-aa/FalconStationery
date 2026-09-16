@@ -170,7 +170,7 @@ class ChartOfAccount {
         $this->db->query("SELECT t.*, je.entry_date, je.reference, je.description AS entry_description 
                           FROM transactions t 
                           JOIN journal_entries je ON t.journal_entry_id = je.id 
-                          WHERE t.account_id = :aid AND t.is_cleared = 0 
+                          WHERE t.account_id = :aid AND t.is_cleared = 0 AND je.status != 'Voided'
                           ORDER BY je.entry_date ASC");
         $this->db->bind(':aid', $accountId);
         return $this->db->resultSet();
@@ -502,7 +502,7 @@ class ChartOfAccount {
     }
 
     public function getBankLedger($accountId) {
-        $this->db->query("SELECT t.*, je.entry_date, je.reference, je.description 
+        $this->db->query("SELECT t.*, je.entry_date, je.reference, je.description, je.status 
                           FROM transactions t 
                           JOIN journal_entries je ON t.journal_entry_id = je.id 
                           WHERE t.account_id = :aid 

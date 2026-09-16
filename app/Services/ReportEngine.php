@@ -799,7 +799,7 @@ class ReportEngine {
                           FROM transactions t
                           JOIN journal_entries je ON t.journal_entry_id = je.id
                           JOIN chart_of_accounts c ON t.account_id = c.id
-                          WHERE 1=1 /*WHERE_CLAUSE*/"
+                          WHERE je.status = 'Posted' /*WHERE_CLAUSE*/"
             ],
             'balance_sheet' => [
                 'title' => 'Balance Sheet',

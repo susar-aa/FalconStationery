@@ -373,6 +373,111 @@ class JournalEntry {
             $this->db->bind(':id', $id);
             $this->db->execute();
 
+            // 5. Reset transaction clearing flags so voided entries don't linger in reconciliation
+            $this->db->query("UPDATE transactions SET is_cleared = 0 WHERE journal_entry_id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            $userId = $_SESSION['user_id'] ?? null;
+
+            // 6. Cascade void status to linked customer payments
+            $this->db->query("SELECT id FROM customer_payments WHERE journal_entry_id = :id");
+            $this->db->bind(':id', $id);
+            $custPmts = $this->db->resultSet() ?: [];
+            foreach ($custPmts as $cp) {
+                $this->db->query("UPDATE customer_payments SET status = 'Reversed', reversed_by = :uid, reversed_at = CURRENT_TIMESTAMP() WHERE id = :cpid");
+                $this->db->bind(':uid', $userId);
+                $this->db->bind(':cpid', $cp->id);
+                $this->db->execute();
+
+                // Reverse allocations
+                $this->db->query("SELECT invoice_id FROM customer_payment_allocations WHERE customer_payment_id = :cpid AND is_reversed = 0");
+                $this->db->bind(':cpid', $cp->id);
+                $allocs = $this->db->resultSet() ?: [];
+
+                $this->db->query("UPDATE customer_payment_allocations SET is_reversed = 1, reversed_by = :uid, reversed_at = CURRENT_TIMESTAMP() WHERE customer_payment_id = :cpid AND is_reversed = 0");
+                $this->db->bind(':uid', $userId);
+                $this->db->bind(':cpid', $cp->id);
+                $this->db->execute();
+
+                foreach ($allocs as $al) {
+                    $this->db->query("UPDATE invoices SET status = 'Unpaid' WHERE id = :iid AND status = 'Paid'");
+                    $this->db->bind(':iid', $al->invoice_id);
+                    $this->db->execute();
+                }
+            }
+
+            // 7. Cascade void status to linked supplier payments
+            $this->db->query("SELECT id FROM supplier_payments WHERE journal_entry_id = :id");
+            $this->db->bind(':id', $id);
+            $suppPmts = $this->db->resultSet() ?: [];
+            foreach ($suppPmts as $sp) {
+                $this->db->query("UPDATE supplier_payments SET status = 'Reversed', reversed_by = :uid, reversed_at = CURRENT_TIMESTAMP() WHERE id = :spid");
+                $this->db->bind(':uid', $userId);
+                $this->db->bind(':spid', $sp->id);
+                $this->db->execute();
+
+                // Reverse allocations
+                $this->db->query("SELECT grn_id FROM supplier_payment_allocations WHERE supplier_payment_id = :spid AND is_reversed = 0");
+                $this->db->bind(':spid', $sp->id);
+                $sAllocs = $this->db->resultSet() ?: [];
+
+                $this->db->query("UPDATE supplier_payment_allocations SET is_reversed = 1, reversed_by = :uid, reversed_at = CURRENT_TIMESTAMP() WHERE supplier_payment_id = :spid AND is_reversed = 0");
+                $this->db->bind(':uid', $userId);
+                $this->db->bind(':spid', $sp->id);
+                $this->db->execute();
+
+                foreach ($sAllocs as $sal) {
+                    $this->db->query("UPDATE goods_receipt_notes SET payment_status = 'Unpaid' WHERE id = :gid AND payment_status = 'Paid'");
+                    $this->db->bind(':gid', $sal->grn_id);
+                    $this->db->execute();
+                }
+            }
+
+            // 8. Cascade void to expenses
+            $this->db->query("UPDATE expenses SET status = 'Voided' WHERE journal_entry_id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            // 9. Cascade void to petty cash transactions
+            $this->db->query("UPDATE petty_cash_transactions SET status = 'Voided', updated_at = CURRENT_TIMESTAMP() WHERE journal_entry_id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            // 10. Cascade void to cheques
+            $this->db->query("UPDATE cheques SET status = 'Voided' WHERE supplier_payment_id IN (SELECT id FROM supplier_payments WHERE journal_entry_id = :id)");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            // 11. Cascade to loan repayments/disbursements if applicable
+            if (!empty($entry->reference)) {
+                if (strpos($entry->reference, 'LOAN-REP-') === 0) {
+                    $repId = intval(substr($entry->reference, 9));
+                    if ($repId > 0) {
+                        $this->db->query("SELECT loan_id FROM loan_repayments WHERE id = :repid");
+                        $this->db->bind(':repid', $repId);
+                        $repRow = $this->db->single();
+
+                        $this->db->query("DELETE FROM loan_repayments WHERE id = :repid");
+                        $this->db->bind(':repid', $repId);
+                        $this->db->execute();
+
+                        if ($repRow && $repRow->loan_id) {
+                            $this->db->query("UPDATE loans SET status = 'Active' WHERE id = :lid AND status = 'Closed'");
+                            $this->db->bind(':lid', $repRow->loan_id);
+                            $this->db->execute();
+                        }
+                    }
+                } elseif (strpos($entry->reference, 'LOAN-DISB-') === 0) {
+                    $loanId = intval(substr($entry->reference, 10));
+                    if ($loanId > 0) {
+                        $this->db->query("UPDATE loans SET status = 'Pending' WHERE id = :lid");
+                        $this->db->bind(':lid', $loanId);
+                        $this->db->execute();
+                    }
+                }
+            }
+
             $this->db->commit();
 
             try {

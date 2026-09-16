@@ -1,13 +1,19 @@
 <?php
-// Dynamic calculations
-$totalTransactions = count($data['transactions'] ?? []);
+// Dynamic calculations excluding voided transactions
+$totalTransactions = 0;
 $clearedCount = 0;
+$unclearedCount = 0;
 foreach ($data['transactions'] ?? [] as $t) {
+    if (($t->status ?? '') === 'Voided') {
+        continue;
+    }
+    $totalTransactions++;
     if ($t->is_cleared) {
         $clearedCount++;
+    } else {
+        $unclearedCount++;
     }
 }
-$unclearedCount = $totalTransactions - $clearedCount;
 ?>
 
 <!-- Inter Font & FontAwesome Icons -->
@@ -264,15 +270,24 @@ $unclearedCount = $totalTransactions - $clearedCount;
                                     </div>
                                 </td>
                             </tr>
-                        <?php else: foreach($data['transactions'] as $t): ?>
-                            <tr>
+                        <?php else: foreach($data['transactions'] as $t): 
+                            $isVoided = (($t->status ?? '') === 'Voided');
+                        ?>
+                            <tr style="<?= $isVoided ? 'opacity: 0.6; background: rgba(255, 59, 48, 0.05);' : '' ?>">
                                 <td class="td-date"><?= date('M d, Y', strtotime($t->entry_date)) ?></td>
                                 <td class="td-ref"><?= htmlspecialchars($t->reference) ?></td>
-                                <td class="td-desc" title="<?= htmlspecialchars($t->description) ?>"><?= htmlspecialchars($t->description) ?></td>
-                                <td class="td-num td-debit"><?= $t->debit > 0 ? number_format($t->debit, 2) : '-' ?></td>
-                                <td class="td-num td-credit"><?= $t->credit > 0 ? number_format($t->credit, 2) : '-' ?></td>
+                                <td class="td-desc" title="<?= htmlspecialchars($t->description) ?>">
+                                    <?= htmlspecialchars($t->description) ?>
+                                    <?php if ($isVoided): ?>
+                                        <span style="color: var(--c-red); font-weight: 700; margin-left: 6px;">[VOIDED]</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="td-num td-debit" style="<?= $isVoided ? 'text-decoration: line-through;' : '' ?>"><?= $t->debit > 0 ? number_format($t->debit, 2) : '-' ?></td>
+                                <td class="td-num td-credit" style="<?= $isVoided ? 'text-decoration: line-through;' : '' ?>"><?= $t->credit > 0 ? number_format($t->credit, 2) : '-' ?></td>
                                 <td class="td-center">
-                                    <?php if ($t->is_cleared): ?>
+                                    <?php if ($isVoided): ?>
+                                        <span class="status-pill voided" style="background: var(--c-red-light); color: var(--c-red);">Voided</span>
+                                    <?php elseif ($t->is_cleared): ?>
                                         <span class="status-pill cleared">Cleared</span>
                                     <?php else: ?>
                                         <span class="status-pill uncleared">Uncleared</span>
