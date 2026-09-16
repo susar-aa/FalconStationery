@@ -40,7 +40,8 @@ class Deposit {
     }
 
     public function getDepositItems($depositId) {
-        $this->db->query("SELECT di.*, ch.cheque_number, ch.bank_name, ch.amount as cheque_amount, ch.banking_date, cust.name as customer_name
+        $this->db->query("SELECT di.*, ch.cheque_number, ch.bank_name, ch.amount as cheque_amount, ch.banking_date, 
+                                 COALESCE(NULLIF(TRIM(cust.name), ''), NULLIF(TRIM(ch.payee_name), ''), NULLIF(TRIM(ch.drawer), ''), 'Manual Collection') as customer_name
                           FROM deposit_items di
                           LEFT JOIN cheques ch ON di.cheque_id = ch.id
                           LEFT JOIN customers cust ON ch.customer_id = cust.id
@@ -50,11 +51,12 @@ class Deposit {
     }
 
     public function getPendingCheques() {
-        $this->db->query("SELECT ch.*, c.name as customer_name 
+        $this->db->query("SELECT ch.*, COALESCE(NULLIF(TRIM(c.name), ''), NULLIF(TRIM(ch.payee_name), ''), NULLIF(TRIM(ch.drawer), ''), 'Manual Collection') as customer_name 
                           FROM cheques ch 
                           LEFT JOIN customers c ON ch.customer_id = c.id 
-                          WHERE ch.status = 'Pending' AND ch.customer_id IS NOT NULL 
-                          ORDER BY ch.banking_date ASC");
+                          WHERE (ch.status = 'Pending' OR ch.status = 'Received' OR ch.status = 'In Hand' OR ch.status = 'Pending Deposit')
+                            AND (ch.type IS NULL OR ch.type = '' OR ch.type = 'Received' OR ch.type = 'Incoming')
+                          ORDER BY ch.banking_date ASC, ch.id ASC");
         return $this->db->resultSet() ?: [];
     }
 
