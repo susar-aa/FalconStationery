@@ -434,12 +434,7 @@ class JournalEntry {
                 }
             }
 
-            // 8. Cascade void to expenses
-            $this->db->query("UPDATE expenses SET status = 'Voided' WHERE journal_entry_id = :id");
-            $this->db->bind(':id', $id);
-            $this->db->execute();
-
-            // 9. Cascade void to petty cash transactions
+            // 8. Cascade void to petty cash transactions
             $this->db->query("UPDATE petty_cash_transactions SET status = 'Voided', updated_at = CURRENT_TIMESTAMP() WHERE journal_entry_id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();

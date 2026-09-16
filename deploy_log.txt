@@ -1038,3 +1038,16 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Wed 09/16/2026 19:41:35.48 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Views/banking/ledger.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 4839534] Update: app/Models/ChartOfAccount.php, app/Views/banking/ledger.php, deploy_log.txt
+ 3 files changed, 62 insertions(+), 5 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   454a75c..4839534  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Wed 09/16/2026 19:43:02.73 
+=================================================== 
+Adding changes... 

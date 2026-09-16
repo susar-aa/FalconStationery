@@ -15,9 +15,6 @@ class ChartOfAccount {
             $this->db->query("UPDATE journal_entries SET status = 'Voided' WHERE (status IS NULL OR status != 'Voided') AND id IN (SELECT journal_entry_id FROM supplier_payments WHERE status = 'Reversed' AND journal_entry_id IS NOT NULL)");
             $this->db->execute();
 
-            $this->db->query("UPDATE journal_entries SET status = 'Voided' WHERE (status IS NULL OR status != 'Voided') AND id IN (SELECT journal_entry_id FROM expenses WHERE status = 'Voided' AND journal_entry_id IS NOT NULL)");
-            $this->db->execute();
-
             $this->db->query("UPDATE journal_entries SET status = 'Voided' WHERE (status IS NULL OR status != 'Voided') AND id IN (SELECT journal_entry_id FROM petty_cash_transactions WHERE status = 'Voided' AND journal_entry_id IS NOT NULL)");
             $this->db->execute();
         } catch (Throwable $e) {
@@ -194,7 +191,6 @@ class ChartOfAccount {
                             AND (je.status IS NULL OR je.status != 'Voided')
                             AND NOT EXISTS (SELECT 1 FROM customer_payments cp WHERE cp.journal_entry_id = je.id AND cp.status = 'Reversed')
                             AND NOT EXISTS (SELECT 1 FROM supplier_payments sp WHERE sp.journal_entry_id = je.id AND sp.status = 'Reversed')
-                            AND NOT EXISTS (SELECT 1 FROM expenses ex WHERE ex.journal_entry_id = je.id AND ex.status = 'Voided')
                           ORDER BY je.entry_date ASC");
         $this->db->bind(':aid', $accountId);
         return $this->db->resultSet();
@@ -534,14 +530,12 @@ class ChartOfAccount {
                                      NULLIF(je.status, ''), 
                                      (SELECT CASE WHEN cp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM customer_payments cp WHERE cp.journal_entry_id = je.id LIMIT 1),
                                      (SELECT CASE WHEN sp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM supplier_payments sp WHERE sp.journal_entry_id = je.id LIMIT 1),
-                                     (SELECT CASE WHEN ex.status = 'Voided' THEN 'Voided' ELSE NULL END FROM expenses ex WHERE ex.journal_entry_id = je.id LIMIT 1),
                                      'Posted'
                                  ) AS status,
                                  COALESCE(
                                      NULLIF(je.status, ''), 
                                      (SELECT CASE WHEN cp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM customer_payments cp WHERE cp.journal_entry_id = je.id LIMIT 1),
                                      (SELECT CASE WHEN sp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM supplier_payments sp WHERE sp.journal_entry_id = je.id LIMIT 1),
-                                     (SELECT CASE WHEN ex.status = 'Voided' THEN 'Voided' ELSE NULL END FROM expenses ex WHERE ex.journal_entry_id = je.id LIMIT 1),
                                      'Posted'
                                  ) AS entry_status
                           FROM transactions t 
