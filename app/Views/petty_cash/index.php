@@ -548,16 +548,18 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
             </div>
         </div>
 
+        <?php $activeTab = $data['active_tab'] ?? 'transactionsTab'; ?>
+
         <!-- Tabs Container -->
         <div style="background: var(--c-surface); border-radius: var(--r-xl); border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-sm); overflow: hidden;">
             <div style="display: flex; border-bottom: 0.5px solid var(--c-separator); background: var(--c-surface2); padding: 8px 14px; gap: 8px;">
-                <button class="sf-btn neutral tab-btn active" onclick="window.switchTab(event, 'transactionsTab')" style="border-radius: var(--r-pill); font-size: 13px; padding: 7px 16px;"><i class="fa-solid fa-list"></i> Transactions</button>
-                <button class="sf-btn neutral tab-btn" onclick="window.switchTab(event, 'reimbursementsTab')" style="border-radius: var(--r-pill); font-size: 13px; padding: 7px 16px;"><i class="fa-solid fa-arrows-rotate"></i> Reimbursements</button>
-                <button class="sf-btn neutral tab-btn" onclick="window.switchTab(event, 'pendingExpensesTab')" style="border-radius: var(--r-pill); font-size: 13px; padding: 7px 16px;"><i class="fa-solid fa-clock"></i> Unreimbursed Expenses (<?= count($data['pending_expenses']) ?>)</button>
+                <button class="sf-btn neutral tab-btn <?= $activeTab === 'transactionsTab' ? 'active' : '' ?>" onclick="window.switchTab(event, 'transactionsTab')" style="border-radius: var(--r-pill); font-size: 13px; padding: 7px 16px;"><i class="fa-solid fa-list"></i> Transactions</button>
+                <button class="sf-btn neutral tab-btn <?= $activeTab === 'reimbursementsTab' ? 'active' : '' ?>" onclick="window.switchTab(event, 'reimbursementsTab')" style="border-radius: var(--r-pill); font-size: 13px; padding: 7px 16px;"><i class="fa-solid fa-arrows-rotate"></i> Reimbursements (<?= count($data['reimbursements'] ?? []) ?>)</button>
+                <button class="sf-btn neutral tab-btn <?= $activeTab === 'pendingExpensesTab' ? 'active' : '' ?>" onclick="window.switchTab(event, 'pendingExpensesTab')" style="border-radius: var(--r-pill); font-size: 13px; padding: 7px 16px;"><i class="fa-solid fa-clock"></i> Unreimbursed Expenses (<?= count($data['pending_expenses']) ?>)</button>
             </div>
 
             <!-- Tab 1: Transactions -->
-            <div id="transactionsTab" class="tab-content active">
+            <div id="transactionsTab" class="tab-content <?= $activeTab === 'transactionsTab' ? 'active' : '' ?>">
                 <form method="GET" action="<?= APP_URL ?>/pettycash" class="filter-card">
                     <input type="hidden" name="limit" value="<?= htmlspecialchars((string)($data['limit'] ?? 20)) ?>">
                     <div class="filter-field">
@@ -774,7 +776,8 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
             </div>
 
             <!-- Tab 2: Reimbursements -->
-            <div id="reimbursementsTab" class="tab-content">
+            <div id="reimbursementsTab" class="tab-content <?= $activeTab === 'reimbursementsTab' ? 'active' : '' ?>">
+
                 <div class="table-panel">
                     <table class="inv-table">
                         <thead>
@@ -848,7 +851,7 @@ textarea.sf-input { resize: vertical; min-height: 80px; }
             </div>
 
             <!-- Tab 3: Pending Expenses -->
-            <div id="pendingExpensesTab" class="tab-content">
+            <div id="pendingExpensesTab" class="tab-content <?= $activeTab === 'pendingExpensesTab' ? 'active' : '' ?>">
                 <?php if (empty($data['pending_expenses'])): ?>
                     <div class="tbl-empty">
                         <div class="tbl-empty-icon"><i class="fa-solid fa-circle-check" style="color: var(--c-green);"></i></div>

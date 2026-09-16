@@ -90,6 +90,9 @@ class PettyCashController extends Controller {
         $db->query("SELECT id, route_name FROM rep_daily_routes ORDER BY route_name ASC");
         $routes = $db->resultSet() ?: [];
 
+        $activeTab = $_SESSION['flash_tab'] ?? ($_GET['tab'] ?? 'transactionsTab');
+        unset($_SESSION['flash_tab']);
+
         $data = [
             'title' => 'Petty Cash Management',
             'content_view' => 'petty_cash/index',
@@ -110,6 +113,7 @@ class PettyCashController extends Controller {
             'limit' => $limit,
             'total_transactions' => $totalTransactions,
             'total_pages' => $totalPages,
+            'active_tab' => $activeTab,
             'csrf_token' => $this->generateCsrfToken(),
             'error' => '',
             'success' => ''
@@ -317,6 +321,7 @@ class PettyCashController extends Controller {
                 $result = $this->pcReimModel->createRequest($reimburseData, (int)$_SESSION['user_id']);
                 if ($result === true) {
                     $_SESSION['flash_success'] = 'Reimbursement request generated successfully.';
+                    $_SESSION['flash_tab'] = 'reimbursementsTab';
                 } else {
                     $_SESSION['flash_error'] = is_string($result) ? $result : 'Failed to create reimbursement request.';
                 }
