@@ -16,17 +16,66 @@ class PettyCashReimbursement {
         $this->audit = new AuditLog();
         $this->journal = new JournalEntry();
         $this->pcTx = new PettyCashTransaction();
+        $this->ensureTableSchema();
+    }
+
+    public function ensureTableSchema(): void {
+        try {
+            $this->db->query("CREATE TABLE IF NOT EXISTS petty_cash_reimbursements (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                reimbursement_date DATE NOT NULL,
+                amount DECIMAL(15,2) NOT NULL,
+                bank_account_id INT NULL,
+                payment_method VARCHAR(50) DEFAULT 'Bank Transfer',
+                cheque_number VARCHAR(100) NULL,
+                cheque_date DATE NULL,
+                payee_name VARCHAR(255) NULL,
+                status ENUM('Pending', 'Approved', 'Disbursed', 'Rejected') DEFAULT 'Pending',
+                description TEXT NULL,
+                created_by INT NOT NULL,
+                approved_by INT NULL,
+                approved_at DATETIME NULL,
+                disbursed_at DATETIME NULL,
+                journal_entry_id INT NULL,
+                cheque_id INT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            $this->db->execute();
+
+            $cols = [
+                'payment_method' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN payment_method VARCHAR(50) DEFAULT 'Bank Transfer' AFTER bank_account_id",
+                'cheque_number' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_number VARCHAR(100) NULL AFTER payment_method",
+                'cheque_date' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_date DATE NULL AFTER cheque_number",
+                'payee_name' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN payee_name VARCHAR(255) NULL AFTER cheque_date",
+                'cheque_id' => "ALTER TABLE petty_cash_reimbursements ADD COLUMN cheque_id INT NULL AFTER journal_entry_id"
+            ];
+            foreach ($cols as $col => $sql) {
+                $this->db->query("SHOW COLUMNS FROM petty_cash_reimbursements LIKE '{$col}'");
+                if (!$this->db->single()) {
+                    $this->db->query($sql);
+                    $this->db->execute();
+                }
+            }
+
+            $this->db->query("SHOW COLUMNS FROM petty_cash_transactions LIKE 'reimbursement_id'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE petty_cash_transactions ADD COLUMN reimbursement_id INT NULL AFTER voucher_number");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {
+            // Ignore if schema checks fail or already present
+        }
     }
 
     /**
-     * Get pending expenses (approved but not yet reimbursed)
+     * Get pending expenses (approved/unreimbursed expenses)
      */
     public function getPendingExpenses(): array {
         $this->db->query("SELECT t.*, u.username as creator_name, a.account_name as offset_account_name, a.account_code as offset_account_code
                           FROM petty_cash_transactions t
                           LEFT JOIN users u ON t.created_by = u.id
                           LEFT JOIN chart_of_accounts a ON t.account_id = a.id
-                          WHERE t.type = 'expense' AND t.status = 'Approved' AND t.reimbursement_id IS NULL
+                          WHERE t.type = 'expense' AND (t.status = 'Approved' OR t.status = 'Pending' OR t.status IS NULL OR t.status = '') AND t.reimbursement_id IS NULL
                           ORDER BY t.transaction_date ASC, t.id ASC");
         return $this->db->resultSet() ?: [];
     }

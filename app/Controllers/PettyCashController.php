@@ -302,6 +302,8 @@ class PettyCashController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->validateCsrfOrDie();
 
+            $_SESSION['flash_tab'] = 'reimbursementsTab';
+
             $paymentMethod = trim($_POST['payment_method'] ?? 'Bank Transfer');
             $reimburseData = [
                 'payment_method' => $paymentMethod,
@@ -321,7 +323,6 @@ class PettyCashController extends Controller {
                 $result = $this->pcReimModel->createRequest($reimburseData, (int)$_SESSION['user_id']);
                 if ($result === true) {
                     $_SESSION['flash_success'] = 'Reimbursement request generated successfully.';
-                    $_SESSION['flash_tab'] = 'reimbursementsTab';
                 } else {
                     $_SESSION['flash_error'] = is_string($result) ? $result : 'Failed to create reimbursement request.';
                 }
@@ -333,6 +334,7 @@ class PettyCashController extends Controller {
 
     public function approve_reimbursement($id) {
         $this->checkPermission('petty_cash', 'create_edit');
+        $_SESSION['flash_tab'] = 'reimbursementsTab';
         
         $result = $this->pcReimModel->approveRequest(intval($id), (int)$_SESSION['user_id']);
         if ($result === true) {
@@ -347,6 +349,7 @@ class PettyCashController extends Controller {
 
     public function reject_reimbursement($id) {
         $this->checkPermission('petty_cash', 'create_edit');
+        $_SESSION['flash_tab'] = 'reimbursementsTab';
         
         $result = $this->pcReimModel->rejectRequest(intval($id), (int)$_SESSION['user_id']);
         if ($result === true) {
