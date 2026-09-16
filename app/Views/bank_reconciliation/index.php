@@ -1,4 +1,3 @@
-<?php require APPROOT . '/Views/layouts/header.php'; ?>
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -86,4 +85,3 @@
         </div>
     </div>
 </div>
-<?php require APPROOT . '/Views/layouts/footer.php'; ?>

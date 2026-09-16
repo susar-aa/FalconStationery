@@ -1,4 +1,3 @@
-<?php require APPROOT . '/Views/layouts/header.php'; ?>
 <?php 
 $rec = $data['reconciliation']; 
 $isFinalized = ($rec->status === 'Finalized');
@@ -365,5 +364,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-<?php require APPROOT . '/Views/layouts/footer.php'; ?>
