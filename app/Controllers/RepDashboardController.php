@@ -2345,5 +2345,87 @@ class RepDashboardController extends Controller {
         ]);
         exit;
     }
+
+    public function api_get_customer_profile() {
+        header('Content-Type: application/json');
+
+        try {
+            $userId = $this->validate_api_token();
+            if ($userId <= 0 && isset($_GET['user_id'])) {
+                $userId = intval($_GET['user_id']);
+            }
+            if ($userId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Unauthorized or invalid token.']);
+                exit;
+            }
+
+            $customerId = isset($_GET['customer_id']) ? intval($_GET['customer_id']) : (isset($_POST['customer_id']) ? intval($_POST['customer_id']) : 0);
+            if ($customerId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Invalid customer ID.']);
+                exit;
+            }
+
+            $customer = $this->customerModel->getCustomerById($customerId);
+            if (!$customer) {
+                echo json_encode(['success' => false, 'message' => 'Customer not found.']);
+                exit;
+            }
+
+            $stats = $this->customerModel->getCustomerStats($customerId);
+            $ledgerRaw = $this->customerModel->getActivityLedger($customerId);
+
+            $ledger = [];
+            if (is_array($ledgerRaw)) {
+                foreach ($ledgerRaw as $row) {
+                    $ledger[] = [
+                        'type' => $row->type,
+                        'id' => intval($row->id),
+                        'ref' => $row->ref,
+                        'date' => $row->date,
+                        'debit' => floatval($row->debit),
+                        'credit' => floatval($row->credit),
+                        'balance' => floatval($row->balance ?? 0),
+                        'created_at' => $row->created_at ?? ''
+                    ];
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'customer' => [
+                    'id' => intval($customer->id),
+                    'name' => $customer->name,
+                    'email' => $customer->email ?: '',
+                    'phone' => $customer->phone ?: '',
+                    'whatsapp' => $customer->whatsapp ?: '',
+                    'address' => $customer->address ?: '',
+                    'territory' => $customer->territory ?: '',
+                    'mca_name' => $customer->mca_name ?: '',
+                    'credit_limit' => floatval($customer->credit_limit),
+                    'vat_number' => $customer->vat_number ?: '',
+                    'status' => $customer->status ?: 'Active',
+                    'customer_type' => $customer->customer_type ?: 'Standard',
+                    'notes' => $customer->notes ?: '',
+                    'latitude' => $customer->latitude !== null ? floatval($customer->latitude) : null,
+                    'longitude' => $customer->longitude !== null ? floatval($customer->longitude) : null,
+                    'created_at' => $customer->created_at ?: ''
+                ],
+                'stats' => [
+                    'total_orders' => intval($stats->total_orders ?? 0),
+                    'total_billed' => floatval($stats->total_billed ?? 0),
+                    'total_paid' => floatval($stats->total_paid ?? 0),
+                    'total_credited' => floatval($stats->total_credited ?? 0),
+                    'opening_balance' => floatval($stats->opening_balance ?? 0),
+                    'outstanding' => floatval($stats->outstanding ?? 0)
+                ],
+                'ledger' => $ledger
+            ]);
+            exit;
+        } catch (Exception $e) {
+            error_log("Error in api_get_customer_profile: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+            exit;
+        }
+    }
 }
 
