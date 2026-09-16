@@ -9,8 +9,19 @@ class SalesController extends Controller {
 
     public function __construct() {
         $isPublicInvoice = false;
-        $url = explode('/', filter_var(rtrim($_GET['url'] ?? '', '/'), FILTER_SANITIZE_URL));
-        if (isset($url[0]) && strtolower($url[0]) === 'sales' && isset($url[1]) && strtolower($url[1]) === 'show' && isset($url[2])) {
+        $reqUri = $_SERVER['REQUEST_URI'] ?? '';
+        $urlGet = $_GET['url'] ?? '';
+        $urlParts = explode('/', filter_var(rtrim($urlGet, '/'), FILTER_SANITIZE_URL));
+
+        if (
+            (isset($urlParts[0]) && strtolower($urlParts[0]) === 'sales' && isset($urlParts[1]) && in_array(strtolower($urlParts[1]), ['show', 'invoice', 'print', 'download_pdf'])) ||
+            (stripos($reqUri, '/sales/show') !== false) ||
+            (stripos($reqUri, '/sales/invoice') !== false) ||
+            (stripos($reqUri, '/sales/print') !== false) ||
+            (stripos($reqUri, '/sales/download_pdf') !== false) ||
+            (stripos($urlGet, 'sales/show') !== false) ||
+            (stripos($urlGet, 'sales/invoice') !== false)
+        ) {
             $isPublicInvoice = true;
         }
 

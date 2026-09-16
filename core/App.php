@@ -99,9 +99,21 @@ class App {
             }
         }
 
-        // Allow public access to sales/show
+        // Allow public access to sales invoice viewing and portal routes
         $isPublicInvoice = false;
-        if (isset($url[0]) && strtolower($url[0]) === 'sales' && isset($url[1]) && strtolower($url[1]) === 'show' && isset($url[2])) {
+        $reqUri = $_SERVER['REQUEST_URI'] ?? '';
+        $urlGet = $_GET['url'] ?? '';
+        if (
+            (isset($url[0]) && strtolower($url[0]) === 'sales' && isset($url[1]) && in_array(strtolower($url[1]), ['show', 'invoice', 'print', 'download_pdf'])) ||
+            (isset($url[0]) && strtolower($url[0]) === 'portal' && isset($url[1]) && strtolower($url[1]) === 'show') ||
+            (stripos($reqUri, '/sales/show') !== false) ||
+            (stripos($reqUri, '/sales/invoice') !== false) ||
+            (stripos($reqUri, '/sales/print') !== false) ||
+            (stripos($reqUri, '/sales/download_pdf') !== false) ||
+            (stripos($reqUri, '/portal/show') !== false) ||
+            (stripos($urlGet, 'sales/show') !== false) ||
+            (stripos($urlGet, 'sales/invoice') !== false)
+        ) {
             $isPublicInvoice = true;
         }
 
