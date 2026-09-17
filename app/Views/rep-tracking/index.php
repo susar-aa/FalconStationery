@@ -387,52 +387,124 @@
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
-                        <div style="border:1px solid #cbd5e1; border-radius:8px; padding:20px; background:#fff;">
-                            <h4 style="margin:0 0 15px 0; color:var(--primary); font-size:15px; font-weight:bold;"><i class="ph ph-clipboard-text"></i> Route & Representative Info</h4>
-                            <table style="width:100%; border-collapse:collapse; font-size:13px;">
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Route Code</td><td style="padding:10px 0; font-weight:bold; font-family:var(--f-mono);" id="tab1RouteNumber">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Route Name</td><td style="padding:10px 0; font-weight:bold;" id="tab1RouteName">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Representative</td><td style="padding:10px 0; font-weight:bold;" id="tab1RepName">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Current Status</td><td style="padding:10px 0;"><span id="tab1Status" style="font-weight:bold; background:#e2e8f0; padding:2px 8px; border-radius:4px; font-size:11px;">-</span></td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Start Time</td><td style="padding:10px 0;" id="tab1StartTime">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">End Time</td><td style="padding:10px 0;" id="tab1EndTime">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Total Sales Value</td><td style="padding:10px 0; font-weight:bold; color:var(--c-green);" id="tab1SalesValue">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Total Bills Count</td><td style="padding:10px 0; font-weight:bold;" id="tab1BillsCount">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Unproductive Visits</td><td style="padding:10px 0; font-weight:bold; color:#ea580c;" id="tab1UnproductiveCount">0</td></tr>
-                            </table>
-                            <div style="display: flex; gap: 8px; margin-top: 15px;">
-                                <button id="auto-evt-button-19" type="button"  style="flex:1; justify-content:center; display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:0.5px solid var(--c-blue-mid); background:var(--c-surface); color:var(--c-blue); border-radius:var(--r-sm); font-weight:600; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs);">
+                    <!-- ═══ KPI STAT ROW ═══ -->
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; margin-bottom:20px;">
+                        <!-- Sales Value -->
+                        <div style="background:linear-gradient(135deg,#0f766e 0%,#14b8a6 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(20,184,166,0.25); position:relative; overflow:hidden;">
+                            <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
+                            <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Total Sales</div>
+                            <div id="tab1SalesValue" style="font-size:22px; font-weight:800; font-family:var(--f-mono); letter-spacing:-0.5px;">-</div>
+                            <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-chart-line-up"></i> Route Revenue</div>
+                        </div>
+                        <!-- Bills Count -->
+                        <div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(59,130,246,0.25); position:relative; overflow:hidden;">
+                            <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
+                            <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Total Bills</div>
+                            <div id="tab1BillsCount" style="font-size:22px; font-weight:800; font-family:var(--f-mono);">-</div>
+                            <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-receipt"></i> Invoices Issued</div>
+                        </div>
+                        <!-- Distance -->
+                        <div style="background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(168,85,247,0.25); position:relative; overflow:hidden;">
+                            <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
+                            <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Distance Covered</div>
+                            <div id="tab1Distance" style="font-size:22px; font-weight:800; font-family:var(--f-mono);">-</div>
+                            <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-gauge"></i> Odometer Range</div>
+                        </div>
+                        <!-- Unproductive -->
+                        <div style="background:linear-gradient(135deg,#9a3412 0%,#ea580c 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(234,88,12,0.25); position:relative; overflow:hidden;">
+                            <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
+                            <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Unproductive</div>
+                            <div id="tab1UnproductiveCount" style="font-size:22px; font-weight:800; font-family:var(--f-mono);">0</div>
+                            <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-x-circle"></i> Failed Visits</div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ MAIN DETAIL GRID ═══ -->
+                    <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:16px; margin-bottom:16px;">
+
+                        <!-- LEFT: Route & Rep Info -->
+                        <div style="background:var(--c-surface); border:1px solid var(--c-separator); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm);">
+                            <div style="background:linear-gradient(90deg,var(--primary) 0%,#4f46e5 100%); padding:14px 18px; display:flex; align-items:center; justify-content:space-between;">
+                                <div style="display:flex; align-items:center; gap:8px; color:#fff;">
+                                    <i class="ph-bold ph-clipboard-text" style="font-size:16px;"></i>
+                                    <span style="font-weight:700; font-size:13px; letter-spacing:0.03em;">Route &amp; Representative</span>
+                                </div>
+                                <span id="tab1Status" style="font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.35); letter-spacing:0.04em;">-</span>
+                            </div>
+                            <div style="padding:6px 0;">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--c-separator);">
+                                    <div style="padding:12px 18px; border-right:1px solid var(--c-separator);">
+                                        <div style="font-size:10px; font-weight:700; color:var(--t-label); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Route Code</div>
+                                        <div id="tab1RouteNumber" style="font-weight:800; font-family:var(--f-mono); font-size:14px; color:var(--primary);">-</div>
+                                    </div>
+                                    <div style="padding:12px 18px;">
+                                        <div style="font-size:10px; font-weight:700; color:var(--t-label); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Route Name</div>
+                                        <div id="tab1RouteName" style="font-weight:700; font-size:13px; color:var(--t-primary);">-</div>
+                                    </div>
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--c-separator);">
+                                    <div style="padding:12px 18px; border-right:1px solid var(--c-separator);">
+                                        <div style="font-size:10px; font-weight:700; color:var(--t-label); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Representative</div>
+                                        <div style="font-weight:700; font-size:13px; color:var(--t-primary); display:flex; align-items:center; gap:6px;"><i class="ph ph-user-circle" style="color:var(--primary); font-size:16px;"></i><span id="tab1RepName">-</span></div>
+                                    </div>
+                                    <div style="padding:12px 18px;">
+                                        <div style="font-size:10px; font-weight:700; color:var(--t-label); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Start Time</div>
+                                        <div id="tab1StartTime" style="font-weight:600; font-size:13px; color:var(--t-primary); font-family:var(--f-mono);">-</div>
+                                    </div>
+                                </div>
+                                <div style="display:grid; grid-template-columns:1fr 1fr;">
+                                    <div style="padding:12px 18px; border-right:1px solid var(--c-separator);">
+                                        <div style="font-size:10px; font-weight:700; color:var(--t-label); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">End Time</div>
+                                        <div id="tab1EndTime" style="font-weight:600; font-size:13px; color:var(--t-primary); font-family:var(--f-mono);">-</div>
+                                    </div>
+                                    <div style="padding:12px 18px;">
+                                        <div style="font-size:10px; font-weight:700; color:var(--t-label); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">ODO: Start → End</div>
+                                        <div style="font-weight:700; font-size:12px; color:#7c3aed; font-family:var(--f-mono);"><span id="tab1StartMeter">-</span> → <span id="tab1EndMeter">-</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="padding:12px 16px; background:var(--c-surface2); border-top:1px solid var(--c-separator); display:flex; gap:8px; flex-wrap:wrap;">
+                                <button id="auto-evt-button-19" type="button" style="flex:1; min-width:100px; justify-content:center; display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border:1px solid var(--c-blue-mid); background:var(--c-surface); color:var(--c-blue); border-radius:var(--r-sm); font-weight:700; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs); transition:all 0.15s ease;">
                                     <i class="ph ph-swap"></i> Switch Route
                                 </button>
-                                <button type="button" id="btnViewMapDetails"  style="flex:1; justify-content:center; display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:none; background:var(--c-orange); color:#fff; border-radius:var(--r-sm); font-weight:600; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs);">
+                                <button type="button" id="btnViewMapDetails" style="flex:1; min-width:100px; justify-content:center; display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border:none; background:var(--c-orange); color:#fff; border-radius:var(--r-sm); font-weight:700; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs); transition:all 0.15s ease;">
                                     <i class="ph ph-map-pin"></i> View Map
                                 </button>
-                                <button type="button" id="btnUnbindRouteTab1" onclick="unbindCombinedRoute()" style="flex:1; justify-content:center; display:none; align-items:center; gap:6px; padding:8px 12px; border:none; background:#dc2626; color:#fff; border-radius:var(--r-sm); font-weight:600; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs);">
+                                <button type="button" id="btnUnbindRouteTab1" onclick="unbindCombinedRoute()" style="flex:1; min-width:100px; justify-content:center; display:none; align-items:center; gap:6px; padding:9px 14px; border:none; background:#dc2626; color:#fff; border-radius:var(--r-sm); font-weight:700; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs); transition:all 0.15s ease;">
                                     <i class="ph ph-link-break"></i> Undo Bind
                                 </button>
-                                <button id="auto-evt-button-20" type="button"  style="flex:1; justify-content:center; display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:none; background:#dc2626; color:#fff; border-radius:var(--r-sm); font-weight:600; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs);">
+                                <button id="auto-evt-button-20" type="button" style="flex:1; min-width:100px; justify-content:center; display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border:none; background:#dc2626; color:#fff; border-radius:var(--r-sm); font-weight:700; cursor:pointer; font-size:12px; box-shadow:var(--shadow-xs); transition:all 0.15s ease;">
                                     <i class="ph ph-trash"></i> Delete Route
                                 </button>
                             </div>
                         </div>
-                        <div style="border:1px solid #cbd5e1; border-radius:8px; padding:20px; background:#fff;">
-                            <h4 style="margin:0 0 15px 0; color:var(--primary); font-size:15px; font-weight:bold;"><i class="ph ph-gauge"></i> Odometer Readings</h4>
-                            <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:15px;">
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Start ODO</td><td style="padding:10px 0; font-weight:bold;" id="tab1StartMeter">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">End ODO</td><td style="padding:10px 0; font-weight:bold;" id="tab1EndMeter">-</td></tr>
-                                <tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px 0; color:#64748b; font-weight:bold;">Total Distance</td><td style="padding:10px 0; font-weight:bold; color:#0f172a;" id="tab1Distance">-</td></tr>
-                            </table>
+
+                        <!-- RIGHT: Notes Card -->
+                        <div style="background:var(--c-surface); border:1px solid var(--c-separator); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); display:flex; flex-direction:column;">
+                            <div style="background:linear-gradient(90deg,#0f766e 0%,#14b8a6 100%); padding:14px 18px; display:flex; align-items:center; gap:8px; color:#fff;">
+                                <i class="ph-bold ph-note-pencil" style="font-size:15px;"></i>
+                                <span style="font-weight:700; font-size:13px; letter-spacing:0.03em;">Route General Notes</span>
+                            </div>
+                            <div style="padding:14px 16px; flex:1; display:flex; flex-direction:column;">
+                                <textarea id="tab1RouteNotes" style="width:100%; flex:1; min-height:160px; padding:10px 12px; border:1px solid var(--c-separator); border-radius:8px; font-size:13px; resize:vertical; background:var(--c-surface2); color:var(--t-primary); outline:none; font-family:inherit; box-sizing:border-box;" placeholder="Write any remarks or observations regarding this route..."></textarea>
+                                <div style="text-align:right; margin-top:10px;">
+                                    <button id="btnSaveRouteNotes" style="padding:9px 20px; background:linear-gradient(135deg,#0f766e,#14b8a6); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(20,184,166,0.3); transition:all 0.15s ease;">
+                                        <i class="ph ph-floppy-disk"></i> Save Notes
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <!-- Unproductive Sales Log -->
-                    <div style="border:1px solid #cbd5e1; border-radius:8px; padding:20px; background:#fff; margin-bottom:20px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <h4 style="margin:0; color:var(--primary); font-size:15px; font-weight:bold; display:flex; align-items:center; gap:8px;">
-                                <i class="ph ph-x-circle" style="color: #ea580c;"></i> Unproductive Sales & Visits Log
-                            </h4>
-                            <span id="tab1UnproductiveBadge" style="background:#fff7ed; color:#c2410c; border:1px solid #ffedd5; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold;">0 Visits</span>
+
+
+                    <!-- ═══ UNPRODUCTIVE VISITS LOG ═══ -->
+                    <div style="background:var(--c-surface); border:1px solid var(--c-separator); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); margin-bottom:16px;">
+                        <div style="background:linear-gradient(90deg,#9a3412 0%,#ea580c 100%); padding:14px 18px; display:flex; align-items:center; justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:8px; color:#fff;">
+                                <i class="ph-bold ph-x-circle" style="font-size:16px;"></i>
+                                <span style="font-weight:700; font-size:13px; letter-spacing:0.03em;">Unproductive Sales &amp; Visits Log</span>
+                            </div>
+                            <span id="tab1UnproductiveBadge" style="background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.35); padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:0.04em;">0 Visits</span>
                         </div>
                         <div style="overflow-x:auto;">
                             <table class="data-table" style="margin-top:0; width:100%; font-size:12px;">
@@ -451,14 +523,6 @@
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-
-                    <div style="border:1px solid #cbd5e1; border-radius:8px; padding:20px; background:#fff; margin-bottom:20px;">
-                        <h4 style="margin:0 0 10px 0; color:var(--primary); font-size:15px; font-weight:bold;"><i class="ph ph-note-pencil"></i> Route General Notes</h4>
-                        <textarea id="tab1RouteNotes" style="width:100%; height:100px; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; resize:vertical;" placeholder="Write any remarks or observations regarding this route..."></textarea>
-                        <div style="text-align:right; margin-top:10px;">
-                            <button id="btnSaveRouteNotes"  style="padding:8px 16px; background:#3f51b5; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-floppy-disk"></i> Save Route Notes</button>
                         </div>
                     </div>
                 </div>
