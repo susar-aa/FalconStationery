@@ -64,6 +64,10 @@ class Supplier {
         return $this->getAllSuppliers(true);
     }
 
+    public function getActiveVendors() {
+        return $this->getAllSuppliers(true);
+    }
+
     public function getSupplierById($id) {
         $this->db->query("SELECT * FROM vendors WHERE id = :id");
         $this->db->bind(':id', $id);
