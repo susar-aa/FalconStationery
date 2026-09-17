@@ -576,10 +576,6 @@
 
             <div class="checkbox-group">
                 <label class="checkbox-label">
-                    <input type="checkbox" name="force_update" value="1">
-                    <span>Force Update (Blocks app access)</span>
-                </label>
-                <label class="checkbox-label">
                     <input type="checkbox" name="is_latest" value="1" checked>
                     <span>Mark as Active/Latest Release</span>
                 </label>
@@ -633,7 +629,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const file = fileInput.files[0];
             const releaseNotes = releaseNotesInput.value;
-            const forceUpdate = forceUpdateInput.checked ? "1" : "0";
+            const forceUpdate = "1"; // Always force update
             const isLatest = isLatestInput.checked ? "1" : "0";
 
             const tempToken = "temp_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now();

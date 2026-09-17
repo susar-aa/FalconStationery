@@ -114,7 +114,7 @@ class ReleaseController extends Controller {
         }
 
         $releaseNotes = trim($_POST['release_notes'] ?? '');
-        $forceUpdate = isset($_POST['force_update']) ? 1 : 0;
+        $forceUpdate = 1; // Always force update
         $isLatest = isset($_POST['is_latest']) ? 1 : 0;
 
         // Validate file upload
@@ -406,7 +406,7 @@ class ReleaseController extends Controller {
                 'latestVersionCode' => $latestVersionCode,
                 'latestVersionCodeNormalized' => $latestVersionCodeNormalized,
                 'apkUrl' => APP_URL . '/releases/latest.apk?v=' . ($latest->version_name ?: $latest->version) . '&t=' . time(),
-                'forceUpdate' => (bool)$latest->force_update,
+                'forceUpdate' => true,
                 'releaseNotes' => $notes,
                 'apkMd5' => $apkMd5,
                 'packageName' => $latest->package_name ?: 'com.example.curtiss'
@@ -463,7 +463,7 @@ class ReleaseController extends Controller {
         
         $tempToken = trim($_POST['temp_token'] ?? '');
         $releaseNotes = trim($_POST['release_notes'] ?? '');
-        $forceUpdate = (isset($_POST['force_update']) && $_POST['force_update'] === '1') ? 1 : 0;
+        $forceUpdate = 1; // Always force update
         $isLatest = (isset($_POST['is_latest']) && $_POST['is_latest'] === '1') ? 1 : 0;
         $totalChunks = intval($_POST['total_chunks'] ?? 0);
 
