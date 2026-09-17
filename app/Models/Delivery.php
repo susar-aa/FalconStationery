@@ -245,7 +245,8 @@ class Delivery {
             $idList = implode(',', array_map('intval', $selectedIds));
             $this->db->query("
                 SELECT i.*, c.name as customer_name,
-                (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as true_grand_total
+                (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as true_grand_total,
+                COALESCE((SELECT SUM(amount) FROM customer_payment_allocations WHERE invoice_id = i.id AND is_reversed = 0), 0) as amount_paid
                 FROM invoices i
                 JOIN customers c ON i.customer_id = c.id
                 WHERE i.id IN ($idList) AND i.status != 'Voided'

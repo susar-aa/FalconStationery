@@ -3308,6 +3308,7 @@
                 alert(data.message);
                 closeApplyCreditPaymentModal();
                 loadTab10Accounting(routeId);
+                loadTab8Reconciliation(routeId);
             } else {
                 alert(data.message || 'Failed to apply credit payment.');
             }

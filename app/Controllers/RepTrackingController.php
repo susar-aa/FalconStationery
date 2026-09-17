@@ -3304,8 +3304,8 @@ class RepTrackingController extends Controller {
             }
 
             // 4. Record Customer Payment & Allocation
-            $db->query("INSERT INTO customer_payments (customer_id, amount, unallocated_amount, payment_date, payment_method, reference, notes, journal_entry_id, created_by, status) 
-                        VALUES (:cid, :amt, 0.00, :date, :method, :ref, :notes, :jid, :uid, 'Active')");
+            $db->query("INSERT INTO customer_payments (customer_id, amount, unallocated_amount, payment_date, payment_method, reference, notes, journal_entry_id, created_by, status, rep_route_id) 
+                        VALUES (:cid, :amt, 0.00, :date, :method, :ref, :notes, :jid, :uid, 'Active', :rid)");
             $db->bind(':cid', $customerId);
             $db->bind(':amt', $amount);
             $db->bind(':date', $paymentDate);
@@ -3314,8 +3314,28 @@ class RepTrackingController extends Controller {
             $db->bind(':notes', !empty($notes) ? $notes : "Applied to attached credit bill " . $inv->invoice_number);
             $db->bind(':jid', $journalId);
             $db->bind(':uid', $userId);
+            $db->bind(':rid', $routeId);
             $db->execute();
             $paymentId = $db->lastInsertId();
+
+            // Also record route collection in pending_collections for financial & route variance tracking
+            $db->query("INSERT INTO pending_collections (
+                customer_id, route_id, payment_method, amount, bank_name, cheque_number, cheque_date, status, notes, created_by, created_at, is_verified, finalized_by, finalized_at, debit_account_id, credit_account_id
+            ) VALUES (
+                :cid, :rid, :method, :amt, :bn, :cn, :cdate, 'Finalized', :notes, :uid, NOW(), 1, :uid, NOW(), :da, :ca
+            )");
+            $db->bind(':cid', $customerId);
+            $db->bind(':rid', $routeId);
+            $db->bind(':method', $paymentMethod);
+            $db->bind(':amt', $amount);
+            $db->bind(':bn', $chequeBank);
+            $db->bind(':cn', $chequeNumber);
+            $db->bind(':cdate', !empty($chequeDate) ? $chequeDate : date('Y-m-d'));
+            $db->bind(':notes', !empty($notes) ? $notes : "Credit bill payment for invoice " . $inv->invoice_number);
+            $db->bind(':uid', $userId);
+            $db->bind(':da', $debitAccountId);
+            $db->bind(':ca', $arAccountId);
+            $db->execute();
 
             // Save Payment Allocation to the target Credit Invoice
             $db->query("INSERT INTO customer_payment_allocations (customer_payment_id, invoice_id, amount) 
