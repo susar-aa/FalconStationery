@@ -529,3 +529,7 @@ CREATE TABLE IF NOT EXISTS rep_targets (
 -- Ensure columns exist if rep_targets table was previously created
 ALTER TABLE rep_targets ADD COLUMN IF NOT EXISTS collection_efficiency_target DECIMAL(5,2) DEFAULT 80.00;
 ALTER TABLE rep_targets ADD COLUMN IF NOT EXISTS new_customers_target INT DEFAULT 5;
+
+-- 15. Invoices Table: Modify status column to VARCHAR(50) to support 'Partially Paid' and prevent truncation errors
+ALTER TABLE invoices MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'Unpaid';
+

@@ -139169,3 +139169,8 @@ SQL: ALTER TABLE stock_ledger ADD COLUMN stock_status VARCHAR(50) DEFAULT 'Good'
 #2 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\public\test_full.php(12): require_once('C:\\xampp\\htdocs...')
 #3 {main}
 
+[2026-09-17 19:52:39] Database initialization failed: SQLSTATE[HY000] [1045] Access denied for user 'curtiss_erp'@'localhost' (using password: YES)
+#0 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\core\Database.php(27): PDO->__construct('mysql:host=127....', 'curtiss_erp', 'Susara@20061100...', Array)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\scratch\fix_invoice_status_column.php(6): Database->__construct()
+#2 {main}
+
