@@ -346,7 +346,7 @@ class AccountingController extends Controller {
 
         $data = [
             'title' => 'Journal Entries',
-            'content_view' => 'accounting/journal_entries',
+            'content_view' => 'accounting/journal',
             'accounts' => $this->coaModel->getAccounts(),
             'customers' => $this->model('Customer')->getActiveCustomers(),
             'suppliers' => $this->model('Supplier')->getActiveSuppliers(),
