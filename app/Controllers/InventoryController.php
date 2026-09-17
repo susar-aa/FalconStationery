@@ -2374,6 +2374,39 @@ class InventoryController extends Controller {
         header('Location: ' . APP_URL . '/inventory/deleted');
         exit;
     }
+
+    /**
+     * Endpoint for bulk deleting multiple selected products.
+     */
+    public function bulk_delete() {
+        $this->checkPermission('inventory', 'delete');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
+            exit;
+        }
+
+        $itemIds = $_POST['item_ids'] ?? [];
+        if (!is_array($itemIds) || empty($itemIds)) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'No products selected for deletion.']);
+            exit;
+        }
+
+        $result = $this->itemModel->bulkDeleteItems($itemIds);
+
+        $this->logActivity(
+            'Bulk Product Delete',
+            'Inventory',
+            "Executed bulk delete for " . count($itemIds) . " products. " . ($result['message'] ?? ''),
+            0
+        );
+
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        exit;
+    }
 }
 
 

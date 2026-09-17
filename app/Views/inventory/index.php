@@ -1592,6 +1592,7 @@ if ($importResults) unset($_SESSION['import_results']);
     <div class="bulk-divider"></div>
     <button type="button" onclick="clearSelection()" class="bulk-cancel">Cancel</button>
     <button type="button" onclick="openBulkEditModal()" class="bulk-action"><i class="fa-solid fa-pen"></i> Edit</button>
+    <button type="button" onclick="confirmBulkDelete()" class="bulk-action" style="background: rgba(255, 59, 48, 0.35); color: #fff;"><i class="fa-solid fa-trash-can"></i> Delete</button>
 </div>
 
 
@@ -2191,6 +2192,42 @@ function toggleProductStatus(id, targetStatus) {
     .catch(err => {
         console.error(err);
         alert('Error toggling status.');
+    });
+}
+
+function confirmBulkDelete() {
+    const checkboxes = document.querySelectorAll('.item-select-checkbox');
+    const selected = [...checkboxes].filter(c => c.checked);
+    if (selected.length === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selected.length} selected products?\n\nProducts with historical transaction records will be safely moved to 'Deleted Products', while unused products will be permanently deleted.`)) {
+        return;
+    }
+
+    const formData = new FormData();
+    selected.forEach(cb => {
+        formData.append('item_ids[]', cb.value);
+    });
+
+    fetch('<?php echo APP_URL; ?>/inventory/bulk_delete', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            clearSelection();
+            if (data.message) {
+                alert(data.message);
+            }
+            applyAjaxFilters();
+        } else {
+            alert(data.error || data.message || 'Bulk delete failed.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('An error occurred during bulk deletion.');
     });
 }
 

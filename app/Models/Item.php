@@ -1284,4 +1284,51 @@ class Item {
             return false;
         }
     }
+
+    /**
+     * Process bulk deletion for multiple products.
+     * Items with transaction history are soft-deleted (moved to Deleted Products).
+     * Items without transaction history are permanently hard-deleted.
+     */
+    public function bulkDeleteItems(array $itemIds) {
+        $itemIds = array_map('intval', array_filter($itemIds));
+        if (empty($itemIds)) {
+            return ['success' => false, 'message' => 'No products selected for deletion.'];
+        }
+
+        $softCount = 0;
+        $hardCount = 0;
+        $failCount = 0;
+
+        foreach ($itemIds as $id) {
+            $res = $this->deleteItem($id);
+            if ($res && !empty($res['success'])) {
+                if (($res['type'] ?? '') === 'soft_delete') {
+                    $softCount++;
+                } else {
+                    $hardCount++;
+                }
+            } else {
+                $failCount++;
+            }
+        }
+
+        $totalProcessed = $softCount + $hardCount;
+        $msg = "Bulk deletion processed for {$totalProcessed} product(s).";
+        if ($softCount > 0) {
+            $msg .= " {$softCount} moved to Deleted Products (has historical data).";
+        }
+        if ($hardCount > 0) {
+            $msg .= " {$hardCount} permanently deleted.";
+        }
+
+        return [
+            'success' => true,
+            'processed' => $totalProcessed,
+            'soft_deleted' => $softCount,
+            'hard_deleted' => $hardCount,
+            'failed' => $failCount,
+            'message' => $msg
+        ];
+    }
 }
