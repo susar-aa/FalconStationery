@@ -95,27 +95,16 @@
     font-size: 14px;
 }
 
-/* 3 Column Layout */
+/* 2 Column Layout (Main Table + Timeline) */
 .rel-grid {
     display: grid;
-    grid-template-columns: 360px 1fr 300px;
+    grid-template-columns: 1fr 340px;
     gap: 20px;
 }
 
-@media (max-width: 1400px) {
-    .rel-grid {
-        grid-template-columns: 360px 1fr;
-    }
-    .timeline-col {
-        grid-column: span 2;
-    }
-}
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
     .rel-grid {
         grid-template-columns: 1fr;
-    }
-    .timeline-col {
-        grid-column: span 1;
     }
 }
 
@@ -327,6 +316,70 @@
     white-space: pre-wrap;
 }
 
+/* Popup Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--dur-fast) ease;
+}
+.modal-overlay.open {
+    display: flex;
+    opacity: 1;
+}
+.modal-box {
+    background: var(--c-surface);
+    width: 520px;
+    max-width: 90vw;
+    border-radius: var(--r-xl);
+    padding: 28px;
+    border: 0.5px solid var(--c-separator);
+    box-shadow: var(--shadow-xl);
+    transform: scale(0.95);
+    transition: transform var(--dur-fast) var(--ease-spring);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal-overlay.open .modal-box {
+    transform: scale(1);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--t-primary);
+}
+.modal-close-btn {
+    background: var(--c-fill);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--t-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--dur-fast) ease;
+}
+.modal-close-btn:hover {
+    background: var(--c-fill2);
+    color: var(--t-primary);
+}
+
 /* Alerts */
 .sf-alert {
     padding: 12px 16px;
@@ -343,12 +396,16 @@
 </style>
 
 <div class="rel-root">
+    <!-- Header with Action Button to Open Upload Modal -->
     <div class="sf-page-header">
         <div class="sf-page-title">
             <h1>App Release Management</h1>
             <p>Manage client-side updates, APK distributions, and version rollout strategies.</p>
         </div>
-        <div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="btn-sf btn-sf-primary" onclick="openUploadModal()">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Deploy New Release
+            </button>
             <a href="<?= APP_URL ?>/release/api_latest_version" target="_blank" class="btn-sf btn-sf-secondary">
                 <i class="fa-solid fa-code"></i> View API JSON
             </a>
@@ -371,68 +428,25 @@
     </div>
 
     <div class="rel-grid">
-        <!-- 1. Upload Form Panel -->
-        <div class="sf-panel" style="height: fit-content;">
-            <h3 class="sf-panel-title">
-                <i class="fa-solid fa-circle-plus" style="color: var(--c-blue);"></i> Deploy New Release
-            </h3>
-            
-            <form action="<?= APP_URL ?>/release/upload" method="POST" enctype="multipart/form-data" id="uploadReleaseForm">
-                <div class="form-group">
-                    <label for="apk">APK Binary File</label>
-                    <input type="file" name="apk" id="apk" class="form-control-sf" accept=".apk" required style="padding: 8px;">
-                    <div style="font-size: 11px; color: var(--t-label); margin-top: 4px;">Upload the compiled Android app binary package.</div>
-                    <div style="font-size: 11.5px; color: #166534; background: var(--c-green-light); border: 0.5px solid rgba(52,199,89,0.3); padding: 10px; border-radius: var(--r-sm); margin-top: 8px; line-height: 1.4;">
-                        <i class="fa-solid fa-circle-info"></i> APK metadata (Package Name, Version Name, Code) will be extracted automatically. Ensure you bumped <code>versionCode</code> in your build config.
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="release_notes">Release Notes & Changelog</label>
-                    <textarea name="release_notes" id="release_notes" class="form-control-sf" rows="5" placeholder="• Fixed crash on Billing POS screen&#10;• Added Sample Code search indexing&#10;• General performance optimizations"></textarea>
-                </div>
-
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="force_update" value="1">
-                        <span>Force Update (Blocks app access)</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" name="is_latest" value="1" checked>
-                        <span>Mark as Active/Latest Release</span>
-                    </label>
-                </div>
-
-                <!-- Upload Progress Bar (AJAX Mode) -->
-                <div id="uploadProgressContainer" style="display: none; margin-bottom: 18px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; font-weight: 600;">
-                        <span style="color: var(--t-secondary);">Uploading APK File...</span>
-                        <span id="uploadPercent" style="color: var(--c-blue);">0%</span>
-                    </div>
-                    <div style="width: 100%; height: 6px; background: var(--c-fill2); border-radius: var(--r-pill); overflow: hidden;">
-                        <div id="uploadProgressBar" style="width: 0%; height: 100%; background: var(--c-blue); transition: width 0.1s ease;"></div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-sf btn-sf-primary" style="width: 100%; justify-content: center; padding: 12px;" id="btnUploadSubmit">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload and Deploy Release
-                </button>
-            </form>
-        </div>
-
-        <!-- 2. Deployment History Table Panel -->
+        <!-- 1. Deployment History Table Panel (Main Area) -->
         <div class="table-panel">
-            <div style="padding: 20px 24px; border-bottom: 0.5px solid var(--c-separator);">
+            <div style="padding: 20px 24px; border-bottom: 0.5px solid var(--c-separator); display: flex; justify-content: space-between; align-items: center;">
                 <h3 class="sf-panel-title" style="margin: 0;">
                     <i class="fa-solid fa-clock-rotate-left" style="color: var(--c-blue);"></i> Deployment History
                 </h3>
+                <button type="button" class="btn-sf btn-sf-primary" style="font-size: 12px; padding: 6px 14px;" onclick="openUploadModal()">
+                    <i class="fa-solid fa-plus"></i> New Release
+                </button>
             </div>
 
             <?php if (empty($data['releases'])): ?>
                 <div style="text-align: center; padding: 60px 20px; color: var(--t-secondary);">
                     <i class="fa-solid fa-cloud-slash" style="font-size: 42px; opacity: 0.3; margin-bottom: 14px; display: block;"></i>
                     <div style="font-size: 16px; font-weight: 700; color: var(--t-primary); margin-bottom: 4px;">No Releases Deployed Yet</div>
-                    <div style="font-size: 13px;">Upload your first APK package to initialize the update delivery system.</div>
+                    <div style="font-size: 13px; margin-bottom: 16px;">Upload your first APK package to initialize the update delivery system.</div>
+                    <button type="button" class="btn-sf btn-sf-primary" onclick="openUploadModal()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload First Release
+                    </button>
                 </div>
             <?php else: ?>
                 <div style="overflow-x: auto;">
@@ -472,7 +486,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div style="font-size: 13px; color: var(--t-secondary); max-width: 260px; white-space: pre-wrap; line-height: 1.4;"><?= htmlspecialchars($r->release_notes) ?></div>
+                                        <div style="font-size: 13px; color: var(--t-secondary); max-width: 320px; white-space: pre-wrap; line-height: 1.4;"><?= htmlspecialchars($r->release_notes) ?></div>
                                     </td>
                                     <td style="color: var(--t-secondary); font-size: 13px;">
                                         <?= date('M d, Y H:i', strtotime($r->created_at)) ?>
@@ -502,7 +516,7 @@
             <?php endif; ?>
         </div>
 
-        <!-- 3. Release Timeline Panel -->
+        <!-- 2. Release Timeline Panel (Right Sidebar) -->
         <div class="sf-panel timeline-col" style="height: fit-content;">
             <h3 class="sf-panel-title">
                 <i class="fa-solid fa-code-branch" style="color: var(--c-blue);"></i> Release Timeline
@@ -537,7 +551,69 @@
     </div>
 </div>
 
+<!-- Upload Release Popup Modal Panel -->
+<div class="modal-overlay" id="uploadReleaseModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--c-blue); margin-right: 8px;"></i> Deploy New Release</h3>
+            <button type="button" class="modal-close-btn" onclick="closeUploadModal()">&times;</button>
+        </div>
+        
+        <form action="<?= APP_URL ?>/release/upload" method="POST" enctype="multipart/form-data" id="uploadReleaseForm">
+            <div class="form-group">
+                <label for="apk">APK Binary File <span style="color: var(--c-red);">*</span></label>
+                <input type="file" name="apk" id="apk" class="form-control-sf" accept=".apk" required style="padding: 8px;">
+                <div style="font-size: 11px; color: var(--t-label); margin-top: 4px;">Upload the compiled Android app binary package.</div>
+                <div style="font-size: 11.5px; color: #166534; background: var(--c-green-light); border: 0.5px solid rgba(52,199,89,0.3); padding: 10px; border-radius: var(--r-sm); margin-top: 8px; line-height: 1.4;">
+                    <i class="fa-solid fa-circle-info"></i> APK metadata (Package Name, Version Name, Code) will be extracted automatically from the binary.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="release_notes">Release Notes & Changelog</label>
+                <textarea name="release_notes" id="release_notes" class="form-control-sf" rows="5" placeholder="• Fixed crash on Billing POS screen&#10;• Added Sample Code search indexing&#10;• General performance optimizations"></textarea>
+            </div>
+
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="force_update" value="1">
+                    <span>Force Update (Blocks app access)</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_latest" value="1" checked>
+                    <span>Mark as Active/Latest Release</span>
+                </label>
+            </div>
+
+            <!-- Upload Progress Bar (AJAX Mode) -->
+            <div id="uploadProgressContainer" style="display: none; margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; font-weight: 600;">
+                    <span style="color: var(--t-secondary);">Uploading APK File...</span>
+                    <span id="uploadPercent" style="color: var(--c-blue);">0%</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: var(--c-fill2); border-radius: var(--r-pill); overflow: hidden;">
+                    <div id="uploadProgressBar" style="width: 0%; height: 100%; background: var(--c-blue); transition: width 0.1s ease;"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 0.5px solid var(--c-separator);">
+                <button type="button" class="btn-sf btn-sf-secondary" onclick="closeUploadModal()">Cancel</button>
+                <button type="submit" class="btn-sf btn-sf-primary" id="btnUploadSubmit">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload and Deploy Release
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+function openUploadModal() {
+    document.getElementById('uploadReleaseModal').classList.add('open');
+}
+function closeUploadModal() {
+    document.getElementById('uploadReleaseModal').classList.remove('open');
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     const uploadForm = document.getElementById("uploadReleaseForm");
     
@@ -659,6 +735,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                 const response = JSON.parse(xhr.responseText);
                                 if (response.success) {
                                     alert(response.message || "Upload and assembly completed successfully!");
+                                    closeUploadModal();
                                     window.location.reload();
                                 } else {
                                     showError("Assembly failed: " + response.error);
