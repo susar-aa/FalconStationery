@@ -959,6 +959,17 @@ if ($importResults) unset($_SESSION['import_results']);
 
         <!-- Header -->
         <div class="inv-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h1 class="inv-header-title">Inventory Catalog</h1>
+                    <div class="inv-header-desc">Manage products, stock levels, wholesale prices, and variations.</div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <a href="<?= APP_URL ?>/inventory/deleted" class="filter-reset" style="background: var(--c-surface); color: var(--c-red); border-color: rgba(255,59,48,0.3); padding: 8px 16px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-trash-arrow-up"></i> Deleted Products
+                    </a>
+                </div>
+            </div>
 
             <!-- Stat Cards -->
             <div class="stat-row">
@@ -1355,7 +1366,10 @@ if ($importResults) unset($_SESSION['import_results']);
                                                 <a href="<?= APP_URL ?>/inventory/edit/<?= $item->id ?>" class="act-btn edit" title="Edit">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </a>
-                                                <button type="button" class="act-btn trash" onclick="confirmDelete(<?= $item->id ?>, '<?= htmlspecialchars(addslashes($item->name)) ?>')" title="Delete">
+                                                <button type="button" class="act-btn toggle-status" onclick="toggleProductStatus(<?= $item->id ?>, '<?= $itemStatus === 'active' ? 'inactive' : 'active' ?>')" title="<?= $itemStatus === 'active' ? 'Mark Inactive' : 'Mark Active' ?>" style="color: <?= $itemStatus === 'active' ? 'var(--c-orange)' : 'var(--c-green)' ?>;">
+                                                    <i class="fa-solid <?= $itemStatus === 'active' ? 'fa-toggle-on' : 'fa-toggle-off' ?>"></i>
+                                                </button>
+                                                <button type="button" class="act-btn trash" onclick="confirmDelete(<?= $item->id ?>, '<?= htmlspecialchars(addslashes($item->name)) ?>')" title="Delete Product">
                                                     <i class="fa-solid fa-trash-can"></i>
                                                 </button>
                                             </div>
@@ -2145,11 +2159,39 @@ function submitDeleteProduct(e) {
     fetch('<?php echo APP_URL; ?>/inventory/delete/' + activeDeleteId, { method: 'POST', body: new FormData(form) })
         .then(r => { if (!r.ok) throw new Error('Failed'); return r.json(); })
         .then(data => {
-            if (data.success) { closeDeleteModal(); applyAjaxFilters(); }
-            else if (err) { err.textContent = data.error || 'Authorization failed.'; err.classList.remove('hidden'); }
+            if (data.success) { 
+                closeDeleteModal(); 
+                if (data.message) {
+                    alert(data.message);
+                }
+                applyAjaxFilters(); 
+            }
+            else if (err) { err.textContent = data.error || data.message || 'Authorization failed.'; err.classList.remove('hidden'); }
         })
         .catch(ex => { if (err) { err.textContent = ex.message; err.classList.remove('hidden'); } })
         .finally(() => { if (btn) btn.disabled = false; if (spinner) spinner.classList.add('hidden'); });
+}
+
+function toggleProductStatus(id, targetStatus) {
+    const formData = new FormData();
+    formData.append('status', targetStatus);
+
+    fetch('<?php echo APP_URL; ?>/inventory/toggle_status/' + id, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            applyAjaxFilters();
+        } else {
+            alert(data.message || 'Failed to toggle status.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error toggling status.');
+    });
 }
 
 function toggleSelectAll(cb) {

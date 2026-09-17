@@ -217,6 +217,8 @@ class Item {
         if (isset($filters['status']) && $filters['status'] !== '') {
             $whereClauses[] = "i.status = :status";
             $params[':status'] = $filters['status'];
+        } else {
+            $whereClauses[] = "(i.status IS NULL OR i.status != 'deleted')";
         }
 
         return !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
@@ -285,7 +287,7 @@ class Item {
                 COUNT(*) AS total_items,
                 SUM(CASE WHEN CAST({$qtyCol} AS SIGNED) <= 0 OR {$qtyCol} IS NULL THEN 1 ELSE 0 END) AS out_of_stock_count,
                 SUM(CASE WHEN CAST({$qtyCol} AS SIGNED) > 0 AND CAST({$qtyCol} AS SIGNED) <= 5 THEN 1 ELSE 0 END) AS low_stock_count
-                FROM items");
+                FROM items WHERE (status IS NULL OR status != 'deleted')");
             
             $stats = $this->db->single();
             if ($stats) {
@@ -947,35 +949,232 @@ class Item {
         }
     }
 
+    /**
+     * Check if a product has historical or relational dependencies across ERP tables.
+     */
+    public function hasDependencies($itemId) {
+        $itemId = intval($itemId);
+        $tables = [
+            'invoice_items' => 'item_id',
+            'sales_order_items' => 'item_id',
+            'grn_items' => 'item_id',
+            'purchase_order_items' => 'item_id',
+            'stock_ledger' => 'item_id',
+            'credit_note_items' => 'item_id',
+            'supplier_return_items' => 'item_id'
+        ];
+
+        foreach ($tables as $tbl => $col) {
+            try {
+                $this->db->query("SELECT COUNT(*) AS cnt FROM {$tbl} WHERE {$col} = :id");
+                $this->db->bind(':id', $itemId);
+                $res = $this->db->single();
+                if ($res && intval($res->cnt ?? 0) > 0) {
+                    return true;
+                }
+            } catch (Exception $e) {
+                // Ignore table if missing in current schema
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Delete item smart logic.
+     * If item is referenced in transactions (wanted data), soft-delete by setting status = 'deleted'.
+     * If no references exist, perform permanent hard delete.
+     */
     public function deleteItem($id) {
+        $id = intval($id);
+        $isWanted = $this->hasDependencies($id);
+
+        if ($isWanted) {
+            try {
+                $this->db->query("UPDATE items SET status = 'deleted', updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+                $this->db->bind(':id', $id);
+                $this->db->execute();
+                return [
+                    'success' => true,
+                    'type' => 'soft_delete',
+                    'message' => 'Product contains historical transaction records. It has been moved to Deleted Products.'
+                ];
+            } catch (Exception $e) {
+                error_log("Error in soft delete item #{$id}: " . $e->getMessage());
+                return ['success' => false, 'message' => $e->getMessage()];
+            }
+        } else {
+            return $this->hardDeleteItem($id);
+        }
+    }
+
+    /**
+     * Perform hard delete if item has no dependencies.
+     */
+    public function hardDeleteItem($id) {
+        $id = intval($id);
+        if ($this->hasDependencies($id)) {
+            // Cannot hard delete due to dependencies - soft delete instead
+            $this->db->query("UPDATE items SET status = 'deleted', updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+            return [
+                'success' => true,
+                'type' => 'soft_delete',
+                'message' => 'Product has historical dependencies and cannot be permanently purged. It was moved to Deleted Products.'
+            ];
+        }
+
         $this->db->beginTransaction();
         try {
-            // Delete related discount rules
             $this->db->query("DELETE FROM discount_rules WHERE target_item_id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();
 
-            // Delete related item images
             $this->db->query("DELETE FROM item_images WHERE item_id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();
 
-            // Delete related variation options
             $this->db->query("DELETE FROM item_variation_options WHERE item_id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();
 
-            // Soft delete item itself
-            $this->db->query("UPDATE items SET status = 'inactive', updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+            $this->db->query("DELETE FROM item_suppliers WHERE item_id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            $this->db->query("DELETE FROM items WHERE id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();
 
             $this->db->commit();
-            return true;
+            return [
+                'success' => true,
+                'type' => 'hard_delete',
+                'message' => 'Product deleted permanently.'
+            ];
         } catch (Exception $e) {
             $this->db->rollBack();
+            error_log("Error in hard delete item #{$id}: " . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Restore a soft-deleted product back to active inventory.
+     */
+    public function restoreItem($id) {
+        $id = intval($id);
+        try {
+            $this->db->query("UPDATE items SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+            $this->db->bind(':id', $id);
+            return $this->db->execute();
+        } catch (Exception $e) {
+            error_log("Error restoring item #{$id}: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Explicitly toggle or set active / inactive status for a product.
+     */
+    public function toggleStatus($id, $targetStatus = null) {
+        $id = intval($id);
+        try {
+            if ($targetStatus !== 'active' && $targetStatus !== 'inactive') {
+                $this->db->query("SELECT status FROM items WHERE id = :id");
+                $this->db->bind(':id', $id);
+                $row = $this->db->single();
+                $cur = strtolower($row->status ?? 'active');
+                $targetStatus = ($cur === 'active') ? 'inactive' : 'active';
+            }
+
+            $this->db->query("UPDATE items SET status = :status, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+            $this->db->bind(':status', $targetStatus);
+            $this->db->bind(':id', $id);
+            return $this->db->execute();
+        } catch (Exception $e) {
+            error_log("Error toggling status for item #{$id}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Fetch paged soft-deleted products for the Deleted Products module.
+     */
+    public function getDeletedItemsPaged($limit, $offset, $search = '') {
+        $params = [];
+        $whereClause = "WHERE i.status = 'deleted'";
+
+        if (!empty($search)) {
+            $tokens = preg_split('/\s+/', trim($search));
+            $tokenConditions = [];
+            foreach ($tokens as $idx => $token) {
+                if (strlen($token) === 0) continue;
+                $p = ':search_' . $idx;
+                $tokenConditions[] = "(i.{$this->itemCodeColumn} LIKE {$p} OR i.{$this->nameColumn} LIKE {$p} OR i.sample_code LIKE {$p})";
+                $params[$p] = '%' . $token . '%';
+            }
+            if (!empty($tokenConditions)) {
+                $whereClause .= " AND (" . implode(" AND ", $tokenConditions) . ")";
+            }
+        }
+
+        $priceCol = $this->safeCol($this->priceColumn);
+        $wholesalePriceCol = $this->safeCol($this->wholesalePriceColumn);
+        $itemCodeCol = $this->safeCol($this->itemCodeColumn);
+        $qtyCol = $this->safeCol($this->qtyColumn);
+        $descCol = $this->safeCol($this->descColumn);
+
+        $this->db->query("SELECT i.*, 
+                          cat.name AS category_name,
+                          i.{$priceCol} AS selling_price, 
+                          i.{$wholesalePriceCol} AS wholesale_price, 
+                          i.{$itemCodeCol} AS item_code, 
+                          i.{$qtyCol} AS qty, 
+                          i.{$descCol} AS description 
+                          FROM items i 
+                          LEFT JOIN item_categories cat ON i.category_id = cat.id
+                          {$whereClause} 
+                          ORDER BY i.id DESC 
+                          LIMIT :limit OFFSET :offset");
+
+        $this->db->bind(':limit', (int)$limit, PDO::PARAM_INT);
+        $this->db->bind(':offset', (int)$offset, PDO::PARAM_INT);
+
+        foreach ($params as $k => $v) {
+            $this->db->bind($k, $v);
+        }
+
+        return $this->db->resultSet() ?: [];
+    }
+
+    /**
+     * Count total deleted items matching search query.
+     */
+    public function countDeletedItems($search = '') {
+        $params = [];
+        $whereClause = "WHERE i.status = 'deleted'";
+
+        if (!empty($search)) {
+            $tokens = preg_split('/\s+/', trim($search));
+            $tokenConditions = [];
+            foreach ($tokens as $idx => $token) {
+                if (strlen($token) === 0) continue;
+                $p = ':search_' . $idx;
+                $tokenConditions[] = "(i.{$this->itemCodeColumn} LIKE {$p} OR i.{$this->nameColumn} LIKE {$p} OR i.sample_code LIKE {$p})";
+                $params[$p] = '%' . $token . '%';
+            }
+            if (!empty($tokenConditions)) {
+                $whereClause .= " AND (" . implode(" AND ", $tokenConditions) . ")";
+            }
+        }
+
+        $this->db->query("SELECT COUNT(*) AS total FROM items i {$whereClause}");
+        foreach ($params as $k => $v) {
+            $this->db->bind($k, $v);
+        }
+        $row = $this->db->single();
+        return intval($row->total ?? 0);
     }
 
     public function getPriceColumn() {

@@ -1448,6 +1448,13 @@ if (!function_exists('hasPermission')) {
                         </a>
                         <?php endif; ?>
                         <?php if (hasPermission('inventory')): ?>
+                        <a href="<?= APP_URL ?>/inventory/deleted" class="mega-list-item text-danger">
+                            <div class="icon-wrapper text-danger"><i class="ph ph-trash"></i></div>
+                            <div class="mega-list-item-content">
+                                <div class="title text-danger">Deleted Products</div>
+                                <div class="desc">Recycle bin &amp; restore</div>
+                            </div>
+                        </a>
                         <a href="<?= APP_URL ?>/inventory/reserved" class="mega-list-item text-primary">
                             <div class="icon-wrapper text-primary"><i class="ph ph-shield-check"></i></div>
                             <div class="mega-list-item-content">
@@ -1982,6 +1989,7 @@ if (!function_exists('hasPermission')) {
                             <a href="<?= APP_URL ?>/warehouse/transfer" class="fs-link"><i class="ph ph-arrows-left-right"></i> Stock Transfer</a>
                         <?php endif; ?>
                         <?php if (hasPermission('inventory')): ?>
+                            <a href="<?= APP_URL ?>/inventory/deleted" class="fs-link"><i class="ph ph-trash"></i> Deleted Products</a>
                             <a href="<?= APP_URL ?>/inventory/reserved" class="fs-link"><i class="ph ph-shield-check"></i> Reserved Stock</a>
                             <a href="<?= APP_URL ?>/inventory/history" class="fs-link"><i class="ph ph-chart-bar"></i> Pricing History</a>
                             <a href="<?= APP_URL ?>/stockledger" class="fs-link"><i class="ph ph-receipt"></i> Stock Ledger</a>

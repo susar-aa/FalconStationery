@@ -1890,46 +1890,49 @@ class InventoryController extends Controller {
 
     public function delete($id) {
         $this->checkPermission('inventory', 'delete');
+        $id = intval($id);
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
             exit;
         }
 
-        header('Content-Type: application/json');
-        
         $password = $_POST['password'] ?? '';
         $username = $_SESSION['username'] ?? '';
 
-        $userModel = $this->model('User');
-        $user = $userModel->login($username, $password);
-
-        if ($user) {
-            $item = $this->itemModel->getItemById($id);
-            if (!$item) {
-                echo json_encode(['success' => false, 'error' => 'Product not found.']);
+        if (!empty($password)) {
+            $userModel = $this->model('User');
+            $user = $userModel->login($username, $password);
+            if (!$user) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => 'Invalid password. Please enter your correct logged-in password.']);
                 exit;
             }
+        }
 
-            if ($this->itemModel->deleteItem($id)) {
-                // Log action
-                $this->logActivity(
-                    'Product Deleted',
-                    'Inventory',
-                    "Product '{$item->name}' (Code: {$item->item_code}) deleted by '{$username}'.",
-                    $id
-                );
-
-                echo json_encode(['success' => true, 'message' => 'Product deleted successfully!']);
-                exit;
-            } else {
-                echo json_encode(['success' => false, 'error' => 'Failed to delete product from database.']);
-                exit;
-            }
-        } else {
-            echo json_encode(['success' => false, 'error' => 'Invalid password. Please enter your correct logged-in password.']);
+        $item = $this->itemModel->getItemById($id);
+        if (!$item) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Product not found.']);
             exit;
         }
+
+        $result = $this->itemModel->deleteItem($id);
+        if (!is_array($result)) {
+            $result = ['success' => (bool)$result, 'message' => $result ? 'Product processed.' : 'Failed to delete product.'];
+        }
+
+        $this->logActivity(
+            'Product Delete Action',
+            'Inventory',
+            "Product '{$item->name}' (Code: {$item->item_code}) processed. Result: " . ($result['message'] ?? ''),
+            $id
+        );
+
+        header('Content-Type: application/json');
+        echo json_encode($result);
+        exit;
     }
 
     public function bulkUpdate() {
@@ -2235,6 +2238,141 @@ class InventoryController extends Controller {
             echo json_encode(['error' => $e->getMessage()]);
             exit;
         }
+    }
+
+
+
+    /**
+     * Explicitly toggle or set active/inactive status for a product.
+     */
+    public function toggle_status($id) {
+        $this->checkPermission('inventory', 'create_edit');
+        $id = intval($id);
+        $status = $_POST['status'] ?? $_GET['status'] ?? null;
+
+        $res = $this->itemModel->toggleStatus($id, $status);
+
+        $this->logActivity(
+            'Product Status Toggle',
+            'Inventory',
+            "Updated operational status for product #{$id}.",
+            $id
+        );
+
+        $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' || isset($_GET['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => (bool)$res, 'message' => $res ? 'Status updated successfully!' : 'Failed to update status.']);
+            exit;
+        }
+
+        if ($res) {
+            $_SESSION['flash_success'] = 'Product status updated successfully!';
+        } else {
+            $_SESSION['flash_error'] = 'Failed to update product status.';
+        }
+        header('Location: ' . APP_URL . '/inventory');
+        exit;
+    }
+
+    /**
+     * Module view for Deleted Products recycle bin.
+     */
+    public function deleted() {
+        $this->checkPermission('inventory', 'view');
+
+        $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+        $perPage = isset($_GET['per_page']) ? max(5, min(100, intval($_GET['per_page']))) : 15;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+        $totalItems = $this->itemModel->countDeletedItems($search);
+        $totalPages = max(1, ceil($totalItems / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        $items = $this->itemModel->getDeletedItemsPaged($perPage, $offset, $search);
+
+        $data = [
+            'title' => 'Deleted Products',
+            'content_view' => 'inventory/deleted',
+            'items' => $items,
+            'search' => $search,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total_items' => $totalItems,
+                'total_pages' => $totalPages
+            ]
+        ];
+
+        $this->view('layouts/main', $data);
+    }
+
+    /**
+     * Restore a deleted product back to active inventory catalog.
+     */
+    public function restore($id) {
+        $this->checkPermission('inventory', 'create_edit');
+        $id = intval($id);
+        $res = $this->itemModel->restoreItem($id);
+
+        $this->logActivity(
+            'Product Restoration',
+            'Inventory',
+            "Restored soft-deleted product #{$id} back to active inventory.",
+            $id
+        );
+
+        $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' || isset($_GET['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => (bool)$res, 'message' => $res ? 'Product restored successfully!' : 'Failed to restore product.']);
+            exit;
+        }
+
+        if ($res) {
+            $_SESSION['flash_success'] = 'Product restored back to active inventory!';
+        } else {
+            $_SESSION['flash_error'] = 'Failed to restore product.';
+        }
+        header('Location: ' . APP_URL . '/inventory/deleted');
+        exit;
+    }
+
+    /**
+     * Permanently purge a product from Deleted Products module.
+     */
+    public function permanent_delete($id) {
+        $this->checkPermission('inventory', 'delete');
+        $id = intval($id);
+        $result = $this->itemModel->hardDeleteItem($id);
+
+        $this->logActivity(
+            'Product Permanent Purge',
+            'Inventory',
+            "Attempted permanent purge of product #{$id}. Result: " . ($result['message'] ?? 'Done'),
+            $id
+        );
+
+        $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' || isset($_GET['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode($result);
+            exit;
+        }
+
+        if ($result['success']) {
+            $_SESSION['flash_success'] = $result['message'];
+        } else {
+            $_SESSION['flash_error'] = $result['message'] ?? 'Failed to permanently delete product.';
+        }
+        header('Location: ' . APP_URL . '/inventory/deleted');
+        exit;
     }
 }
 
