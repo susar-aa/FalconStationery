@@ -1115,22 +1115,16 @@
         });
     }
 
+    let currentLoadingStageItems = [];
+    let currentLoadingDeliveryId = 0;
+
     function loadLoadingStage(routeId) {
         const box = document.getElementById('loadingBox');
         if (!box) return;
-        box.innerHTML = 'Loading loading items checklist... ';
+        box.innerHTML = '<div style="padding:25px; text-align:center; color:#64748b; font-weight:600;"><i class="ph ph-spinner spin"></i> Loading warehouse verification items...</div>';
 
         fetchSecure('<?= APP_URL ?>/RepTracking/api_get_route_variances/' + routeId)
-            .then(res => {
-                if (!res.ok) {
-                    return res.json().then(errData => {
-                        throw new Error(errData.message || 'Server error ' + res.status);
-                    }).catch(() => {
-                        throw new Error('HTTP error ' + res.status);
-                    });
-                }
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
                 if (data.status !== 'success') {
                     box.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Error loading data: ${data.message || 'Unknown error'}</p>`;
@@ -1138,114 +1132,367 @@
                 }
 
                 const deliveries = data.deliveries || [];
-                const loadingItems = data.loading_items || [];
-
-                // Verification has started if we have at least one delivery AND its verified_items count is > 0.
-                const hasVerificationStarted = (deliveries.length > 0 && deliveries[0].verified_items > 0);
-
-                let listHtml = '';
-                let printButtonsHtml = `
-                    <div style="margin-bottom: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
-                        <button class="btn btn-primary" onclick="printLoadingSheet('final')" style="padding:8px 16px; background:#3f51b5; border:none; color:#fff; border-radius:4px; font-weight:bold; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;"><i class="ph ph-printer"></i> Print Loading Sheet</button>
-                    </div>
-                `;
-
-                if (!hasVerificationStarted) {
-                    if (loadingItems.length === 0) {
-                        listHtml = '<tr><td colspan="2" style="text-align:center; padding:15px; color:#64748b;">No products required for loading on this route.</td></tr>';
-                    } else {
-                        loadingItems.forEach(item => {
-                            listHtml += `
-                                <tr style="border-bottom:1px solid #e2e8f0;">
-                                    <td style="padding:10px; font-weight:600; color:#1e293b;">${item.item_name}</td>
-                                    <td style="padding:10px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px;">${item.total_qty}</td>
-                                </tr>
-                            `;
-                        });
-                    }
-
-                    box.innerHTML = `
-                        ${printButtonsHtml}
-                        <div style="background:#fff7ed; border:1px solid #ffedd5; padding:12px; border-radius:6px; margin-bottom:15px; color:#c2410c; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px;">
-                            <i class="ph ph-info"></i> Verification has not started yet. Showing original required loading quantities.
-                        </div>
-                        <table class="data-table">
-                            <thead>
-                                <tr style="background:#f8fafc;">
-                                    <th style="padding:10px; text-align:left;">Product Name</th>
-                                    <th style="padding:10px; text-align:center; width:150px;">Required Qty</th>
-                                </tr>
-                            </thead>
-                            <tbody>${listHtml}</tbody>
-                        </table>
-                    `;
-                } else {
-                    const del = deliveries[0];
-                    if (del.items.length === 0) {
-                        listHtml = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#64748b;">No verification records found.</td></tr>';
-                    } else {
-                        del.items.forEach(item => {
-                            const req = parseFloat(item.required_qty);
-                            const loaded = item.final_loaded_qty !== null ? parseFloat(item.final_loaded_qty) : parseFloat(item.pre_loaded_qty);
-                            if (req <= 0 && loaded <= 0 && !item.replaced_by_name && !item.replaces_name) return;
-                            const diff = loaded - req;
-
-                            let rowBg = '';
-                            let diffIndicator = '';
-
-                            if (Math.abs(diff) < 0.01) {
-                                rowBg = 'background-color: #d1fae5; color: #065f46;';
-                                diffIndicator = '<i class="ph ph-check-circle" style="color: #16a34a; font-size: 14px;"></i> Match';
-                            } else if (diff < 0) {
-                                rowBg = 'background-color: #fee2e2; color: #991b1b;';
-                                diffIndicator = `Shortage (${diff.toFixed(1)})`;
-                            } else {
-                                rowBg = 'background-color: #fff3e0; color: #e65100;';
-                                diffIndicator = `Overage (+${diff.toFixed(1)})`;
-                            }
-
-                            let nameHtml = `<div style="font-weight:600;">${item.item_name}</div>`;
-                            if (item.replaced_by_name) {
-                                nameHtml += `<div style="font-size:11px; color:#673ab7; font-weight:bold; margin-top:2px;">→ Replaced By ${item.replaced_by_name} (Qty: ${item.replacement_qty})</div>`;
-                            } else if (item.replaces_name) {
-                                nameHtml += `<div style="font-size:11px; color:#16a34a; font-weight:bold; margin-top:2px;"><i class="ph ph-star" style="color: #16a34a;"></i> Replacement for ${item.replaces_name}</div>`;
-                            }
-
-                            listHtml += `
-                                <tr style="border-bottom:1px solid #e2e8f0; ${rowBg}">
-                                    <td style="padding:10px;">${nameHtml}</td>
-                                    <td style="padding:10px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px;">${req}</td>
-                                    <td style="padding:10px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px;">${loaded}</td>
-                                    <td style="padding:10px; text-align:center; font-weight:bold; font-size:12px;">${diffIndicator}</td>
-                                </tr>
-                            `;
-                        });
-                    }
-
-                    box.innerHTML = `
-                        ${printButtonsHtml}
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:12px; border-radius:6px; margin-bottom:15px; font-size:12px;">
-                            <div>Loading Sheet Verification ID: <strong>#${del.delivery_id}</strong></div>
-                            <div>Verification Status: <strong>${del.verified_items} / ${del.total_items} verified</strong></div>
-                        </div>
-                        <table class="data-table">
-                            <thead>
-                                <tr style="background:#f8fafc;">
-                                    <th style="padding:10px; text-align:left;">Product Name</th>
-                                    <th style="padding:10px; text-align:center; width:120px;">Required Qty</th>
-                                    <th style="padding:10px; text-align:center; width:120px;">Verified Qty</th>
-                                    <th style="padding:10px; text-align:center; width:150px;">Status / Variance</th>
-                                </tr>
-                            </thead>
-                            <tbody>${listHtml}</tbody>
-                        </table>
-                    `;
+                if (deliveries.length === 0) {
+                    box.innerHTML = '<div style="background:#fff; border:1px solid #cbd5e1; padding:30px; text-align:center; border-radius:8px; color:#64748b; font-size:13px;">No delivery manifest initialized for this route yet.</div>';
+                    return;
                 }
+
+                const del = deliveries[0];
+                currentLoadingDeliveryId = del.delivery_id;
+                currentLoadingStageItems = del.items || [];
+
+                renderLoadingStageUI();
             })
             .catch(err => {
-                console.error("Error loading route variance details:", err);
+                console.error("Error loading route loading details:", err);
                 box.innerHTML = `<p style="color:red; text-align:center; padding:10px;">Error loading data: ${err.message}</p>`;
             });
+    }
+
+    function renderLoadingStageUI() {
+        const box = document.getElementById('loadingBox');
+        if (!box) return;
+
+        const searchVal = (document.getElementById('searchLoadingProductsInput')?.value || '').toLowerCase();
+        const filteredItems = currentLoadingStageItems.filter(item => item.item_name.toLowerCase().includes(searchVal));
+
+        const verifiedCount = currentLoadingStageItems.filter(item => item.is_verified === 1).length;
+        const totalCount = currentLoadingStageItems.length;
+
+        let listHtml = '';
+        if (filteredItems.length === 0) {
+            listHtml = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b; font-size:13px;">No matching products found.</td></tr>';
+        } else {
+            filteredItems.forEach(item => {
+                const req = parseFloat(item.required_qty);
+                const loaded = item.final_loaded_qty !== null ? parseFloat(item.final_loaded_qty) : req;
+                const diff = loaded - req;
+
+                let rowBg = '';
+                let statusBadge = '';
+                if (Math.abs(diff) < 0.01) {
+                    rowBg = 'background-color: #f0fdf4;';
+                    statusBadge = '<span style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:bold; background:#dcfce7; color:#15803d; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle"></i> Match</span>';
+                } else if (diff < 0) {
+                    rowBg = 'background-color: #fef2f2;';
+                    statusBadge = `<span style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:bold; background:#fee2e2; color:#b91c1c;">Short (${diff.toFixed(1)})</span>`;
+                } else {
+                    rowBg = 'background-color: #fff7ed;';
+                    statusBadge = `<span style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:bold; background:#ffedd5; color:#c2410c;">Over (+${diff.toFixed(1)})</span>`;
+                }
+
+                let nameHtml = `<div style="font-weight:700; color:#0f172a; font-size:13px;">${escapeHtml(item.item_name)}</div>`;
+                if (item.replaced_by_name) {
+                    nameHtml += `<div style="font-size:11px; color:#7c3aed; font-weight:bold; margin-top:2px;"><i class="ph ph-swap"></i> Replaced By: ${escapeHtml(item.replaced_by_name)} (Qty: ${item.replacement_qty})</div>`;
+                } else if (item.replaces_name) {
+                    nameHtml += `<div style="font-size:11px; color:#15803d; font-weight:bold; margin-top:2px;"><i class="ph ph-star"></i> Substituted for: ${escapeHtml(item.replaces_name)}</div>`;
+                }
+
+                const isVerified = (item.is_verified === 1);
+                const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
+
+                listHtml += `
+                    <tr style="border-bottom:1px solid #e2e8f0; ${rowBg}">
+                        <td style="padding:10px 14px;">${nameHtml}</td>
+                        <td style="padding:10px 14px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px; color:#334155;">${req}</td>
+                        <td style="padding:10px 14px; text-align:center;">
+                            <div style="display:inline-flex; align-items:center; gap:4px;">
+                                <button type="button" onclick="adjustLoadingQty(${item.id}, ${loaded - 1})" ${isReadOnly ? 'disabled' : ''} style="width:28px; height:28px; border:1px solid #cbd5e1; background:#fff; border-radius:4px; font-weight:bold; cursor:pointer; font-size:14px; color:#334155;">-</button>
+                                <input type="number" step="1" min="0" value="${loaded}" onchange="adjustLoadingQty(${item.id}, this.value)" ${isReadOnly ? 'disabled' : ''} style="width:65px; text-align:center; padding:4px; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; font-family:monospace; font-size:13px;">
+                                <button type="button" onclick="adjustLoadingQty(${item.id}, ${loaded + 1})" ${isReadOnly ? 'disabled' : ''} style="width:28px; height:28px; border:1px solid #cbd5e1; background:#fff; border-radius:4px; font-weight:bold; cursor:pointer; font-size:14px; color:#334155;">+</button>
+                            </div>
+                        </td>
+                        <td style="padding:10px 14px; text-align:center;">${statusBadge}</td>
+                        <td style="padding:10px 14px; text-align:center;">
+                            <div style="display:inline-flex; align-items:center; gap:6px;">
+                                <button type="button" onclick="toggleItemVerified(${item.id}, ${isVerified ? 0 : 1})" ${isReadOnly ? 'disabled' : ''} style="padding:5px 12px; border:none; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; background:${isVerified ? '#16a34a' : '#64748b'}; color:#fff; display:inline-flex; align-items:center; gap:4px; transition:0.2s;">
+                                    <i class="ph ${isVerified ? 'ph-check-circle' : 'ph-circle'}"></i> ${isVerified ? 'Verified ✓' : 'Verify'}
+                                </button>
+                                ${(!item.replaced_by_name && !item.replaces_name && req > 0 && !isReadOnly) ? `
+                                    <button type="button" onclick="openReplaceProductModal(${item.id})" style="padding:5px 10px; background:#673ab7; color:#fff; border:none; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                                        <i class="ph ph-swap"></i> Replace
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
+
+        box.innerHTML = `
+            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:18px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; border-bottom:1px solid #f1f5f9; padding-bottom:14px;">
+                    <div>
+                        <h3 style="margin:0; font-size:16px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                            <i class="ph ph-truck" style="color:#0284c7;"></i> Warehouse Loading Verification Module
+                        </h3>
+                        <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                            Manifest Delivery ID: <strong>#${currentLoadingDeliveryId}</strong> | Progress: <strong style="color:#0284c7;">${verifiedCount} / ${totalCount} Items Verified</strong>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <button type="button" onclick="printLoadingSheet('final')" style="padding:8px 14px; background:#1e293b; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="ph ph-printer"></i> Print Loading Sheet
+                        </button>
+                        ${!isReadOnly ? `
+                            <button type="button" onclick="verifyAllLoadingItems()" style="padding:8px 14px; background:#0284c7; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                <i class="ph ph-checks"></i> Verify All Items
+                            </button>
+                            <button type="button" onclick="completeLoadingVerification()" style="padding:8px 16px; background:#16a34a; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(22,163,74,0.2);">
+                                <i class="ph ph-arrow-right"></i> Complete Loading Verification
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div style="margin-bottom:14px;">
+                    <input type="text" id="searchLoadingProductsInput" value="${escapeHtml(searchVal)}" oninput="renderLoadingStageUI()" placeholder="Search loading products by name..." style="width:100%; padding:9px 14px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; background:#f8fafc;">
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table class="data-table" style="margin:0; width:100%;">
+                        <thead>
+                            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                                <th style="padding:10px 14px; text-align:left;">Product Name</th>
+                                <th style="padding:10px 14px; text-align:center; width:110px;">Required Qty</th>
+                                <th style="padding:10px 14px; text-align:center; width:160px;">Verified Loaded Qty</th>
+                                <th style="padding:10px 14px; text-align:center; width:130px;">Variance Status</th>
+                                <th style="padding:10px 14px; text-align:center; width:180px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>${listHtml}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    function adjustLoadingQty(itemId, newQty) {
+        const item = currentLoadingStageItems.find(i => parseInt(i.id) === parseInt(itemId));
+        if (!item) return;
+
+        newQty = Math.max(0, parseFloat(newQty) || 0);
+        item.final_loaded_qty = newQty;
+        item.variance = newQty - item.required_qty;
+        item.is_verified = 0; // Reset verification on qty change
+
+        fetchSecure('<?= APP_URL ?>/Picking/api_update_final_item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: item.id,
+                final_loaded_qty: newQty,
+                is_verified: 0,
+                user_id: <?= $_SESSION['user_id'] ?? 1 ?>
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            renderLoadingStageUI();
+        })
+        .catch(err => console.error("Error updating item qty:", err));
+    }
+
+    function toggleItemVerified(itemId, isVerified) {
+        const item = currentLoadingStageItems.find(i => parseInt(i.id) === parseInt(itemId));
+        if (!item) return;
+
+        item.is_verified = isVerified;
+        const finalQty = item.final_loaded_qty !== null ? item.final_loaded_qty : item.required_qty;
+
+        fetchSecure('<?= APP_URL ?>/Picking/api_update_final_item', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: item.id,
+                final_loaded_qty: finalQty,
+                is_verified: isVerified,
+                user_id: <?= $_SESSION['user_id'] ?? 1 ?>
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            renderLoadingStageUI();
+        })
+        .catch(err => console.error("Error toggling verification:", err));
+    }
+
+    function verifyAllLoadingItems() {
+        if (!currentLoadingStageItems.length) return;
+
+        let promises = [];
+        currentLoadingStageItems.forEach(item => {
+            item.is_verified = 1;
+            const finalQty = item.final_loaded_qty !== null ? item.final_loaded_qty : item.required_qty;
+            const p = fetchSecure('<?= APP_URL ?>/Picking/api_update_final_item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: item.id,
+                    final_loaded_qty: finalQty,
+                    is_verified: 1,
+                    user_id: <?= $_SESSION['user_id'] ?? 1 ?>
+                })
+            });
+            promises.push(p);
+        });
+
+        Promise.all(promises).then(() => {
+            renderLoadingStageUI();
+        });
+    }
+
+    function completeLoadingVerification() {
+        if (!currentLoadingDeliveryId) {
+            alert("No delivery ID found for loading verification.");
+            return;
+        }
+
+        if (!confirm("Are you sure you want to complete loading verification? This will finalize verified stock and transition the route directly into Variance Audit.")) {
+            return;
+        }
+
+        fetchSecure('<?= APP_URL ?>/Picking/api_complete_loading', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ delivery_id: currentLoadingDeliveryId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || "Loading verification completed! Route moved to Variance Audit.");
+                currentRouteStatus = 'Variance Adjustment';
+                // Transition RepTracking workflow to Step 4 (Variance Audit - tab index 5)
+                switchRouteTab(5);
+            } else {
+                alert(data.error || "Failed to complete loading verification.");
+            }
+        })
+        .catch(err => {
+            alert("Error completing loading verification: " + err.message);
+        });
+    }
+
+    // Modal handlers for Product Replacement / Substitution
+    function openReplaceProductModal(itemId) {
+        const item = currentLoadingStageItems.find(i => parseInt(i.id) === parseInt(itemId));
+        if (!item) return;
+
+        document.getElementById('replaceDeliveryId').value = currentLoadingDeliveryId;
+        document.getElementById('replaceOrigItemId').value = item.item_id;
+        document.getElementById('replaceOrigVarOptId').value = item.variation_option_id || '';
+        document.getElementById('replaceOrigName').innerText = item.item_name;
+        document.getElementById('replaceOrigQty').innerText = item.required_qty;
+        document.getElementById('replacementSearchInput').value = '';
+        document.getElementById('selectedReplItemId').value = '';
+        document.getElementById('selectedReplVarOptId').value = '';
+        document.getElementById('selectedReplacementBox').style.display = 'none';
+        document.getElementById('replacementSearchResults').style.display = 'none';
+        document.getElementById('replacementQtyInput').value = Math.max(1, item.required_qty);
+
+        const modal = document.getElementById('replaceProductModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeReplaceProductModal() {
+        const modal = document.getElementById('replaceProductModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    let searchTimeout = null;
+    function handleReplacementSearchInput(q) {
+        clearTimeout(searchTimeout);
+        const resultsBox = document.getElementById('replacementSearchResults');
+        if (!q.trim()) {
+            resultsBox.style.display = 'none';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            fetchSecure('<?= APP_URL ?>/Picking/api_search_products?q=' + encodeURIComponent(q.trim()))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.products && data.products.length > 0) {
+                        let html = '';
+                        data.products.forEach(p => {
+                            const name = p.name + (p.variation_name ? ' (' + p.variation_name + ')' : '');
+                            html += `
+                                <div onclick="selectReplacementProduct(${p.id}, '${escapeHtml(addslashes(name))}', ${p.variation_option_id || 'null'})" style="padding:8px 12px; border-bottom:1px solid #f1f5f9; cursor:pointer; font-size:12px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                    <strong>${escapeHtml(name)}</strong>
+                                    <div style="font-size:11px; color:#64748b;">Code: ${escapeHtml(p.item_code || '-')} | Price: Rs ${p.selling_price.toFixed(2)}</div>
+                                </div>
+                            `;
+                        });
+                        resultsBox.innerHTML = html;
+                        resultsBox.style.display = 'block';
+                    } else {
+                        resultsBox.innerHTML = '<div style="padding:10px; font-size:12px; color:#888; text-align:center;">No matching products found</div>';
+                        resultsBox.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    resultsBox.style.display = 'none';
+                });
+        }, 300);
+    }
+
+    function selectReplacementProduct(id, name, varOptId) {
+        document.getElementById('selectedReplItemId').value = id;
+        document.getElementById('selectedReplVarOptId').value = varOptId || '';
+        document.getElementById('selectedReplName').innerText = name;
+        document.getElementById('selectedReplacementBox').style.display = 'block';
+        document.getElementById('replacementSearchResults').style.display = 'none';
+    }
+
+    function submitProductSubstitution() {
+        const deliveryId = parseInt(document.getElementById('replaceDeliveryId').value);
+        const origItemId = parseInt(document.getElementById('replaceOrigItemId').value);
+        const origVarOptId = document.getElementById('replaceOrigVarOptId').value;
+        const replItemId = parseInt(document.getElementById('selectedReplItemId').value);
+        const replVarOptId = document.getElementById('selectedReplVarOptId').value;
+        const replQty = parseFloat(document.getElementById('replacementQtyInput').value || 0);
+
+        if (!replItemId) {
+            alert("Please search and select a replacement product.");
+            return;
+        }
+
+        if (replQty <= 0) {
+            alert("Replacement quantity must be greater than zero.");
+            return;
+        }
+
+        const payload = {
+            delivery_id: deliveryId,
+            original_item_id: origItemId,
+            original_variation_option_id: origVarOptId !== '' ? origVarOptId : null,
+            replacement_item_id: replItemId,
+            replacement_variation_option_id: replVarOptId !== '' ? replVarOptId : null,
+            replacement_qty: replQty,
+            user_id: <?= $_SESSION['user_id'] ?? 1 ?>
+        };
+
+        fetchSecure('<?= APP_URL ?>/Picking/api_substitute_product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || "Product substitution recorded!");
+                closeReplaceProductModal();
+                loadLoadingStage(currentRouteId);
+            } else {
+                alert(data.error || "Failed to record product substitution.");
+            }
+        })
+        .catch(err => {
+            alert("Error submitting substitution: " + err.message);
+        });
     }
 
     let currentVarianceState = {};
@@ -4929,6 +5176,16 @@ window.buildAccountOptions = buildAccountOptions;
     window.detachInvoice = detachInvoice;
     window.submitAdjustmentsLogisticsArrange = submitAdjustmentsLogisticsArrange;
     window.loadLoadingStage = loadLoadingStage;
+    window.renderLoadingStageUI = renderLoadingStageUI;
+    window.adjustLoadingQty = adjustLoadingQty;
+    window.toggleItemVerified = toggleItemVerified;
+    window.verifyAllLoadingItems = verifyAllLoadingItems;
+    window.completeLoadingVerification = completeLoadingVerification;
+    window.openReplaceProductModal = openReplaceProductModal;
+    window.closeReplaceProductModal = closeReplaceProductModal;
+    window.handleReplacementSearchInput = handleReplacementSearchInput;
+    window.selectReplacementProduct = selectReplacementProduct;
+    window.submitProductSubstitution = submitProductSubstitution;
     window.loadVarianceAdjustmentStage = loadVarianceAdjustmentStage;
     window.renderVarianceReconciliation = renderVarianceReconciliation;
     window.updateRemoveCompletelyChoice = updateRemoveCompletelyChoice;

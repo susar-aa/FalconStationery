@@ -814,7 +814,7 @@ class RepTrackingController extends Controller {
                 RepRouteService::ensurePickingItemsPopulated($db, $del->id);
 
                 $db->query("
-                    SELECT dpi.item_id, dpi.variation_option_id, dpi.item_name, dpi.required_qty, dpi.loaded_qty as pre_loaded_qty, 
+                    SELECT dpi.id, dpi.item_id, dpi.variation_option_id, dpi.item_name, dpi.required_qty, dpi.loaded_qty as pre_loaded_qty, 
                            dpi.final_loaded_qty, dpi.variance, dpi.is_verified, dpi.verified_at, u.username as verifier_name
                     FROM delivery_picking_items dpi
                     LEFT JOIN users u ON dpi.verified_by = u.id

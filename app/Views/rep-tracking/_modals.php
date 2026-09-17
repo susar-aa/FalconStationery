@@ -422,3 +422,49 @@
     </div>
 </div>
 
+<!-- Product Replacement / Substitution Modal for Loading Stage -->
+<div class="modal-backdrop" id="replaceProductModal" style="display: none; z-index: 2020;">
+    <div class="modal-panel" style="max-width: 550px; width: 90%;">
+        <div class="modal-header" style="background: #673ab7; color: #fff; border-bottom: 0.5px solid var(--c-separator); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin:0; font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px;"><i class="ph ph-swap"></i> Substitute Product</h3>
+            <button onclick="closeReplaceProductModal()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <input type="hidden" id="replaceDeliveryId">
+            <input type="hidden" id="replaceOrigItemId">
+            <input type="hidden" id="replaceOrigVarOptId">
+            <input type="hidden" id="selectedReplItemId">
+            <input type="hidden" id="selectedReplVarOptId">
+
+            <div style="font-size: 13px; background: #f3e8ff; border: 1px solid #d8b4fe; padding: 10px 12px; border-radius: 6px; color: #581c87;">
+                Replacing: <strong id="replaceOrigName" style="color: #3b0764;">[Product Name]</strong> 
+                (Required Qty: <strong id="replaceOrigQty">0</strong>)
+            </div>
+
+            <div>
+                <label style="font-weight:bold; font-size:11px; text-transform:uppercase; color:var(--t-secondary); display:block; margin-bottom:4px;">Search Replacement Product *</label>
+                <input type="text" id="replacementSearchInput" oninput="handleReplacementSearchInput(this.value)" placeholder="Type product name, SKU or code..." style="width:100%; padding:10px; border:1px solid var(--c-separator); border-radius:var(--r-md); background:var(--c-bg); color:var(--t-primary); font-size:13px;" autocomplete="off">
+                
+                <div id="replacementSearchResults" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--c-separator); border-radius: var(--r-md); background: #fff; margin-top: 5px; display: none; box-shadow: var(--shadow-md);">
+                    <!-- Dynamic search items -->
+                </div>
+            </div>
+
+            <div id="selectedReplacementBox" style="display: none; padding: 10px 12px; background: #dcfce7; border: 1px solid #86efac; border-radius: 6px; font-size: 13px; color: #166534;">
+                Selected Substitution: <strong id="selectedReplName" style="color: #14532d;">[Product]</strong>
+            </div>
+
+            <div>
+                <label style="font-weight:bold; font-size:11px; text-transform:uppercase; color:var(--t-secondary); display:block; margin-bottom:4px;">Replacement Quantity *</label>
+                <input type="number" id="replacementQtyInput" min="0.01" step="1" value="1" style="width:100%; padding:10px; border:1px solid var(--c-separator); border-radius:var(--r-md); background:var(--c-bg); color:var(--t-primary); font-size:13px; font-weight:bold;">
+            </div>
+        </div>
+        <div style="padding: 12px 20px; background: var(--c-surface2); border-top: 0.5px solid var(--c-separator); display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="closeReplaceProductModal()" style="padding:8px 16px; background:var(--c-fill); border:1px solid var(--c-separator); color:var(--t-secondary); border-radius:var(--r-sm); font-size:12px; font-weight:bold; cursor:pointer;">Cancel</button>
+            <button onclick="submitProductSubstitution()" id="btnSaveReplacement" style="padding:8px 16px; background:#673ab7; border:none; color:#fff; border-radius:var(--r-sm); font-size:12px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                <i class="ph ph-floppy-disk"></i> Save Product Substitution
+            </button>
+        </div>
+    </div>
+</div>
+
