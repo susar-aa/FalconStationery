@@ -1419,8 +1419,9 @@
                         let html = '';
                         data.products.forEach(p => {
                             const name = p.name + (p.variation_name ? ' (' + p.variation_name + ')' : '');
+                            const varOptId = p.variation_option_id || '';
                             html += `
-                                <div onclick="selectReplacementProduct(${p.id}, '${escapeHtml(addslashes(name))}', ${p.variation_option_id || 'null'})" style="padding:8px 12px; border-bottom:1px solid #f1f5f9; cursor:pointer; font-size:12px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                <div class="repl-search-row" data-id="${p.id}" data-name="${escapeHtml(name)}" data-var-opt-id="${varOptId}" onclick="onSelectReplacementRow(this)" style="padding:8px 12px; border-bottom:1px solid #f1f5f9; cursor:pointer; font-size:12px;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
                                     <strong>${escapeHtml(name)}</strong>
                                     <div style="font-size:11px; color:#64748b;">Code: ${escapeHtml(p.item_code || '-')} | Price: Rs ${p.selling_price.toFixed(2)}</div>
                                 </div>
@@ -1434,9 +1435,17 @@
                     }
                 })
                 .catch(err => {
+                    console.error("Product search error:", err);
                     resultsBox.style.display = 'none';
                 });
-        }, 300);
+        }, 250);
+    }
+
+    function onSelectReplacementRow(el) {
+        const id = el.getAttribute('data-id');
+        const name = el.getAttribute('data-name');
+        const varOptId = el.getAttribute('data-var-opt-id');
+        selectReplacementProduct(id, name, varOptId);
     }
 
     function selectReplacementProduct(id, name, varOptId) {
@@ -5184,6 +5193,7 @@ window.buildAccountOptions = buildAccountOptions;
     window.openReplaceProductModal = openReplaceProductModal;
     window.closeReplaceProductModal = closeReplaceProductModal;
     window.handleReplacementSearchInput = handleReplacementSearchInput;
+    window.onSelectReplacementRow = onSelectReplacementRow;
     window.selectReplacementProduct = selectReplacementProduct;
     window.submitProductSubstitution = submitProductSubstitution;
     window.loadVarianceAdjustmentStage = loadVarianceAdjustmentStage;
