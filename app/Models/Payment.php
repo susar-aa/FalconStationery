@@ -72,7 +72,7 @@ class Payment {
      */
     public function getServiceProviderOutstandingList($activeOnly = true) {
         $sql = "
-            SELECT sp.id, sp.name, sp.phone, sp.email, sp.opening_balance,
+            SELECT sp.id, sp.name, sp.phone, sp.email,
                    (SELECT COALESCE(SUM(gri.total), 0) 
                     FROM grn_items gri 
                     JOIN goods_receipt_notes grn ON gri.grn_id = grn.id 
@@ -98,7 +98,7 @@ class Payment {
         $this->db->query($sql);
         $providers = $this->db->resultSet();
         foreach ($providers as $p) {
-            $p->outstanding_balance = floatval($p->opening_balance ?? 0) + $p->total_billed - $p->total_paid - $p->total_returned;
+            $p->outstanding_balance = $p->total_billed - $p->total_paid - $p->total_returned;
         }
 
         // Sort by outstanding balance desc
