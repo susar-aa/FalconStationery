@@ -1296,3 +1296,19 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Thu 09/17/2026 13:30:15.17 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Item.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/inventory/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/inventory/deleted.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main fde6d28] Update: app/Controllers/InventoryController.php, app/Models/Item.php, app/Views/inventory/index.php, app/Views/layouts/main.php, deploy_log.txt, app/Views/inventory/deleted.php
+ 6 files changed, 875 insertions(+), 36 deletions(-)
+ create mode 100644 app/Views/inventory/deleted.php
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   008cdd0..fde6d28  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Thu 09/17/2026 13:42:56.81 
+=================================================== 
+Adding changes... 
