@@ -497,6 +497,100 @@
                     </div>
 
 
+                    <!-- ═══ QUICK PRINT OPTIONS PANEL ═══ -->
+                    <div style="background:var(--c-surface); border:1px solid var(--c-separator); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); margin-bottom:16px;">
+                        <div style="background:linear-gradient(90deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); padding:12px 18px; display:flex; align-items:center; justify-content:space-between;">
+                            <div style="display:flex; align-items:center; gap:8px; color:#fff;">
+                                <i class="ph-bold ph-printer" style="font-size:16px; color:#a5b4fc;"></i>
+                                <span style="font-weight:700; font-size:13px; letter-spacing:0.03em;">Quick Print Center</span>
+                            </div>
+                            <span style="background:rgba(255,255,255,0.15); color:#e0e7ff; border:1px solid rgba(255,255,255,0.25); padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:0.04em; display:flex; align-items:center; gap:4px;">
+                                <i class="ph ph-lightning"></i> Instant Access
+                            </span>
+                        </div>
+                        <div style="padding:14px 16px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; background:var(--c-surface);">
+                            
+                            <!-- Print All Invoices -->
+                            <button type="button" id="btnQuickPrintAllInvoices" onclick="printRouteInvoices()" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg, #1e40af, #2563eb); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 2px 6px rgba(37,99,235,0.25); transition:all 0.15s ease; text-align:left;">
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="ph-bold ph-files" style="font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:12px; line-height:1.2;">Print All Invoices</div>
+                                    <div style="font-size:10px; opacity:0.85; margin-top:2px;">Full Batch Invoices</div>
+                                </div>
+                            </button>
+
+                            <!-- Print Invoice Summary -->
+                            <button type="button" id="btnQuickPrintInvoiceSummary" onclick="printRouteInvoicesSummary()" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg, #3730a3, #4f46e5); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 2px 6px rgba(79,70,229,0.25); transition:all 0.15s ease; text-align:left;">
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="ph-bold ph-file-text" style="font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:12px; line-height:1.2;">Print Invoice Summary</div>
+                                    <div style="font-size:10px; opacity:0.85; margin-top:2px;">Summary Report</div>
+                                </div>
+                            </button>
+
+                            <!-- Print Loading Sheet -->
+                            <button type="button" id="btnQuickPrintLoadingSheet" onclick="printLoadingSheet('full')" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg, #065f46, #059669); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 2px 6px rgba(5,150,105,0.25); transition:all 0.15s ease; text-align:left;">
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="ph-bold ph-truck" style="font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:12px; line-height:1.2;">Print Loading Sheet</div>
+                                    <div style="font-size:10px; opacity:0.85; margin-top:2px;">Full Dispatch Sheet</div>
+                                </div>
+                            </button>
+
+                            <!-- Print Loading Summary -->
+                            <button type="button" id="btnQuickPrintLoadingSummary" onclick="printLoadingSheet('summary')" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg, #0891b2, #06b6d4); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 2px 6px rgba(6,182,212,0.25); transition:all 0.15s ease; text-align:left;">
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="ph-bold ph-list-checks" style="font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:12px; line-height:1.2;">Print Loading Summary</div>
+                                    <div style="font-size:10px; opacity:0.85; margin-top:2px;">Condensed Summary</div>
+                                </div>
+                            </button>
+
+                            <!-- Print Return Stock Sheet -->
+                            <button type="button" id="btnQuickPrintReturnStock" onclick="printReturnStock()" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg, #b45309, #d97706); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 2px 6px rgba(217,119,6,0.25); transition:all 0.15s ease; text-align:left;">
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="ph-bold ph-package" style="font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:12px; line-height:1.2;">Print Return Stock</div>
+                                    <div style="font-size:10px; opacity:0.85; margin-top:2px;">Stock Return &amp; Unload</div>
+                                </div>
+                            </button>
+
+                            <!-- Print Balancing Report -->
+                            <button type="button" id="btnQuickPrintBalancingReport" onclick="printBalancingReport()" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg, #7e22ce, #9333ea); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 2px 6px rgba(147,51,234,0.25); transition:all 0.15s ease; text-align:left;">
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="ph-bold ph-scales" style="font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:12px; line-height:1.2;">Print Balancing Report</div>
+                                    <div style="font-size:10px; opacity:0.85; margin-top:2px;">Settlement &amp; Variance</div>
+                                </div>
+                            </button>
+
+                            <!-- Export Loading Spreadsheet -->
+                            <button type="button" id="btnQuickPrintSpreadsheet" onclick="printLoadingSheetSpreadsheet()" style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:linear-gradient(135deg, #15803d, #16a34a); color:#fff; border:none; border-radius:10px; font-weight:600; font-size:12px; cursor:pointer; box-shadow:0 2px 6px rgba(22,163,74,0.25); transition:all 0.15s ease; text-align:left;">
+                                <div style="width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <i class="ph-bold ph-file-xls" style="font-size:18px;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight:700; font-size:12px; line-height:1.2;">Export Loading Sheet</div>
+                                    <div style="font-size:10px; opacity:0.85; margin-top:2px;">Excel / Spreadsheet</div>
+                                </div>
+                            </button>
+
+                        </div>
+                    </div>
+
+
                     <!-- ═══ UNPRODUCTIVE VISITS LOG ═══ -->
                     <div style="background:var(--c-surface); border:1px solid var(--c-separator); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); margin-bottom:16px;">
                         <div style="background:linear-gradient(90deg,#9a3412 0%,#ea580c 100%); padding:14px 18px; display:flex; align-items:center; justify-content:space-between;">

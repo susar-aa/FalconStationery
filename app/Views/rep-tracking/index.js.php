@@ -4228,6 +4228,12 @@
         }
     }
 
+    function printReturnStock() {
+        if (currentRouteId) {
+            window.open('<?= APP_URL ?>/RepTracking/print_return_stock/' + currentRouteId, '_blank');
+        }
+    }
+
     function openInvoiceSlider(invoiceId) {
         const backdrop = document.getElementById('invoiceSliderBackdrop');
         const iframe = document.getElementById('invoiceIframe');
@@ -5240,6 +5246,7 @@ window.buildAccountOptions = buildAccountOptions;
     window.redirectToAddInvoice = redirectToAddInvoice;
     window.printRouteInvoices = printRouteInvoices;
     window.printRouteInvoicesSummary = printRouteInvoicesSummary;
+    window.printReturnStock = printReturnStock;
     window.openInvoiceSlider = openInvoiceSlider;
     window.closeInvoiceSlider = closeInvoiceSlider;
     window.deleteSalesOrder = deleteSalesOrder;
