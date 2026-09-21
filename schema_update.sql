@@ -1,111 +1,51 @@
 -- 1. Safely remove any empty/partial entries for the affected invoices
-DELETE FROM `invoice_items` WHERE `invoice_id` IN (278491, 278492, 278503, 278504, 278505, 278515, 278516);
+DELETE FROM `invoice_items` WHERE `invoice_id` IN (278636, 278637, 278638);
 
--- 2. Insert intact product lines (103 items)
+-- 2. Invoice 20260910240098 (ID 278636) - Customer: IMAN BOOK SHOP-POLGAHAWELA - Total: Rs 19,900.00
 INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id`, `description`, `quantity`, `loaded_quantity`, `unit_price`, `discount_value`, `discount_type`, `total`, `cost_at_sale`) VALUES
-(28689, 278491, 4533, 150, 'Business File FC - Blue', 12.00, 12.00, 72.80, 0.00, 'Rs', 873.60, 56.00),
-(28690, 278491, 4533, 155, 'Business File FC - Red', 12.00, 12.00, 72.80, 0.00, 'Rs', 873.60, 56.00),
-(28691, 278491, 4543, 225, 'Pocket File - 10', 6.00, 6.00, 225.00, 0.00, 'Rs', 1350.00, 170.00),
-(28692, 278491, 4666, NULL, 'Slime Mini', 24.00, 24.00, 50.00, 0.00, 'Rs', 1200.00, 38.00),
-(28693, 278491, 5356, NULL, 'Binding Tape 25mm*20mt BLACK', 6.00, 6.00, 130.00, 0.00, 'Rs', 780.00, 77.00),
-(28694, 278491, 5362, NULL, 'Binding Tape 48mm*20mt BLACK', 6.00, 6.00, 214.50, 0.00, 'Rs', 1287.00, 165.00),
-(28695, 278491, 5498, NULL, 'Water Color Pallet Small 288', 6.00, 6.00, 110.00, 0.00, 'Rs', 660.00, 80.00),
-(28696, 278491, 5550, NULL, 'Paper Fastener 50s', 4.00, 4.00, 221.00, 0.00, 'Rs', 884.00, 170.00),
-(28697, 278491, 5596, NULL, 'Desighn Clear Bag', 12.00, 12.00, 50.00, 0.00, 'Rs', 600.00, 35.00),
-(28698, 278491, 5611, NULL, 'My Clear Bag  MIX', 12.00, 12.00, 30.00, 0.00, 'Rs', 360.00, 22.50),
-(28699, 278491, 5683, NULL, '3 Pin 3M 13A Round Code EC100', 3.00, 3.00, 1155.00, 0.00, 'Rs', 3465.00, 925.00),
-(28700, 278492, 4529, NULL, 'Paper File Cover 100Pcs - Mix', 25.00, 25.00, 1200.00, 0.00, 'Rs', 30000.00, 1020.00),
-(28701, 278492, 5396, NULL, 'Rubber Band (1 1/2 Inch) 1Kg', 10.00, 10.00, 1265.00, 0.00, 'Rs', 12650.00, 1030.00),
-(28953, 278503, 4478, NULL, 'Redy Binder Gum 500ml', 10.00, 10.00, 170.00, 0.00, 'Rs', 1700.00, 130.00),
-(28954, 278503, 4679, NULL, 'Sticky Notes Multy Color 76*76', 12.00, 12.00, 78.00, 0.00, 'Rs', 936.00, 60.00),
-(28955, 278503, 4771, NULL, 'Magnet Box 1230', 6.00, 6.00, 175.00, 0.00, 'Rs', 1050.00, 135.00),
-(28956, 278503, 4773, NULL, 'Magnet Box 6603', 6.00, 6.00, 215.00, 0.00, 'Rs', 1290.00, 165.00),
-(28957, 278503, 5024, NULL, 'Mathematical Set Atlas', 12.00, 12.00, 485.00, 0.00, 'Rs', 5820.00, 430.00),
-(28958, 278503, 5143, NULL, 'Atlas Chokk Board Duster 12', 6.00, 6.00, 140.00, 0.00, 'Rs', 840.00, 125.00),
-(28959, 278503, 5328, NULL, 'Correction Tape SD-824 ( 6M)', 24.00, 24.00, 40.00, 0.00, 'Rs', 960.00, 28.50),
-(28960, 278503, 5363, NULL, 'Binding Tape 48mm*20mt RED', 2.00, 2.00, 214.50, 0.00, 'Rs', 429.00, 165.00),
-(28961, 278503, 5550, NULL, 'Paper Fastener 50s', 2.00, 2.00, 221.00, 0.00, 'Rs', 442.00, 170.00),
-(28962, 278503, 5752, NULL, 'Clear Tape 1/2*20 Y RED', 12.00, 12.00, 21.60, 0.00, 'Rs', 259.20, 18.00),
-(28963, 278504, 4596, NULL, 'Vneed Artist Brushes 6Pcs', 3.00, 3.00, 315.00, 0.00, 'Rs', 945.00, 245.00),
-(28964, 278504, 4692, NULL, 'Rainbow Mesh Bag - A 6', 12.00, 12.00, 67.60, 0.00, 'Rs', 811.20, 52.00),
-(28965, 278504, 4712, NULL, 'FALCON Color Brown 100', 1.00, 1.00, 770.00, 0.00, 'Rs', 770.00, 680.00),
-(28966, 278504, 4715, NULL, 'FALCON Color Light Blue 100', 1.00, 1.00, 770.00, 0.00, 'Rs', 770.00, 680.00),
-(28967, 278504, 4719, NULL, 'FALCON Color Purple 100', 1.00, 1.00, 770.00, 0.00, 'Rs', 770.00, 680.00),
-(28968, 278504, 4721, NULL, 'FALCON Color Yellow 100', 1.00, 1.00, 770.00, 0.00, 'Rs', 770.00, 680.00),
-(28969, 278504, 4724, NULL, 'Atlas Executive Note Book CR', 2.00, 2.00, 735.00, 0.00, 'Rs', 1470.00, 642.00),
-(28970, 278504, 4768, NULL, 'Magnet Box 0802', 4.00, 4.00, 235.00, 0.00, 'Rs', 940.00, 185.00),
-(28971, 278504, 4769, NULL, 'Magnet Box 110', 4.00, 4.00, 195.00, 0.00, 'Rs', 780.00, 155.00),
-(28972, 278504, 4771, NULL, 'Magnet Box 1230', 4.00, 4.00, 175.00, 0.00, 'Rs', 700.00, 135.00),
-(28973, 278504, 4806, NULL, 'Laminating Pouch A 4 100 Mic', 1.00, 1.00, 2150.00, 0.00, 'Rs', 2150.00, 1750.00),
-(28974, 278504, 4976, NULL, 'Water Color 12 Color Flexy', 6.00, 6.00, 255.00, 0.00, 'Rs', 1530.00, 195.00),
-(28975, 278504, 5026, NULL, 'Drawing Book 40P Atlas', 20.00, 20.00, 120.00, 0.00, 'Rs', 2400.00, 102.50),
-(28976, 278504, 5046, NULL, 'Soft Pastels Color Box 12 Color', 6.00, 6.00, 315.00, 0.00, 'Rs', 1890.00, 245.00),
-(28977, 278504, 5057, NULL, 'Double A A 4 70G', 5.00, 5.00, 1235.00, 0.00, 'Rs', 6175.00, 1070.00),
-(28978, 278504, 5085, NULL, 'Clear Bag Button F/C Mix', 12.00, 12.00, 40.00, 0.00, 'Rs', 480.00, 25.00),
-(28979, 278504, 5092, NULL, 'Ruler 30Cm Steel', 12.00, 12.00, 55.00, 0.00, 'Rs', 660.00, 39.00),
-(28980, 278504, 5136, NULL, 'Cutter Blade Small 10s SD', 5.00, 5.00, 55.00, 0.00, 'Rs', 275.00, 40.00),
-(28981, 278504, 5138, NULL, 'Scissors 170 SD', 12.00, 12.00, 78.00, 0.00, 'Rs', 936.00, 60.00),
-(28982, 278504, 5139, NULL, 'Scissors 210 SD', 6.00, 6.00, 115.00, 0.00, 'Rs', 690.00, 90.00),
-(28983, 278504, 5158, NULL, 'Sharpener Single Metal SD', 24.00, 24.00, 20.00, 0.00, 'Rs', 480.00, 12.50),
-(28984, 278504, 5161, NULL, 'Sharpener Metal Double SD', 24.00, 24.00, 35.00, 0.00, 'Rs', 840.00, 23.50),
-(28985, 278504, 5165, NULL, 'Stapler No 10 Metal SD', 6.00, 6.00, 195.00, 0.00, 'Rs', 1170.00, 150.00),
-(28986, 278504, 5202, NULL, 'Pencil Soft Grib HB SD', 12.00, 12.00, 28.00, 0.00, 'Rs', 336.00, 19.50),
-(28987, 278504, 5240, NULL, 'Color Pencil 12 Full SD', 12.00, 12.00, 240.00, 0.00, 'Rs', 2880.00, 185.00),
-(28988, 278504, 5262, NULL, 'Fine Liner Pen 10 Color Set SD', 6.00, 6.00, 345.00, 0.00, 'Rs', 2070.00, 270.00),
-(28989, 278504, 5267, NULL, 'Permanent Marker 10 Pcs Black', 1.00, 1.00, 480.00, 0.00, 'Rs', 480.00, 380.00),
-(28990, 278504, 5268, NULL, 'Permanent Marker 10 Pcs Blue', 1.00, 1.00, 480.00, 0.00, 'Rs', 480.00, 380.00),
-(28991, 278504, 5282, NULL, 'Highlighter Pen 5 Color SD', 6.00, 6.00, 275.00, 0.00, 'Rs', 1650.00, 210.00),
-(28992, 278504, 5326, NULL, 'Tape Dispenser Small SD', 6.00, 6.00, 150.00, 0.00, 'Rs', 900.00, 115.00),
-(28993, 278504, 5328, NULL, 'Correction Tape SD-824 ( 6M)', 12.00, 12.00, 40.00, 0.00, 'Rs', 480.00, 28.50),
-(28994, 278504, 5336, NULL, 'Correction Pen 7Ml SD', 12.00, 12.00, 85.00, 0.00, 'Rs', 1020.00, 67.50),
-(28995, 278504, 5344, NULL, 'Glue Stick 15G SD', 12.00, 12.00, 78.00, 0.00, 'Rs', 936.00, 60.00),
-(28996, 278504, 5360, NULL, 'Binding Tape 36mm*20mt BLACK', 2.00, 2.00, 160.00, 0.00, 'Rs', 320.00, 122.50),
-(28997, 278504, 5362, NULL, 'Binding Tape 48mm*20mt BLACK', 4.00, 4.00, 214.50, 0.00, 'Rs', 858.00, 165.00),
-(28998, 278504, 5363, NULL, 'Binding Tape 48mm*20mt RED', 2.00, 2.00, 214.50, 0.00, 'Rs', 429.00, 165.00),
-(28999, 278504, 5365, NULL, 'Binding Tape 48mm*20mt BLUE', 2.00, 2.00, 214.50, 0.00, 'Rs', 429.00, 165.00),
-(29000, 278504, 5367, NULL, 'Binding Tape 48mm*20mt GREEN', 2.00, 2.00, 214.50, 0.00, 'Rs', 429.00, 165.00),
-(29001, 278504, 5459, NULL, 'Super Glue 3G Flexy', 12.00, 12.00, 30.00, 0.00, 'Rs', 360.00, 22.50),
-(29002, 278504, 5483, NULL, 'Paper Fasteners Box 50 Pcs SD', 2.00, 2.00, 210.00, 0.00, 'Rs', 420.00, 160.00),
-(29003, 278504, 5522, NULL, 'Carbon Paper Black 100s SD', 1.00, 1.00, 680.00, 0.00, 'Rs', 680.00, 560.00),
-(29004, 278504, 5523, NULL, 'Carbon Paper Blue 100s SD', 1.00, 1.00, 680.00, 0.00, 'Rs', 680.00, 560.00),
-(29005, 278504, 5530, NULL, 'Geometry Box Mango', 6.00, 6.00, 195.00, 0.00, 'Rs', 1170.00, 150.00),
-(29006, 278504, 5536, NULL, 'Paper Clip 33mm SD', 10.00, 10.00, 48.00, 0.00, 'Rs', 480.00, 36.50),
-(29007, 278504, 5550, NULL, 'Paper Fastener 50s', 2.00, 2.00, 221.00, 0.00, 'Rs', 442.00, 170.00),
-(29008, 278504, 5594, NULL, 'Desighn Clear Bag Button FC', 12.00, 12.00, 60.00, 0.00, 'Rs', 720.00, 42.00),
-(29009, 278504, 5596, NULL, 'Desighn Clear Bag', 12.00, 12.00, 50.00, 0.00, 'Rs', 600.00, 35.00),
-(29010, 278504, 5604, NULL, 'Expanding File FC 13 Pockets - MIX', 2.00, 2.00, 520.00, 0.00, 'Rs', 1040.00, 410.00),
-(29012, 278505, 5271, NULL, 'White Board Ink - Black', 6.00, 6.00, 170.00, 0.00, 'Rs', 1020.00, 130.00),
-(29013, 278505, 5272, NULL, 'White Board Ink - Blue', 6.00, 6.00, 170.00, 0.00, 'Rs', 1020.00, 130.00),
-(29014, 278505, 5273, NULL, 'White Board Ink - Red', 6.00, 6.00, 170.00, 0.00, 'Rs', 1020.00, 130.00),
-(29015, 278505, 5326, NULL, 'Tape Dispenser Small SD', 6.00, 6.00, 150.00, 0.00, 'Rs', 900.00, 115.00),
-(29231, 278515, 4776, NULL, 'Stationery Set 6010', 2.00, 2.00, 320.00, 0.00, 'Rs', 640.00, 248.00),
-(29232, 278515, 4778, NULL, 'Stationery Set 6605', 2.00, 2.00, 260.00, 0.00, 'Rs', 520.00, 200.00),
-(29233, 278515, 4779, NULL, 'Stationery Set 6608', 2.00, 2.00, 260.00, 0.00, 'Rs', 520.00, 200.00),
-(29234, 278515, 4780, NULL, 'Stationery Set 6609', 2.00, 2.00, 260.00, 0.00, 'Rs', 520.00, 200.00),
-(29235, 278515, 5026, NULL, 'Drawing Book 40P Atlas', 20.00, 20.00, 120.00, 0.00, 'Rs', 2400.00, 102.50),
-(29236, 278515, 5028, NULL, 'Cr 80 Pg Atlas SQ', 10.00, 10.00, 170.00, 0.00, 'Rs', 1700.00, 142.50),
-(29237, 278515, 5032, NULL, 'Cr 120 Pg Atlas SQ', 10.00, 10.00, 245.00, 0.00, 'Rs', 2450.00, 206.50),
-(29238, 278515, 5034, NULL, 'Cr 120 Pg Atlas CR', 10.00, 10.00, 245.00, 0.00, 'Rs', 2450.00, 206.50),
-(29239, 278515, 5328, NULL, 'Correction Tape SD-824 ( 6M)', 6.00, 6.00, 40.00, 0.00, 'Rs', 240.00, 28.50),
-(29240, 278515, 5336, NULL, 'Correction Pen 7Ml SD', 6.00, 6.00, 85.00, 0.00, 'Rs', 510.00, 67.50),
-(29241, 278515, 5550, NULL, 'Paper Fastener 50s', 3.00, 3.00, 221.00, 0.00, 'Rs', 663.00, 170.00),
-(29242, 278516, 4443, NULL, 'Drawing Pin', 10.00, 10.00, 265.00, 0.00, 'Rs', 2650.00, 210.00),
-(29243, 278516, 4529, NULL, 'Paper File Cover 100Pcs - Mix', 3.00, 3.00, 1200.00, 0.00, 'Rs', 3600.00, 1020.00),
-(29244, 278516, 5396, NULL, 'Rubber Band (1 1/2 Inch) 1Kg', 3.00, 3.00, 1265.00, 0.00, 'Rs', 3795.00, 1030.00),
-(29245, 278516, 5459, NULL, 'Super Glue 3G Flexy', 24.00, 24.00, 30.00, 0.00, 'Rs', 720.00, 22.50),
-(29246, 278516, 5506, NULL, 'White Board Cleaner 250ml', 6.00, 6.00, 255.00, 0.00, 'Rs', 1530.00, 200.00),
-(29247, 278516, 5536, NULL, 'Paper Clip 33mm SD', 10.00, 10.00, 48.00, 0.00, 'Rs', 480.00, 36.50),
-(29248, 278516, 5550, NULL, 'Paper Fastener 50s', 2.00, 2.00, 221.00, 0.00, 'Rs', 442.00, 170.00),
-(29249, 278516, 5596, NULL, 'Desighn Clear Bag', 12.00, 12.00, 50.00, 0.00, 'Rs', 600.00, 35.00),
-(29250, 278516, 5611, NULL, 'My Clear Bag  MIX', 12.00, 12.00, 30.00, 0.00, 'Rs', 360.00, 22.50);
+(NULL, 278636, 4351, 220, 'Rainbow Mesh Bag - A 6', 12.00, 12.00, 52.00, 0.00, 'Rs', 624.00, 52.00),
+(NULL, 278636, 4351, 222, 'Rainbow Mesh Bag - A 3', 12.00, 12.00, 190.00, 0.00, 'Rs', 2280.00, 52.00),
+(NULL, 278636, 4351, 223, 'Rainbow Mesh Bag - B 4', 12.00, 12.00, 156.00, 0.00, 'Rs', 1872.00, 52.00),
+(NULL, 278636, 4351, 224, 'Rainbow Mesh Bag - A 5', 12.00, 12.00, 52.00, 0.00, 'Rs', 624.00, 52.00),
+(NULL, 278636, 4386, NULL, 'Copy Paper A3 80 Gsm', 5.00, 5.00, 1562.00, 0.00, 'Rs', 7810.00, 2000.00),
+(NULL, 278636, 4665, NULL, 'Slime 150', 6.00, 6.00, 185.00, 0.00, 'Rs', 1110.00, 185.00),
+(NULL, 278636, 4791, 239, 'Cello CD Marker - Black', 72.00, 72.00, 65.00, 0.00, 'Rs', 4680.00, 65.00),
+(NULL, 278636, 5477, NULL, 'Slime 148', 6.00, 6.00, 150.00, 0.00, 'Rs', 900.00, 150.00);
 
--- 3. Re-sync delivery_picking_items for bound route deliveries #210 and #213
-DELETE FROM delivery_picking_items WHERE delivery_id IN (210, 213);
+-- 3. Invoice 20260910240099 (ID 278637) - Customer: CITY BOOK SHOP-PUTTALAM - Total: Rs 62,665.60
+INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id`, `description`, `quantity`, `loaded_quantity`, `unit_price`, `discount_value`, `discount_type`, `total`, `cost_at_sale`) VALUES
+(NULL, 278637, 4577, NULL, 'File Separate A4 1 To 10', 10.00, 10.00, 138.00, 0.00, 'Rs', 1380.00, 138.00),
+(NULL, 278637, 4685, NULL, 'Kids Learning Clock Large', 12.00, 12.00, 96.00, 0.00, 'Rs', 1152.00, 96.00),
+(NULL, 278637, 5104, NULL, 'Magnet Box 1230', 40.00, 40.00, 135.00, 0.00, 'Rs', 5400.00, 135.00),
+(NULL, 278637, 5174, NULL, 'Pencil Purse 97A', 24.00, 24.00, 410.00, 0.00, 'Rs', 9840.00, 410.00),
+(NULL, 278637, 5235, NULL, '3 IN One Sharpener 8103', 48.00, 48.00, 57.50, 0.00, 'Rs', 2760.00, 57.50),
+(NULL, 278637, 5654, NULL, 'Lunch Box ET118', 12.00, 12.00, 238.52, 0.00, 'Rs', 2862.24, 238.52),
+(NULL, 278637, 4550, 248, 'Paper File Cover 100Pcs - Mix', 15.00, 15.00, 1200.00, 0.00, 'Rs', 18000.00, 912.00),
+(NULL, 278637, 4581, 109, 'Magazine Holder 3 Inch - Black', 32.00, 32.00, 265.00, 0.00, 'Rs', 8480.00, 265.00),
+(NULL, 278637, 4594, 120, 'Magazine Holder 6 Inch - Black', 8.00, 8.00, 338.92, 0.00, 'Rs', 2711.36, 305.00),
+(NULL, 278637, 4857, NULL, 'Fancy Note Book 2518', 18.00, 18.00, 560.00, 0.00, 'Rs', 10080.00, 560.00);
+
+-- 4. Invoice 20260910240100 (ID 278638) - Customer: A TO Z BOOK SHOP-PUTTALAM - Total: Rs 66,204.00
+INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id`, `description`, `quantity`, `loaded_quantity`, `unit_price`, `discount_value`, `discount_type`, `total`, `cost_at_sale`) VALUES
+(NULL, 278638, 4653, NULL, 'Scratch Book Small', 24.00, 24.00, 84.00, 0.00, 'Rs', 2016.00, 84.00),
+(NULL, 278638, 4863, NULL, 'Fancy Note Book Unicorn', 30.00, 30.00, 590.00, 0.00, 'Rs', 17700.00, 590.00),
+(NULL, 278638, 4866, NULL, 'Fancy Note Book Wool', 12.00, 12.00, 590.00, 0.00, 'Rs', 7080.00, 590.00),
+(NULL, 278638, 4857, NULL, 'Fancy Note Book 2518', 12.00, 12.00, 560.00, 0.00, 'Rs', 6720.00, 560.00),
+(NULL, 278638, 5296, NULL, 'Stencil 1Pcs', 12.00, 12.00, 60.00, 0.00, 'Rs', 720.00, 60.00),
+(NULL, 278638, 5297, NULL, 'Stencil 2Pcs', 12.00, 12.00, 120.00, 0.00, 'Rs', 1440.00, 120.00),
+(NULL, 278638, 5526, NULL, 'Magnet Box PX500', 24.00, 24.00, 622.00, 0.00, 'Rs', 14928.00, 960.00),
+(NULL, 278638, 5600, NULL, 'Panda Bendy Pen 48 Pcs', 2.00, 2.00, 3120.00, 0.00, 'Rs', 6240.00, 3120.00),
+(NULL, 278638, 5569, NULL, 'Vacum Cup 169', 12.00, 12.00, 780.00, 0.00, 'Rs', 9360.00, 780.00);
+
+-- 5. Re-sync delivery_picking_items for associated deliveries
+DELETE FROM delivery_picking_items WHERE delivery_id IN (
+    SELECT DISTINCT id FROM deliveries WHERE rep_route_id IN (SELECT rep_route_id FROM invoices WHERE id IN (278636, 278637, 278638))
+);
 
 INSERT INTO delivery_picking_items (delivery_id, item_name, item_id, variation_option_id, required_qty, loaded_qty)
 SELECT d.id, ii.description, ii.item_id, ii.variation_option_id, SUM(ii.quantity) as required_qty, SUM(ii.loaded_quantity) as loaded_qty
 FROM deliveries d
 JOIN invoices i ON i.rep_route_id = d.rep_route_id
 JOIN invoice_items ii ON ii.invoice_id = i.id
-WHERE d.id IN (210, 213) AND i.status != 'Voided'
+WHERE i.id IN (278636, 278637, 278638) AND i.status != 'Voided'
 GROUP BY d.id, ii.description, ii.item_id, ii.variation_option_id;
