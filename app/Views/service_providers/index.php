@@ -1004,11 +1004,20 @@ try {
 
     window.openModal = function(id) { 
         const m = document.getElementById(id);
-        if (m) m.classList.remove('hidden'); 
+        if (m) {
+            m.classList.remove('hidden');
+        } else {
+            console.error('[openModal Error] Target modal ID not found in DOM:', id);
+            alert('Unable to open modal: #' + id + ' is missing.');
+        }
     }
     window.closeModal = function(id) { 
         const m = document.getElementById(id);
-        if (m) m.classList.add('hidden'); 
+        if (m) {
+            m.classList.add('hidden');
+        } else {
+            console.error('[closeModal Error] Target modal ID not found in DOM:', id);
+        }
     }
 
     window.openServiceProviderModalPopup = function(id, tab = null) {
@@ -1026,7 +1035,7 @@ try {
         
         fetch(targetUrl)
             .then(response => {
-                if (!response.ok) throw new Error('Failed to load provider profile');
+                if (!response.ok) throw new Error('Failed to load provider profile (HTTP ' + response.status + ')');
                 return response.text();
             })
             .then(html => {
@@ -1035,23 +1044,35 @@ try {
                 
                 const newContent = doc.getElementById('modal-profile-content-source');
                 const newHeader = doc.getElementById('modal-header-source');
+                const newBillModal = doc.getElementById('addBillModal');
                 
                 if (newContent && newHeader) {
                     content.innerHTML = newContent.innerHTML;
                     document.getElementById('modal-header-container').innerHTML = newHeader.innerHTML;
+                    
+                    // Inject or update the dynamic addBillModal in main DOM
+                    let billModalEl = document.getElementById('addBillModal');
+                    if (newBillModal) {
+                        if (billModalEl) {
+                            billModalEl.outerHTML = newBillModal.outerHTML;
+                        } else {
+                            document.body.insertAdjacentHTML('beforeend', newBillModal.outerHTML);
+                        }
+                    }
+
                     loader.style.display = 'none';
                     content.style.display = 'flex';
                     
                     if (tab) { window.switchModalTab(tab); } 
                     else { window.switchModalTab('ledger'); }
                 } else {
-                    throw new Error('Profile layout mismatch');
+                    throw new Error('Profile layout mismatch: missing modal-profile-content-source or modal-header-source');
                 }
             })
             .catch(err => {
-                console.error(err);
+                console.error('[openServiceProviderModalPopup Error]:', err);
                 loader.style.display = 'none';
-                content.innerHTML = `<div style="padding:40px; text-align:center; color:var(--c-red); font-weight:600;"><i class="fa-solid fa-triangle-exclamation" style="font-size:24px; margin-bottom:10px; display:block;"></i>Failed to load provider profile data.</div>`;
+                content.innerHTML = `<div style="padding:40px; text-align:center; color:var(--c-red); font-weight:600;"><i class="fa-solid fa-triangle-exclamation" style="font-size:24px; margin-bottom:10px; display:block;"></i>Failed to load provider profile data: ${err.message || err}</div>`;
                 content.style.display = 'block';
             });
     }
