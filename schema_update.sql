@@ -1,7 +1,7 @@
 -- 1. Safely remove any empty/partial entries for the affected invoices
 DELETE FROM `invoice_items` WHERE `invoice_id` IN (278636, 278637, 278638);
 
--- 2. Invoice 20260910240098 (ID 278636) - Customer: IMAN BOOK SHOP-POLGAHAWELA - Total: Rs 19,900.00
+-- Invoice 20260910240098 (ID 278636) - Customer: IMAN BOOK SHOP-POLGAHAWELA - Total: Rs 19,900.00
 INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id`, `description`, `quantity`, `loaded_quantity`, `unit_price`, `discount_value`, `discount_type`, `total`, `cost_at_sale`) VALUES
 (NULL, 278636, 4351, 220, 'Rainbow Mesh Bag - A 6', 12.00, 12.00, 52.00, 0.00, 'Rs', 624.00, 52.00),
 (NULL, 278636, 4351, 222, 'Rainbow Mesh Bag - A 3', 12.00, 12.00, 190.00, 0.00, 'Rs', 2280.00, 52.00),
@@ -12,7 +12,7 @@ INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id
 (NULL, 278636, 4791, 239, 'Cello CD Marker - Black', 72.00, 72.00, 65.00, 0.00, 'Rs', 4680.00, 65.00),
 (NULL, 278636, 5477, NULL, 'Slime 148', 6.00, 6.00, 150.00, 0.00, 'Rs', 900.00, 150.00);
 
--- 3. Invoice 20260910240099 (ID 278637) - Customer: CITY BOOK SHOP-PUTTALAM - Total: Rs 62,665.60
+-- Invoice 20260910240099 (ID 278637) - Customer: CITY BOOK SHOP-PUTTALAM - Total: Rs 62,665.60
 INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id`, `description`, `quantity`, `loaded_quantity`, `unit_price`, `discount_value`, `discount_type`, `total`, `cost_at_sale`) VALUES
 (NULL, 278637, 4577, NULL, 'File Separate A4 1 To 10', 10.00, 10.00, 138.00, 0.00, 'Rs', 1380.00, 138.00),
 (NULL, 278637, 4685, NULL, 'Kids Learning Clock Large', 12.00, 12.00, 96.00, 0.00, 'Rs', 1152.00, 96.00),
@@ -25,7 +25,7 @@ INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id
 (NULL, 278637, 4594, 120, 'Magazine Holder 6 Inch - Black', 8.00, 8.00, 338.92, 0.00, 'Rs', 2711.36, 305.00),
 (NULL, 278637, 4857, NULL, 'Fancy Note Book 2518', 18.00, 18.00, 560.00, 0.00, 'Rs', 10080.00, 560.00);
 
--- 4. Invoice 20260910240100 (ID 278638) - Customer: A TO Z BOOK SHOP-PUTTALAM - Total: Rs 66,204.00
+-- Invoice 20260910240100 (ID 278638) - Customer: A TO Z BOOK SHOP-PUTTALAM - Total: Rs 66,204.00
 INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id`, `description`, `quantity`, `loaded_quantity`, `unit_price`, `discount_value`, `discount_type`, `total`, `cost_at_sale`) VALUES
 (NULL, 278638, 4653, NULL, 'Scratch Book Small', 24.00, 24.00, 84.00, 0.00, 'Rs', 2016.00, 84.00),
 (NULL, 278638, 4863, NULL, 'Fancy Note Book Unicorn', 30.00, 30.00, 590.00, 0.00, 'Rs', 17700.00, 590.00),
@@ -37,15 +37,7 @@ INSERT INTO `invoice_items` (`id`, `invoice_id`, `item_id`, `variation_option_id
 (NULL, 278638, 5600, NULL, 'Panda Bendy Pen 48 Pcs', 2.00, 2.00, 3120.00, 0.00, 'Rs', 6240.00, 3120.00),
 (NULL, 278638, 5569, NULL, 'Vacum Cup 169', 12.00, 12.00, 780.00, 0.00, 'Rs', 9360.00, 780.00);
 
--- 5. Re-sync delivery_picking_items for associated deliveries
-DELETE FROM delivery_picking_items WHERE delivery_id IN (
-    SELECT DISTINCT id FROM deliveries WHERE rep_route_id IN (SELECT rep_route_id FROM invoices WHERE id IN (278636, 278637, 278638))
-);
-
-INSERT INTO delivery_picking_items (delivery_id, item_name, item_id, variation_option_id, required_qty, loaded_qty)
-SELECT d.id, ii.description, ii.item_id, ii.variation_option_id, SUM(ii.quantity) as required_qty, SUM(ii.loaded_quantity) as loaded_qty
-FROM deliveries d
-JOIN invoices i ON i.rep_route_id = d.rep_route_id
-JOIN invoice_items ii ON ii.invoice_id = i.id
-WHERE i.id IN (278636, 278637, 278638) AND i.status != 'Voided'
-GROUP BY d.id, ii.description, ii.item_id, ii.variation_option_id;
+-- 2. Sync invoice totals to match item line sums for bound routes
+UPDATE invoices i 
+SET total_amount = (SELECT SUM(total) FROM invoice_items ii WHERE ii.invoice_id = i.id) 
+WHERE i.id IN (278491, 278492, 278503, 278504, 278505, 278515, 278516, 278636, 278637, 278638);

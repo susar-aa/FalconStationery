@@ -35,6 +35,10 @@ class Invoice {
 
     public function createInvoiceWithAccounting($invoiceData, $items, $arAccountId, $revenueAccountId, $userId, $taxData = null, $allowNegativeInventory = false) {
         try {
+            if (empty($items)) {
+                error_log("Invoice Creation Error: Attempted to create invoice with an empty items array.");
+                throw new Exception("Cannot create an invoice with an empty items array.");
+            }
             $this->db->beginTransaction();
 
             // PRE-INSERT STOCK LOCKING & VERIFICATION
