@@ -114,8 +114,8 @@ class JournalEntry {
                 }
             }
 
-            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, is_manual) 
-                              VALUES (:entry_date, :reference, :description, :created_by, :is_manual)");
+            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, is_manual, status) 
+                              VALUES (:entry_date, :reference, :description, :created_by, :is_manual, 'Posted')");
             $this->db->bind(':entry_date', $date);
             $this->db->bind(':reference', $reference);
             $this->db->bind(':description', $description);

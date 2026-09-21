@@ -133,7 +133,10 @@ class ChartOfAccount {
         $this->db->query("SELECT SUM(t.debit) as total_debit, SUM(t.credit) as total_credit 
                           FROM transactions t 
                           JOIN journal_entries je ON t.journal_entry_id = je.id 
-                          WHERE t.account_id = :account_id AND je.entry_date < :start_date AND je.status = 'Posted'");
+                          WHERE t.account_id = :account_id AND je.entry_date < :start_date 
+                            AND (je.status IS NULL OR je.status = '' OR je.status NOT IN ('Voided', 'Draft', 'Cancelled'))
+                            AND NOT EXISTS (SELECT 1 FROM customer_payments cp WHERE cp.journal_entry_id = je.id AND cp.status IN ('Reversed', 'Bounced'))
+                            AND NOT EXISTS (SELECT 1 FROM supplier_payments sp WHERE sp.journal_entry_id = je.id AND sp.status = 'Reversed')");
         $this->db->bind(':account_id', $accountId);
         $this->db->bind(':start_date', $startDate);
         $row = $this->db->single();
@@ -144,11 +147,22 @@ class ChartOfAccount {
      * Fetch filtered chronological transaction entries for account ledger
      */
     public function getAccountHistory($accountId, $filters = []) {
-        $sql = "SELECT t.*, je.entry_date, je.reference, je.description AS entry_description, inv.id as invoice_id, inv.invoice_number 
+        // Auto-heal legacy journal entries that have NULL or empty status
+        try {
+            $this->db->query("UPDATE journal_entries SET status = 'Posted' WHERE status IS NULL OR status = ''");
+            $this->db->execute();
+        } catch (Exception $e) {
+            error_log("selfHealJournalEntriesStatus Error: " . $e->getMessage());
+        }
+
+        $sql = "SELECT t.*, je.entry_date, je.reference, COALESCE(NULLIF(TRIM(t.description), ''), je.description) AS entry_description, inv.id as invoice_id, inv.invoice_number 
                 FROM transactions t 
                 JOIN journal_entries je ON t.journal_entry_id = je.id 
                 LEFT JOIN invoices inv ON je.id = inv.journal_entry_id 
-                WHERE t.account_id = :account_id AND je.status = 'Posted'";
+                WHERE t.account_id = :account_id 
+                  AND (je.status IS NULL OR je.status = '' OR je.status NOT IN ('Voided', 'Draft', 'Cancelled'))
+                  AND NOT EXISTS (SELECT 1 FROM customer_payments cp WHERE cp.journal_entry_id = je.id AND cp.status IN ('Reversed', 'Bounced'))
+                  AND NOT EXISTS (SELECT 1 FROM supplier_payments sp WHERE sp.journal_entry_id = je.id AND sp.status = 'Reversed')";
         
         $params = [':account_id' => $accountId];
 
