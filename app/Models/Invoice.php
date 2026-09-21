@@ -323,6 +323,10 @@ class Invoice {
 
     public function updateInvoiceWithAccounting($invoiceId, $invoiceData, $items, $arAccountId, $revenueAccountId, $userId, $allowNegativeInventory = false) {
         try {
+            if (empty($items)) {
+                error_log("Invoice Update Error: Attempted to update invoice ID {$invoiceId} with empty items array.");
+                throw new Exception("Cannot update invoice with an empty items array.");
+            }
             $this->db->beginTransaction();
 
             // Fetch current invoice state
