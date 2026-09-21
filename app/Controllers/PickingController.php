@@ -354,6 +354,7 @@ class PickingController extends Controller {
             LEFT JOIN variations v ON ivo.variation_id = v.id
             LEFT JOIN variation_values vv ON ivo.variation_value_id = vv.id
             WHERE dpi.delivery_id = :delivery_id
+            ORDER BY category_name ASC, dpi.item_name ASC
         ");
         $this->db->bind(':delivery_id', $deliveryId);
         $items = $this->db->resultSet() ?: [];

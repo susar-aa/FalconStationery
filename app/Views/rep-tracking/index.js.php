@@ -1182,6 +1182,9 @@
                 }
 
                 let nameHtml = `<div style="font-weight:700; color:#0f172a; font-size:13px;">${escapeHtml(item.item_name)}</div>`;
+                if (item.category_name) {
+                    nameHtml += `<div style="font-size:10px; color:#64748b; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; margin-top:1px;">${escapeHtml(item.category_name)}</div>`;
+                }
                 if (item.replaced_by_name) {
                     nameHtml += `<div style="font-size:11px; color:#7c3aed; font-weight:bold; margin-top:2px;"><i class="ph ph-swap"></i> Replaced By: ${escapeHtml(item.replaced_by_name)} (Qty: ${item.replacement_qty})</div>`;
                 } else if (item.replaces_name) {

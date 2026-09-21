@@ -815,10 +815,14 @@ class RepTrackingController extends Controller {
 
                 $db->query("
                     SELECT dpi.id, dpi.item_id, dpi.variation_option_id, dpi.item_name, dpi.required_qty, dpi.loaded_qty as pre_loaded_qty, 
-                           dpi.final_loaded_qty, dpi.variance, dpi.is_verified, dpi.verified_at, u.username as verifier_name
+                           dpi.final_loaded_qty, dpi.variance, dpi.is_verified, dpi.verified_at, u.username as verifier_name,
+                           COALESCE(ic.name, 'Uncategorized') as category_name
                     FROM delivery_picking_items dpi
+                    LEFT JOIN items it ON dpi.item_id = it.id
+                    LEFT JOIN item_categories ic ON it.category_id = ic.id
                     LEFT JOIN users u ON dpi.verified_by = u.id
                     WHERE dpi.delivery_id = :did
+                    ORDER BY category_name ASC, dpi.item_name ASC
                 ");
                 $db->bind(':did', $del->id);
                 $items = $db->resultSet() ?: [];
