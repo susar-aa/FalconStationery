@@ -315,6 +315,19 @@ class Invoice {
                 }
             }
 
+            try {
+                require_once __DIR__ . '/AuditLog.php';
+                $auditLog = new AuditLog();
+                $auditLog->logAction($userId, 'CREATE', 'Sales', "Created Invoice {$invoiceData['invoice_number']} with " . count($items) . " items", $invoiceId, null, [
+                    'invoice_number' => $invoiceData['invoice_number'],
+                    'customer_id' => $invoiceData['customer_id'],
+                    'total_amount' => $invoiceData['subtotal'],
+                    'items' => $items
+                ]);
+            } catch (Throwable $tAudit) {
+                error_log("Audit log recording error on invoice creation: " . $tAudit->getMessage());
+            }
+
             $this->db->commit();
             return $invoiceId;
         } catch (Throwable $e) {
@@ -694,6 +707,22 @@ class Invoice {
                 if ($isPosted) {
                     $this->db->updateAccountBalance($inventoryAccountId, 0, $totalCogs);
                 }
+            }
+
+            try {
+                require_once __DIR__ . '/AuditLog.php';
+                $auditLog = new AuditLog();
+                $auditLog->logAction($userId, 'UPDATE', 'Sales', "Updated Invoice {$oldInvoice->invoice_number} with " . count($items) . " items", $invoiceId, [
+                    'old_total' => $oldGrandTotal,
+                    'old_items_count' => count($oldItems)
+                ], [
+                    'invoice_number' => $oldInvoice->invoice_number,
+                    'customer_id' => $invoiceData['customer_id'],
+                    'total_amount' => $invoiceData['subtotal'],
+                    'items' => $items
+                ]);
+            } catch (Throwable $tAudit) {
+                error_log("Audit log recording error on invoice update: " . $tAudit->getMessage());
             }
 
             $this->db->commit();

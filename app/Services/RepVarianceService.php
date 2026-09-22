@@ -390,6 +390,22 @@ class RepVarianceService {
                 }
             }
 
+            foreach ($modifiedInvoices as $mInvId) {
+                try {
+                    $db->query("SELECT * FROM invoice_items WHERE invoice_id = :iid");
+                    $db->bind(':iid', $mInvId);
+                    $currItems = $db->resultSet();
+                    require_once dirname(__DIR__) . '/Models/AuditLog.php';
+                    $auditLog = new AuditLog();
+                    $auditLog->logAction($userId, 'VARIANCE_AUDIT', 'RepTracking', "Rep Route Variance Audit processed on Invoice #{$mInvId}", $mInvId, null, [
+                        'invoice_id' => $mInvId,
+                        'item_lines' => $currItems
+                    ]);
+                } catch (Throwable $tAudit) {
+                    error_log("Audit log failed for rep variance audit: " . $tAudit->getMessage());
+                }
+            }
+
             // Resolve all bound/merged route IDs to transition them together
             $routeIds = [intval($routeId)];
             $db->query("SELECT route_binding_id FROM rep_daily_routes WHERE id = :rid LIMIT 1");
