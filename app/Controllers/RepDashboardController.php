@@ -1346,6 +1346,27 @@ class RepDashboardController extends Controller {
                                 }
                             }
 
+                            // SAFEGUARD: If mobile app sent empty items for an existing invoice, preserve existing invoice items
+                            if (empty($itemsPayload) && !empty($existingInv->id)) {
+                                $this->db->query("SELECT * FROM invoice_items WHERE invoice_id = :id");
+                                $this->db->bind(':id', $existingInv->id);
+                                $existingItems = $this->db->resultSet();
+                                if (!empty($existingItems)) {
+                                    foreach ($existingItems as $eItem) {
+                                        $itemsPayload[] = [
+                                            'item_selection' => intval($eItem->item_id ?? 0) . '|' . intval($eItem->variation_option_id ?? 0),
+                                            'description' => $eItem->description,
+                                            'quantity' => floatval($eItem->quantity),
+                                            'unit_price' => floatval($eItem->unit_price),
+                                            'discount_value' => floatval($eItem->discount_value ?? 0.0),
+                                            'discount_type' => $eItem->discount_type ?? 'Rs',
+                                            'total' => floatval($eItem->total)
+                                        ];
+                                    }
+                                    error_log("RepDashboardController Mobile Sync Safeguard: Reconstructed " . count($itemsPayload) . " items from existing invoice ID {$existingInv->id} because mobile payload had 0 items.");
+                                }
+                            }
+
                             $globalDiscountType = isset($inv['global_discount_type']) ? trim($inv['global_discount_type']) : (isset($inv['discount_type']) ? trim($inv['discount_type']) : 'Rs');
                             if ($globalDiscountType !== '%' && $globalDiscountType !== 'Rs') {
                                 $globalDiscountType = 'Rs';

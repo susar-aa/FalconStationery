@@ -144,21 +144,10 @@ class RepVarianceService {
                         }
 
                         if ($newQty === 0.0) {
-                            $db->query("SELECT COUNT(*) as cnt FROM invoice_items WHERE invoice_id = :iid");
-                            $db->bind(':iid', $invoiceId);
-                            $cntRow = $db->single();
-                            $itemCount = $cntRow ? intval($cntRow->cnt) : 0;
-
-                            if ($itemCount <= 1) {
-                                $db->query("UPDATE invoice_items SET quantity = 0, loaded_quantity = 0, total = 0 WHERE id = :id");
-                                $db->bind(':id', $line->id);
-                                $db->execute();
-                                error_log("RepVarianceService Safeguard: Preserved item ID {$line->id} with 0 qty for invoice ID {$invoiceId} to prevent wiping invoice lines.");
-                            } else {
-                                $db->query("DELETE FROM invoice_items WHERE id = :id");
-                                $db->bind(':id', $line->id);
-                                $db->execute();
-                            }
+                            $db->query("UPDATE invoice_items SET quantity = 0, loaded_quantity = 0, total = 0 WHERE id = :id");
+                            $db->bind(':id', $line->id);
+                            $db->execute();
+                            error_log("RepVarianceService Safeguard: Preserved item ID {$line->id} with 0 qty for invoice ID {$invoiceId} to preserve historical product records.");
                         } else {
                             $db->query("UPDATE invoice_items SET quantity = :qty, loaded_quantity = :qty, total = :total WHERE id = :id");
                             $db->bind(':qty', $newQty);
