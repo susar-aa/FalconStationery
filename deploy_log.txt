@@ -1578,3 +1578,16 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 09/22/2026 15:14:32.54 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Services/RepVarianceService.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 209dc73] Update: app/Models/Invoice.php, app/Services/RepVarianceService.php, deploy_log.txt
+ 3 files changed, 58 insertions(+)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   adf6a50..209dc73  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Tue 09/22/2026 21:13:10.34 
+=================================================== 
+Adding changes... 

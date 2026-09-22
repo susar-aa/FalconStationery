@@ -790,8 +790,8 @@ class RepTrackingController extends Controller {
             }
             $deliveries = $db->resultSet() ?: [];
 
-            // If no delivery exists but route status is 'Loading', auto-create it
-            if (empty($deliveries) && $route && $route->status === 'Loading') {
+            // If no delivery exists, auto-create it for any active/viewed route
+            if (empty($deliveries) && $route) {
                 require_once dirname(__DIR__) . '/Services/RepRouteService.php';
                 RepRouteService::ensureDeliveryAndPickingPopulated($db, $routeId);
                 
