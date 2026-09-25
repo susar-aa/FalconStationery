@@ -21,7 +21,7 @@ class RepTracking {
             LEFT JOIN (
                 SELECT rep_route_id, 
                        COUNT(*) as bill_count,
-                       SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_sales
+                       SUM(COALESCE(grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))) as total_sales
                 FROM invoices 
                 WHERE status != 'Voided' AND rep_route_id IS NOT NULL
                 GROUP BY rep_route_id
@@ -108,7 +108,7 @@ class RepTracking {
 
         $this->db->query("
             SELECT i.*, c.name as customer_name,
-            (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as true_grand_total
+            COALESCE(i.grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0))) as true_grand_total
             FROM invoices i
             JOIN customers c ON i.customer_id = c.id
             WHERE i.rep_route_id IN ($placeholdersStr)
@@ -131,9 +131,9 @@ class RepTracking {
 
         $this->db->query("
             SELECT r.*, COALESCE(e.first_name, u.username) as first_name, COALESCE(e.last_name, '') as last_name,
-                (SELECT COUNT(*) FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status != 'Voided') as bill_count,
-                (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) 
-                 FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status != 'Voided') as total_sales
+                (SELECT COUNT(*) FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as bill_count,
+                (SELECT COALESCE(SUM(COALESCE(grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))), 0) 
+                 FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as total_sales
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
             LEFT JOIN employees e ON u.email = e.email
@@ -144,6 +144,87 @@ class RepTracking {
             $this->db->bind(":rid_" . $index, intval($id));
         }
         return $this->db->single();
+    }
+
+    /**
+     * Reconcile route invoice totals against posted GL journal entries
+     */
+    public function getRouteGLReconciliation(int $routeId): array {
+        $routeIds = $this->resolveAllBoundRouteIds($routeId);
+        $placeholders = [];
+        foreach ($routeIds as $index => $id) {
+            $placeholders[] = ":rid_" . $index;
+        }
+        $placeholdersStr = implode(',', $placeholders);
+
+        // 1. Invoice grand_total sum
+        $this->db->query("
+            SELECT 
+                COUNT(id) as total_invoices,
+                COALESCE(SUM(COALESCE(grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))), 0.0) as invoice_sales_total
+            FROM invoices 
+            WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
+        ");
+        foreach ($routeIds as $index => $id) {
+            $this->db->bind(":rid_" . $index, intval($id));
+        }
+        $invRow = $this->db->single();
+        $invoiceSalesTotal = floatval($invRow->invoice_sales_total ?? 0.0);
+        $invoiceCount = intval($invRow->total_invoices ?? 0);
+
+        // 2. GL Accounts Receivable (Debit sum on AR account 1200) for route invoices
+        $this->db->query("
+            SELECT COALESCE(SUM(t.debit), 0.0) as gl_ar_debit
+            FROM transactions t
+            JOIN journal_entries je ON t.journal_entry_id = je.id
+            JOIN invoices i ON i.journal_entry_id = je.id
+            JOIN chart_of_accounts coa ON t.account_id = coa.id
+            WHERE i.rep_route_id IN ($placeholdersStr) 
+              AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
+              AND coa.account_code = '1200'
+        ");
+        foreach ($routeIds as $index => $id) {
+            $this->db->bind(":rid_" . $index, intval($id));
+        }
+        $arRow = $this->db->single();
+        $glArTotal = floatval($arRow->gl_ar_debit ?? 0.0);
+
+        // 3. GL Revenue (Credit sum on Sales account 4000 - Debit sum on Discounts 4050)
+        $this->db->query("
+            SELECT 
+                COALESCE(SUM(CASE WHEN coa.account_code = '4000' THEN t.credit ELSE 0 END), 0.0) as gl_gross_sales,
+                COALESCE(SUM(CASE WHEN coa.account_code = '4050' THEN t.debit ELSE 0 END), 0.0) as gl_discounts,
+                COALESCE(SUM(CASE WHEN coa.account_code = '2110' THEN t.credit ELSE 0 END), 0.0) as gl_tax
+            FROM transactions t
+            JOIN journal_entries je ON t.journal_entry_id = je.id
+            JOIN invoices i ON i.journal_entry_id = je.id
+            JOIN chart_of_accounts coa ON t.account_id = coa.id
+            WHERE i.rep_route_id IN ($placeholdersStr) 
+              AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
+        ");
+        foreach ($routeIds as $index => $id) {
+            $this->db->bind(":rid_" . $index, intval($id));
+        }
+        $revRow = $this->db->single();
+        $glGrossSales = floatval($revRow->gl_gross_sales ?? 0.0);
+        $glDiscounts = floatval($revRow->gl_discounts ?? 0.0);
+        $glTax = floatval($revRow->gl_tax ?? 0.0);
+        $glNetSales = $glGrossSales - $glDiscounts + $glTax;
+
+        $variance = round($invoiceSalesTotal - $glArTotal, 2);
+
+        return [
+            'route_id' => $routeId,
+            'invoice_count' => $invoiceCount,
+            'invoice_sales_total' => $invoiceSalesTotal,
+            'gl_ar_total' => $glArTotal,
+            'gl_gross_sales' => $glGrossSales,
+            'gl_discounts' => $glDiscounts,
+            'gl_tax' => $glTax,
+            'gl_net_sales' => $glNetSales,
+            'variance' => $variance,
+            'is_reconciled' => abs($variance) < 0.01
+        ];
     }
 
     public function getRouteLoadingItems($routeId) {
@@ -400,7 +481,7 @@ class RepTracking {
                    c.name as customer_name, pc.finalized_by, pc.notes,
                    pc.is_verified, pc.is_flagged, pc.adjusted_amount, pc.verification_notes,
                    pc.debit_account_id, pc.credit_account_id,
-                   CASE WHEN pc.status = 'Finalized' THEN 999999 ELSE NULL END as journal_entry_id,
+                   pc.journal_entry_id,
                    DATE(pc.created_at) as payment_date,
                    COALESCE(pc.cheque_number, pc.bank_name, '') as reference
             FROM pending_collections pc
@@ -481,8 +562,24 @@ class RepTracking {
                     $arAccId = intval($payment->credit_account_id);
                 }
 
-                if (!$assetAccId) {
-                    continue; // Skip if no valid account mapped
+                // Hard validation: Ensure valid Debit and Credit GL accounts are resolved
+                if (empty($assetAccId) || $assetAccId <= 0) {
+                    throw new Exception("Collection Finalisation Failed for Payment #{$pid} ({$method}): No valid Debit/Asset GL account (Cash/Bank/Cheque) mapped.");
+                }
+
+                if (empty($arAccId) || $arAccId <= 0) {
+                    throw new Exception("Collection Finalisation Failed for Payment #{$pid} ({$method}): No valid Credit GL account (Accounts Receivable) mapped.");
+                }
+
+                // Verify accounts exist in Chart of Accounts
+                $this->db->query("SELECT id FROM chart_of_accounts WHERE id IN (:aid1, :aid2)");
+                $this->db->bind(':aid1', $assetAccId);
+                $this->db->bind(':aid2', $arAccId);
+                $accCheckRows = $this->db->resultSet() ?: [];
+                $validAccCount = count($accCheckRows);
+                $expectedAccCount = ($assetAccId == $arAccId) ? 1 : 2;
+                if ($validAccCount < $expectedAccCount) {
+                    throw new Exception("Collection Finalisation Failed for Payment #{$pid}: Mapped GL accounts (Debit: {$assetAccId}, Credit: {$arAccId}) do not exist in Chart of Accounts.");
                 }
 
                 // Create Journal Entry
@@ -559,7 +656,8 @@ class RepTracking {
                 $paymentModel->settleCustomerInvoicesWithCreditNonTransactional($payment->customer_id, $userId);
 
                 // Link pending collection to generated journal entry and mark as Finalized
-                $this->db->query("UPDATE pending_collections SET status = 'Finalized', finalized_by = :uid, finalized_at = NOW() WHERE id = :pid");
+                $this->db->query("UPDATE pending_collections SET status = 'Finalized', journal_entry_id = :jid, finalized_by = :uid, finalized_at = NOW() WHERE id = :pid");
+                $this->db->bind(':jid', $jid);
                 $this->db->bind(':uid', $userId);
                 $this->db->bind(':pid', $pid);
                 $this->db->execute();

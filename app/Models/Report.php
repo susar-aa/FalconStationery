@@ -541,7 +541,7 @@ class Report {
 
                 $this->db->query("
                     SELECT 
-                        (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE customer_id = :cid1 AND status != 'Voided') - 
+                        (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE customer_id = :cid1 AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) - 
                         (SELECT COALESCE(SUM(amount), 0) FROM customer_payments WHERE customer_id = :cid2 AND status = 'Active') - 
                         (SELECT COALESCE(SUM(total_amount), 0) FROM credit_notes WHERE customer_id = :cid3)
                         AS outstanding_balance
@@ -556,7 +556,7 @@ class Report {
                     SELECT id, invoice_number, invoice_date, status, 
                            (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_amount 
                     FROM invoices 
-                    WHERE customer_id = :cid 
+                    WHERE customer_id = :cid AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
                     ORDER BY invoice_date DESC, id DESC LIMIT 5
                 ");
                 $this->db->bind(':cid', $customer->id);

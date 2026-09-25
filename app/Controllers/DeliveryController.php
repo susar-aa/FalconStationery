@@ -106,6 +106,7 @@ class DeliveryController extends Controller {
             $debitAccounts = $postData['debit_accounts'] ?? [];
             $creditAccounts = $postData['credit_accounts'] ?? [];
             $returnedItems = $postData['returned_items'] ?? [];
+            $varianceApprovalReason = !empty($postData['variance_approval_reason']) ? trim($postData['variance_approval_reason']) : null;
 
             $this->deliveryModel->finalizeDelivery(
                 $deliveryId, 
@@ -114,7 +115,11 @@ class DeliveryController extends Controller {
                 $selectedInvoiceIds, 
                 $debitAccounts, 
                 $creditAccounts,
-                $returnedItems
+                $returnedItems,
+                null,
+                null,
+                null,
+                $varianceApprovalReason
             );
 
             header('Content-Type: application/json');

@@ -144,16 +144,13 @@ class RouteExpenseService {
             $creditAccountId = $this->pettyCash->getPettyCashAccountId();
         } else {
             // Collected Cash: use Driver Transit Collections clearing account (1090)
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1090' LIMIT 1");
+            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1090' AND is_active = 1 LIMIT 1");
             $clearingRow = $this->db->single();
             if ($clearingRow) {
                 $creditAccountId = intval($clearingRow->id);
             } else {
-                // Auto create 1090 if it somehow doesn't exist
-                $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, balance, parent_id) 
-                                  VALUES ('1090', 'Driver Transit Collections (Temp)', 'Asset', 0.00, NULL)");
-                $this->db->execute();
-                $creditAccountId = intval($this->db->lastInsertId());
+                error_log("Route Expense Error: Clearing account 1090 (Driver Transit Collections) is missing or inactive.");
+                return "Accounting Configuration Error: Active Driver Transit Collections clearing account (1090) is missing or inactive. Please contact Finance Admin.";
             }
         }
 
@@ -446,99 +443,60 @@ class RouteExpenseService {
     }
 
     /**
-     * Map or create Chart of Account expense accounts dynamically
+     * Map Chart of Account expense accounts without dynamic creation
      */
     public function getOrCreateExpenseAccount(string $type, ?string $vehicleNumber = null): ?int {
         $accountName = '';
         $parentCode = '';
-        $parentName = '';
         
         switch ($type) {
             case 'Fuel':
                 $accountName = "Vehicle Expense - " . ($vehicleNumber ?: 'General');
                 $parentCode = '6700';
-                $parentName = 'Travel Transport (Fuel)';
                 break;
             case 'Vehicle Maintenance':
                 $accountName = "Vehicle Maintenance - " . ($vehicleNumber ?: 'General');
                 $parentCode = '6800';
-                $parentName = 'Vehicle Maintenance';
                 break;
             case 'Meals':
                 $accountName = "Meals Expense";
                 $parentCode = '6100';
-                $parentName = 'Staff Meals & Entertainment';
                 break;
             case 'Accommodation':
                 $accountName = "Accommodation Expense";
                 $parentCode = '6200';
-                $parentName = 'Accommodation';
                 break;
             case 'Parking':
                 $accountName = "Parking Expense";
                 $parentCode = '6300';
-                $parentName = 'Parking & Tolls';
                 break;
             case 'Toll Charges':
                 $accountName = "Toll Charges Expense";
                 $parentCode = '6300';
-                $parentName = 'Parking & Tolls';
                 break;
             default:
                 $accountName = "Other Route Expense";
                 $parentCode = '6900';
-                $parentName = 'Miscellaneous Expenses';
                 break;
         }
         
-        // 1. Check if account already exists
-        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_name = :name LIMIT 1");
+        // 1. Check if specific named active sub-account exists
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_name = :name AND is_active = 1 LIMIT 1");
         $this->db->bind(':name', $accountName);
         $row = $this->db->single();
         if ($row) {
             return intval($row->id);
         }
         
-        // 2. Ensure parent exists
-        $this->db->query("SELECT id, account_code FROM chart_of_accounts WHERE account_code = :code LIMIT 1");
+        // 2. Fall back to active parent category account by account_code
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = :code AND is_active = 1 LIMIT 1");
         $this->db->bind(':code', $parentCode);
         $parent = $this->db->single();
-        if (!$parent) {
-            // Find parent by name
-            $this->db->query("SELECT id, account_code FROM chart_of_accounts WHERE account_name = :name LIMIT 1");
-            $this->db->bind(':name', $parentName);
-            $parent = $this->db->single();
+        if ($parent) {
+            return intval($parent->id);
         }
-        
-        if (!$parent) {
-            // Create parent
-            $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, parent_id) VALUES (:code, :name, 'Expense', NULL)");
-            $this->db->bind(':code', $parentCode);
-            $this->db->bind(':name', $parentName);
-            $this->db->execute();
-            $parentId = intval($this->db->lastInsertId());
-        } else {
-            $parentId = intval($parent->id);
-            $parentCode = $parent->account_code;
-        }
-        
-        // 3. Create sub-account under parent
-        $this->db->query("SELECT MAX(CAST(account_code AS UNSIGNED)) as max_code FROM chart_of_accounts WHERE parent_id = :pid");
-        $this->db->bind(':pid', $parentId);
-        $maxRow = $this->db->single();
-        $maxCode = $maxRow ? intval($maxRow->max_code) : 0;
-        if ($maxCode > 0) {
-            $subAccountCode = strval($maxCode + 1);
-        } else {
-            $subAccountCode = strval(intval($parentCode) + 1);
-        }
-        
-        $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, parent_id) VALUES (:code, :name, 'Expense', :pid)");
-        $this->db->bind(':code', $subAccountCode);
-        $this->db->bind(':name', $accountName);
-        $this->db->bind(':pid', $parentId);
-        $this->db->execute();
-        
-        return intval($this->db->lastInsertId());
+
+        error_log("Route Expense Error: Active COA account for code [{$parentCode}] or name [{$accountName}] is missing or inactive.");
+        return null;
     }
 }

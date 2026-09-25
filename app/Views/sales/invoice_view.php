@@ -11,7 +11,7 @@ if (!empty($data['invoice']->customer_id)) {
     $db->query("
         SELECT 
             COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) as total_billed
-        FROM invoices WHERE customer_id = :id AND status != 'Voided'
+        FROM invoices WHERE customer_id = :id AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
     ");
     $db->bind(':id', $data['invoice']->customer_id);
     $billed = $db->single()->total_billed ?? 0;
@@ -991,7 +991,9 @@ $invoiceBalance = max(0, $thisInvoiceGrandTotal - $invoicePaidAmount);
                             <?php if(!empty($repPhone)) echo '<strong>Tel:</strong> ' . htmlspecialchars($repPhone) . '<br>'; ?>
                             <div style="margin-top: 5px;">
                                 <strong>Payment:</strong>
-                                <?php if ($isFullyPaid): ?>
+                                <?php if (strtolower($data['invoice']->status ?? '') === 'cancelled' || strtolower($data['invoice']->delivery_status ?? '') === 'cancelled'): ?>
+                                    <span class="status-badge" style="background:#FEE2E2; color:#DC2626; border:1px solid #FECACA;"><i class="ph ph-x-circle"></i> Cancelled</span>
+                                <?php elseif ($isFullyPaid): ?>
                                     <span class="status-badge status-paid"><i class="ph ph-check-circle"></i> Paid</span>
                                 <?php elseif ($isPartiallyPaid): ?>
                                     <span class="status-badge status-partial"><i class="ph ph-clock"></i> Partially Paid</span>
@@ -1003,7 +1005,9 @@ $invoiceBalance = max(0, $thisInvoiceGrandTotal - $invoicePaidAmount);
                     <?php else: ?>
                         <div class="customer-name" style="font-size: 13px; text-transform: uppercase; color: #64748B; letter-spacing: 0.5px;">Payment Status</div>
                         <div class="customer-details" style="margin-top: 4px;">
-                            <?php if ($isFullyPaid): ?>
+                            <?php if (strtolower($data['invoice']->status ?? '') === 'cancelled' || strtolower($data['invoice']->delivery_status ?? '') === 'cancelled'): ?>
+                                <span class="status-badge" style="background:#FEE2E2; color:#DC2626; border:1px solid #FECACA;"><i class="ph ph-x-circle"></i> Cancelled</span>
+                            <?php elseif ($isFullyPaid): ?>
                                 <span class="status-badge status-paid"><i class="ph ph-check-circle"></i> Paid</span>
                             <?php elseif ($isPartiallyPaid): ?>
                                 <span class="status-badge status-partial"><i class="ph ph-clock"></i> Partially Paid</span>

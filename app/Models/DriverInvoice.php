@@ -197,7 +197,7 @@ class DriverInvoice {
 
             // 2. Release physical stock
             if ($item->item_id) {
-                require_once '../app/Models/Item.php';
+                require_once __DIR__ . '/Item.php';
                 $itemModel = new Item();
                 $itemModel->updateStockDelta($item->item_id, $oldQty);
             }
@@ -600,6 +600,30 @@ class DriverInvoice {
         $this->db->query("UPDATE invoices SET delivery_status = :status WHERE id = :id");
         $this->db->bind(':status', $status);
         $this->db->bind(':id', $invoiceId);
-        return $this->db->execute();
+        $res = $this->db->execute();
+
+        if ($status === 'Cancelled') {
+            // Update invoice status to Cancelled and stock status to returned
+            $this->db->query("UPDATE invoices SET status = 'Cancelled', stock_status = 'returned' WHERE id = :id");
+            $this->db->bind(':id', $invoiceId);
+            $this->db->execute();
+
+            // Void associated journal entry if present
+            $this->db->query("SELECT journal_entry_id FROM invoices WHERE id = :id");
+            $this->db->bind(':id', $invoiceId);
+            $row = $this->db->single();
+            if ($row && !empty($row->journal_entry_id)) {
+                $this->db->query("UPDATE journal_entries SET status = 'Voided' WHERE id = :jid");
+                $this->db->bind(':jid', $row->journal_entry_id);
+                $this->db->execute();
+            }
+        } else {
+            // If status was previously Cancelled and is being un-cancelled, restore status to Unpaid
+            $this->db->query("UPDATE invoices SET status = 'Unpaid' WHERE id = :id AND status = 'Cancelled'");
+            $this->db->bind(':id', $invoiceId);
+            $this->db->execute();
+        }
+
+        return $res;
     }
 }

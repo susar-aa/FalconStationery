@@ -9,6 +9,9 @@ class DriverDashboardController extends Controller {
             header('Location: ' . APP_URL . '/driver/auth/login');
             exit;
         }
+        $this->routeModel = $this->model('DriverRoute');
+    }
+
     private function validate_api_token() {
         $token = '';
         if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
@@ -33,9 +36,6 @@ class DriverDashboardController extends Controller {
         $user = $db->single();
         
         return $user ? intval($user->id) : 0;
-    }
-
-        $this->routeModel = $this->model('DriverRoute');
     }
 
     public function index() {
@@ -358,19 +358,20 @@ class DriverDashboardController extends Controller {
             ], JSON_INVALID_UTF8_SUBSTITUTE);
             exit;
         } catch (Throwable $e) {
-            http_response_code(500);
-            $errMessage = "Internal server error during driver pull sync: " . $e->getMessage();
+            $correlationId = 'ERR-DRVPULL-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8)) . '-' . time();
+            $errMessage = "[Correlation ID: {$correlationId}] Internal server error during driver pull sync: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine();
             error_log($errMessage . "\n" . $e->getTraceAsString());
             
-            // Log to sync_errors.log in the project root directory
-            $logFile = dirname(dirname(__DIR__)) . '/sync_errors.log';
+            $logFile = dirname(dirname(__DIR__)) . '/app_errors.log';
             $logContent = "[" . date('Y-m-d H:i:s') . "] " . $errMessage . "\n" . $e->getTraceAsString() . "\n\n";
             @file_put_contents($logFile, $logContent, FILE_APPEND);
 
+            http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'message' => $errMessage,
-                'trace' => $e->getTraceAsString()
+                'status' => 'error',
+                'correlation_id' => $correlationId,
+                'message' => 'Internal server error during driver sync pull. (Correlation ID: ' . $correlationId . ')'
             ]);
             exit;
         }

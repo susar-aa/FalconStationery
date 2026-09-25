@@ -14,6 +14,13 @@ class Customer {
                 $this->db->query("ALTER TABLE customers ADD COLUMN status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active' AFTER opening_balance_date");
                 $this->db->execute();
             }
+
+            // Automatic self-healing: Sync any invoices with delivery_status = 'Cancelled' to status = 'Cancelled' and void GL entries
+            $this->db->query("UPDATE invoices SET status = 'Cancelled', stock_status = 'returned' WHERE delivery_status = 'Cancelled' AND status != 'Cancelled'");
+            $this->db->execute();
+
+            $this->db->query("UPDATE journal_entries je JOIN invoices i ON i.journal_entry_id = je.id SET je.status = 'Voided' WHERE (i.delivery_status = 'Cancelled' OR i.status = 'Cancelled') AND je.status != 'Voided'");
+            $this->db->execute();
         } catch (Exception $e) {
             error_log("Customer selfHealSchema Error: " . $e->getMessage());
         }
@@ -34,7 +41,7 @@ class Customer {
                 SELECT customer_id, 
                        SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_billed
                 FROM invoices 
-                WHERE status != 'Voided'
+                WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
                 GROUP BY customer_id
             ) inv ON c.id = inv.customer_id
             LEFT JOIN (
@@ -80,7 +87,7 @@ class Customer {
                 SELECT customer_id, 
                        SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_billed
                 FROM invoices 
-                WHERE status != 'Voided'
+                WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
                 GROUP BY customer_id
             ) inv ON c.id = inv.customer_id
             LEFT JOIN (
@@ -134,7 +141,7 @@ class Customer {
             SELECT 
                 COUNT(id) as total_orders,
                 COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) as total_billed
-            FROM invoices WHERE customer_id = :id AND status != 'Voided'
+            FROM invoices WHERE customer_id = :id AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
         ");
         $this->db->bind(':id', $id);
         $stats = $this->db->single();
@@ -170,7 +177,7 @@ class Customer {
             SELECT 'Invoice' as type, id, invoice_number as ref, invoice_date as date, 
             (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as debit, 
             0 as credit, created_at 
-            FROM invoices WHERE customer_id = :c1 AND status != 'Voided'
+            FROM invoices WHERE customer_id = :c1 AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
             UNION ALL
             SELECT 'Payment' as type, id, CONCAT(payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, payment_date as date, 0 as debit, amount as credit, created_at 
             FROM customer_payments WHERE customer_id = :c2

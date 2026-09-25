@@ -1114,6 +1114,7 @@ class RepTrackingController extends Controller {
             $vehicleNumber = !empty($postData['vehicle_number']) ? trim($postData['vehicle_number']) : null;
             $driverName = !empty($postData['driver_name']) ? trim($postData['driver_name']) : null;
             $partnerName = !empty($postData['partner_name']) ? trim($postData['partner_name']) : null;
+            $varianceApprovalReason = !empty($postData['variance_approval_reason']) ? trim($postData['variance_approval_reason']) : null;
 
             if (empty($vehicleNumber) || empty($driverName)) {
                 throw new Exception("Vehicle number and Driver name are required to finalize dispatch.");
@@ -1129,7 +1130,8 @@ class RepTrackingController extends Controller {
                 $returnedItems,
                 $vehicleNumber,
                 $driverName,
-                $partnerName
+                $partnerName,
+                $varianceApprovalReason
             );
 
             // Update route status to Completed
@@ -1428,6 +1430,7 @@ class RepTrackingController extends Controller {
             'items' => $items,
             'bills' => $this->trackingModel->getRouteBills($routeId),
             'credit_bills' => $this->deliveryModel->getDeliveryCreditInvoices($routeId),
+            'gl_reconciliation' => $this->trackingModel->getRouteGLReconciliation($routeId),
             'delivery' => $delivery,
             'company' => $company
         ];
@@ -3238,6 +3241,23 @@ class RepTrackingController extends Controller {
             }
 
             $allocAmount = min($amount, $balanceDue);
+            $unallocated = max(0, $amount - $allocAmount);
+
+            $allowExcessAsAdvance = !empty($payload['allow_excess_as_advance']) || !empty($_POST['allow_excess_as_advance']);
+            if ($unallocated > 0.01 && !$allowExcessAsAdvance) {
+                $db->rollBack();
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'status' => 'excess_warning',
+                    'message' => "Payment amount (Rs " . number_format($amount, 2) . ") exceeds the balance due (Rs " . number_format($balanceDue, 2) . ") on Invoice " . $inv->invoice_number . ". Allocated: Rs " . number_format($allocAmount, 2) . ", Excess Customer Advance: Rs " . number_format($unallocated, 2) . ".",
+                    'balance_due' => round($balanceDue, 2),
+                    'payment_amount' => round($amount, 2),
+                    'allocated_amount' => round($allocAmount, 2),
+                    'excess_amount' => round($unallocated, 2),
+                    'requires_confirmation' => true
+                ]);
+                exit;
+            }
 
             // 2. Resolve Accounts for Double Entry Accounting
             // Default Accounts Receivable Account (Code 1200)
@@ -3455,6 +3475,30 @@ class RepTrackingController extends Controller {
         ];
 
         $this->view('rep-tracking/print_market_return', $data);
+    }
+
+    public function api_gl_reconciliation($routeId) {
+        $this->checkPermission('reptracking', 'view');
+        header('Content-Type: application/json');
+        
+        try {
+            $routeId = intval($routeId);
+            if ($routeId <= 0) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid route ID.']);
+                return;
+            }
+            
+            $reconciliation = $this->trackingModel->getRouteGLReconciliation($routeId);
+            echo json_encode([
+                'status' => 'success',
+                'data' => $reconciliation
+            ]);
+        } catch (Exception $e) {
+            error_log("Route GL Reconciliation Error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        }
     }
 }
 

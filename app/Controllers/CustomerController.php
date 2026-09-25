@@ -461,7 +461,7 @@ class CustomerController extends Controller {
                     SELECT customer_id, 
                            SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_billed
                     FROM invoices 
-                    WHERE status != 'Voided'
+                    WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
                     GROUP BY customer_id
                 ) inv ON c.id = inv.customer_id
                 LEFT JOIN (

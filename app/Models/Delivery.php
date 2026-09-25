@@ -498,11 +498,11 @@ class Delivery {
         ];
     }
 
-    public function finalizeDelivery($deliveryId, $adminUserId, $selectedPaymentIds = [], $selectedInvoiceIds = [], $debitAccounts = [], $creditAccounts = [], $returnedItems = [], $vehicleNumber = null, $driverName = null, $partnerName = null) {
+    public function finalizeDelivery($deliveryId, $adminUserId, $selectedPaymentIds = [], $selectedInvoiceIds = [], $debitAccounts = [], $creditAccounts = [], $returnedItems = [], $vehicleNumber = null, $driverName = null, $partnerName = null, $varianceApprovalReason = null) {
         $this->db->beginTransaction();
         try {
             // Lock the deliveries row immediately to prevent concurrent return stock save/other finalize (INV-2 Race Condition protection)
-            $this->db->query("SELECT id, status, return_stock_json FROM deliveries WHERE id = :id FOR UPDATE");
+            $this->db->query("SELECT id, status, return_stock_json, rep_route_id, secondary_rep_route_id FROM deliveries WHERE id = :id FOR UPDATE");
             $this->db->bind(':id', $deliveryId);
             $lockedDelivery = $this->db->single();
             if (!$lockedDelivery) {
@@ -511,15 +511,65 @@ class Delivery {
             if ($lockedDelivery->status === 'Finalized') {
                 throw new Exception("Delivery is already finalized");
             }
-            if ($lockedDelivery->return_stock_json === null || $lockedDelivery->return_stock_json === '') {
-                throw new Exception("Cannot finalize delivery: Return stock verification has not been saved yet.");
-            }
 
             $delivery = $this->getDeliveryById($deliveryId);
             if (!$delivery) {
                 throw new Exception("Delivery not found");
             }
-            
+
+            $rids = [intval($delivery->rep_route_id)];
+            if (!empty($delivery->secondary_rep_route_id)) {
+                $rids[] = intval($delivery->secondary_rep_route_id);
+            }
+            $rids = $this->resolveAllBoundRouteIds($rids);
+            $ridsStr = implode(',', array_map('intval', $rids));
+
+            // =========================================================================
+            // MANDATORY ROUTE CLOSURE GATE CONTROLS (Item 14 Audit Compliance)
+            // =========================================================================
+
+            // GATE 1: All mobile sync events must be acknowledged (no pending sync exceptions)
+            $this->db->query("
+                SELECT COUNT(*) as pending_cnt 
+                FROM sync_exceptions 
+                WHERE (route_id IN ($ridsStr) OR (route_id IS NULL AND rep_id IN (SELECT user_id FROM rep_daily_routes WHERE id IN ($ridsStr))))
+                  AND status = 'pending'
+            ");
+            $syncCheck = $this->db->single();
+            if ($syncCheck && intval($syncCheck->pending_cnt) > 0) {
+                throw new Exception("Cannot finalize route: There are {$syncCheck->pending_cnt} unacknowledged mobile sync exception(s) pending in the Exceptions Inbox. Please acknowledge or resolve all sync exceptions before route closure.");
+            }
+
+            // GATE 2: All collections must be resolved (no pending or unverified collections)
+            $this->db->query("
+                SELECT COUNT(*) as unresolved_cnt 
+                FROM pending_collections 
+                WHERE route_id IN ($ridsStr) 
+                  AND (status = 'Pending' OR is_verified = 0)
+            ");
+            $collCheck = $this->db->single();
+            if ($collCheck && intval($collCheck->unresolved_cnt) > 0) {
+                throw new Exception("Cannot finalize route: There are {$collCheck->unresolved_cnt} unresolved or unverified payment collection(s). All route collections must be finalized and verified by accounting before route closure.");
+            }
+
+            // GATE 3: Stock return must be verified
+            if ($lockedDelivery->return_stock_json === null || trim($lockedDelivery->return_stock_json) === '' || $lockedDelivery->return_stock_json === 'null') {
+                throw new Exception("Cannot finalize route: Stock return verification has not been completed/saved yet.");
+            }
+
+            // GATE 4: Reconciliation variance must be approved with an explicit reason if variance > 0.01
+            require_once __DIR__ . '/RepTracking.php';
+            $trackingModel = new RepTracking();
+            $rec = $trackingModel->getRouteGLReconciliation(intval($delivery->rep_route_id));
+            $variance = round(abs(floatval($rec['variance'] ?? 0.0)), 2);
+
+            $cleanReason = !empty($varianceApprovalReason) ? trim($varianceApprovalReason) : null;
+            if ($variance > 0.01) {
+                if (empty($cleanReason)) {
+                    throw new Exception("Cannot finalize route: A reconciliation variance of Rs. " . number_format($variance, 2) . " exists between invoice sales total (Rs. " . number_format($rec['invoice_sales_total'], 2) . ") and GL AR entries (Rs. " . number_format($rec['gl_ar_total'], 2) . "). An explicit variance approval reason must be provided to approve and close this route.");
+                }
+            }
+
             // Merge draft mappings from deliveries.accounting_entries_json if empty
             if (empty($debitAccounts) || empty($creditAccounts)) {
                 $this->db->query("SELECT accounting_entries_json FROM deliveries WHERE id = :id");
@@ -538,10 +588,6 @@ class Delivery {
                 }
             }
 
-            if ($delivery->status === 'Finalized') {
-                throw new Exception("Delivery is already finalized");
-            }
-
             if ($vehicleNumber !== null && $driverName !== null) {
                 $this->db->query("UPDATE deliveries 
                                   SET vehicle_number = :v, driver_name = :d, partner_name = :p 
@@ -556,19 +602,33 @@ class Delivery {
             // Ensure 1605 account exists in chart of accounts
             $this->ensureRequiredAccountsExist();
 
-            // 1. Update statuses to Finalized
-            $this->db->query("UPDATE deliveries SET status = 'Finalized' WHERE id = :id");
+            $nowStr = date('Y-m-d H:i:s');
+            // 1. Update statuses to Finalized and store variance approval record
+            $this->db->query("
+                UPDATE deliveries 
+                SET status = 'Finalized',
+                    variance_approval_reason = :v_reason,
+                    variance_approved_by = :v_by,
+                    variance_approved_at = :v_at
+                WHERE id = :id
+            ");
+            $this->db->bind(':v_reason', $cleanReason);
+            $this->db->bind(':v_by', $cleanReason ? $adminUserId : null);
+            $this->db->bind(':v_at', $cleanReason ? $nowStr : null);
             $this->db->bind(':id', $deliveryId);
             $this->db->execute();
 
-            $rids = [intval($delivery->rep_route_id)];
-            if (!empty($delivery->secondary_rep_route_id)) {
-                $rids[] = intval($delivery->secondary_rep_route_id);
-            }
-            $rids = $this->resolveAllBoundRouteIds($rids);
-            $ridsStr = implode(',', array_map('intval', $rids));
-
-            $this->db->query("UPDATE rep_daily_routes SET status = 'Finalized' WHERE id IN ($ridsStr)");
+            $this->db->query("
+                UPDATE rep_daily_routes 
+                SET status = 'Finalized',
+                    variance_approval_reason = :v_reason,
+                    variance_approved_by = :v_by,
+                    variance_approved_at = :v_at
+                WHERE id IN ($ridsStr)
+            ");
+            $this->db->bind(':v_reason', $cleanReason);
+            $this->db->bind(':v_by', $cleanReason ? $adminUserId : null);
+            $this->db->bind(':v_at', $cleanReason ? $nowStr : null);
             $this->db->execute();
 
             // 2. Stock deductions & reservation releases

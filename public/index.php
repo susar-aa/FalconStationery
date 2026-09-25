@@ -13,13 +13,13 @@ if (DIRECTORY_SEPARATOR === '\\' ||
 
 // Global Exception and Error Logger
 function global_exception_handler(Throwable $exception) {
+    $correlationId = 'ERR-SYS-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8)) . '-' . time();
     $logFile = dirname(__DIR__) . '/app_errors.log';
-    $errMessage = "Uncaught Exception: " . $exception->getMessage() . " in " . $exception->getFile() . " on line " . $exception->getLine();
+    $errMessage = "[Correlation ID: {$correlationId}] Uncaught Exception: " . $exception->getMessage() . " in " . $exception->getFile() . " on line " . $exception->getLine();
     $logContent = "[" . date('Y-m-d H:i:s') . "] " . $errMessage . "\n" . $exception->getTraceAsString() . "\n\n";
     @file_put_contents($logFile, $logContent, FILE_APPEND);
-    @file_put_contents(__DIR__ . '/error_debug.log', $logContent, FILE_APPEND);
 
-    // If it's an API/AJAX request, return structured JSON
+    // If it's an API/AJAX request, return structured JSON without leaking internal traces
     $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
               (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
               isset($_GET['api_sync']);
@@ -31,9 +31,11 @@ function global_exception_handler(Throwable $exception) {
         }
         echo json_encode([
             'success' => false,
-            'message' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString()
+            'status' => 'error',
+            'correlation_id' => $correlationId,
+            'message' => 'An internal server error occurred. (Correlation ID: ' . $correlationId . ')'
         ]);
+        exit;
     } else {
         if (!headers_sent()) {
             http_response_code(500);

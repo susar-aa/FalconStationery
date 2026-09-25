@@ -16,7 +16,7 @@ class Payment {
         $this->db->query("
             SELECT c.id, c.name, c.phone, c.email, c.opening_balance,
                    c.opening_balance + 
-                   (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE customer_id = c.id AND status != 'Voided') 
+                   (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE customer_id = c.id AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) 
                    - 
                    (SELECT COALESCE(SUM(amount), 0) FROM customer_payments WHERE customer_id = c.id AND status = 'Active') 
                    - 
@@ -118,7 +118,7 @@ class Payment {
                    (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as total_amount,
                    COALESCE((SELECT SUM(amount) FROM customer_payment_allocations WHERE invoice_id = i.id AND is_reversed = 0), 0) as amount_paid
             FROM invoices i
-            WHERE i.customer_id = :cid AND i.status != 'Voided' AND i.status != 'Paid'
+            WHERE i.customer_id = :cid AND i.status NOT IN ('Voided', 'Cancelled', 'Paid') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
             ORDER BY i.invoice_date ASC
         ");
         $this->db->bind(':cid', $customerId);

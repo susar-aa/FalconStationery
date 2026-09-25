@@ -512,7 +512,7 @@ class RepDashboardController extends Controller {
             ];
             
             // Invoices on this route
-            $this->db->query("SELECT * FROM invoices WHERE rep_route_id = :rid AND status != 'Voided'");
+            $this->db->query("SELECT * FROM invoices WHERE rep_route_id = :rid AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')");
             $this->db->bind(':rid', $activeRoute->id);
             $invs = $this->db->resultSet() ?: [];
             foreach ($invs as $inv) {
@@ -688,19 +688,20 @@ class RepDashboardController extends Controller {
             echo '}';
             exit;
         } catch (Throwable $e) {
-            http_response_code(200);
-            $errMessage = "Internal server error during pull sync: " . $e->getMessage();
+            $correlationId = 'ERR-PULL-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8)) . '-' . time();
+            $errMessage = "[Correlation ID: {$correlationId}] Internal server error during pull sync: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine();
             error_log($errMessage . "\n" . $e->getTraceAsString());
             
-            // Log to sync_errors.log in the project root directory
-            $logFile = dirname(dirname(__DIR__)) . '/sync_errors.log';
+            $logFile = dirname(dirname(__DIR__)) . '/app_errors.log';
             $logContent = "[" . date('Y-m-d H:i:s') . "] " . $errMessage . "\n" . $e->getTraceAsString() . "\n\n";
             @file_put_contents($logFile, $logContent, FILE_APPEND);
 
+            http_response_code(200);
             echo json_encode([
                 'success' => false,
-                'message' => $errMessage,
-                'trace' => $e->getTraceAsString()
+                'status' => 'error',
+                'correlation_id' => $correlationId,
+                'message' => 'Internal server error during sync pull. (Correlation ID: ' . $correlationId . ')'
             ]);
             exit;
         }
@@ -760,6 +761,27 @@ class RepDashboardController extends Controller {
 
         // Set session user ID temporarily for audit log tracking
         $_SESSION['user_id'] = $userId;
+
+        // Idempotency check via batch_uuid or idempotency_key
+        $batchUuid = $payload['batch_uuid'] ?? $payload['idempotency_key'] ?? $_SERVER['HTTP_X_SYNC_BATCH_ID'] ?? null;
+        if (!empty($batchUuid)) {
+            try {
+                $this->db->query("SELECT details FROM mobile_sync_batches WHERE batch_uuid = :uuid AND user_id = :uid AND status IN ('success', 'partial_success') LIMIT 1");
+                $this->db->bind(':uuid', $batchUuid);
+                $this->db->bind(':uid', $userId);
+                $existingBatch = $this->db->single();
+                if ($existingBatch && !empty($existingBatch->details)) {
+                    $cachedResponse = json_decode($existingBatch->details, true);
+                    if ($cachedResponse) {
+                        $cachedResponse['idempotent_replay'] = true;
+                        echo json_encode($cachedResponse);
+                        exit;
+                    }
+                }
+            } catch (Exception $e) {
+                // Ignore if table does not exist yet
+            }
+        }
 
         $mappings = [
             'customers' => [],
@@ -1107,15 +1129,16 @@ class RepDashboardController extends Controller {
                 return 0; // Return 0 instead of falling back to $localRouteId directly
             };
 
-            // Enforce strict route resolution and audit logging
+            // Enforce strict route resolution and audit logging (no active route / date guessing fallbacks)
             $resolveRouteId = function($serverRouteIdFromApp, $routeUuid, $localRouteId, $userId, $itemDate = null) use (&$mappings, $getRouteServerId) {
                 $resolvedId = null;
                 $method = 'none';
 
-                // 1. Try server route ID from app if it actually exists on the server
+                // 1. Try server route ID from app if it actually exists on the server and belongs to this user
                 if ($serverRouteIdFromApp > 0) {
-                    $this->db->query("SELECT id FROM rep_daily_routes WHERE id = :id LIMIT 1");
+                    $this->db->query("SELECT id FROM rep_daily_routes WHERE id = :id AND user_id = :user_id LIMIT 1");
                     $this->db->bind(':id', $serverRouteIdFromApp);
+                    $this->db->bind(':user_id', $userId);
                     $checkRow = $this->db->single();
                     if ($checkRow) {
                         $resolvedId = intval($checkRow->id);
@@ -1123,10 +1146,11 @@ class RepDashboardController extends Controller {
                     }
                 }
 
-                // 2. Try route UUID if not empty
+                // 2. Try route UUID if not empty and belongs to this user
                 if (!$resolvedId && !empty($routeUuid)) {
-                    $this->db->query("SELECT id FROM rep_daily_routes WHERE uuid = :uuid LIMIT 1");
+                    $this->db->query("SELECT id FROM rep_daily_routes WHERE uuid = :uuid AND user_id = :user_id LIMIT 1");
                     $this->db->bind(':uuid', $routeUuid);
+                    $this->db->bind(':user_id', $userId);
                     $rRow = $this->db->single();
                     if ($rRow) {
                         $resolvedId = intval($rRow->id);
@@ -1143,53 +1167,54 @@ class RepDashboardController extends Controller {
                     }
                 }
 
-                // 4. Smart fallback: Look for a route covering the item's date/time for this rep
-                if (!$resolvedId && !empty($itemDate)) {
-                    $this->db->query("SELECT id FROM rep_daily_routes 
-                                      WHERE user_id = :user_id 
-                                        AND :item_date >= start_time 
-                                        AND (:item_date <= end_time OR end_time IS NULL OR end_time = '' OR status = 'Active') 
-                                      ORDER BY start_time DESC LIMIT 1");
-                    $this->db->bind(':user_id', $userId);
-                    $this->db->bind(':item_date', $itemDate);
-                    $rRow = $this->db->single();
-                    if ($rRow) {
-                        $resolvedId = intval($rRow->id);
-                        $method = 'date_range_fallback';
-                    }
-                }
-
-                // 5. Hard fallback: Look for any active route for this rep
-                if (!$resolvedId) {
-                    $this->db->query("SELECT id FROM rep_daily_routes WHERE user_id = :user_id AND status = 'Active' ORDER BY id DESC LIMIT 1");
-                    $this->db->bind(':user_id', $userId);
-                    $rRow = $this->db->single();
-                    if ($rRow) {
-                        $resolvedId = intval($rRow->id);
-                        $method = 'active_route_fallback';
-                    }
+                // Strictly NO automatic fallback to date range or active route.
+                // An unmatched record must NOT be blindly posted to another day's route.
+                if (!$resolvedId && ($serverRouteIdFromApp > 0 || !empty($routeUuid) || $localRouteId > 0)) {
+                    error_log("SyncPush Route Resolution Warning: Could not match route (server_id:{$serverRouteIdFromApp}, uuid:{$routeUuid}, local_id:{$localRouteId}) for User {$userId}. Record posted without route binding.");
                 }
 
                 error_log("SyncPush Route Resolution: user_id={$userId}, local_route_id={$localRouteId}, server_route_id_from_app={$serverRouteIdFromApp}, route_uuid={$routeUuid}, item_date={$itemDate}, resolved_id=" . ($resolvedId ?: 'NULL') . " via method={$method}");
                 return $resolvedId;
             };
 
-            // Resolve AR and Revenue accounting accounts
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_type = :type_asset AND (account_name LIKE '%Receivable%' OR account_code LIKE :cash_hand OR account_code = :ar) LIMIT 1");
+            // Resolve AR (1200) and Revenue (4000) accounting accounts strictly
+            $this->db->query("SELECT id FROM chart_of_accounts 
+                              WHERE account_type = :type_asset 
+                                AND (account_code = :ar OR account_code LIKE :ar_prefix OR account_name LIKE '%Receivable%' OR account_name LIKE '%Debtors%')
+                                AND account_code NOT LIKE :cash_hand
+                              ORDER BY CASE 
+                                         WHEN account_code = :ar THEN 1 
+                                         WHEN account_name LIKE '%Receivable%' THEN 2 
+                                         ELSE 3 
+                                       END ASC 
+                              LIMIT 1");
             $this->db->bind(':type_asset', COA_TYPE_ASSET);
-            $this->db->bind(':cash_hand', COA_CODE_CASH_HAND . '%');
             $this->db->bind(':ar', COA_CODE_AR);
+            $this->db->bind(':ar_prefix', COA_CODE_AR . '%');
+            $this->db->bind(':cash_hand', COA_CODE_CASH_HAND . '%');
             $arRow = $this->db->single();
-            $arAccountId = $arRow ? $arRow->id : null;
+            $arAccountId = $arRow ? intval($arRow->id) : null;
 
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_type = :type_revenue AND (account_name LIKE '%Sales%' OR account_name LIKE '%Revenue%' OR account_code LIKE :sales) LIMIT 1");
+            $this->db->query("SELECT id FROM chart_of_accounts 
+                              WHERE account_type = :type_revenue 
+                                AND (account_code = :sales OR account_code LIKE :sales_prefix OR account_name LIKE '%Sales%' OR account_name LIKE '%Revenue%')
+                              ORDER BY CASE 
+                                         WHEN account_code = :sales THEN 1 
+                                         WHEN account_name LIKE '%Sales%' THEN 2 
+                                         ELSE 3 
+                                       END ASC 
+                              LIMIT 1");
             $this->db->bind(':type_revenue', COA_TYPE_REVENUE);
-            $this->db->bind(':sales', COA_CODE_SALES . '%');
+            $this->db->bind(':sales', COA_CODE_SALES);
+            $this->db->bind(':sales_prefix', COA_CODE_SALES . '%');
             $revRow = $this->db->single();
-            $revenueAccountId = $revRow ? $revRow->id : null;
+            $revenueAccountId = $revRow ? intval($revRow->id) : null;
 
-            if (!$arAccountId || !$revenueAccountId) {
-                throw new Exception("Accounting accounts could not be resolved.");
+            if (!$arAccountId) {
+                throw new Exception("Accounting resolution failed: Accounts Receivable account (Code " . COA_CODE_AR . ") is missing in Chart of Accounts.");
+            }
+            if (!$revenueAccountId) {
+                throw new Exception("Accounting resolution failed: Sales Revenue account (Code " . COA_CODE_SALES . ") is missing in Chart of Accounts.");
             }
 
             // 3. Process Invoices
@@ -1221,52 +1246,19 @@ class RepDashboardController extends Controller {
                     // Generate new invoice number if sequence is used or keep what mobile generated
                     $invNo = $inv['invoice_number'];
 
-                    // ── COLLISION HARDENING LAYER 1: UUID-first, owner-scoped lookup ──────────
-                    // UUID matches MUST belong to the same user. A UUID from rep A must never
-                    // resolve to rep B's invoice, which was the cause of the July 17 data loss.
+                    // Deterministic invoice lookup (UUID first, then exact invoice_number)
+                    // Never renumber, suffix, or mutate the invoice number
                     $existingInv = null;
                     if (!empty($inv['uuid'])) {
-                        $this->db->query("SELECT id, invoice_number, invoice_date, stock_status, uuid, created_by FROM invoices WHERE uuid = :uuid AND created_by = :user_id LIMIT 1");
+                        $this->db->query("SELECT id, invoice_number, invoice_date, stock_status, uuid, created_by FROM invoices WHERE uuid = :uuid LIMIT 1");
                         $this->db->bind(':uuid', $inv['uuid']);
-                        $this->db->bind(':user_id', $userId);
-                        $existingInv = $this->db->single();
-
-                        // If a UUID matches but belongs to a DIFFERENT user, it is a ghost UUID
-                        // collision. Assign a fresh server-generated number so we create a new
-                        // invoice instead of overwriting the other user's data.
-                        if (!$existingInv) {
-                            $this->db->query("SELECT id FROM invoices WHERE uuid = :uuid LIMIT 1");
-                            $this->db->bind(':uuid', $inv['uuid']);
-                            $ghostMatch = $this->db->single();
-                            if ($ghostMatch) {
-                                // UUID taken by another user — rewrite the invoice number to be unique
-                                $invNo = $invNo . 'U' . $userId;
-                                $this->logActivity('Sync Collision Avoided', 'Billing', "UUID {$inv['uuid']} already owned by another user. Remapped invoice number to {$invNo} for User {$userId}.", null);
-                            }
-                        }
-                    }
-
-                    // ── COLLISION HARDENING LAYER 2: Invoice-number fallback, owner-scoped ────
-                    if (!$existingInv) {
-                        $this->db->query("SELECT id, invoice_number, invoice_date, stock_status, uuid, created_by FROM invoices WHERE invoice_number = :invoice_number AND created_by = :user_id LIMIT 1");
-                        $this->db->bind(':invoice_number', $invNo);
-                        $this->db->bind(':user_id', $userId);
                         $existingInv = $this->db->single();
                     }
 
-                    // ── COLLISION HARDENING LAYER 3: Cross-user number conflict guard ─────────
-                    // If invoice_number exists but belongs to a DIFFERENT user, auto-suffix the
-                    // number with the user ID to make it unique, then fall through to CREATE.
-                    if (!$existingInv) {
-                        $this->db->query("SELECT id, created_by FROM invoices WHERE invoice_number = :invoice_number AND created_by != :user_id LIMIT 1");
+                    if (!$existingInv && !empty($invNo)) {
+                        $this->db->query("SELECT id, invoice_number, invoice_date, stock_status, uuid, created_by FROM invoices WHERE invoice_number = :invoice_number LIMIT 1");
                         $this->db->bind(':invoice_number', $invNo);
-                        $this->db->bind(':user_id', $userId);
-                        $crossUserConflict = $this->db->single();
-                        if ($crossUserConflict) {
-                            $remappedNo = $invNo . 'U' . $userId;
-                            $this->logActivity('Sync Collision Avoided', 'Billing', "Invoice number {$invNo} already owned by User {$crossUserConflict->created_by}. Remapped to {$remappedNo} for User {$userId}.", null);
-                            $invNo = $remappedNo;
-                        }
+                        $existingInv = $this->db->single();
                     }
 
                     if ($existingInv) {
@@ -1302,15 +1294,18 @@ class RepDashboardController extends Controller {
                                     $this->db->bind(':id', $prodId);
                                     $pRow = $this->db->single();
                                     if (!$pRow) {
+                                        // Try to look up by exact name
                                         $this->db->query("SELECT id FROM items WHERE name = :name LIMIT 1");
                                         $this->db->bind(':name', $prodName);
                                         $pByName = $this->db->single();
                                         if ($pByName) {
                                             $prodId = intval($pByName->id);
                                         } else {
-                                            $this->db->query("SELECT id FROM items LIMIT 1");
-                                            $firstProd = $this->db->single();
-                                            $prodId = $firstProd ? intval($firstProd->id) : 1;
+                                            // Reject unmapped products; never silently substitute first product
+                                            $errMsg = "Product mapping failed: Unknown product '{$prodName}' (ID: {$prodId}) on invoice {$invNo}.";
+                                            $mappings['errors'][] = $errMsg;
+                                            $this->logActivity('Product Mapping Error', 'Billing', $errMsg, null);
+                                            throw new Exception($errMsg);
                                         }
                                     }
 
@@ -1320,6 +1315,15 @@ class RepDashboardController extends Controller {
                                     }
 
                                     $varId = intval($item['variation_option_id'] ?? 0);
+                                    if ($varId > 0) {
+                                        $this->db->query("SELECT id FROM item_variation_options WHERE id = :vid AND item_id = :pid LIMIT 1");
+                                        $this->db->bind(':vid', $varId);
+                                        $this->db->bind(':pid', $prodId);
+                                        $vCheck = $this->db->single();
+                                        if (!$vCheck) {
+                                            $varId = 0;
+                                        }
+                                    }
                                     if ($varId <= 0 && strpos($prodName, ' - ') !== false) {
                                         $parts = explode(' - ', $prodName);
                                         $optName = trim(end($parts));
@@ -1459,17 +1463,29 @@ class RepDashboardController extends Controller {
                             $this->db->bind(':id', $prodId);
                             $pRow = $this->db->single();
                             if (!$pRow) {
-                                // Try to look up by name
+                                // Try to look up by exact name
                                 $this->db->query("SELECT id FROM items WHERE name = :name LIMIT 1");
                                 $this->db->bind(':name', $prodName);
                                 $pByName = $this->db->single();
                                 if ($pByName) {
                                     $prodId = intval($pByName->id);
                                 } else {
-                                    // Fallback to first available product
-                                    $this->db->query("SELECT id FROM items LIMIT 1");
-                                    $firstProd = $this->db->single();
-                                    $prodId = $firstProd ? intval($firstProd->id) : 1;
+                                    // Reject unmapped products; never silently substitute first product
+                                    $errMsg = "Product mapping failed: Unknown product '{$prodName}' (ID: {$prodId}) on invoice {$invNo}.";
+                                    $mappings['errors'][] = $errMsg;
+                                    $this->logActivity('Product Mapping Error', 'Billing', $errMsg, null);
+                                    require_once dirname(__DIR__) . '/Models/SyncException.php';
+                                    SyncException::log(
+                                        $userId,
+                                        'unmapped_product',
+                                        'invoice',
+                                        strval($localId),
+                                        $inv['uuid'] ?? null,
+                                        $routeServerId ?: null,
+                                        $errMsg,
+                                        $inv
+                                    );
+                                    throw new Exception($errMsg);
                                 }
                             }
 
@@ -1479,6 +1495,15 @@ class RepDashboardController extends Controller {
                             }
 
                             $varId = intval($item['variation_option_id'] ?? 0);
+                            if ($varId > 0) {
+                                $this->db->query("SELECT id FROM item_variation_options WHERE id = :vid AND item_id = :pid LIMIT 1");
+                                $this->db->bind(':vid', $varId);
+                                $this->db->bind(':pid', $prodId);
+                                $vCheck = $this->db->single();
+                                if (!$vCheck) {
+                                    $varId = 0;
+                                }
+                            }
                             if ($varId <= 0 && strpos($prodName, ' - ') !== false) {
                                 $parts = explode(' - ', $prodName);
                                 $optName = trim(end($parts));
@@ -1586,21 +1611,59 @@ class RepDashboardController extends Controller {
                         } catch (Exception $e) {
                             $this->db->rollBack();
                             
-                            // Handle Duplicate Invoice Collision (PDOException 23000)
-                            if ($e instanceof PDOException && $e->getCode() == '23000' && $attempt < $maxRetries) {
+                            // Handle Duplicate Invoice Entry on Retry idempotently without modifying invoice_number
+                            if ($e instanceof PDOException && $e->getCode() == '23000') {
                                 $msg = strtolower($e->getMessage());
                                 if (strpos($msg, 'invoice_number') !== false || strpos($msg, 'duplicate entry') !== false) {
-                                    $inv['invoice_number'] = $inv['invoice_number'] . '-' . rand(100, 999);
-                                    $this->logActivity('Sync Collision Avoided', 'Billing', "Retrying invoice creation with new number {$inv['invoice_number']} after constraint violation.");
-                                    continue;
+                                    $this->db->query("SELECT id, invoice_number, invoice_date FROM invoices WHERE invoice_number = :inv_num LIMIT 1");
+                                    $this->db->bind(':inv_num', $invNo);
+                                    $dupInv = $this->db->single();
+                                    if ($dupInv) {
+                                        $mappings['invoices'][] = [
+                                            'local_id' => $localId,
+                                            'server_id' => intval($dupInv->id),
+                                            'invoice_number' => $dupInv->invoice_number,
+                                            'server_timestamp' => $dupInv->invoice_date,
+                                            'remapped' => false,
+                                            'new_invoice_number' => null
+                                        ];
+                                        $this->logActivity('Sync Retry Matched', 'Billing', "Resolved invoice {$invNo} idempotently after duplicate entry detection.", $dupInv->id);
+                                        break; // Idempotently resolved
+                                    }
                                 }
                             }
                             
+                            $errText = $e->getMessage();
+                            $cat = 'other';
+                            if (strpos($errText, 'Product mapping') !== false) {
+                                $cat = 'unmapped_product';
+                            } elseif (strpos($errText, 'Customer') !== false) {
+                                $cat = 'unknown_customer';
+                            } elseif (strpos($errText, 'Route') !== false) {
+                                $cat = 'route_not_found';
+                            } elseif (strpos($errText, 'Accounting') !== false || strpos($errText, 'COA') !== false) {
+                                $cat = 'coa_not_configured';
+                            } elseif (strpos($errText, 'Stock') !== false) {
+                                $cat = 'stock_conflict';
+                            }
+
+                            require_once dirname(__DIR__) . '/Models/SyncException.php';
+                            SyncException::log(
+                                $userId,
+                                $cat,
+                                'invoice',
+                                strval($localId),
+                                $inv['uuid'] ?? null,
+                                $routeServerId ?: null,
+                                $errText,
+                                $inv
+                            );
+
                             $mappings['errors'][] = [
                                 'local_id' => $localId,
                                 'type' => 'invoice',
                                 'invoice_number' => $inv['invoice_number'] ?? 'Unknown',
-                                'error' => 'Invoice Sync Failed: ' . $e->getMessage()
+                                'error' => 'Invoice Sync Failed: ' . $errText
                             ];
                             break; // Unrecoverable error, break out of retry loop
                         }
@@ -1696,10 +1759,53 @@ class RepDashboardController extends Controller {
                         $this->db->commit();
                     } catch (Exception $e) {
                         $this->db->rollBack();
+                        
+                        // Handle Duplicate Payment Entry on Retry idempotently
+                        if ($e instanceof PDOException && $e->getCode() == '23000') {
+                            $this->db->query("SELECT id, uuid FROM pending_collections WHERE (uuid = :uuid AND :uuid != '') OR (mobile_local_id = :mlid AND mobile_rep_id = :mrepid) LIMIT 1");
+                            $this->db->bind(':uuid', $p['uuid'] ?? '');
+                            $this->db->bind(':mlid', $localId);
+                            $this->db->bind(':mrepid', $userId);
+                            $dupPmt = $this->db->single();
+                            if ($dupPmt) {
+                                $mappings['payments'][] = [
+                                    'local_id' => $localId,
+                                    'server_id' => intval($dupPmt->id),
+                                    'uuid' => $dupPmt->uuid ?? ($p['uuid'] ?? '')
+                                ];
+                                $this->logActivity('Sync Retry Matched', 'Billing', "Resolved payment collection idempotently after duplicate entry constraint.", $dupPmt->id);
+                                continue; // Idempotently resolved
+                            }
+                        }
+
+                        $errText = $e->getMessage();
+                        $cat = 'other';
+                        if (strpos($errText, 'Customer') !== false) {
+                            $cat = 'unknown_customer';
+                        } elseif (strpos($errText, 'Route') !== false) {
+                            $cat = 'route_not_found';
+                        } elseif (strpos($errText, 'duplicate') !== false || strpos($errText, 'Duplicate') !== false) {
+                            $cat = 'duplicate_event';
+                        } elseif (strpos($errText, 'Accounting') !== false || strpos($errText, 'COA') !== false) {
+                            $cat = 'coa_not_configured';
+                        }
+
+                        require_once dirname(__DIR__) . '/Models/SyncException.php';
+                        SyncException::log(
+                            $userId,
+                            $cat,
+                            'payment',
+                            strval($localId),
+                            $p['uuid'] ?? null,
+                            $routeServerId ?: null,
+                            $errText,
+                            $p
+                        );
+
                         $mappings['errors'][] = [
                             'local_id' => $localId,
                             'type' => 'payment',
-                            'error' => 'Payment Sync Failed: ' . $e->getMessage()
+                            'error' => 'Payment Sync Failed: ' . $errText
                         ];
                     }
                 }
@@ -1750,10 +1856,68 @@ class RepDashboardController extends Controller {
                 }
             }
 
-            echo json_encode([
-                'success' => true,
+            $hasErrors = !empty($mappings['errors']);
+            $hasSuccesses = (!empty($mappings['customers']) || !empty($mappings['routes']) || !empty($mappings['invoices']) || !empty($mappings['payments']) || !empty($mappings['unproductive_visits']));
+            $errorsCount = count($mappings['errors']);
+
+            if (!$hasErrors) {
+                $syncStatus = 'success';
+                $isOverallSuccess = true;
+            } elseif ($hasSuccesses) {
+                $syncStatus = 'partial_success';
+                $isOverallSuccess = true;
+                $this->logActivity('Sync Warning', 'Billing', "SyncPush for User {$userId} finished with {$errorsCount} error(s).", null);
+            } else {
+                $syncStatus = 'error';
+                $isOverallSuccess = false;
+                $this->logActivity('Sync Error', 'Billing', "SyncPush for User {$userId} failed completely ({$errorsCount} error(s)).", null);
+            }
+
+            $responsePayload = [
+                'success' => $isOverallSuccess,
+                'status' => $syncStatus,
+                'errors_count' => $errorsCount,
                 'mappings' => $mappings
-            ]);
+            ];
+
+            // Record sync batch in DB table
+            try {
+                $this->db->query("CREATE TABLE IF NOT EXISTS mobile_sync_batches (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    batch_uuid VARCHAR(100) NULL,
+                    idempotency_key VARCHAR(100) NULL,
+                    customers_count INT DEFAULT 0,
+                    routes_count INT DEFAULT 0,
+                    invoices_count INT DEFAULT 0,
+                    payments_count INT DEFAULT 0,
+                    errors_count INT DEFAULT 0,
+                    status VARCHAR(50) NOT NULL DEFAULT 'success',
+                    details LONGTEXT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_user_id (user_id),
+                    KEY idx_batch_uuid (batch_uuid)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                $this->db->execute();
+
+                $this->db->query("INSERT INTO mobile_sync_batches (user_id, batch_uuid, idempotency_key, customers_count, routes_count, invoices_count, payments_count, errors_count, status, details) 
+                                  VALUES (:uid, :uuid, :idemp, :c_cnt, :r_cnt, :i_cnt, :p_cnt, :err_cnt, :status, :details)");
+                $this->db->bind(':uid', $userId);
+                $this->db->bind(':uuid', $batchUuid);
+                $this->db->bind(':idemp', $batchUuid);
+                $this->db->bind(':c_cnt', $customersCount);
+                $this->db->bind(':r_cnt', $routesCount);
+                $this->db->bind(':i_cnt', $invoicesCount);
+                $this->db->bind(':p_cnt', $paymentsCount);
+                $this->db->bind(':err_cnt', $errorsCount);
+                $this->db->bind(':status', $syncStatus);
+                $this->db->bind(':details', json_encode($responsePayload));
+                $this->db->execute();
+            } catch (Exception $e) {
+                error_log("Failed to record mobile_sync_batch: " . $e->getMessage());
+            }
+
+            echo json_encode($responsePayload);
             exit;
     }
 
@@ -1964,8 +2128,8 @@ class RepDashboardController extends Controller {
 
         // Fetch paginated
         $sql = "SELECT r.id, r.route_name, r.start_time, r.end_time, r.start_meter, r.end_meter, r.status,
-                       (SELECT COUNT(*) FROM invoices WHERE rep_route_id = r.id AND status != 'Voided') as total_bills,
-                       (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE rep_route_id = r.id AND status != 'Voided') as total_sales
+                       (SELECT COUNT(*) FROM invoices WHERE rep_route_id = r.id AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as total_bills,
+                       (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE rep_route_id = r.id AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as total_sales
                 FROM rep_daily_routes r
                 $where
                 ORDER BY r.start_time DESC, r.id DESC

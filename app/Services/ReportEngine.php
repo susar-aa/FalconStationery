@@ -390,13 +390,13 @@ class ReportEngine {
                                  SUM(i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as total_sales,
                                  COALESCE((SELECT SUM(amount) FROM customer_payments WHERE customer_id = c.id AND status = 'Active'), 0) as paid_amount,
                                  (COALESCE(c.opening_balance, 0) + 
-                                  COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE customer_id = c.id AND status != 'Voided'), 0) - 
+                                  COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE customer_id = c.id AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')), 0) - 
                                   COALESCE((SELECT SUM(amount) FROM customer_payments WHERE customer_id = c.id AND status = 'Active'), 0) - 
                                   COALESCE((SELECT SUM(total_amount) FROM credit_notes WHERE customer_id = c.id), 0)) as outstanding,
                                  i.customer_id, i.created_by, i.rep_route_id, c.territory, c.customer_type
                           FROM invoices i
                           JOIN customers c ON i.customer_id = c.id
-                          WHERE i.status != 'Voided' /*WHERE_CLAUSE*/
+                          WHERE i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled') /*WHERE_CLAUSE*/
                           GROUP BY c.id, c.name, c.phone, c.territory, c.customer_type"
             ],
             'sales_by_item' => [
@@ -899,16 +899,16 @@ class ReportEngine {
                     'variance' => ['label' => 'Variance', 'type' => 'text', 'align' => 'right']
                 ],
                 'sql' => "SELECT 'Monthly Sales Revenue' as metric, 'Rs. 1,000,000.00' as target, 
-                                 CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status != 'Voided' AND MONTH(invoice_date) = MONTH(NOW()) AND YEAR(invoice_date) = YEAR(NOW())), 0), 2)) as actual,
-                                 CONCAT(FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status != 'Voided' AND MONTH(invoice_date) = MONTH(NOW()) AND YEAR(invoice_date) = YEAR(NOW())), 0) - 1000000.00, 2)) as variance
+                                 CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled') AND MONTH(invoice_date) = MONTH(NOW()) AND YEAR(invoice_date) = YEAR(NOW())), 0), 2)) as actual,
+                                 CONCAT(FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled') AND MONTH(invoice_date) = MONTH(NOW()) AND YEAR(invoice_date) = YEAR(NOW())), 0) - 1000000.00, 2)) as variance
                           UNION ALL
                           SELECT 'New Customers Registered' as metric, '50' as target, 
                                  CAST(COALESCE((SELECT COUNT(*) FROM customers WHERE MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())), 0) as CHAR) as actual,
                                  CAST(COALESCE((SELECT COUNT(*) FROM customers WHERE MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())), 0) - 50 as CHAR) as variance
                           UNION ALL
                           SELECT 'Outstanding Receivables' as metric, 'Rs. 200,000.00' as target, 
-                                 CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status != 'Paid' AND status != 'Voided'), 0), 2)) as actual,
-                                 CONCAT(FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status != 'Paid' AND status != 'Voided'), 0) - 200000.00, 2)) as variance
+                                 CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Paid', 'Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')), 0), 2)) as actual,
+                                 CONCAT(FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Paid', 'Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')), 0) - 200000.00, 2)) as variance
                           UNION ALL
                           SELECT 'Procurement (GRN) Value' as metric, 'Rs. 500,000.00' as target, 
                                  CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(quantity * unit_cost) FROM grn_items), 0), 2)) as actual,

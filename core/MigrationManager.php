@@ -517,6 +517,81 @@ class MigrationManager {
             'pending_collections_uuid' => "ALTER TABLE pending_collections ADD COLUMN uuid VARCHAR(255) NULL",
             'pending_collections_debit_account_id' => "ALTER TABLE pending_collections ADD COLUMN debit_account_id INT NULL",
             'pending_collections_credit_account_id' => "ALTER TABLE pending_collections ADD COLUMN credit_account_id INT NULL",
+            'pending_collections_unique_rep_local' => "ALTER TABLE pending_collections ADD UNIQUE KEY uq_rep_local (mobile_rep_id, mobile_local_id)",
+            'pending_collections_unique_uuid' => "ALTER TABLE pending_collections ADD UNIQUE KEY uq_pending_uuid (uuid)",
+            'pending_collections_journal_entry_id' => "ALTER TABLE pending_collections ADD COLUMN journal_entry_id INT NULL",
+            'seed_system_coa_accounts' => function(PDO $dbh) {
+                $accounts = [
+                    ['code' => '1000', 'name' => 'Cash in Hand', 'type' => 'Asset', 'cat' => 'Current Assets'],
+                    ['code' => '1010', 'name' => 'Bank Account', 'type' => 'Asset', 'cat' => 'Current Assets'],
+                    ['code' => '1090', 'name' => 'Driver Transit Collections (Temp)', 'type' => 'Asset', 'cat' => 'Current Assets'],
+                    ['code' => '1100', 'name' => 'Undeposited Cash', 'type' => 'Asset', 'cat' => 'Current Assets'],
+                    ['code' => '1200', 'name' => 'Accounts Receivable', 'type' => 'Asset', 'cat' => 'Current Assets'],
+                    ['code' => '1300', 'name' => 'Inventory Asset', 'type' => 'Asset', 'cat' => 'Current Assets'],
+                    ['code' => '1600', 'name' => 'Customer Advance Payments', 'type' => 'Liability', 'cat' => 'Current Liabilities'],
+                    ['code' => '1605', 'name' => 'Undeposited Cheques Clearing', 'type' => 'Asset', 'cat' => 'Current Assets'],
+                    ['code' => '2110', 'name' => 'VAT / Sales Tax Payable', 'type' => 'Liability', 'cat' => 'Current Liabilities'],
+                    ['code' => '4000', 'name' => 'Sales Revenue', 'type' => 'Revenue', 'cat' => 'Sales'],
+                    ['code' => '4050', 'name' => 'Discounts Allowed', 'type' => 'Expense', 'cat' => 'Discounts'],
+                    ['code' => '5000', 'name' => 'Cost of Goods Sold (COGS)', 'type' => 'Expense', 'cat' => 'Cost of Goods Sold'],
+                    ['code' => '6100', 'name' => 'Staff Meals & Entertainment', 'type' => 'Expense', 'cat' => 'Operating Expenses'],
+                    ['code' => '6200', 'name' => 'Accommodation', 'type' => 'Expense', 'cat' => 'Operating Expenses'],
+                    ['code' => '6300', 'name' => 'Parking & Tolls', 'type' => 'Expense', 'cat' => 'Operating Expenses'],
+                    ['code' => '6700', 'name' => 'Travel Transport (Fuel)', 'type' => 'Expense', 'cat' => 'Operating Expenses'],
+                    ['code' => '6800', 'name' => 'Vehicle Maintenance', 'type' => 'Expense', 'cat' => 'Operating Expenses'],
+                    ['code' => '6900', 'name' => 'Miscellaneous Expenses', 'type' => 'Expense', 'cat' => 'Operating Expenses']
+                ];
+                $stmtCheck = $dbh->prepare("SELECT id FROM chart_of_accounts WHERE account_code = :code LIMIT 1");
+                $stmtInsert = $dbh->prepare("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) VALUES (:code, :name, :type, :cat, 0.00, 1)");
+                foreach ($accounts as $acc) {
+                    $stmtCheck->execute([':code' => $acc['code']]);
+                    if (!$stmtCheck->fetch()) {
+                        $stmtInsert->execute([
+                            ':code' => $acc['code'],
+                            ':name' => $acc['name'],
+                            ':type' => $acc['type'],
+                            ':cat' => $acc['cat']
+                        ]);
+                    }
+                }
+            },
+            'add_grand_total_to_invoices' => function(PDO $dbh) {
+                $stmt = $dbh->query("SHOW COLUMNS FROM invoices LIKE 'grand_total'");
+                if (!$stmt->fetch()) {
+                    $dbh->exec("ALTER TABLE invoices ADD COLUMN grand_total DECIMAL(15,2) NULL AFTER tax_amount");
+                }
+                $dbh->exec("
+                    UPDATE invoices 
+                    SET grand_total = ROUND(
+                        total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0),
+                        2
+                    ) 
+                    WHERE grand_total IS NULL
+                ");
+            },
+            'create_sync_exceptions_table' => "
+                CREATE TABLE IF NOT EXISTS sync_exceptions (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    category ENUM('unmapped_product', 'unknown_customer', 'route_not_found', 'duplicate_event', 'coa_not_configured', 'stock_conflict', 'other') NOT NULL DEFAULT 'other',
+                    entity_type VARCHAR(50) NOT NULL,
+                    local_id VARCHAR(100) NULL,
+                    uuid VARCHAR(255) NULL,
+                    route_id INT NULL,
+                    error_message TEXT NOT NULL,
+                    payload LONGTEXT NOT NULL,
+                    status ENUM('pending', 'resolved', 'ignored') NOT NULL DEFAULT 'pending',
+                    resolution_notes TEXT NULL,
+                    resolved_by INT NULL,
+                    resolved_at DATETIME NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_user_id (user_id),
+                    KEY idx_category (category),
+                    KEY idx_status (status),
+                    KEY idx_entity_type (entity_type),
+                    KEY idx_uuid (uuid)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            ",
             'grn_service_bills' => "
                 ALTER TABLE goods_receipt_notes 
                 ADD COLUMN due_date DATE NULL,
@@ -1224,6 +1299,31 @@ class MigrationManager {
                         try { $dbh->exec($sql); } catch (Exception $e) {}
                     }
                 }
+                return true;
+            },
+            'add_route_closure_gate_columns' => function(PDO $dbh) {
+                $tables = ['deliveries', 'rep_daily_routes'];
+                $cols = [
+                    'variance_approval_reason' => "ALTER TABLE %s ADD COLUMN variance_approval_reason TEXT NULL",
+                    'variance_approved_by' => "ALTER TABLE %s ADD COLUMN variance_approved_by INT NULL",
+                    'variance_approved_at' => "ALTER TABLE %s ADD COLUMN variance_approved_at DATETIME NULL"
+                ];
+                foreach ($tables as $tbl) {
+                    foreach ($cols as $col => $sqlTpl) {
+                        $q = $dbh->query("SHOW COLUMNS FROM {$tbl} LIKE '{$col}'");
+                        if (!$q || !$q->fetch()) {
+                            try { $dbh->exec(sprintf($sqlTpl, $tbl)); } catch (Exception $e) {}
+                        }
+                    }
+                }
+                return true;
+            },
+            'repair_cancelled_invoices_status_and_gl' => function(PDO $dbh) {
+                try {
+                    $dbh->exec("UPDATE invoices SET status = 'Cancelled', stock_status = 'returned' WHERE delivery_status = 'Cancelled'");
+                    $dbh->exec("UPDATE invoice_items ii JOIN invoices i ON ii.invoice_id = i.id SET ii.quantity = 0, ii.total = 0 WHERE i.delivery_status = 'Cancelled' OR i.status = 'Cancelled'");
+                    $dbh->exec("UPDATE journal_entries je JOIN invoices i ON i.journal_entry_id = je.id SET je.status = 'Voided' WHERE i.delivery_status = 'Cancelled' OR i.status = 'Cancelled'");
+                } catch (Exception $e) {}
                 return true;
             }
         ];

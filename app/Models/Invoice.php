@@ -86,43 +86,40 @@ class Invoice {
             $grossRevenue = ($itemGrossTotal > 0) ? $itemGrossTotal : ($subtotal + $itemDiscountTotal);
             $netGrandTotal = floatval($invoiceData['grand_total'] ?? ($subtotal - $globalDiscAmount));
 
-            // Resolve Discounts Allowed Account (Code 4050 / Name Discounts Allowed)
+            // Resolve Discounts Allowed Account (Code 4050) strictly without dynamic insertion
             $discountAccountId = null;
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '4050' OR account_name LIKE '%Discount%' LIMIT 1");
+            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '4050' AND is_active = 1 LIMIT 1");
             $discRow = $this->db->single();
             if ($discRow) {
-                $discountAccountId = $discRow->id;
+                $discountAccountId = intval($discRow->id);
             } else {
-                $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) VALUES ('4050', 'Discounts Allowed', 'Expense', 'Discounts', 0.00, 1)");
-                $this->db->execute();
-                $discountAccountId = $this->db->lastInsertId();
+                error_log("Invoice Accounting Error: Active COA account [4050] Discounts Allowed is missing or inactive.");
+                throw new Exception("Accounting Configuration Error: Discounts Allowed account (Code 4050) is missing or inactive. Please contact Finance Admin.");
             }
 
-            // Resolve COGS Account (Code 5000)
+            // Resolve COGS Account (Code 5000) strictly without dynamic insertion
             $cogsAccountId = null;
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '5000' OR account_name LIKE '%Cost of Goods%' LIMIT 1");
+            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '5000' AND is_active = 1 LIMIT 1");
             $cogsRow = $this->db->single();
             if ($cogsRow) {
-                $cogsAccountId = $cogsRow->id;
+                $cogsAccountId = intval($cogsRow->id);
             } else {
-                $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) VALUES ('5000', 'Cost of Goods Sold (COGS)', 'Expense', 'Cost of Goods Sold', 0.00, 1)");
-                $this->db->execute();
-                $cogsAccountId = $this->db->lastInsertId();
+                error_log("Invoice Accounting Error: Active COA account [5000] COGS is missing or inactive.");
+                throw new Exception("Accounting Configuration Error: Cost of Goods Sold account (Code 5000) is missing or inactive. Please contact Finance Admin.");
             }
 
-            // Resolve Inventory Asset Account (Code 1300)
+            // Resolve Inventory Asset Account (Code 1300) strictly without dynamic insertion
             $inventoryAccountId = null;
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1300' OR account_name LIKE '%Inventory Asset%' LIMIT 1");
+            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1300' AND is_active = 1 LIMIT 1");
             $invRow = $this->db->single();
             if ($invRow) {
-                $inventoryAccountId = $invRow->id;
+                $inventoryAccountId = intval($invRow->id);
             } else {
-                $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) VALUES ('1300', 'Inventory Asset', 'Asset', 'Current Assets', 0.00, 1)");
-                $this->db->execute();
-                $inventoryAccountId = $this->db->lastInsertId();
+                error_log("Invoice Accounting Error: Active COA account [1300] Inventory Asset is missing or inactive.");
+                throw new Exception("Accounting Configuration Error: Inventory Asset account (Code 1300) is missing or inactive. Please contact Finance Admin.");
             }
 
-            // Resolve Tax Payable Account
+            // Resolve Tax Payable Account (Code 2110) strictly without dynamic insertion
             $taxAccountId = null;
             if (!empty($invoiceData['tax_rate_id'])) {
                 $this->db->query("SELECT liability_account_id FROM tax_rates WHERE id = :id");
@@ -133,14 +130,13 @@ class Invoice {
                 }
             }
             if (empty($taxAccountId)) {
-                $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '2110' OR account_name LIKE '%Tax Payable%' OR account_name LIKE '%Sales Tax%' LIMIT 1");
+                $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '2110' AND is_active = 1 LIMIT 1");
                 $taxRow = $this->db->single();
                 if ($taxRow) {
-                    $taxAccountId = $taxRow->id;
+                    $taxAccountId = intval($taxRow->id);
                 } else {
-                    $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) VALUES ('2110', 'VAT / Sales Tax Payable', 'Liability', 'Current Liabilities', 0.00, 1)");
-                    $this->db->execute();
-                    $taxAccountId = $this->db->lastInsertId();
+                    error_log("Invoice Accounting Error: Active COA account [2110] VAT / Sales Tax Payable is missing or inactive.");
+                    throw new Exception("Accounting Configuration Error: VAT / Sales Tax Payable account (Code 2110) is missing or inactive. Please contact Finance Admin.");
                 }
             }
 
@@ -206,8 +202,8 @@ class Invoice {
 
             $stockStatus = $invoiceData['stock_status'] ?? 'deducted';
             $uuid = $invoiceData['uuid'] ?? null;
-            $this->db->query("INSERT INTO invoices (invoice_number, uuid, customer_id, rep_route_id, invoice_date, due_date, payment_term_id, total_amount, tax_amount, tax_rate_id, global_discount_val, global_discount_type, notes, journal_entry_id, created_by, status, stock_status, customer_vat_number) 
-                              VALUES (:invoice_number, :uuid, :customer_id, :rep_route_id, :invoice_date, :due_date, :payment_term_id, :total_amount, :tax_amount, :tax_rate_id, :global_discount_val, :global_discount_type, :notes, :journal_entry_id, :created_by, 'Unpaid', :stock_status, :customer_vat_number)");
+            $this->db->query("INSERT INTO invoices (invoice_number, uuid, customer_id, rep_route_id, invoice_date, due_date, payment_term_id, total_amount, grand_total, tax_amount, tax_rate_id, global_discount_val, global_discount_type, notes, journal_entry_id, created_by, status, stock_status, customer_vat_number) 
+                              VALUES (:invoice_number, :uuid, :customer_id, :rep_route_id, :invoice_date, :due_date, :payment_term_id, :total_amount, :grand_total, :tax_amount, :tax_rate_id, :global_discount_val, :global_discount_type, :notes, :journal_entry_id, :created_by, 'Unpaid', :stock_status, :customer_vat_number)");
             $this->db->bind(':invoice_number', $invoiceData['invoice_number']);
             $this->db->bind(':uuid', $uuid);
             $this->db->bind(':customer_id', $invoiceData['customer_id']);
@@ -216,6 +212,7 @@ class Invoice {
             $this->db->bind(':due_date', $invoiceData['due_date']);
             $this->db->bind(':payment_term_id', $invoiceData['payment_term_id'] ?? null);
             $this->db->bind(':total_amount', $invoiceData['subtotal']);
+            $this->db->bind(':grand_total', round($netGrandTotal, 2));
             $this->db->bind(':tax_amount', $taxAmount > 0 ? $taxAmount : 0.0);
             $this->db->bind(':tax_rate_id', $invoiceData['tax_rate_id'] ?? null);
             $this->db->bind(':global_discount_val', $invoiceData['global_discount_val']);

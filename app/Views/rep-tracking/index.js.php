@@ -2135,7 +2135,9 @@
                     else if (inv.delivery_status === 'Cancelled') dColor = '#ef4444';
                     else if (inv.delivery_status === 'Postponed') dColor = '#6b7280';
 
-                    let pColor = inv.status === 'Paid' ? '#2e7d32' : '#d05d00';
+                    let isCancelled = (inv.status === 'Cancelled' || inv.delivery_status === 'Cancelled');
+                    let pColor = inv.status === 'Paid' ? '#2e7d32' : (isCancelled ? '#ef4444' : '#d05d00');
+                    let displayPaymentStatus = isCancelled ? 'Cancelled' : (inv.status || 'Unpaid');
                     
                     let actionHtml = '';
                     if (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized') {
@@ -2174,7 +2176,7 @@
                             <td style="font-weight:bold; color:var(--primary);">${inv.invoice_number}</td>
                             <td style="text-align:right; font-family:monospace; font-weight:bold;">Rs ${parseFloat(inv.true_grand_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:center;">${statusSelectHtml}</td>
-                            <td style="text-align:center; color:${pColor}; font-weight:bold;">${inv.status}</td>
+                            <td style="text-align:center; color:${pColor}; font-weight:bold;">${displayPaymentStatus}</td>
                             <td style="text-align:center;">${actionHtml}</td>
                         </tr>
                     `;
@@ -3563,6 +3565,39 @@
         .then(res => res.json())
         .then(data => {
             btnSubmit.disabled = false;
+            if (data.status === 'excess_warning') {
+                const msg = data.message + 
+                    "\n\n• Invoice Balance Due: Rs " + (data.balance_due || 0).toLocaleString() +
+                    "\n• Bill Allocation: Rs " + (data.allocated_amount || 0).toLocaleString() +
+                    "\n• Excess Customer Advance: Rs " + (data.excess_amount || 0).toLocaleString() +
+                    "\n\nDo you want to confirm and keep the excess Rs " + (data.excess_amount || 0).toLocaleString() + " as customer advance credit?";
+                if (confirm(msg)) {
+                    payload.allow_excess_as_advance = true;
+                    btnSubmit.disabled = true;
+                    fetchSecure('<?= APP_URL ?>/RepTracking/api_apply_credit_bill_payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(r => r.json())
+                    .then(d2 => {
+                        btnSubmit.disabled = false;
+                        if (d2.status === 'success') {
+                            alert(d2.message);
+                            closeApplyCreditPaymentModal();
+                            loadTab10Accounting(routeId);
+                            loadTab8Reconciliation(routeId);
+                        } else {
+                            alert(d2.message || 'Failed to apply credit payment.');
+                        }
+                    })
+                    .catch(err => {
+                        btnSubmit.disabled = false;
+                        alert('Error applying payment: ' + err.message);
+                    });
+                }
+                return;
+            }
             if (data.status === 'success') {
                 alert(data.message);
                 closeApplyCreditPaymentModal();

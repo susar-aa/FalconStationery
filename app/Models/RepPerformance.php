@@ -103,7 +103,7 @@ class RepPerformance {
 
         foreach ($routesDetail as $r) {
             $rId = intval($r->id);
-            $this->db->query("SELECT {$invoiceTotalExpr} as route_sales FROM invoices i WHERE i.rep_route_id = :rid AND i.status != 'Voided'");
+            $this->db->query("SELECT {$invoiceTotalExpr} as route_sales FROM invoices i WHERE i.rep_route_id = :rid AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')");
             $this->db->bind(':rid', $rId);
             $rsRow = $this->db->single();
             $r->sales = floatval($rsRow->route_sales ?? 0);
@@ -113,7 +113,7 @@ class RepPerformance {
         $salesSql = "SELECT {$invoiceTotalExpr} as total_sales, COUNT(i.id) as invoice_count 
                      FROM invoices i
                      LEFT JOIN customers c ON i.customer_id = c.id
-                     WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status != 'Voided'
+                     WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
                        AND i.invoice_date BETWEEN :start AND :end";
         if ($areaId) {
             $salesSql .= " AND c.mca_id = :area_id";
@@ -156,7 +156,7 @@ class RepPerformance {
         $prodVisitsSql = "SELECT COUNT(DISTINCT i.customer_id) as active_customers 
                           FROM invoices i
                           LEFT JOIN customers c ON i.customer_id = c.id
-                          WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status != 'Voided'
+                          WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
                             AND i.invoice_date BETWEEN :start AND :end";
         if ($areaId) {
             $prodVisitsSql .= " AND c.mca_id = :area_id";
@@ -197,7 +197,7 @@ class RepPerformance {
                           SELECT i.customer_id, COUNT(*) as cnt 
                           FROM invoices i
                           LEFT JOIN customers c ON i.customer_id = c.id
-                          WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status != 'Voided'
+                          WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
                             AND i.invoice_date BETWEEN :start AND :end";
         if ($areaId) {
             $repeatSql .= " AND c.mca_id = :area_id";
@@ -288,8 +288,7 @@ class RepPerformance {
                            FROM invoices i
                            LEFT JOIN customers c ON i.customer_id = c.id
                            WHERE i.rep_route_id IN ($routeIdsPlaceholder) 
-                             AND i.status != 'Voided' 
-                             AND i.status != 'Paid'";
+                             AND i.status NOT IN ('Voided', 'Cancelled', 'Paid') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')";
         if ($areaId) {
             $outstandingSql .= " AND c.mca_id = :area_id";
         }
@@ -395,7 +394,7 @@ class RepPerformance {
         $topCustomersSql = "SELECT c.name as customer_name, COUNT(i.id) as bills, SUM(i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as total_sales 
                              FROM invoices i
                              JOIN customers c ON i.customer_id = c.id
-                             WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status != 'Voided'
+                             WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
                                AND i.invoice_date BETWEEN :start AND :end";
         if ($areaId) {
             $topCustomersSql .= " AND c.mca_id = :area_id";
@@ -413,7 +412,7 @@ class RepPerformance {
         $salesTrendSql = "SELECT i.invoice_date as label, SUM(i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as sales_amount 
                           FROM invoices i
                           LEFT JOIN customers c ON i.customer_id = c.id
-                          WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status != 'Voided'
+                          WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
                             AND i.invoice_date BETWEEN :start AND :end";
         if ($areaId) {
             $salesTrendSql .= " AND c.mca_id = :area_id";
@@ -443,7 +442,7 @@ class RepPerformance {
                                   (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as true_amount
                            FROM invoices i
                            JOIN customers c ON i.customer_id = c.id
-                           WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status != 'Voided'
+                           WHERE i.rep_route_id IN ($routeIdsPlaceholder) AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
                              AND i.invoice_date BETWEEN :start AND :end";
         if ($areaId) {
             $recentSalesSql .= " AND c.mca_id = :area_id";
