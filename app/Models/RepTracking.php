@@ -180,7 +180,7 @@ class RepTracking {
             JOIN invoices i ON i.journal_entry_id = je.id
             JOIN chart_of_accounts coa ON t.account_id = coa.id
             WHERE i.rep_route_id IN ($placeholdersStr) 
-              AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
+              AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
               AND coa.account_code = '1200'
         ");
         foreach ($routeIds as $index => $id) {

@@ -1604,3 +1604,39 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Sat 09/26/2026  1:08:14.43 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/DeliveryController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Controllers/DriverDashboardController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Controllers/RepDashboardController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/Delivery.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/Payment.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/RepPerformance.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/RepTracking.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/Report.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Services/ReportEngine.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Services/RouteExpenseService.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/sales/invoice_view.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app_errors.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'core/MigrationManager.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'REP_APP_TO_REP_TRACKING_WORKFLOW_AUDIT_2026-09-23.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Controllers/SyncExceptionsController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/SyncException.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/sync_exceptions/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scratch/check_polythene_stock.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main c607b92] Update: app/Controllers/CustomerController.php, app/Controllers/DeliveryController.php, app/Controllers/DriverDashboardController.php, app/Controllers/RepDashboardController.php, app/Controllers/RepTrackingController.php, app/Models/Customer.php, app/Models/Delivery.php, app/Models/DriverInvoice.php, app/Models/Invoice.php, app/Models/Payment.php, app/Models/RepPerformance.php, app/Models/RepTracking.php, app/Models/Report.php, app/Services/ReportEngine.php, app/Services/RouteExpenseService.php, app/Views/rep-tracking/index.js.php, app/Views/sales/invoice_view.php, app_errors.log, core/MigrationManager.php, deploy_log.txt, public/index.php, schema_update.sql, REP_APP_TO_REP_TRACKING_WORKFLOW_AUDIT_2026-09-23.md, app/Controllers/SyncExceptionsController.php, app/Models/SyncException.php, app/Views/sync_exceptions/, scratch/check_polythene_stock.php
+ 27 files changed, 10773 insertions(+), 262 deletions(-)
+ create mode 100644 REP_APP_TO_REP_TRACKING_WORKFLOW_AUDIT_2026-09-23.md
+ create mode 100644 app/Controllers/SyncExceptionsController.php
+ create mode 100644 app/Models/SyncException.php
+ create mode 100644 app/Views/sync_exceptions/index.php
+ create mode 100644 scratch/check_polythene_stock.php
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   4146ac1..c607b92  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Mon 09/28/2026 10:03:59.51 
+=================================================== 
+Adding changes... 
