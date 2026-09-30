@@ -2020,6 +2020,21 @@
         window.open('<?= APP_URL ?>/RepTracking/print_loading/' + currentRouteId + '?type=' + type, '_blank');
     }
 
+    function setSelectValue(selectId, val) {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+        sel.value = val || '';
+        if (sel.selectedIndex <= 0 && val) {
+            const cleanVal = String(val).trim().toLowerCase();
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value.trim().toLowerCase() === cleanVal || sel.options[i].text.trim().toLowerCase() === cleanVal) {
+                    sel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
+
     function loadDispatchStage(routeId) {
         const formView = document.getElementById('adjDeliveryFormView');
         if (!formView) return;
@@ -2038,38 +2053,30 @@
         // Load outstanding bills and pre-check
         loadOutstandingBillsChecklist(routeId, delId);
 
-        if (!delId || delId === '0' || delId === '') {
-            // Not arranged yet
-            if (statusBanner) statusBanner.style.display = 'none';
-            
-            // Set default date if blank
-            const dateInput = document.getElementById('adjDaDate');
-            if (dateInput && !dateInput.value) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-            }
-            
-            // Reset dropdowns
-            document.getElementById('adjDaVehicle').value = '';
-            document.getElementById('adjDaDriver').value = '';
-            document.getElementById('adjDaPartner').value = '';
-        } else {
-            // Already arranged
-            if (statusBanner) {
-                statusBanner.style.display = 'flex';
-                statusId.innerText = '#' + delId;
-            }
-            
-            fetchSecure('<?= APP_URL ?>/RepTracking/api_get_delivery_details/' + delId)
-                .then(res => res.json())
-                .then(dData => {
-                    if (dData.delivery) {
-                        if (document.getElementById('adjDaDate')) document.getElementById('adjDaDate').value = dData.delivery.delivery_date || '';
-                        if (document.getElementById('adjDaVehicle')) document.getElementById('adjDaVehicle').value = dData.delivery.vehicle_number || '';
-                        if (document.getElementById('adjDaDriver')) document.getElementById('adjDaDriver').value = dData.delivery.driver_name || '';
-                        if (document.getElementById('adjDaPartner')) document.getElementById('adjDaPartner').value = dData.delivery.partner_name || '';
+        fetchSecure('<?= APP_URL ?>/RepTracking/api_get_delivery_details/' + (delId || 0) + '?route_id=' + routeId)
+            .then(res => res.json())
+            .then(dData => {
+                if (dData.status === 'success' && dData.delivery) {
+                    if (statusBanner) {
+                        statusBanner.style.display = 'flex';
+                        statusId.innerText = '#' + dData.delivery.id;
                     }
-                });
-        }
+                    if (rdata) rdata.setAttribute('data-delivery-id', dData.delivery.id);
+                    if (document.getElementById('adjDaDate')) document.getElementById('adjDaDate').value = dData.delivery.delivery_date || '';
+                    setSelectValue('adjDaVehicle', dData.delivery.vehicle_number);
+                    setSelectValue('adjDaDriver', dData.delivery.driver_name);
+                    setSelectValue('adjDaPartner', dData.delivery.partner_name);
+                } else {
+                    if (statusBanner) statusBanner.style.display = 'none';
+                    const dateInput = document.getElementById('adjDaDate');
+                    if (dateInput && !dateInput.value) {
+                        dateInput.value = new Date().toISOString().split('T')[0];
+                    }
+                    setSelectValue('adjDaVehicle', '');
+                    setSelectValue('adjDaDriver', '');
+                    setSelectValue('adjDaPartner', '');
+                }
+            });
     }
 
     function loadDeliveryLiveStage(routeId) {
@@ -2965,9 +2972,6 @@
                         remarks = recon.audit_remarks || '';
                         actualDenoms = recon.actual_denominations || null;
                         chequeApprovals = recon.cheque_approvals || {};
-                        if (recon && (recon.actual_cash !== undefined || recon.actual_denominations)) {
-                            isReadOnly = true;
-                        }
                     } catch(e) {}
                 }
 
