@@ -675,7 +675,7 @@ updateClock(); setInterval(updateClock, 1000);
     try {
         const queries = ['luxury office interior','modern workspace minimal','architecture interior light','business premium interior'];
         const q = queries[Math.floor(Date.now() / ONE_HOUR) % queries.length];
-        const res = await fetch(`https://api.unsplash.com/photos/random?client_id=l9G-Db3ETQ2zxJN1viWaIpgPjshWK2z9gmczP3kWlX4&orientation=landscape&query=${encodeURIComponent(q)}&content_filter=high`);
+        const res = await fetch(`https://api.unsplash.com/photos/random?client_id=l9G-&orientation=landscape&query=${encodeURIComponent(q)}&content_filter=high`);
         const data = await res.json();
         const url = data.urls?.regular || data.urls?.full;
         if (url) { localStorage.setItem(KEY, url); localStorage.setItem(TIME_KEY, Date.now().toString()); applyBg(url); }
