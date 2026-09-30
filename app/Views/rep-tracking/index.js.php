@@ -2035,42 +2035,53 @@
 
     function setSelectValue(selectId, val) {
         const sel = document.getElementById(selectId);
-        if (!sel) {
-            console.log(`[setSelectValue] Element #${selectId} not found`);
-            return;
-        }
-        console.log(`[setSelectValue] #${selectId} requested val="${val}"`);
-        if (!val || val === '' || val === 'null' || val === 'undefined') {
+        if (!sel) return;
+        
+        const cleanVal = (val && val !== 'null' && val !== 'undefined') ? String(val).trim() : '';
+        if (!cleanVal) {
             sel.value = '';
+            sel.selectedIndex = 0;
             return;
         }
-        
-        // 1. Try exact value assignment
-        sel.value = val;
-        if (sel.value === val && sel.selectedIndex >= 0) {
-            console.log(`[setSelectValue] #${selectId} exact match set index ${sel.selectedIndex}: "${val}"`);
-            return;
-        }
-        
-        // 2. Try matching trimmed & case-insensitive text or value
-        const cleanVal = String(val).trim().toLowerCase();
+
+        // Reset previous selections
         for (let i = 0; i < sel.options.length; i++) {
-            const optVal = (sel.options[i].value || '').trim().toLowerCase();
-            const optTxt = (sel.options[i].text || '').trim().toLowerCase();
-            if (optVal === cleanVal || optTxt === cleanVal) {
+            sel.options[i].selected = false;
+        }
+
+        // 1. Try exact match
+        for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === cleanVal || sel.options[i].text === cleanVal) {
+                sel.options[i].selected = true;
                 sel.selectedIndex = i;
-                console.log(`[setSelectValue] #${selectId} fuzzy match set index ${i}: "${sel.options[i].value}"`);
+                sel.value = sel.options[i].value;
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
                 return;
             }
         }
-        
-        // 3. Dynamically append option if missing from pre-rendered HTML list so saved selection is NEVER lost!
-        console.log(`[setSelectValue] #${selectId} option "${val}" missing; appending dynamically...`);
+
+        // 2. Try case-insensitive / trimmed match
+        const lowerVal = cleanVal.toLowerCase();
+        for (let i = 0; i < sel.options.length; i++) {
+            const optVal = (sel.options[i].value || '').trim().toLowerCase();
+            const optTxt = (sel.options[i].text || '').trim().toLowerCase();
+            if (optVal === lowerVal || optTxt === lowerVal) {
+                sel.options[i].selected = true;
+                sel.selectedIndex = i;
+                sel.value = sel.options[i].value;
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+                return;
+            }
+        }
+
+        // 3. Dynamically append option if missing from list so selection is NEVER lost
         const opt = document.createElement('option');
-        opt.value = val;
-        opt.textContent = val;
+        opt.value = cleanVal;
+        opt.textContent = cleanVal;
+        opt.selected = true;
         sel.appendChild(opt);
-        sel.value = val;
+        sel.value = cleanVal;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     function loadDispatchStage(routeId) {
