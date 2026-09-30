@@ -1203,7 +1203,7 @@ class RepTrackingController extends Controller {
         if ($targetStatus === 'Completed') { // Only guard transition to Completed
             $db->query("SELECT id, UNIX_TIMESTAMP(created_at) as created_ts FROM pending_collections 
                         WHERE (route_id = :rid OR route_id IN (SELECT id FROM rep_daily_routes WHERE route_binding_id = :bid AND route_binding_id IS NOT NULL)) 
-                        AND (status = 'Pending' OR is_verified = 0)");
+                        AND status NOT IN ('Finalized', 'Rejected') AND is_verified = 0");
             $db->bind(':rid', $routeId);
             $db->bind(':bid', $oldRoute ? $oldRoute->route_binding_id : 0);
             $pendingCollections = $db->resultSet() ?: [];
@@ -1277,7 +1277,7 @@ class RepTrackingController extends Controller {
         $delStatus = 'Arranged';
         if ($targetStatus === 'Completed') {
             // Check if there are any pending collections for this route
-            $db->query("SELECT COUNT(*) as pending_count FROM pending_collections WHERE (route_id = :rid OR route_id IN (SELECT id FROM rep_daily_routes WHERE route_binding_id = :bid AND route_binding_id IS NOT NULL)) AND (status = 'Pending' OR is_verified = 0)");
+            $db->query("SELECT COUNT(*) as pending_count FROM pending_collections WHERE (route_id = :rid OR route_id IN (SELECT id FROM rep_daily_routes WHERE route_binding_id = :bid AND route_binding_id IS NOT NULL)) AND status NOT IN ('Finalized', 'Rejected') AND is_verified = 0");
             $db->bind(':rid', $routeId);
             $db->bind(':bid', $oldRoute ? $oldRoute->route_binding_id : 0);
             $pendingRow = $db->single();

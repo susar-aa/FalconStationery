@@ -540,12 +540,13 @@ class Delivery {
                 throw new Exception("Cannot finalize route: There are {$syncCheck->pending_cnt} unacknowledged mobile sync exception(s) pending in the Exceptions Inbox. Please acknowledge or resolve all sync exceptions before route closure.");
             }
 
-            // GATE 2: All collections must be resolved (no pending or unverified collections)
+            // GATE 2: All collections must be verified by accounting (no unverified collections)
             $this->db->query("
                 SELECT COUNT(*) as unresolved_cnt 
                 FROM pending_collections 
                 WHERE route_id IN ($ridsStr) 
-                  AND (status = 'Pending' OR is_verified = 0)
+                  AND status NOT IN ('Finalized', 'Rejected')
+                  AND is_verified = 0
             ");
             $collCheck = $this->db->single();
             if ($collCheck && intval($collCheck->unresolved_cnt) > 0) {
