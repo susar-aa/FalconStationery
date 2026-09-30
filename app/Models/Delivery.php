@@ -532,7 +532,7 @@ class Delivery {
             $this->db->query("
                 SELECT COUNT(*) as pending_cnt 
                 FROM sync_exceptions 
-                WHERE (route_id IN ($ridsStr) OR (route_id IS NULL AND rep_id IN (SELECT user_id FROM rep_daily_routes WHERE id IN ($ridsStr))))
+                WHERE (route_id IN ($ridsStr) OR (route_id IS NULL AND user_id IN (SELECT user_id FROM rep_daily_routes WHERE id IN ($ridsStr))))
                   AND status = 'pending'
             ");
             $syncCheck = $this->db->single();
