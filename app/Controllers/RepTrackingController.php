@@ -711,48 +711,60 @@ class RepTrackingController extends Controller {
     private function autoApplyPaymentsToInvoices($customerId, $db = null) {
         $dbToUse = $db ?: new Database();
         
-        // Sum both active finalized payments and pending collections on current routes
         $dbToUse->query("
-            SELECT (
-                SELECT COALESCE(SUM(amount), 0) 
-                FROM customer_payments 
-                WHERE customer_id = :cid AND (status IS NULL OR status = 'Active')
-            ) + (
-                SELECT COALESCE(SUM(amount), 0) 
-                FROM pending_collections 
-                WHERE customer_id = :cid2 AND status = 'Pending'
-            ) as total_paid
-        ");
-        $dbToUse->bind(':cid', $customerId);
-        $dbToUse->bind(':cid2', $customerId);
-        $rowPaid = $dbToUse->single();
-        $totalPaid = $rowPaid ? floatval($rowPaid->total_paid) : 0.0;
-        
-        $dbToUse->query("
-            SELECT id, 
+            SELECT id, rep_route_id,
                    (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as true_grand_total,
-                   status,
-                   delivery_status
+                   status, delivery_status
             FROM invoices
             WHERE customer_id = :cid AND status != 'Voided'
             ORDER BY invoice_date ASC, id ASC
         ");
         $dbToUse->bind(':cid', $customerId);
-        $invoices = $dbToUse->resultSet();
-        
-        $remainingPaid = $totalPaid;
+        $invoices = $dbToUse->resultSet() ?: [];
+
+        // Fetch route-specific pending collections
+        $dbToUse->query("SELECT route_id, COALESCE(SUM(amount), 0) as route_paid FROM pending_collections WHERE customer_id = :cid AND status = 'Pending' GROUP BY route_id");
+        $dbToUse->bind(':cid', $customerId);
+        $routePendingRows = $dbToUse->resultSet() ?: [];
+        $routePendingMap = [];
+        foreach ($routePendingRows as $r) {
+            $routePendingMap[intval($r->route_id)] = floatval($r->route_paid);
+        }
+
+        // Fetch general finalized payments (excluding pending route collections)
+        $dbToUse->query("SELECT COALESCE(SUM(amount), 0) as total_paid FROM customer_payments WHERE customer_id = :cid AND (status IS NULL OR status = 'Active')");
+        $dbToUse->bind(':cid', $customerId);
+        $genPaidRow = $dbToUse->single();
+        $generalPaid = $genPaidRow ? floatval($genPaidRow->total_paid) : 0.0;
+
         foreach ($invoices as $inv) {
-            // Postponed or Cancelled invoices must not be marked Paid, and should not consume payments
             if ($inv->delivery_status === 'Cancelled' || $inv->delivery_status === 'Postponed') {
                 $newStatus = 'Unpaid';
             } else {
                 $grandTotal = floatval($inv->true_grand_total);
-                if ($remainingPaid >= $grandTotal - 0.01 && $grandTotal > 0) {
-                    $newStatus = 'Paid';
-                    $remainingPaid -= $grandTotal;
-                } else {
+                $rId = intval($inv->rep_route_id ?? 0);
+                
+                // If invoice belongs to a route with pending collections recorded for this customer, use route collection pool
+                if ($rId > 0 && isset($routePendingMap[$rId])) {
+                    if ($routePendingMap[$rId] >= $grandTotal - 0.01 && $grandTotal > 0) {
+                        $newStatus = 'Paid';
+                        $routePendingMap[$rId] -= $grandTotal;
+                    } else {
+                        $newStatus = 'Unpaid';
+                        $routePendingMap[$rId] = 0;
+                    }
+                } else if ($rId > 0) {
+                    // Invoice belongs to a route but NO pending collection was recorded on that route -> Credit Sale / Unpaid on route!
                     $newStatus = 'Unpaid';
-                    $remainingPaid = 0;
+                } else {
+                    // Non-route standard invoice: apply general customer payments
+                    if ($generalPaid >= $grandTotal - 0.01 && $grandTotal > 0) {
+                        $newStatus = 'Paid';
+                        $generalPaid -= $grandTotal;
+                    } else {
+                        $newStatus = 'Unpaid';
+                        $generalPaid = 0;
+                    }
                 }
             }
             if ($inv->status !== $newStatus) {

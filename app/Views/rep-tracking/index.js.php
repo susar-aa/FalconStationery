@@ -2164,7 +2164,7 @@
                 const totalInvoices = invoices.length;
                 const delivered = invoices.filter(inv => inv.delivery_status === 'Delivered').length;
                 const pending = totalInvoices - delivered;
-                const collections = parseFloat(data.balancing.total_payments || 0);
+                const collections = data.balancing ? (parseFloat(data.balancing.total_payments) || (parseFloat(data.balancing.raw_cash_collections || 0) + parseFloat(data.balancing.cheque_collections || 0) + parseFloat(data.balancing.bank_collections || 0))) : 0;
 
                 summaryCards.innerHTML = `
                     <div style="background:#f0f9ff; border:1px solid #bae6fd; padding:12px; border-radius:6px; text-align:center;">
