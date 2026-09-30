@@ -161,7 +161,7 @@ class RepTracking {
         $this->db->query("
             SELECT 
                 COUNT(id) as total_invoices,
-                COALESCE(SUM(COALESCE(grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))), 0.0) as invoice_sales_total
+                COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0.0) as invoice_sales_total
             FROM invoices 
             WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
         ");
