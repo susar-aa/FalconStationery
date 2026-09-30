@@ -1074,6 +1074,13 @@
     }
 
     function submitAdjustmentsLogisticsArrange() {
+        console.log('[ARRANGE LOGISTICS] submitAdjustmentsLogisticsArrange called', {
+            currentRouteId: currentRouteId,
+            date: document.getElementById('adjDaDate')?.value,
+            vehicle: document.getElementById('adjDaVehicle')?.value,
+            driver: document.getElementById('adjDaDriver')?.value,
+            partner: document.getElementById('adjDaPartner')?.value
+        });
         const date = document.getElementById('adjDaDate').value;
         const vehicle = document.getElementById('adjDaVehicle').value;
         const driver = document.getElementById('adjDaDriver').value;
@@ -1094,6 +1101,8 @@
             selected_credit_invoices: checkedBills
         };
 
+        console.log('[ARRANGE LOGISTICS] Sending payload:', payload);
+
         fetchSecure('<?= APP_URL ?>/RepTracking/arrange', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1101,6 +1110,7 @@
         })
         .then(res => res.json())
         .then(data => {
+            console.log('[ARRANGE LOGISTICS] Server response:', data);
             if (data.status === 'success') {
                 alert("Delivery arranged successfully!");
                 const rdata = document.getElementById('route_data_' + currentRouteId);
@@ -1112,6 +1122,9 @@
             } else {
                 alert("Error: " + data.message);
             }
+        })
+        .catch(err => {
+            console.error('[ARRANGE LOGISTICS] Fetch error:', err);
         });
     }
 
@@ -2022,7 +2035,11 @@
 
     function setSelectValue(selectId, val) {
         const sel = document.getElementById(selectId);
-        if (!sel) return;
+        if (!sel) {
+            console.log(`[setSelectValue] Element #${selectId} not found`);
+            return;
+        }
+        console.log(`[setSelectValue] #${selectId} requested val="${val}"`);
         if (!val || val === '' || val === 'null' || val === 'undefined') {
             sel.value = '';
             return;
@@ -2030,7 +2047,10 @@
         
         // 1. Try exact value assignment
         sel.value = val;
-        if (sel.value === val && sel.selectedIndex >= 0) return;
+        if (sel.value === val && sel.selectedIndex >= 0) {
+            console.log(`[setSelectValue] #${selectId} exact match set index ${sel.selectedIndex}: "${val}"`);
+            return;
+        }
         
         // 2. Try matching trimmed & case-insensitive text or value
         const cleanVal = String(val).trim().toLowerCase();
@@ -2039,11 +2059,13 @@
             const optTxt = (sel.options[i].text || '').trim().toLowerCase();
             if (optVal === cleanVal || optTxt === cleanVal) {
                 sel.selectedIndex = i;
+                console.log(`[setSelectValue] #${selectId} fuzzy match set index ${i}: "${sel.options[i].value}"`);
                 return;
             }
         }
         
         // 3. Dynamically append option if missing from pre-rendered HTML list so saved selection is NEVER lost!
+        console.log(`[setSelectValue] #${selectId} option "${val}" missing; appending dynamically...`);
         const opt = document.createElement('option');
         opt.value = val;
         opt.textContent = val;
@@ -2052,6 +2074,7 @@
     }
 
     function loadDispatchStage(routeId) {
+        console.log('[loadDispatchStage] Called for routeId:', routeId);
         const formView = document.getElementById('adjDeliveryFormView');
         if (!formView) return;
 
@@ -2062,6 +2085,7 @@
 
         const rdata = document.getElementById('route_data_' + routeId);
         const delId = rdata ? rdata.getAttribute('data-delivery-id') : null;
+        console.log('[loadDispatchStage] route_data delId:', delId);
 
         const statusBanner = document.getElementById('adjDeliveryStatusBanner');
         const statusId = document.getElementById('adjDeliveryStatusId');
@@ -2072,6 +2096,7 @@
         fetchSecure('<?= APP_URL ?>/RepTracking/api_get_delivery_details/' + (delId || 0) + '?route_id=' + routeId)
             .then(res => res.json())
             .then(dData => {
+                console.log('[loadDispatchStage] api_get_delivery_details response:', dData);
                 if (dData.status === 'success' && dData.delivery) {
                     if (statusBanner) {
                         statusBanner.style.display = 'flex';
@@ -2092,6 +2117,9 @@
                     setSelectValue('adjDaDriver', '');
                     setSelectValue('adjDaPartner', '');
                 }
+            })
+            .catch(err => {
+                console.error('[loadDispatchStage] fetch error:', err);
             });
     }
 
