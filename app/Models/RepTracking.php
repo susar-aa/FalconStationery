@@ -174,14 +174,18 @@ class RepTracking {
 
         // 2. GL Accounts Receivable (Debit sum on AR account 1200) for route invoices
         $this->db->query("
-            SELECT COALESCE(SUM(t.debit), 0.0) as gl_ar_debit
-            FROM transactions t
-            JOIN journal_entries je ON t.journal_entry_id = je.id
-            JOIN invoices i ON i.journal_entry_id = je.id
-            JOIN chart_of_accounts coa ON t.account_id = coa.id
-            WHERE i.rep_route_id IN ($placeholdersStr) 
-              AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
-              AND coa.account_code = '1200'
+            SELECT COALESCE(SUM(inv_ar.ar_debit), 0.0) as gl_ar_debit
+            FROM (
+                SELECT i.id, MAX(t.debit) as ar_debit
+                FROM invoices i
+                JOIN journal_entries je ON i.journal_entry_id = je.id
+                JOIN transactions t ON t.journal_entry_id = je.id
+                JOIN chart_of_accounts coa ON t.account_id = coa.id
+                WHERE i.rep_route_id IN ($placeholdersStr) 
+                  AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
+                  AND coa.account_code = '1200'
+                GROUP BY i.id
+            ) inv_ar
         ");
         foreach ($routeIds as $index => $id) {
             $this->db->bind(":rid_" . $index, intval($id));
@@ -192,15 +196,23 @@ class RepTracking {
         // 3. GL Revenue (Credit sum on Sales account 4000 - Debit sum on Discounts 4050)
         $this->db->query("
             SELECT 
-                COALESCE(SUM(CASE WHEN coa.account_code = '4000' THEN t.credit ELSE 0 END), 0.0) as gl_gross_sales,
-                COALESCE(SUM(CASE WHEN coa.account_code = '4050' THEN t.debit ELSE 0 END), 0.0) as gl_discounts,
-                COALESCE(SUM(CASE WHEN coa.account_code = '2110' THEN t.credit ELSE 0 END), 0.0) as gl_tax
-            FROM transactions t
-            JOIN journal_entries je ON t.journal_entry_id = je.id
-            JOIN invoices i ON i.journal_entry_id = je.id
-            JOIN chart_of_accounts coa ON t.account_id = coa.id
-            WHERE i.rep_route_id IN ($placeholdersStr) 
-              AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
+                COALESCE(SUM(inv_gl.gl_gross_sales), 0.0) as gl_gross_sales,
+                COALESCE(SUM(inv_gl.gl_discounts), 0.0) as gl_discounts,
+                COALESCE(SUM(inv_gl.gl_tax), 0.0) as gl_tax
+            FROM (
+                SELECT 
+                    i.id,
+                    MAX(CASE WHEN coa.account_code = '4000' THEN t.credit ELSE 0 END) as gl_gross_sales,
+                    MAX(CASE WHEN coa.account_code = '4050' THEN t.debit ELSE 0 END) as gl_discounts,
+                    MAX(CASE WHEN coa.account_code = '2110' THEN t.credit ELSE 0 END) as gl_tax
+                FROM invoices i
+                JOIN journal_entries je ON i.journal_entry_id = je.id
+                JOIN transactions t ON t.journal_entry_id = je.id
+                JOIN chart_of_accounts coa ON t.account_id = coa.id
+                WHERE i.rep_route_id IN ($placeholdersStr) 
+                  AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
+                GROUP BY i.id
+            ) inv_gl
         ");
         foreach ($routeIds as $index => $id) {
             $this->db->bind(":rid_" . $index, intval($id));
