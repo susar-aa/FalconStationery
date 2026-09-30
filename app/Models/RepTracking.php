@@ -574,14 +574,30 @@ class RepTracking {
                     $arAccId = intval($payment->credit_account_id);
                 }
 
+                // Helper function to resolve ID or account_code to true chart_of_accounts.id
+                $resolveAcc = function($val) {
+                    if (empty($val)) return 0;
+                    $this->db->query("SELECT id FROM chart_of_accounts WHERE id = :v1 OR account_code = :v2 LIMIT 1");
+                    $this->db->bind(':v1', intval($val));
+                    $this->db->bind(':v2', strval($val));
+                    $row = $this->db->single();
+                    return $row ? intval($row->id) : 0;
+                };
+
+                $resolvedAssetAccId = $resolveAcc($assetAccId);
+                $resolvedArAccId = $resolveAcc($arAccId);
+
                 // Hard validation: Ensure valid Debit and Credit GL accounts are resolved
-                if (empty($assetAccId) || $assetAccId <= 0) {
+                if (empty($resolvedAssetAccId) || $resolvedAssetAccId <= 0) {
                     throw new Exception("Collection Finalisation Failed for Payment #{$pid} ({$method}): No valid Debit/Asset GL account (Cash/Bank/Cheque) mapped.");
                 }
 
-                if (empty($arAccId) || $arAccId <= 0) {
+                if (empty($resolvedArAccId) || $resolvedArAccId <= 0) {
                     throw new Exception("Collection Finalisation Failed for Payment #{$pid} ({$method}): No valid Credit GL account (Accounts Receivable) mapped.");
                 }
+
+                $assetAccId = $resolvedAssetAccId;
+                $arAccId = $resolvedArAccId;
 
                 // Verify accounts exist in Chart of Accounts
                 $this->db->query("SELECT id FROM chart_of_accounts WHERE id IN (:aid1, :aid2)");
