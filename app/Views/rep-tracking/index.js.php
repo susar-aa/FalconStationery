@@ -2023,16 +2023,32 @@
     function setSelectValue(selectId, val) {
         const sel = document.getElementById(selectId);
         if (!sel) return;
-        sel.value = val || '';
-        if (sel.selectedIndex <= 0 && val) {
-            const cleanVal = String(val).trim().toLowerCase();
-            for (let i = 0; i < sel.options.length; i++) {
-                if (sel.options[i].value.trim().toLowerCase() === cleanVal || sel.options[i].text.trim().toLowerCase() === cleanVal) {
-                    sel.selectedIndex = i;
-                    break;
-                }
+        if (!val || val === '' || val === 'null' || val === 'undefined') {
+            sel.value = '';
+            return;
+        }
+        
+        // 1. Try exact value assignment
+        sel.value = val;
+        if (sel.value === val && sel.selectedIndex >= 0) return;
+        
+        // 2. Try matching trimmed & case-insensitive text or value
+        const cleanVal = String(val).trim().toLowerCase();
+        for (let i = 0; i < sel.options.length; i++) {
+            const optVal = (sel.options[i].value || '').trim().toLowerCase();
+            const optTxt = (sel.options[i].text || '').trim().toLowerCase();
+            if (optVal === cleanVal || optTxt === cleanVal) {
+                sel.selectedIndex = i;
+                return;
             }
         }
+        
+        // 3. Dynamically append option if missing from pre-rendered HTML list so saved selection is NEVER lost!
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        sel.appendChild(opt);
+        sel.value = val;
     }
 
     function loadDispatchStage(routeId) {

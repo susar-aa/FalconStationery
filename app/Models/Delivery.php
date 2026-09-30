@@ -12,7 +12,7 @@ class Delivery {
 
         try {
             // Check if there is already an existing delivery for this rep_route_id
-            $this->db->query("SELECT id FROM deliveries WHERE rep_route_id = :rid LIMIT 1");
+            $this->db->query("SELECT id FROM deliveries WHERE rep_route_id = :rid OR secondary_rep_route_id = :rid LIMIT 1");
             $this->db->bind(':rid', $data['rep_route_id']);
             $existing = $this->db->single();
 
