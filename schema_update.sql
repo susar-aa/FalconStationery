@@ -2,5 +2,10 @@
 UPDATE invoices SET status = 'Paid' WHERE id = 278677;   -- Invoice 20260913170015 (WISDOM BOOK SHOP)
 UPDATE invoices SET status = 'Unpaid' WHERE id = 281167; -- Invoice 20260921170026 (OLIVIA SUPER MART)
 
--- Sync grand_total column on invoices to match true net grand total after discounts and tax
-UPDATE invoices SET grand_total = (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) WHERE rep_route_id = 496;
+
+-- Populate missing account_category for legacy parent accounts in chart_of_accounts
+UPDATE chart_of_accounts SET account_category = 'Current Asset' WHERE account_type = 'Asset' AND (account_category IS NULL OR account_category = '');
+UPDATE chart_of_accounts SET account_category = 'Current Liability' WHERE account_type = 'Liability' AND (account_category IS NULL OR account_category = '');
+UPDATE chart_of_accounts SET account_category = 'Equity' WHERE account_type = 'Equity' AND (account_category IS NULL OR account_category = '');
+UPDATE chart_of_accounts SET account_category = 'Revenue' WHERE account_type = 'Revenue' AND (account_category IS NULL OR account_category = '');
+UPDATE chart_of_accounts SET account_category = 'Operating Expense' WHERE account_type = 'Expense' AND (account_category IS NULL OR account_category = '');

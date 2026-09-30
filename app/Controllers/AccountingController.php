@@ -98,65 +98,78 @@ class AccountingController extends Controller {
                 }
             }
             elseif ($_POST['action'] == 'add_sub') {
-                $parent = $this->coaModel->getAccountById($_POST['parent_id']);
-                if ($parent) {
-                    $code = trim($_POST['account_code']);
-                    $name = trim($_POST['account_name']);
-                    $type = $parent->account_type;
-                    $category = $parent->account_category;
+                try {
+                    $parentId = intval($_POST['parent_id'] ?? 0);
+                    $parent = $this->coaModel->getAccountById($parentId);
+                    if ($parent) {
+                        $code = trim($_POST['account_code'] ?? '');
+                        $name = trim($_POST['account_name'] ?? '');
+                        $type = $parent->account_type;
+                        $category = $parent->account_category;
 
-                    $isValid = true;
-                    if (!preg_match('/^[0-9]{4}$/', $code)) {
-                        $data['error'] = 'Accounting Error: Account Code must be exactly a 4-digit number.';
-                        $isValid = false;
-                    } else {
-                        $firstDigit = $code[0];
-                        $expectedRange = '';
-                        if ($type === COA_TYPE_ASSET && $firstDigit !== '1') { $expectedRange = '1000-1999'; }
-                        elseif ($type === COA_TYPE_LIABILITY && $firstDigit !== '2') { $expectedRange = '2000-2999'; }
-                        elseif ($type === COA_TYPE_EQUITY && $firstDigit !== '3') { $expectedRange = '3000-3999'; }
-                        elseif ($type === COA_TYPE_REVENUE && $firstDigit !== '4') { $expectedRange = '4000-4999'; }
-                        elseif ($type === COA_TYPE_EXPENSE && $firstDigit !== '5' && $firstDigit !== '6') { $expectedRange = '5000-6999'; }
-
-                        if (!empty($expectedRange)) {
-                            $data['error'] = "Accounting Error: Account Code for Type '{$type}' must be in the range {$expectedRange}.";
-                            $isValid = false;
+                        if (empty($category)) {
+                            if ($type === COA_TYPE_ASSET) $category = 'Current Asset';
+                            elseif ($type === COA_TYPE_LIABILITY) $category = 'Current Liability';
+                            elseif ($type === COA_TYPE_EQUITY) $category = 'Equity';
+                            elseif ($type === COA_TYPE_REVENUE) $category = 'Revenue';
+                            elseif ($type === COA_TYPE_EXPENSE) $category = 'Operating Expense';
                         }
-                    }
 
-                    if ($isValid) {
-                        $postData = [
-                            'account_code' => $code,
-                            'account_name' => $name,
-                            'account_type' => $type, // Sub-accounts MUST inherit the parent's type
-                            'account_category' => $category, // Sub-accounts MUST inherit the parent's category
-                            'parent_id' => $parent->id
-                        ];
-                        if ($this->coaModel->addAccount($postData)) { 
-                            $data['success'] = 'Sub-Account added successfully.'; 
-                            $this->logActivity('Create Sub-Account', 'Chart of Accounts', "Created Sub-Account {$code} - {$name} under Parent Account ID {$parent->id}", null, null, $postData);
-                            
-                            // Handle Opening Balance
-                            $openingBalance = floatval($_POST['opening_balance'] ?? 0);
-                            if ($openingBalance > 0) {
-                                // Fetch the newly created account by code
-                                $newAcc = null;
-                                foreach ($this->coaModel->getAccounts() as $a) {
-                                    if ($a->account_code === $code) { $newAcc = $a; break; }
-                                }
-                                if ($newAcc) {
-                                    $obType = $_POST['opening_balance_type'] ?? 'Debit';
-                                    $obDate = $_POST['opening_balance_date'] ?? date('Y-m-d');
-                                    $obNotes = trim($_POST['opening_balance_notes'] ?? '');
-                                    $this->coaModel->postOpeningBalance($newAcc->id, $openingBalance, $obType, $obDate, $obNotes, $_SESSION['user_id']);
-                                    $data['success'] .= ' Opening balance posted.';
-                                }
+                        $isValid = true;
+                        if (!preg_match('/^[0-9]{4}$/', $code)) {
+                            $data['error'] = 'Accounting Error: Account Code must be exactly a 4-digit number.';
+                            $isValid = false;
+                        } else {
+                            $firstDigit = $code[0];
+                            $expectedRange = '';
+                            if ($type === COA_TYPE_ASSET && $firstDigit !== '1') { $expectedRange = '1000-1999'; }
+                            elseif ($type === COA_TYPE_LIABILITY && $firstDigit !== '2') { $expectedRange = '2000-2999'; }
+                            elseif ($type === COA_TYPE_EQUITY && $firstDigit !== '3') { $expectedRange = '3000-3999'; }
+                            elseif ($type === COA_TYPE_REVENUE && $firstDigit !== '4') { $expectedRange = '4000-4999'; }
+                            elseif ($type === COA_TYPE_EXPENSE && $firstDigit !== '5' && $firstDigit !== '6') { $expectedRange = '5000-6999'; }
+
+                            if (!empty($expectedRange)) {
+                                $data['error'] = "Accounting Error: Account Code for Type '{$type}' must be in the range {$expectedRange}.";
+                                $isValid = false;
                             }
-                        } 
-                        else { $data['error'] = 'Failed to add account. Account Code may already exist.'; }
+                        }
+
+                        if ($isValid) {
+                            $postData = [
+                                'account_code' => $code,
+                                'account_name' => $name,
+                                'account_type' => $type, // Sub-accounts MUST inherit the parent's type
+                                'account_category' => $category, // Sub-accounts MUST inherit the parent's category
+                                'parent_id' => $parent->id
+                            ];
+                            if ($this->coaModel->addAccount($postData)) { 
+                                $data['success'] = 'Sub-Account added successfully.'; 
+                                $this->logActivity('Create Sub-Account', 'Chart of Accounts', "Created Sub-Account {$code} - {$name} under Parent Account ID {$parent->id}", null, null, $postData);
+                                
+                                // Handle Opening Balance
+                                $openingBalance = floatval($_POST['opening_balance'] ?? 0);
+                                if ($openingBalance > 0) {
+                                    // Fetch the newly created account by code
+                                    $newAcc = null;
+                                    foreach ($this->coaModel->getAccounts() as $a) {
+                                        if ($a->account_code === $code) { $newAcc = $a; break; }
+                                    }
+                                    if ($newAcc) {
+                                        $obType = $_POST['opening_balance_type'] ?? 'Debit';
+                                        $obDate = $_POST['opening_balance_date'] ?? date('Y-m-d');
+                                        $obNotes = trim($_POST['opening_balance_notes'] ?? '');
+                                        $this->coaModel->postOpeningBalance($newAcc->id, $openingBalance, $obType, $obDate, $obNotes, $_SESSION['user_id'] ?? 1);
+                                        $data['success'] .= ' Opening balance posted.';
+                                    }
+                                }
+                            } 
+                            else { $data['error'] = 'Failed to add sub-account. Account Code may already exist.'; }
+                        }
+                    } else {
+                        $data['error'] = 'Invalid parent account selected.';
                     }
-                } else {
-                    $data['error'] = 'Invalid parent account selected.';
+                } catch (Throwable $e) {
+                    $data['error'] = 'Accounting Error: ' . $e->getMessage();
                 }
             }
             elseif ($_POST['action'] == 'edit_account') {

@@ -2514,3 +2514,16 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Thu 10/01/2026  4:32:44.23 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/RepTracking.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 675273c] Update: app/Models/RepTracking.php, deploy_log.txt, schema_update.sql
+ 3 files changed, 30 insertions(+), 8 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   48a16d3..675273c  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Thu 10/01/2026  4:43:38.55 
+=================================================== 
+Adding changes... 

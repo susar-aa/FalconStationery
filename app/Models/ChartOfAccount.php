@@ -57,7 +57,7 @@ class ChartOfAccount {
         $this->db->bind(':account_category', $data['account_category'] ?? null);
         $this->db->bind(':parent_id', !empty($data['parent_id']) ? $data['parent_id'] : null);
 
-        try { return $this->db->execute(); } catch (PDOException $e) { return false; }
+        try { return $this->db->execute(); } catch (Throwable $e) { return false; }
     }
 
     public function updateAccount($data) {
@@ -79,7 +79,7 @@ class ChartOfAccount {
                 $this->cascadeAccountCategory($data['id'], $data['account_category'] ?? null);
             }
             return $res;
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -123,7 +123,7 @@ class ChartOfAccount {
     public function deleteAccount($id) {
         $this->db->query("DELETE FROM chart_of_accounts WHERE id = :id");
         $this->db->bind(':id', $id);
-        try { return $this->db->execute(); } catch (PDOException $e) { return false; }
+        try { return $this->db->execute(); } catch (Throwable $e) { return false; }
     }
 
     /**
@@ -637,7 +637,7 @@ class ChartOfAccount {
 
             $this->db->commit();
             return true;
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
             $this->db->rollBack();
             return false;
         }
