@@ -795,4 +795,3 @@ function escapeHtml(str) {
 
 document.addEventListener('DOMContentLoaded', loadTodos);
 </script>
-q
