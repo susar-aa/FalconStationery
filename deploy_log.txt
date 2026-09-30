@@ -1693,3 +1693,14 @@ operable program or batch file.
 Deployment Log - Thu 10/01/2026  1:06:42.77 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Delivery.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy.bat', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 5f80880] Update: app/Models/Delivery.php, deploy.bat, deploy_log.txt, schema_update.sql
+ 4 files changed, 68 insertions(+), 90 deletions(-)
+Pushing to GitHub... 
+=================================================== 
+Deployment Log - Thu 10/01/2026  1:11:12.56 
+=================================================== 
+Adding changes... 
