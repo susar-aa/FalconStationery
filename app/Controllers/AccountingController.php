@@ -866,4 +866,28 @@ class AccountingController extends Controller {
         }
         echo json_encode(['status' => 'success', 'data' => $details]);
     }
+
+    public function print_journal(int $id): void {
+        $details = $this->journalModel->getEntryDetails($id);
+        if (!$details) {
+            die("Error: Journal entry #{$id} not found.");
+        }
+        $this->view('accounting/print_journal', $details);
+    }
+
+    public function print_journal_list(): void {
+        $filters = [
+            'search' => isset($_GET['search']) ? trim($_GET['search']) : '',
+            'status' => isset($_GET['status']) ? trim($_GET['status']) : 'All',
+            'start_date' => isset($_GET['start_date']) ? trim($_GET['start_date']) : '',
+            'end_date' => isset($_GET['end_date']) ? trim($_GET['end_date']) : ''
+        ];
+
+        $entries = $this->journalModel->getAllEntries(1000, 0, $filters);
+        $data = [
+            'entries' => $entries ?: [],
+            'filters' => $filters
+        ];
+        $this->view('accounting/print_journal_list', $data);
+    }
 }

@@ -304,6 +304,7 @@ $endDate = $data['filters']['end_date'] ?? '';
                 
                 <button type="submit" class="filter-btn"><i class="fa-solid fa-filter"></i> Apply</button>
                 <a href="<?= APP_URL ?>/accounting/journal" class="filter-reset">Reset</a>
+                <a href="<?= APP_URL ?>/accounting/print_journal_list?<?= http_build_query($_GET) ?>" target="_blank" class="filter-reset" style="background: var(--c-surface); border: 0.5px solid var(--c-separator); color: var(--t-primary); font-weight: 600;"><i class="fa-solid fa-print"></i> Print List</a>
             </form>
         </div>
 
@@ -463,6 +464,7 @@ $endDate = $data['filters']['end_date'] ?? '';
                             <td><?= htmlspecialchars($entry->username) ?></td>
                             <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
                                 <button type="button" class="sf-btn neutral" onclick="viewJournal(<?= $entry->id ?>)" style="padding: 6px 12px; font-size: 12px;"><i class="fa-solid fa-eye"></i> View</button>
+                                <a href="<?= APP_URL ?>/accounting/print_journal/<?= $entry->id ?>" target="_blank" class="sf-btn neutral" style="padding: 6px 12px; font-size: 12px;"><i class="fa-solid fa-print"></i> Print</a>
                                 <?php if($entry->status === 'Posted' && !$entry->is_closed): ?>
                                     <form action="<?= APP_URL ?>/accounting/void_journal" method="POST" onsubmit="return confirm('Are you sure you want to void this journal entry? This will reverse all ledger balances for these accounts.')" style="display:inline; margin: 0;">
                                         <input type="hidden" name="entry_id" value="<?= $entry->id ?>">
@@ -588,7 +590,8 @@ $endDate = $data['filters']['end_date'] ?? '';
                 </div>
             </div>
         </div>
-        <div class="modal-foot" style="padding: 16px 24px; border-top: 0.5px solid var(--c-separator); background: var(--c-surface2); display: flex; justify-content: flex-end;">
+        <div class="modal-foot" style="padding: 16px 24px; border-top: 0.5px solid var(--c-separator); background: var(--c-surface2); display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" class="sf-btn primary" onclick="printCurrentJournalModal()"><i class="fa-solid fa-print"></i> Print Voucher</button>
             <button type="button" class="sf-btn neutral" onclick="closeJournalModal()">Close</button>
         </div>
     </div>
@@ -931,7 +934,10 @@ $endDate = $data['filters']['end_date'] ?? '';
     
     calcTotals();
 
+    let currentViewingJournalId = null;
+
     function viewJournal(id) {
+        currentViewingJournalId = id;
         const veil = document.getElementById('journalDetailsModal');
         const loader = document.getElementById('modalLoader');
         const error = document.getElementById('modalError');
@@ -1023,5 +1029,11 @@ $endDate = $data['filters']['end_date'] ?? '';
     
     function closeJournalModal() {
         document.getElementById('journalDetailsModal').classList.remove('open');
+    }
+
+    function printCurrentJournalModal() {
+        if (currentViewingJournalId) {
+            window.open('<?= APP_URL ?>/accounting/print_journal/' + currentViewingJournalId, '_blank');
+        }
     }
 </script>
