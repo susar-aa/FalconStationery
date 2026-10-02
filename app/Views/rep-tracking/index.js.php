@@ -341,17 +341,18 @@
 
     function updateSidebarProgress() {
         const steps = [
-            { id: 1, num: 1, name: 'Route Details', statusKey: 'Active' },
-            { id: 3, num: 2, name: 'Bill Adjustments', statusKey: 'Adjustments' },
-            { id: 4, num: 3, name: 'Loading', statusKey: 'Loading' },
-            { id: 5, num: 4, name: 'Variance Audit', statusKey: 'Variance Adjustment' },
-            { id: 6, num: 5, name: 'Delivery Arrange', statusKey: 'Finalizing' },
-            { id: 8, num: 6, name: 'Delivery Execution', statusKey: 'Finalizing' },
-            { id: 12, num: 7, name: 'Expenses', statusKey: 'Finalizing' },
-            { id: 7, num: 8, name: 'Reconciliation', statusKey: 'Finalizing' },
-            { id: 9, num: 9, name: 'Return Stock', statusKey: 'Finalizing' },
-            { id: 10, num: 10, name: 'Payments', statusKey: 'Finalizing' },
-            { id: 11, num: 11, name: 'Finalize', statusKey: 'Finalizing' }
+            { id: 1, icon: '<i class="ph-bold ph-clipboard-text"></i>', name: 'Route Details', statusKey: 'Active' },
+            { id: 3, icon: '<i class="ph-bold ph-file-text"></i>', name: 'Bill Adjustments', statusKey: 'Adjustments' },
+            { id: 4, icon: '<i class="ph-bold ph-truck"></i>', name: 'Loading', statusKey: 'Loading' },
+            { id: 5, icon: '<i class="ph-bold ph-scales"></i>', name: 'Variance Audit', statusKey: 'Variance Adjustment' },
+            { id: 6, icon: '<i class="ph-bold ph-map-trifold"></i>', name: 'Delivery Arrange', statusKey: 'Finalizing' },
+            { id: 8, icon: '<i class="ph-bold ph-steering-wheel"></i>', name: 'Delivery Execution', statusKey: 'Finalizing' },
+            { id: 12, icon: '<i class="ph-bold ph-receipt"></i>', name: 'Expenses', statusKey: 'Finalizing' },
+            { id: 7, icon: '<i class="ph-bold ph-currency-dollar"></i>', name: 'Reconciliation', statusKey: 'Finalizing' },
+            { id: 9, icon: '<i class="ph-bold ph-package"></i>', name: 'Return Stock', statusKey: 'Finalizing' },
+            { id: 10, icon: '<i class="ph-bold ph-credit-card"></i>', name: 'Payments', statusKey: 'Finalizing' },
+            { id: 13, icon: '<i class="ph-bold ph-arrow-counter-clockwise"></i>', name: 'Market Returns', statusKey: 'Finalizing' },
+            { id: 11, icon: '<i class="ph-bold ph-flag-checkered"></i>', name: 'Finalize', statusKey: 'Finalizing' }
         ];
 
         const statusSequence = ['Active', 'Pending GL', 'Adjustments', 'Loading', 'Variance Adjustment', 'Finalizing', 'Completed', 'Finalized'];
@@ -370,7 +371,7 @@
             
             // Step dot element
             const dot = el.querySelector('.step-dot');
-            dot.innerHTML = step.num; // Default back to step sequence number
+            dot.innerHTML = step.icon; // Default back to step sequence number
 
             // Determine active tab
             if (step.id === currentTabIndex) {
