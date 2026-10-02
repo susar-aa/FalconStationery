@@ -6,7 +6,7 @@
 ?>
     <div class="pane-middle">
         <!-- Header -->
-        <div class="mid-header" id="midHeader" style="display: none !important; visibility: hidden; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--c-surface); border-bottom: 1px solid var(--c-separator);">
+        <div class="mid-header" id="midHeader" style="display: none; padding: 12px 20px; align-items: center; justify-content: space-between; gap: 20px; background: var(--c-surface); border-bottom: 1px solid var(--c-separator);">
             
             <!-- Left Side: Back button + Route Name + Status Badge -->
             <div style="display: flex; align-items: center; gap: 16px; min-width: 0;">
