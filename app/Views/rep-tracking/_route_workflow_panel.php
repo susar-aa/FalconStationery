@@ -6,7 +6,7 @@
 ?>
     <div class="pane-middle">
         <!-- Header -->
-        <div class="mid-header" id="midHeader" style="display: none !important; visibility: hidden; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--c-surface); border-bottom: 1px solid var(--c-separator);">
+        <div class="mid-header" id="midHeader" style="display: none; visibility: hidden; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--c-surface); border-bottom: 1px solid var(--c-separator);">
             
             <!-- Left Side: Back button + Route Name + Status Badge -->
             <div style="display: flex; align-items: center; gap: 16px; min-width: 0;">
@@ -26,7 +26,7 @@
             <div style="display: flex; align-items: center; gap: 15px; font-size: 12px; color: var(--t-secondary); background: var(--c-surface2); padding: 8px 14px; border-radius: var(--r-md); border: 0.5px solid var(--c-separator);">
                 <div>Rep: <strong id="mhRepName" style="color: var(--t-primary);"></strong></div>
                 <div style="width: 1px; height: 12px; background: var(--c-separator);"></div>
-                <div>ODO: <strong id="mhStart"></strong> - <strong id="mhEnd"></strong></div>
+                <div>ODO: <strong id="mhStart"></strong> - <strong id="mhEnd"></strong></div></div>
 
             <!-- Right Side: Stats + Global Action Buttons -->
             <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">

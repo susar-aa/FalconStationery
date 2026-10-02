@@ -553,6 +553,7 @@
         }
 
         document.getElementById('midHeader').style.visibility = 'visible';
+        document.getElementById('midHeader').style.display = 'flex';
         document.getElementById('midEmptyState').style.display = 'none';
         document.getElementById('workspaceLayoutWrapper').style.display = 'flex';
         document.getElementById('btnViewMap').style.display = 'inline-flex';
