@@ -637,32 +637,55 @@
 
     /* Premium Collapsible Workflow Sidebar */
     .workflow-sidebar {
-        width: 58px;
-        min-width: 58px;
+        width: 56px;
+        min-width: 56px;
         background: var(--c-surface);
         border-right: 0.5px solid var(--c-separator);
         display: flex;
         flex-direction: column;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 16px 6px;
+        overflow: hidden !important;
+        padding: 10px 4px;
         flex-shrink: 0;
         transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), padding 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
         z-index: 100;
         position: relative;
+        /* Hide scrollbar completely when collapsed */
+        scrollbar-width: none !important;
+        -ms-overflow-style: none !important;
+    }
+    .workflow-sidebar::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
     }
     .workflow-sidebar:hover {
         width: 260px;
         min-width: 260px;
-        padding: 16px 10px;
+        padding: 12px 10px;
         box-shadow: 6px 0 24px rgba(0, 0, 0, 0.08);
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        /* Show thin custom scrollbar on hover if needed */
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(0,0,0,0.15) transparent;
+    }
+    .workflow-sidebar:hover::-webkit-scrollbar {
+        display: block !important;
+        width: 4px !important;
+    }
+    .workflow-sidebar:hover::-webkit-scrollbar-track {
+        background: transparent !important;
+    }
+    .workflow-sidebar:hover::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.15) !important;
+        border-radius: 4px !important;
     }
     
     .workflow-sidebar-header {
-        padding-bottom: 12px;
+        padding-bottom: 8px;
         border-bottom: 1px solid var(--c-separator);
-        margin-bottom: 14px;
+        margin-bottom: 10px;
         overflow: hidden;
     }
 
@@ -671,14 +694,14 @@
         background: var(--c-fill);
         border: 0.5px solid var(--c-separator);
         color: var(--c-blue);
-        font-size: 13px;
+        font-size: 12.5px;
         font-weight: 700;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: flex-start;
         gap: 10px;
-        padding: 9px 12px;
+        padding: 7px 10px;
         border-radius: var(--r-md);
         transition: background 0.2s, border-color 0.2s;
         white-space: nowrap;
@@ -703,14 +726,14 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 3px;
     }
     .workflow-sidebar-steps::before {
         content: '';
         position: absolute;
-        left: 21px; /* Align with center of 32px step-dot */
-        top: 20px;
-        bottom: 20px;
+        left: 19px; /* Align with center of 30px step-dot (4px padding + 15px) */
+        top: 15px;
+        bottom: 15px;
         width: 1.5px;
         background: var(--c-separator);
         z-index: 0;
@@ -720,8 +743,8 @@
         z-index: 1;
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 6px;
+        gap: 10px;
+        padding: 4px;
         border-radius: var(--r-md);
         cursor: pointer;
         user-select: none;
@@ -739,13 +762,13 @@
     }
     
     .step-dot {
-        width: 32px;
-        height: 32px;
-        border-radius: 9px;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 700;
         flex-shrink: 0;
         background: var(--c-surface);
