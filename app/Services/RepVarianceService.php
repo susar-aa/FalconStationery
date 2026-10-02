@@ -302,9 +302,10 @@ class RepVarianceService {
 
                     $grandTotal = max(0.0, ($subtotal - $disc) + $taxVal);
 
-                    $db->query("UPDATE invoices SET total_amount = :sub, tax_amount = :tax WHERE id = :id");
+                    $db->query("UPDATE invoices SET total_amount = :sub, tax_amount = :tax, grand_total = :grand WHERE id = :id");
                     $db->bind(':sub', $subtotal);
                     $db->bind(':tax', $taxVal);
+                    $db->bind(':grand', $grandTotal);
                     $db->bind(':id', $invId);
                     $db->execute();
 
@@ -680,9 +681,10 @@ class RepVarianceService {
 
                     $grandTotal = max(0.0, ($subtotal - $disc) + $taxVal);
 
-                    $db->query("UPDATE invoices SET total_amount = :sub, tax_amount = :tax WHERE id = :id");
+                    $db->query("UPDATE invoices SET total_amount = :sub, tax_amount = :tax, grand_total = :grand WHERE id = :id");
                     $db->bind(':sub', $subtotal);
                     $db->bind(':tax', $taxVal);
+                    $db->bind(':grand', $grandTotal);
                     $db->bind(':id', $invoice->id);
                     $db->execute();
 

@@ -273,9 +273,10 @@ class DriverInvoice {
         $newGrandTotal = $netSub + $taxAmount;
 
         // Update invoice
-        $this->db->query("UPDATE invoices SET total_amount = :subtotal, tax_amount = :tax WHERE id = :id");
+        $this->db->query("UPDATE invoices SET total_amount = :subtotal, tax_amount = :tax, grand_total = :grand WHERE id = :id");
         $this->db->bind(':subtotal', $subTotal);
         $this->db->bind(':tax', $taxAmount);
+        $this->db->bind(':grand', $newGrandTotal);
         $this->db->bind(':id', $invoiceId);
         $this->db->execute();
 

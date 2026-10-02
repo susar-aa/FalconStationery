@@ -2551,3 +2551,20 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Thu 10/01/2026 13:10:40.73 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Views/accounting/journal.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/accounting/print_journal.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/accounting/print_journal_list.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main f29a87c] Update: app/Controllers/AccountingController.php, app/Views/accounting/journal.php, deploy_log.txt, schema_update.sql, app/Views/accounting/print_journal.php, app/Views/accounting/print_journal_list.php
+ 6 files changed, 665 insertions(+), 12 deletions(-)
+ create mode 100644 app/Views/accounting/print_journal.php
+ create mode 100644 app/Views/accounting/print_journal_list.php
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   95bc7ba..f29a87c  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Sat 10/03/2026  0:21:45.31 
+=================================================== 
+Adding changes... 

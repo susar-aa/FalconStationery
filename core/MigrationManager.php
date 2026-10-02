@@ -569,6 +569,20 @@ class MigrationManager {
                     WHERE grand_total IS NULL
                 ");
             },
+            'add_original_grand_total_to_invoices' => function(PDO $dbh) {
+                $stmt = $dbh->query("SHOW COLUMNS FROM invoices LIKE 'original_grand_total'");
+                if (!$stmt->fetch()) {
+                    $dbh->exec("ALTER TABLE invoices ADD COLUMN original_grand_total DECIMAL(15,2) NULL AFTER grand_total");
+                }
+                $dbh->exec("
+                    UPDATE invoices 
+                    SET original_grand_total = COALESCE(grand_total, ROUND(
+                        total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0),
+                        2
+                    ))
+                    WHERE original_grand_total IS NULL
+                ");
+            },
             'create_sync_exceptions_table' => "
                 CREATE TABLE IF NOT EXISTS sync_exceptions (
                     id INT AUTO_INCREMENT PRIMARY KEY,

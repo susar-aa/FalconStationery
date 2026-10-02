@@ -1036,7 +1036,9 @@ $invoiceBalance = max(0, $thisInvoiceGrandTotal - $invoicePaidAmount);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $rowNum = 1; foreach($data['items'] as $item): ?>
+                        <?php $rowNum = 1; foreach($data['items'] as $item): 
+                            if (floatval($item->quantity) <= 0) continue;
+                        ?>
                         <tr>
                             <td class="center"><?= $rowNum++ ?></td>
                             <td class="item-desc"><?= htmlspecialchars($item->description) ?></td>
@@ -1220,6 +1222,7 @@ $invoiceBalance = max(0, $thisInvoiceGrandTotal - $invoicePaidAmount);
                         $rowNum = 1; 
                         $totalItems = count($data['items']); 
                         foreach($data['items'] as $index => $item): 
+                            if (floatval($item->quantity) <= 0) continue;
                             $isLast = ($index === $totalItems - 1);
                             $bottomBorder = $isLast ? 'border-bottom: 2px solid #000;' : 'border-bottom: 1px solid #eaeaea;';
                         ?>

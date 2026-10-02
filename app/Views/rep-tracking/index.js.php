@@ -682,7 +682,12 @@
             statusBadge.style.borderColor = (status === 'Completed' || status === 'Finalized') ? '#2e7d32' : '#d97706';
         }
 
-        document.getElementById('tab1SalesValue').innerText = 'Rs ' + (d.getAttribute('data-sales') || '0.00');
+        const repSales = d.getAttribute('data-rep-sales') || d.getAttribute('data-sales') || '0.00';
+        const actualSales = d.getAttribute('data-actual-sales') || d.getAttribute('data-sales') || '0.00';
+        document.getElementById('tab1SalesValue').innerText = 'Rs ' + repSales;
+        if (document.getElementById('tab1ActualSalesValue')) {
+            document.getElementById('tab1ActualSalesValue').innerText = 'Rs ' + actualSales;
+        }
         document.getElementById('tab1BillsCount').innerText = d.getAttribute('data-bills') || '0';
 
         document.getElementById('tab1StartTime').innerText = d.getAttribute('data-start-time') || '';

@@ -526,7 +526,9 @@ $invoices = $data['invoices'];
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $rowNum = 1; foreach($items as $item): ?>
+                        <?php $rowNum = 1; foreach($items as $item): 
+                            if (floatval($item->quantity) <= 0) continue;
+                        ?>
                         <tr>
                             <td class="center"><?= $rowNum++ ?></td>
                             <td><?= htmlspecialchars($item->description) ?></td>

@@ -388,33 +388,40 @@
                     </div>
 
                     <!-- ═══ KPI STAT ROW ═══ -->
-                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:14px; margin-bottom:20px;">
-                        <!-- Sales Value -->
-                        <div style="background:linear-gradient(135deg,#0f766e 0%,#14b8a6 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(20,184,166,0.25); position:relative; overflow:hidden;">
+                    <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:12px; margin-bottom:20px;">
+                        <!-- Rep Sales Value -->
+                        <div style="background:linear-gradient(135deg,#0f766e 0%,#14b8a6 100%); border-radius:14px; padding:16px 18px; color:#fff; display:flex; flex-direction:column; gap:4px; box-shadow:0 4px 16px rgba(20,184,166,0.25); position:relative; overflow:hidden;">
                             <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
-                            <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Total Sales</div>
-                            <div id="tab1SalesValue" style="font-size:22px; font-weight:800; font-family:var(--f-mono); letter-spacing:-0.5px;">-</div>
-                            <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-chart-line-up"></i> Route Revenue</div>
+                            <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Rep Sales</div>
+                            <div id="tab1SalesValue" style="font-size:20px; font-weight:800; font-family:var(--f-mono); letter-spacing:-0.5px;">-</div>
+                            <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-user"></i> Rep Original Total</div>
+                        </div>
+                        <!-- Actual Sales Value -->
+                        <div style="background:linear-gradient(135deg,#047857 0%,#10b981 100%); border-radius:14px; padding:16px 18px; color:#fff; display:flex; flex-direction:column; gap:4px; box-shadow:0 4px 16px rgba(16,185,129,0.25); position:relative; overflow:hidden;">
+                            <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
+                            <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Actual Sales</div>
+                            <div id="tab1ActualSalesValue" style="font-size:20px; font-weight:800; font-family:var(--f-mono); letter-spacing:-0.5px;">-</div>
+                            <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-check-circle"></i> Adjusted Value</div>
                         </div>
                         <!-- Bills Count -->
-                        <div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(59,130,246,0.25); position:relative; overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%); border-radius:14px; padding:16px 18px; color:#fff; display:flex; flex-direction:column; gap:4px; box-shadow:0 4px 16px rgba(59,130,246,0.25); position:relative; overflow:hidden;">
                             <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
                             <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Total Bills</div>
-                            <div id="tab1BillsCount" style="font-size:22px; font-weight:800; font-family:var(--f-mono);">-</div>
+                            <div id="tab1BillsCount" style="font-size:20px; font-weight:800; font-family:var(--f-mono);">-</div>
                             <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-receipt"></i> Invoices Issued</div>
                         </div>
                         <!-- Distance -->
-                        <div style="background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(168,85,247,0.25); position:relative; overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#7c3aed 0%,#a855f7 100%); border-radius:14px; padding:16px 18px; color:#fff; display:flex; flex-direction:column; gap:4px; box-shadow:0 4px 16px rgba(168,85,247,0.25); position:relative; overflow:hidden;">
                             <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
                             <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Distance Covered</div>
-                            <div id="tab1Distance" style="font-size:22px; font-weight:800; font-family:var(--f-mono);">-</div>
+                            <div id="tab1Distance" style="font-size:20px; font-weight:800; font-family:var(--f-mono);">-</div>
                             <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-gauge"></i> Odometer Range</div>
                         </div>
                         <!-- Unproductive -->
-                        <div style="background:linear-gradient(135deg,#9a3412 0%,#ea580c 100%); border-radius:14px; padding:18px 20px; color:#fff; display:flex; flex-direction:column; gap:6px; box-shadow:0 4px 16px rgba(234,88,12,0.25); position:relative; overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#9a3412 0%,#ea580c 100%); border-radius:14px; padding:16px 18px; color:#fff; display:flex; flex-direction:column; gap:4px; box-shadow:0 4px 16px rgba(234,88,12,0.25); position:relative; overflow:hidden;">
                             <div style="position:absolute;right:-10px;top:-10px;width:70px;height:70px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
                             <div style="font-size:11px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Unproductive</div>
-                            <div id="tab1UnproductiveCount" style="font-size:22px; font-weight:800; font-family:var(--f-mono);">0</div>
+                            <div id="tab1UnproductiveCount" style="font-size:20px; font-weight:800; font-family:var(--f-mono);">0</div>
                             <div style="font-size:10px; opacity:0.75; display:flex; align-items:center; gap:4px;"><i class="ph ph-x-circle"></i> Failed Visits</div>
                         </div>
                     </div>

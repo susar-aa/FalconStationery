@@ -11,6 +11,8 @@ class RepTracking {
         $this->db->query("
             SELECT r.*, COALESCE(e.first_name, u.username) as first_name, COALESCE(e.last_name, '') as last_name,
                 COALESCE(inv.bill_count, 0) as bill_count,
+                COALESCE(inv.rep_total_sales, inv.total_sales, 0.00) as rep_total_sales,
+                COALESCE(inv.actual_total_sales, inv.total_sales, 0.00) as actual_total_sales,
                 COALESCE(inv.total_sales, 0.00) as total_sales,
                 COALESCE(pc.unfinalized_count, 0) as unfinalized_count,
                 rb.name as binding_name
@@ -21,7 +23,9 @@ class RepTracking {
             LEFT JOIN (
                 SELECT rep_route_id, 
                        COUNT(*) as bill_count,
-                       SUM(COALESCE(grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))) as total_sales
+                       SUM(COALESCE(original_grand_total, grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))) as rep_total_sales,
+                       SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as actual_total_sales,
+                       SUM(COALESCE(original_grand_total, grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))) as total_sales
                 FROM invoices 
                 WHERE status != 'Voided' AND rep_route_id IS NOT NULL
                 GROUP BY rep_route_id
@@ -108,7 +112,7 @@ class RepTracking {
 
         $this->db->query("
             SELECT i.*, c.name as customer_name,
-            COALESCE(i.grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0))) as true_grand_total
+            (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as true_grand_total
             FROM invoices i
             JOIN customers c ON i.customer_id = c.id
             WHERE i.rep_route_id IN ($placeholdersStr)
@@ -132,7 +136,11 @@ class RepTracking {
         $this->db->query("
             SELECT r.*, COALESCE(e.first_name, u.username) as first_name, COALESCE(e.last_name, '') as last_name,
                 (SELECT COUNT(*) FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as bill_count,
-                (SELECT COALESCE(SUM(COALESCE(grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))), 0) 
+                (SELECT COALESCE(SUM(COALESCE(original_grand_total, grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))), 0) 
+                 FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as rep_total_sales,
+                (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) 
+                 FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as actual_total_sales,
+                (SELECT COALESCE(SUM(COALESCE(original_grand_total, grand_total, (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)))), 0) 
                  FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as total_sales
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
