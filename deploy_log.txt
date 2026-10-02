@@ -2686,3 +2686,24 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Sat 10/03/2026  1:41:17.53 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Views/rep-tracking/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/_route_selection_dock.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/_route_selection_filters.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/_route_selection_panel.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/_route_workflow_panel.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main e588cb3] Update: app/Views/layouts/main.php, app/Views/rep-tracking/index.css.php, app/Views/rep-tracking/index.js.php, app/Views/rep-tracking/index.php, deploy_log.txt, app/Views/rep-tracking/_route_selection_dock.php, app/Views/rep-tracking/_route_selection_filters.php, app/Views/rep-tracking/_route_selection_panel.php, app/Views/rep-tracking/_route_workflow_panel.php
+ 9 files changed, 1717 insertions(+), 1838 deletions(-)
+ create mode 100644 app/Views/rep-tracking/_route_selection_dock.php
+ create mode 100644 app/Views/rep-tracking/_route_selection_filters.php
+ create mode 100644 app/Views/rep-tracking/_route_selection_panel.php
+ create mode 100644 app/Views/rep-tracking/_route_workflow_panel.php
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   0969efc..e588cb3  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Sat 10/03/2026  1:48:08.62 
+=================================================== 
+Adding changes... 

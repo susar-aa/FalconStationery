@@ -1319,11 +1319,11 @@ if (!function_exists('hasPermission')) {
                     <div class="mega-menu-col">
                         <div class="mega-menu-header">Operations</div>
                         <?php if (hasPermission('reptracking')): ?>
-                        <a href="<?php echo APP_URL; ?>/RepTracking/index" class="mega-list-item">
-                            <div class="icon-wrapper"><i class="ph ph-map-pin"></i></div>
+                        <a href="<?= APP_URL ?>/RepTracking/index" class="mega-list-item" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(3, 105, 161, 0.12) 100%); border-radius: 10px; border: 1px solid rgba(2, 132, 199, 0.2);">
+                            <div class="icon-wrapper" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; border: none;"><i class="ph-bold ph-compass"></i></div>
                             <div class="mega-list-item-content">
-                                <div class="title">Master Route Control Panel</div>
-                                <div class="desc">Unified route lifecycle & deliveries</div>
+                                <div class="title" style="font-weight: 700; color: #0284c7;">Route Selection</div>
+                                <div class="desc">Browse, select &amp; manage routes</div>
                             </div>
                         </a>
                         <a href="<?php echo APP_URL; ?>/RepTracking/live" class="mega-list-item">
@@ -1919,6 +1919,14 @@ if (!function_exists('hasPermission')) {
 
 
 
+        <!-- Direct Quick Route Selection Action Button -->
+        <?php if (hasPermission('reptracking')): ?>
+        <a href="<?= APP_URL ?>/RepTracking/index" class="nav-route-selection-btn" title="Open Route Selection Panel" style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border-radius: 20px; font-size: 12px; font-weight: 700; text-decoration: none; box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35); transition: all 0.2s ease; margin-left: 8px; flex-shrink: 0;">
+            <i class="ph-bold ph-compass" style="font-size: 15px;"></i>
+            <span>Route Selection</span>
+        </a>
+        <?php endif; ?>
+
         <!-- Page Heading + Menu Button -->
         <div class="nav-page-heading">
             <span class="nav-page-dot"></span>
@@ -1957,7 +1965,7 @@ if (!function_exists('hasPermission')) {
                         <?php if (hasPermission('creditnote')): ?><a href="<?= APP_URL ?>/creditnote" class="fs-link"><i class="ph ph-money"></i> Refunds</a><?php endif; ?>
                         <?php if (hasPermission('dunning')): ?><a href="<?= APP_URL ?>/dunning" class="fs-link"><i class="ph ph-clock"></i> Dunning</a><?php endif; ?>
                         <?php if (hasPermission('discount')): ?><a href="<?= APP_URL ?>/discount" class="fs-link"><i class="ph ph-tag"></i> Discounts</a><?php endif; ?>
-                        <?php if (hasPermission('reptracking')): ?><a href="<?= APP_URL ?>/RepTracking/index" class="fs-link"><i class="ph ph-map-pin"></i> Route Control</a><?php endif; ?>
+                        <?php if (hasPermission('reptracking')): ?><a href="<?= APP_URL ?>/RepTracking/index" class="fs-link" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.25) 0%, rgba(3, 105, 161, 0.25) 100%); border-color: rgba(2, 132, 199, 0.5); color: #38bdf8;"><i class="ph-bold ph-compass"></i> Route Selection</a><?php endif; ?>
                         <?php if (hasPermission('reptracking')): ?><a href="<?= APP_URL ?>/repperformance" class="fs-link"><i class="ph ph-chart-bar"></i> Rep Performance</a><?php endif; ?>
                         <?php if (hasPermission('territory')): ?><a href="<?= APP_URL ?>/territory" class="fs-link"><i class="ph ph-map-trifold"></i> Territory</a><?php endif; ?>
                         <?php if (hasPermission('sales')): ?><a href="<?= APP_URL ?>/sales/deleted_list" class="fs-link text-danger"><i class="ph ph-trash"></i> Deleted Invoices</a><?php endif; ?>
