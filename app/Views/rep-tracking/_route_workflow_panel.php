@@ -6,7 +6,7 @@
 ?>
     <div class="pane-middle">
         <!-- Header -->
-        <div class="mid-header" id="midHeader" style="display: none; padding: 12px 20px; align-items: center; justify-content: space-between; gap: 20px; background: var(--c-surface); border-bottom: 1px solid var(--c-separator);">
+        <div class="mid-header" id="midHeader" style="display: none !important; visibility: hidden; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--c-surface); border-bottom: 1px solid var(--c-separator);">
             
             <!-- Left Side: Back button + Route Name + Status Badge -->
             <div style="display: flex; align-items: center; gap: 16px; min-width: 0;">
@@ -27,7 +27,6 @@
                 <div>Rep: <strong id="mhRepName" style="color: var(--t-primary);"></strong></div>
                 <div style="width: 1px; height: 12px; background: var(--c-separator);"></div>
                 <div>ODO: <strong id="mhStart"></strong> - <strong id="mhEnd"></strong></div>
-            </div>
 
             <!-- Right Side: Stats + Global Action Buttons -->
             <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
@@ -157,11 +156,9 @@
                     </div>
                 </div>
             </div>
-                    
-            </div>
 
             <!-- Right Side: Content Area (previously #workspaceBody) -->
-            <div style="flex:1; overflow-y:auto; position:relative; background:var(--c-bg);" id="workspaceBody">
+            <div style="flex:1; margin-left: 60px; overflow-y:auto; position:relative; background:var(--c-bg); min-width:0;" id="workspaceBody">
                 <!-- Loading Indicator -->
                 <div id="midLoader" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; font-weight:bold; color:var(--c-blue); z-index: 10;">
                     Loading Workspace Information... <i class="fa-solid fa-spinner fa-spin"></i>

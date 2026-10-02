@@ -635,69 +635,69 @@
         box-shadow: var(--shadow-xs);
     }
 
-    /* Premium Hover-Expandable Glassmorphism Workflow Sidebar */
+    /* Premium Workflow Sidebar Styling (Glassmorphism & Collapsible) */
     .workflow-sidebar {
-        width: 64px;
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        z-index: 40;
-        background: rgba(255, 255, 255, 0.45) !important;
+        width: 260px;
+        background: rgba(255, 255, 255, 0.78) !important;
         backdrop-filter: blur(20px) saturate(180%) !important;
         -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-        border-right: 0.5px solid rgba(0, 0, 0, 0.1);
+        border-right: 0.5px solid var(--c-separator);
         display: flex;
         flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 16px 6px;
+        padding: 16px 8px;
         flex-shrink: 0;
-        transition: width 0.26s cubic-bezier(0.25, 1, 0.5, 1), background 0.26s ease, box-shadow 0.26s ease;
-        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
-    }
-
-    .workflow-sidebar:hover,
-    .workflow-sidebar.expanded {
-        width: 250px !important;
-        background: rgba(255, 255, 255, 0.82) !important;
-        backdrop-filter: blur(24px) saturate(190%) !important;
-        -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-        border-right: 0.5px solid rgba(0, 0, 0, 0.12);
-        box-shadow: 12px 0 36px rgba(0, 0, 0, 0.14);
+        transition: width 0.28s cubic-bezier(0.25, 1, 0.5, 1), background 0.28s ease, padding 0.28s ease, border-color 0.28s ease;
+        position: relative;
+        z-index: 15;
     }
 
     @media (prefers-color-scheme: dark) {
         .workflow-sidebar {
-            background: rgba(20, 20, 32, 0.5) !important;
-            border-right-color: rgba(255, 255, 255, 0.1);
-        }
-        .workflow-sidebar:hover,
-        .workflow-sidebar.expanded {
-            background: rgba(20, 20, 32, 0.85) !important;
-            border-right-color: rgba(255, 255, 255, 0.18);
+            background: rgba(26, 26, 38, 0.82) !important;
+            border-right-color: rgba(255, 255, 255, 0.12);
         }
     }
 
-    /* Workspace Body Margin to Prevent Underflow */
-    #workspaceBody {
-        margin-left: 64px !important;
-        flex: 1;
-        min-width: 0;
-        overflow-y: auto;
-        position: relative;
+    /* Collapsed Sidebar Mode (Icons Only & Transparent Background) */
+    .workflow-sidebar.collapsed {
+        width: 60px !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-right-color: transparent !important;
+        box-shadow: none !important;
+        padding: 16px 4px !important;
+    }
+    .workflow-sidebar.collapsed .sidebar-text,
+    .workflow-sidebar.collapsed .step-info {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+    .workflow-sidebar.collapsed .sidebar-step-item {
+        justify-content: center !important;
+        padding: 8px 0 !important;
+        gap: 0 !important;
+    }
+    .workflow-sidebar.collapsed .workflow-sidebar-steps::before {
+        left: 25px !important;
+    }
+    .workflow-sidebar.collapsed .sidebar-back-btn {
+        padding: 9px 0 !important;
     }
     
     .workflow-sidebar-steps {
         position: relative;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
     }
     .workflow-sidebar-steps::before {
         content: '';
         position: absolute;
-        left: 22px; /* Align with center of 34px step-dot */
+        left: 25px; /* Align with center of 26px step-dot */
         top: 20px;
         bottom: 20px;
         width: 1.5px;
@@ -710,63 +710,13 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 6px;
+        padding: 8px 12px;
         border-radius: var(--r-md);
         cursor: pointer;
         user-select: none;
         transition: background var(--dur-fast), transform var(--dur-fast);
         border: 0.5px solid transparent;
         background: transparent;
-        min-height: 42px;
-    }
-    .sidebar-step-item:hover {
-        background: var(--c-fill2);
-    }
-    .sidebar-step-item.active {
-        background: var(--c-blue-light);
-        border-color: var(--c-blue-mid);
-    }
-    
-    .step-info {
-        opacity: 0;
-        visibility: hidden;
-        white-space: nowrap;
-        transition: opacity 0.2s ease, visibility 0.2s ease;
-        display: flex;
-        flex-direction: column;
-    }
-    .workflow-sidebar:hover .step-info,
-    .workflow-sidebar.expanded .step-info {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .step-dot {
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 15px;
-        flex-shrink: 0;
-        background: var(--c-surface);
-        color: var(--t-secondary);
-        transition: all 0.2s ease;
-        border: 0.5px solid var(--c-separator);
-        z-index: 2;
-    }
-    .sidebar-step-item.active .step-dot {
-        background: var(--c-blue);
-        color: #fff;
-        border-color: var(--c-blue);
-        box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
-    }
-    .sidebar-step-item.completed .step-dot {
-        background: var(--c-green);
-        color: #fff;
-        border-color: var(--c-green);
-        box-shadow: 0 2px 8px rgba(52, 199, 89, 0.25);
     }
     .sidebar-step-item:hover {
         background: var(--c-fill);

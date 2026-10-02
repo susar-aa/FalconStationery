@@ -8,7 +8,7 @@ $isHistory = $isHistory ?? ($data['is_history'] ?? false);
 <div class="cmd-bar">
     <div id="auto-evt-div-27" class="cmd-search">
         <i class="ph ph-magnifying-glass"></i>
-        <input type="search" id="floatingSearchInput" name="search_route_query_no_autofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search routes..." readonly onfocus="this.removeAttribute('readonly');" onclick="this.removeAttribute('readonly');">
+        <input type="text" id="floatingSearchInput" name="search_route_query_no_autofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search routes...">
     </div>
     <div class="cmd-divider"></div>
     
