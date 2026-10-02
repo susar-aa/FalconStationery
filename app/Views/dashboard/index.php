@@ -522,9 +522,9 @@
                             <div class="d-qbtn-icon" style="color:#ec4899"><i class="ph ph-package"></i></div>
                             <span>Inventory</span>
                         </a>
-                        <a href="<?= APP_URL ?>/RepTracking/index" class="d-qbtn" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.22) 0%, rgba(3, 105, 161, 0.3) 100%); border: 1.5px solid rgba(2, 132, 199, 0.5); box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);">
-                            <div class="d-qbtn-icon" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; box-shadow: 0 2px 8px rgba(2,132,199,0.4);"><i class="ph-bold ph-compass"></i></div>
-                            <span style="color: #ffffff; font-weight: 700;">Route Selection</span>
+                        <a href="<?= APP_URL ?>/reptracking" class="d-qbtn" target="_blank">
+                            <div class="d-qbtn-icon" style="color:#06b6d4"><i class="ph ph-map-pin"></i></div>
+                            <span>Route Control</span>
                         </a>
                         <a href="<?= APP_URL ?>/customerpayment" class="d-qbtn" target="_blank">
                             <div class="d-qbtn-icon" style="color:#14b8a6"><i class="ph ph-hand-coins"></i></div>
