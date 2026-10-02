@@ -291,18 +291,18 @@
 
     function updateSidebarProgress() {
         const steps = [
-            { id: 1, num: 1, name: 'Route Details', statusKey: 'Active' },
-            { id: 3, num: 2, name: 'Bill Adjustments', statusKey: 'Adjustments' },
-            { id: 4, num: 3, name: 'Loading', statusKey: 'Loading' },
-            { id: 5, num: 4, name: 'Variance Audit', statusKey: 'Variance Adjustment' },
-            { id: 6, num: 5, name: 'Delivery Arrange', statusKey: 'Finalizing' },
-            { id: 8, num: 6, name: 'Delivery Execution', statusKey: 'Finalizing' },
-            { id: 12, num: 7, name: 'Expenses', statusKey: 'Finalizing' },
-            { id: 7, num: 8, name: 'Reconciliation', statusKey: 'Finalizing' },
-            { id: 9, num: 9, name: 'Return Stock', statusKey: 'Finalizing' },
-            { id: 10, num: 10, name: 'Payments', statusKey: 'Finalizing' },
-            { id: 13, num: 11, name: 'Market Returns', statusKey: 'Finalizing' },
-            { id: 11, num: 12, name: 'Finalize', statusKey: 'Finalizing' }
+            { id: 1, num: 1, name: 'Route Details', statusKey: 'Active', icon: 'ph-bold ph-clipboard-text' },
+            { id: 3, num: 2, name: 'Bill Adjustments', statusKey: 'Adjustments', icon: 'ph-bold ph-sliders-horizontal' },
+            { id: 4, num: 3, name: 'Loading Checklist', statusKey: 'Loading', icon: 'ph-bold ph-package' },
+            { id: 5, num: 4, name: 'Variance Audit', statusKey: 'Variance Adjustment', icon: 'ph-bold ph-scales' },
+            { id: 6, num: 5, name: 'Delivery Arrange', statusKey: 'Finalizing', icon: 'ph-bold ph-truck' },
+            { id: 8, num: 6, name: 'Delivery Execution', statusKey: 'Finalizing', icon: 'ph-bold ph-steering-wheel' },
+            { id: 12, num: 7, name: 'Expenses', statusKey: 'Finalizing', icon: 'ph-bold ph-wallet' },
+            { id: 7, num: 8, name: 'Reconciliation', statusKey: 'Finalizing', icon: 'ph-bold ph-calculator' },
+            { id: 9, num: 9, name: 'Return Stock', statusKey: 'Finalizing', icon: 'ph-bold ph-arrow-counter-clockwise' },
+            { id: 10, num: 10, name: 'Payments', statusKey: 'Finalizing', icon: 'ph-bold ph-bank' },
+            { id: 13, num: 11, name: 'Market Returns', statusKey: 'Finalizing', icon: 'ph-bold ph-storefront' },
+            { id: 11, num: 12, name: 'Finalize', statusKey: 'Finalizing', icon: 'ph-bold ph-flag-checkered' }
         ];
 
         const statusSequence = ['Active', 'Pending GL', 'Adjustments', 'Loading', 'Variance Adjustment', 'Finalizing', 'Completed', 'Finalized'];
@@ -321,7 +321,6 @@
             
             // Step dot element
             const dot = el.querySelector('.step-dot');
-            dot.innerHTML = step.num; // Default back to step sequence number
 
             // Determine active tab
             if (step.id === currentTabIndex) {
@@ -402,7 +401,7 @@
                     if (hasChks && allCollectionsApproved) {
                         isStepCompleted = true;
                     }
-                } else if (step.id === 12 || step.id === 13) {
+                } else if (step.id === 12) {
                     isStepCompleted = true;
                 } else if (step.id === 11) {
                     if (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized') {
@@ -413,9 +412,10 @@
 
             if (isStepCompleted) {
                 el.classList.add('completed');
-                dot.innerHTML = '<i class="fa-solid fa-check"></i>';
+                dot.innerHTML = `<i class="${step.icon}"></i><span class="step-check-badge"><i class="ph-bold ph-check"></i></span>`;
             } else {
                 el.classList.add('pending');
+                dot.innerHTML = `<i class="${step.icon}"></i>`;
             }
         });
     }
@@ -531,12 +531,7 @@
 
         updateWizardProgress(status);
 
-        if (document.getElementById('workflowBubbleBar')) {
-            document.getElementById('workflowBubbleBar').style.display = 'flex';
-        }
-        if (document.getElementById('routeWorkspaceTabs')) {
-            document.getElementById('routeWorkspaceTabs').style.display = 'flex';
-        }
+        document.getElementById('routeWorkspaceTabs').style.display = 'flex';
         document.getElementById('stageContentWrapper').style.display = 'block';
 
         // Toggle completed archive banner
@@ -588,29 +583,6 @@
         // Transition views
         document.body.classList.add('workspace-showing');
         document.querySelector('.app-workspace').classList.add('workspace-active');
-    }
-
-    function goBackToRoutes() {
-        currentRouteId = null;
-        document.body.classList.remove('workspace-showing');
-        const workspace = document.querySelector('.app-workspace');
-        if (workspace) workspace.classList.remove('workspace-active');
-        
-        const bubbleBar = document.getElementById('workflowBubbleBar');
-        if (bubbleBar) bubbleBar.style.display = 'none';
-        
-        const wrapper = document.getElementById('workspaceLayoutWrapper');
-        if (wrapper) wrapper.style.display = 'none';
-        
-        const midHeader = document.getElementById('midHeader');
-        if (midHeader) {
-            midHeader.style.visibility = 'hidden';
-            midHeader.style.display = 'none';
-        }
-        const midEmptyState = document.getElementById('midEmptyState');
-        if (midEmptyState) midEmptyState.style.display = 'flex';
-        
-        document.querySelectorAll('.route-item').forEach(i => i.classList.remove('active'));
     }
 
     function switchRouteTab(tabIndex) {
@@ -5916,7 +5888,5 @@ window.buildAccountOptions = buildAccountOptions;
     window.openMoveInvoiceModal = openMoveInvoiceModal;
     window.closeMoveInvoiceModal = closeMoveInvoiceModal;
     window.submitMoveSalesOrder = submitMoveSalesOrder;
-    window.goBackToRoutes = goBackToRoutes;
-    window.switchRouteTab = switchRouteTab;
 })();
 </script>
