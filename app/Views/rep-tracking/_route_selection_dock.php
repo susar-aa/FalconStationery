@@ -3,6 +3,7 @@
  * Route Selection Panel - Floating Command Dock
  * Search Input, Route History/Active Routes toggle, Create Route, Binding Panel, Refresh
  */
+$isHistory = $isHistory ?? ($data['is_history'] ?? false);
 ?>
 <div class="cmd-bar">
     <div id="auto-evt-div-27" class="cmd-search">

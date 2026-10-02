@@ -5,8 +5,13 @@
  * 1. Route Selection Panel (_route_selection_filters.php, _route_selection_panel.php, _route_selection_dock.php)
  * 2. Route Workflow Panel (_route_workflow_panel.php)
  */
+$isHistory = $data['is_history'] ?? false;
 include __DIR__ . '/index.css.php';
 ?>
+
+<!-- Leaflet Map Library (Required for Route Tracking & Customer Locations) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <div class="header-actions" style="margin-bottom: 15px; display: flex; justify-content: <?= $isHistory ? 'flex-start' : 'flex-end' ?>; align-items: center; flex-wrap: wrap; gap: 10px;">
     <?php if ($isHistory): ?>
