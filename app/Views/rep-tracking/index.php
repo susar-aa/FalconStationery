@@ -230,12 +230,6 @@
         <div id="workspaceLayoutWrapper" style="display: none; flex: 1; flex-direction: row; min-height: 0; width: 100%;">
             <!-- Left Side: Workflow Sidebar (Collapsible) -->
             <div class="workflow-sidebar" id="workflowSidebar">
-                <div class="workflow-sidebar-header">
-                    <button id="auto-evt-button-14" type="button" class="workflow-sidebar-back-btn">
-                        <i class="ph ph-arrow-left" style="font-weight: bold; flex-shrink: 0;"></i>
-                        <span class="sidebar-btn-text">Back to Route List</span>
-                    </button>
-                </div>
                 <div class="workflow-sidebar-steps">
                     <div class="sidebar-step-item active" id="sb-step-1" title="1. Route Details">
                         <div class="step-dot"><i class="ph-bold ph-clipboard-text"></i></div>

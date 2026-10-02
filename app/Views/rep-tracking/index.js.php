@@ -5184,6 +5184,13 @@
         document.getElementById('auto-evt-button-1')?.addEventListener('mouseover', function(event) { this.style.background='var(--c-fill)'; this.style.color='var(--t-primary)';; });
         document.getElementById('auto-evt-button-1')?.addEventListener('mouseout', function(event) { this.style.background='var(--c-surface2)'; this.style.color='var(--t-secondary)';; });
         document.getElementById('auto-evt-button-2')?.addEventListener('click', (event) => { goBackToRoutes(); });
+        document.querySelector('.nav-back-btn')?.addEventListener('click', (event) => {
+            if (document.body.classList.contains('workspace-showing')) {
+                event.preventDefault();
+                event.stopPropagation();
+                goBackToRoutes();
+            }
+        });
         document.getElementById('auto-evt-button-3')?.addEventListener('click', (event) => { openRouteSwitcherModal(); });
         document.getElementById('btnViewMap')?.addEventListener('click', (event) => { openMapModal(); });
         document.getElementById('auto-evt-button-4')?.addEventListener('click', function(event) { switchRouteTab(1, this); });
