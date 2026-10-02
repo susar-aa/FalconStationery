@@ -148,20 +148,40 @@
         const routeId = urlParams.get('route_id');
         const page = urlParams.get('page') || 1;
         
-        if (urlParams.get('search')) {
-            document.getElementById('floatingSearchInput').value = urlParams.get('search');
+        const searchVal = urlParams.get('search');
+        const searchInput = document.getElementById('floatingSearchInput');
+        if (searchInput) {
+            searchInput.value = searchVal ? searchVal : '';
         }
-        if (urlParams.get('rep')) {
-            document.getElementById('filterRepSelect').value = urlParams.get('rep');
+
+        const repVal = urlParams.get('rep');
+        const repSelect = document.getElementById('filterRepSelect');
+        if (repSelect) {
+            repSelect.value = repVal ? repVal : '';
         }
-        if (urlParams.get('route')) {
-            document.getElementById('filterRouteSelect').value = urlParams.get('route');
+
+        const routeVal = urlParams.get('route');
+        const routeSelect = document.getElementById('filterRouteSelect');
+        if (routeSelect) {
+            routeSelect.value = routeVal ? routeVal : '';
         }
-        if (urlParams.get('date')) {
-            document.getElementById('filterDateInput').value = urlParams.get('date');
+
+        const dateVal = urlParams.get('date');
+        const dateInput = document.getElementById('filterDateInput');
+        if (dateInput) {
+            dateInput.value = dateVal ? dateVal : '';
         }
-        if (urlParams.get('territory')) {
-            document.getElementById('filterTerritorySelect').value = urlParams.get('territory');
+
+        const territoryVal = urlParams.get('territory');
+        const territorySelect = document.getElementById('filterTerritorySelect');
+        if (territorySelect) {
+            territorySelect.value = territoryVal ? territoryVal : '';
+        }
+
+        // Failsafe: Purge browser credential autofill on load
+        if (!searchVal && searchInput) {
+            setTimeout(() => { if (!new URLSearchParams(window.location.search).get('search')) searchInput.value = ''; }, 50);
+            setTimeout(() => { if (!new URLSearchParams(window.location.search).get('search')) searchInput.value = ''; }, 300);
         }
 
         fetchRoutesList(page);
