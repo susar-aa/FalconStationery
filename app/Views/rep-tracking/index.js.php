@@ -463,7 +463,6 @@
 
             if (isStepCompleted) {
                 el.classList.add('completed');
-                dot.innerHTML = '<i class="fa-solid fa-check"></i>';
             } else {
                 el.classList.add('pending');
             }

@@ -742,9 +742,10 @@
         box-shadow: 0 0 0 3.5px rgba(0, 122, 255, 0.18);
     }
     .sidebar-step-item.completed .step-dot {
-        background: var(--c-green-light);
-        color: var(--c-green);
-        border-color: var(--c-green);
+        background: #dcfce7;
+        color: #15803d;
+        border: 1.5px solid #16a34a;
+        font-size: 14px;
     }
 
     .step-info {
@@ -796,9 +797,10 @@
         box-shadow: 0 0 0 3.5px rgba(0, 122, 255, 0.15);
     }
     .sidebar-step-item.completed .step-dot {
-        background: var(--c-green-light);
-        color: var(--c-green);
-        border-color: var(--c-green);
+        background: #dcfce7;
+        color: #15803d;
+        border: 1.5px solid #16a34a;
+        font-size: 14px;
     }
     .sidebar-step-item.locked .step-dot {
         background: var(--c-surface);
