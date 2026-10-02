@@ -5,10 +5,14 @@
  */
 $isHistory = $isHistory ?? ($data['is_history'] ?? false);
 ?>
+<!-- Dummy hidden inputs to absorb browser autofill -->
+<input type="text" name="username_autofill_honeypot" style="display:none !important; position:absolute; opacity:0; pointer-events:none;" tabIndex="-1" autocomplete="username">
+<input type="password" name="password_autofill_honeypot" style="display:none !important; position:absolute; opacity:0; pointer-events:none;" tabIndex="-1" autocomplete="current-password">
+
 <div class="cmd-bar">
     <div id="auto-evt-div-27" class="cmd-search">
         <i class="ph ph-magnifying-glass"></i>
-        <input type="text" id="floatingSearchInput" name="search_route_query_no_autofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search routes...">
+        <input type="search" id="floatingSearchInput" name="search_route_query_no_autofill" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search routes...">
     </div>
     <div class="cmd-divider"></div>
     

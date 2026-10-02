@@ -70,12 +70,19 @@
     }
     initMapIcons();
 
+    const activeUsername = <?php echo json_encode($_SESSION['username'] ?? ''); ?>;
+
     let isFetchingRoutes = false;
     function fetchRoutesList(pageNumber = 1) {
         if (isFetchingRoutes) return;
         isFetchingRoutes = true;
 
-        const query = document.getElementById('floatingSearchInput').value.trim();
+        let query = document.getElementById('floatingSearchInput').value.trim();
+        if (query && (query.toLowerCase() === 'susar.aa' || (activeUsername && query.toLowerCase() === activeUsername.toLowerCase()))) {
+            document.getElementById('floatingSearchInput').value = '';
+            query = '';
+        }
+
         const selectedRep = document.getElementById('filterRepSelect').value;
         const selectedRoute = document.getElementById('filterRouteSelect').value;
         const selectedDate = document.getElementById('filterDateInput').value;
@@ -179,10 +186,19 @@
         }
 
         // Failsafe: Purge browser credential autofill on load
-        if (!searchVal && searchInput) {
-            setTimeout(() => { if (!new URLSearchParams(window.location.search).get('search')) searchInput.value = ''; }, 50);
-            setTimeout(() => { if (!new URLSearchParams(window.location.search).get('search')) searchInput.value = ''; }, 300);
-        }
+        const purgeAutofill = () => {
+            const input = document.getElementById('floatingSearchInput');
+            if (input && !new URLSearchParams(window.location.search).get('search')) {
+                const val = input.value.trim().toLowerCase();
+                if (val === 'susar.aa' || (activeUsername && val === activeUsername.toLowerCase())) {
+                    input.value = '';
+                }
+            }
+        };
+        purgeAutofill();
+        setTimeout(purgeAutofill, 50);
+        setTimeout(purgeAutofill, 200);
+        setTimeout(purgeAutofill, 600);
 
         fetchRoutesList(page);
     });
