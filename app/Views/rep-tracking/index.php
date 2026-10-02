@@ -210,118 +210,65 @@
             </div>
         </div>
 
-        <!-- Route Workspace Tabs -->
-        <div class="scroll-tabs" id="routeWorkspaceTabs" style="display: none; border-bottom: 2px solid #cbd5e1; margin-bottom: 0;">
-            <button id="auto-evt-button-4" class="scroll-tab-btn active" ><i class="ph ph-clipboard-text"></i> 1. Route Details</button>
-            <button id="auto-evt-button-6" class="scroll-tab-btn" ><i class="ph ph-gear"></i> 2. Bill Adjustments</button>
-            <button id="auto-evt-button-7" class="scroll-tab-btn" ><i class="ph ph-truck"></i> 3. Loading</button>
-            <button id="auto-evt-button-8" class="scroll-tab-btn" ><i class="ph ph-scales"></i> 4. Variance Audit</button>
-            <button id="auto-evt-button-9" class="scroll-tab-btn" ><i class="ph ph-map-trifold"></i> 5. Delivery Arrangement</button>
-            <button id="auto-evt-button-11" class="scroll-tab-btn" ><i class="ph ph-steering-wheel"></i> 6. Delivery</button>
-            <button id="btnTabExpenses" class="scroll-tab-btn" ><i class="ph ph-receipt"></i> 7. Expenses</button>
-            <button id="auto-evt-button-10" class="scroll-tab-btn" ><i class="ph ph-currency-dollar"></i> 8. Reconciliation</button>
-            <button id="auto-evt-button-12" class="scroll-tab-btn" ><i class="ph ph-package"></i> 9. Return Stock Verification</button>
-            <button id="auto-evt-button-13" class="scroll-tab-btn" ><i class="ph ph-briefcase"></i> 10. Payments</button>
-            <button id="btnTabMarketReturns" class="scroll-tab-btn" ><i class="ph ph-arrow-counter-clockwise"></i> 11. Market Returns</button>
-            <button id="btnTabFinalize" class="scroll-tab-btn" ><i class="ph ph-flag-checkered"></i> 12. Finalize</button>
-        </div>
-
-        <!-- Workspace Layout Container (Sidebar + Content Body) -->
-        <div id="workspaceLayoutWrapper" style="display: none; flex: 1; flex-direction: row; min-height: 0; width: 100%;">
-            <!-- Left Side: Workflow Sidebar -->
-            <div class="workflow-sidebar" id="workflowSidebar">
-                <div style="padding: 0 8px 16px 8px; border-bottom: 1.5px solid var(--c-separator); margin-bottom: 16px;">
-                    <button id="auto-evt-button-14" type="button"  style="width: 100%; background: var(--c-fill); border: 0.5px solid var(--c-separator); color: var(--c-blue); font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: var(--r-md); transition: 0.2s;">
-                        <i class="ph ph-arrow-left" style="font-weight: bold;"></i> Back to Route List
-                    </button>
+        <!-- Top Workflow Bubble Bar -->
+        <div class="workflow-bubble-bar-container" id="workflowBubbleBar" style="display: none;">
+            <button type="button" class="bubble-back-btn" id="btnBackToRouteListTop" onclick="goBackToRoutes()" title="Back to Route List">
+                <i class="ph-bold ph-arrow-left"></i>
+            </button>
+            <div class="bubble-steps-wrapper">
+                <div class="bubble-step-item active" id="sb-step-1" onclick="switchRouteTab(1)">
+                    <span class="step-dot">1</span>
+                    <span class="step-title">Route Details</span>
                 </div>
-                <div class="workflow-sidebar-steps">
-                    <div class="sidebar-step-item active" id="sb-step-1" >
-                        <div class="step-dot">1</div>
-                        <div class="step-info">
-                            <span class="step-title">Route Details</span>
-                            <span class="step-desc">Representative & Odo</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-3" >
-                        <div class="step-dot">2</div>
-                        <div class="step-info">
-                            <span class="step-title">Bill Adjustments</span>
-                            <span class="step-desc">Attach/detach SOs</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-4" >
-                        <div class="step-dot">3</div>
-                        <div class="step-info">
-                            <span class="step-title">Loading Checklist</span>
-                            <span class="step-desc">Verify loaded stock</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-5" >
-                        <div class="step-dot">4</div>
-                        <div class="step-info">
-                            <span class="step-title">Variance Audit</span>
-                            <span class="step-desc">Confirm product variances</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-6" >
-                        <div class="step-dot">5</div>
-                        <div class="step-info">
-                            <span class="step-title">Delivery Arrange</span>
-                            <span class="step-desc">Assign driver & vehicle</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-8" >
-                        <div class="step-dot">6</div>
-                        <div class="step-info">
-                            <span class="step-title">Delivery Execution</span>
-                            <span class="step-desc">Track live status</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-12" >
-                        <div class="step-dot">7</div>
-                        <div class="step-info">
-                            <span class="step-title">Expenses</span>
-                            <span class="step-desc">Record route expenses</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-7" >
-                        <div class="step-dot">8</div>
-                        <div class="step-info">
-                            <span class="step-title">Reconciliation</span>
-                            <span class="step-desc">Discrepancies & cash</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-9" >
-                        <div class="step-dot">9</div>
-                        <div class="step-info">
-                            <span class="step-title">Return Stock</span>
-                            <span class="step-desc">Verify returned items</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-10" >
-                        <div class="step-dot">10</div>
-                        <div class="step-info">
-                            <span class="step-title">Payments</span>
-                            <span class="step-desc">Verify & approve payments</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-13" >
-                        <div class="step-dot">11</div>
-                        <div class="step-info">
-                            <span class="step-title">Market Returns</span>
-                            <span class="step-desc">Representative returns</span>
-                        </div>
-                    </div>
-                    <div class="sidebar-step-item" id="sb-step-11" >
-                        <div class="step-dot">12</div>
-                        <div class="step-info">
-                            <span class="step-title">Finalize</span>
-                            <span class="step-desc">Settle & Close Route</span>
-                        </div>
-                    </div>
+                <div class="bubble-step-item" id="sb-step-3" onclick="switchRouteTab(3)">
+                    <span class="step-dot">2</span>
+                    <span class="step-title">Bill Adjustments</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-4" onclick="switchRouteTab(4)">
+                    <span class="step-dot">3</span>
+                    <span class="step-title">Loading Checklist</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-5" onclick="switchRouteTab(5)">
+                    <span class="step-dot">4</span>
+                    <span class="step-title">Variance Audit</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-6" onclick="switchRouteTab(6)">
+                    <span class="step-dot">5</span>
+                    <span class="step-title">Delivery Arrange</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-8" onclick="switchRouteTab(8)">
+                    <span class="step-dot">6</span>
+                    <span class="step-title">Delivery Execution</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-12" onclick="switchRouteTab(12)">
+                    <span class="step-dot">7</span>
+                    <span class="step-title">Expenses</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-7" onclick="switchRouteTab(7)">
+                    <span class="step-dot">8</span>
+                    <span class="step-title">Reconciliation</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-9" onclick="switchRouteTab(9)">
+                    <span class="step-dot">9</span>
+                    <span class="step-title">Return Stock</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-10" onclick="switchRouteTab(10)">
+                    <span class="step-dot">10</span>
+                    <span class="step-title">Payments</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-13" onclick="switchRouteTab(13)">
+                    <span class="step-dot">11</span>
+                    <span class="step-title">Market Returns</span>
+                </div>
+                <div class="bubble-step-item" id="sb-step-11" onclick="switchRouteTab(11)">
+                    <span class="step-dot">12</span>
+                    <span class="step-title">Finalize</span>
                 </div>
             </div>
+        </div>
+
+        <!-- Workspace Layout Container (Content Body) -->
+        <div id="workspaceLayoutWrapper" style="display: none; flex: 1; flex-direction: column; min-height: 0; width: 100%;">
 
             <!-- Right Side: Content Area (previously #workspaceBody) -->
             <div style="flex:1; overflow-y:auto; position:relative; background:var(--c-bg);" id="workspaceBody">

@@ -197,6 +197,149 @@
         color: var(--t-primary);
     }
 
+    /* Workflow Top Bubble Bar */
+    .workflow-bubble-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: var(--c-surface);
+        border-bottom: 0.5px solid var(--c-separator);
+        width: 100%;
+        box-shadow: var(--shadow-xs);
+        z-index: 10;
+        flex-shrink: 0;
+    }
+    .bubble-back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--c-surface2);
+        border: 1px solid var(--c-separator);
+        color: var(--t-primary);
+        font-size: 15px;
+        cursor: pointer;
+        transition: all var(--dur-fast);
+        flex-shrink: 0;
+        box-shadow: var(--shadow-xs);
+    }
+    .bubble-back-btn:hover {
+        background: var(--c-fill2);
+        transform: scale(1.06);
+        border-color: var(--t-tertiary);
+    }
+    .bubble-steps-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 8px;
+        flex: 1;
+        width: 100%;
+    }
+    .bubble-step-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: var(--r-pill);
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--t-secondary);
+        background: var(--c-surface2);
+        border: 1px solid var(--c-separator);
+        cursor: pointer;
+        transition: all var(--dur-fast) var(--ease-ios);
+        white-space: nowrap;
+        user-select: none;
+        box-shadow: var(--shadow-xs);
+    }
+    .bubble-step-item:hover {
+        background: var(--c-fill2);
+        color: var(--t-primary);
+        border-color: var(--t-tertiary);
+    }
+    .bubble-step-item.active {
+        background: var(--c-blue-light, #e5f2ff);
+        color: var(--c-blue, #007aff);
+        border-color: var(--c-blue-mid, #b3d6ff);
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(0, 122, 255, 0.15);
+    }
+    .bubble-step-item.completed {
+        background: var(--c-green-light, #e6f9ec);
+        color: #15803d;
+        border-color: #bbf7d0;
+    }
+    .bubble-step-item.completed.active {
+        background: var(--c-blue-light, #e5f2ff);
+        color: var(--c-blue, #007aff);
+        border-color: var(--c-blue-mid, #b3d6ff);
+    }
+    .bubble-step-item.pending {
+        opacity: 0.7;
+    }
+    .step-dot {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 10.5px;
+        font-weight: 700;
+        background: var(--c-fill2);
+        color: var(--t-secondary);
+        flex-shrink: 0;
+    }
+    .bubble-step-item.active .step-dot {
+        background: var(--c-blue, #007aff);
+        color: #ffffff;
+    }
+    .bubble-step-item.completed .step-dot {
+        background: var(--c-green, #34c759);
+        color: #ffffff;
+    }
+
+    /* Responsive scaling for top workflow bubble buttons to ensure no scrollbar */
+    @media (max-width: 1400px) {
+        .bubble-step-item {
+            padding: 5px 10px;
+            font-size: 11.5px;
+            gap: 5px;
+        }
+        .step-dot {
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+        }
+        .bubble-back-btn {
+            width: 30px;
+            height: 30px;
+            font-size: 13px;
+        }
+    }
+    @media (max-width: 1100px) {
+        .bubble-step-item {
+            padding: 4px 8px;
+            font-size: 11px;
+            gap: 4px;
+        }
+        .step-dot {
+            width: 15px;
+            height: 15px;
+            font-size: 9.5px;
+        }
+    }
+    @media (max-width: 800px) {
+        .bubble-step-item {
+            padding: 3px 6px;
+            font-size: 10px;
+        }
+    }
+
     /* Left Pane: Route List */
     .pane-left {
         width: 360px;

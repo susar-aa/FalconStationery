@@ -2568,3 +2568,21 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Sat 10/03/2026  0:21:45.31 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/RepTracking.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Services/RepVarianceService.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/_route_list_items.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/print_route_invoices.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/sales/invoice_view.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'core/MigrationManager.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main a486ebf] Update: app/Models/DriverInvoice.php, app/Models/Invoice.php, app/Models/RepTracking.php, app/Services/RepVarianceService.php, app/Views/rep-tracking/_route_list_items.php, app/Views/rep-tracking/index.js.php, app/Views/rep-tracking/index.php, app/Views/rep-tracking/print_route_invoices.php, app/Views/sales/invoice_view.php, core/MigrationManager.php, deploy_log.txt
+ 11 files changed, 86 insertions(+), 24 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   f29a87c..a486ebf  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Sat 10/03/2026  0:52:48.22 
+=================================================== 
+Adding changes... 

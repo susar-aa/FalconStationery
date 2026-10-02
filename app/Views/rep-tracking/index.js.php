@@ -301,7 +301,8 @@
             { id: 7, num: 8, name: 'Reconciliation', statusKey: 'Finalizing' },
             { id: 9, num: 9, name: 'Return Stock', statusKey: 'Finalizing' },
             { id: 10, num: 10, name: 'Payments', statusKey: 'Finalizing' },
-            { id: 11, num: 11, name: 'Finalize', statusKey: 'Finalizing' }
+            { id: 13, num: 11, name: 'Market Returns', statusKey: 'Finalizing' },
+            { id: 11, num: 12, name: 'Finalize', statusKey: 'Finalizing' }
         ];
 
         const statusSequence = ['Active', 'Pending GL', 'Adjustments', 'Loading', 'Variance Adjustment', 'Finalizing', 'Completed', 'Finalized'];
@@ -401,7 +402,7 @@
                     if (hasChks && allCollectionsApproved) {
                         isStepCompleted = true;
                     }
-                } else if (step.id === 12) {
+                } else if (step.id === 12 || step.id === 13) {
                     isStepCompleted = true;
                 } else if (step.id === 11) {
                     if (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized') {
@@ -530,7 +531,12 @@
 
         updateWizardProgress(status);
 
-        document.getElementById('routeWorkspaceTabs').style.display = 'flex';
+        if (document.getElementById('workflowBubbleBar')) {
+            document.getElementById('workflowBubbleBar').style.display = 'flex';
+        }
+        if (document.getElementById('routeWorkspaceTabs')) {
+            document.getElementById('routeWorkspaceTabs').style.display = 'flex';
+        }
         document.getElementById('stageContentWrapper').style.display = 'block';
 
         // Toggle completed archive banner
@@ -582,6 +588,29 @@
         // Transition views
         document.body.classList.add('workspace-showing');
         document.querySelector('.app-workspace').classList.add('workspace-active');
+    }
+
+    function goBackToRoutes() {
+        currentRouteId = null;
+        document.body.classList.remove('workspace-showing');
+        const workspace = document.querySelector('.app-workspace');
+        if (workspace) workspace.classList.remove('workspace-active');
+        
+        const bubbleBar = document.getElementById('workflowBubbleBar');
+        if (bubbleBar) bubbleBar.style.display = 'none';
+        
+        const wrapper = document.getElementById('workspaceLayoutWrapper');
+        if (wrapper) wrapper.style.display = 'none';
+        
+        const midHeader = document.getElementById('midHeader');
+        if (midHeader) {
+            midHeader.style.visibility = 'hidden';
+            midHeader.style.display = 'none';
+        }
+        const midEmptyState = document.getElementById('midEmptyState');
+        if (midEmptyState) midEmptyState.style.display = 'flex';
+        
+        document.querySelectorAll('.route-item').forEach(i => i.classList.remove('active'));
     }
 
     function switchRouteTab(tabIndex) {
@@ -5887,5 +5916,7 @@ window.buildAccountOptions = buildAccountOptions;
     window.openMoveInvoiceModal = openMoveInvoiceModal;
     window.closeMoveInvoiceModal = closeMoveInvoiceModal;
     window.submitMoveSalesOrder = submitMoveSalesOrder;
+    window.goBackToRoutes = goBackToRoutes;
+    window.switchRouteTab = switchRouteTab;
 })();
 </script>
