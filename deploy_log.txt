@@ -2719,3 +2719,21 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Sat 10/03/2026  1:53:57.56 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app_errors.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scratch/test_render.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scratch/test_render2.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scratch/test_rep_tracking.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 51ed909] Update: app/Views/dashboard/index.php, app/Views/layouts/main.php, app_errors.log, deploy_log.txt, scratch/test_render.php, scratch/test_render2.php, scratch/test_rep_tracking.php
+ 7 files changed, 2369 insertions(+), 35 deletions(-)
+ create mode 100644 scratch/test_render2.php
+ create mode 100644 scratch/test_rep_tracking.php
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   701e8ea..51ed909  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Sat 10/03/2026  1:54:13.88 
+=================================================== 
+Adding changes... 
