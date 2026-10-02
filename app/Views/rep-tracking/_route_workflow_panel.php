@@ -5,64 +5,21 @@
  */
 ?>
     <div class="pane-middle">
-        <!-- Header -->
-        <div class="mid-header" id="midHeader" style="display: none; visibility: hidden; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: var(--c-surface); border-bottom: 1px solid var(--c-separator);">
-            
-            <!-- Left Side: Back button + Route Name + Status Badge -->
-            <div style="display: flex; align-items: center; gap: 16px; min-width: 0;">
-                <button id="auto-evt-button-2" type="button"  style="background: var(--c-fill); border: none; color: var(--c-blue); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: var(--r-sm);">
-                    <i class="ph-bold ph-arrow-left"></i> Back
-                </button>
-                <div style="min-width: 0;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px;">
-                        <span id="mhRouteNumber" style="font-family: var(--f-mono); font-weight: 700; background: var(--c-blue-light); color: var(--c-blue); padding: 2px 6px; border-radius: var(--r-xs); font-size: 11px;">Route #RT-00000</span>
-                        <span id="mhRouteStatusBadge" style="font-size: 10px; font-weight: 700; padding: 1.5px 6px; border-radius: var(--r-pill); background: var(--c-orange-light); color: var(--c-orange); border: 0.5px solid var(--c-orange);">Active</span>
-                    </div>
-                    <h2 style="margin:0; color:var(--t-primary); font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;" id="mhRouteName">Route Name</h2>
-                </div>
-            </div>
-
-            <!-- Middle: Metadata details (Representative & Odometer) -->
-            <div style="display: flex; align-items: center; gap: 15px; font-size: 12px; color: var(--t-secondary); background: var(--c-surface2); padding: 8px 14px; border-radius: var(--r-md); border: 0.5px solid var(--c-separator);">
-                <div>Rep: <strong id="mhRepName" style="color: var(--t-primary);"></strong></div>
-                <div style="width: 1px; height: 12px; background: var(--c-separator);"></div>
-                <div>ODO: <strong id="mhStart"></strong> - <strong id="mhEnd"></strong></div></div>
-
-            <!-- Right Side: Stats + Global Action Buttons -->
-            <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
-                <div class="stat-box" style="padding: 6px 12px; border: 0.5px solid var(--c-separator); border-radius: var(--r-sm); text-align: left; display: flex; flex-direction: column;">
-                    <span style="font-size: 9px; color: var(--t-label); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Sales Value</span>
-                    <strong style="color: var(--c-green); font-size: 14px; font-weight: 700; font-family: var(--f-mono);">Rs <span id="mhSales"></span></strong>
-                </div>
-                <div class="stat-box" style="padding: 6px 12px; border: 0.5px solid var(--c-separator); border-radius: var(--r-sm); text-align: left; display: flex; flex-direction: column;">
-                    <span style="font-size: 9px; color: var(--t-label); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Bills</span>
-                    <strong id="mhBills" style="font-size: 14px; font-weight: 700; font-family: var(--f-mono);"></strong>
-                </div>
-
-                <div style="display: flex; gap: 6px; align-items: center; border-left: 1px solid var(--c-separator); padding-left: 12px;">
-                    <button id="auto-evt-button-3" type="button"  style="padding: 8px 12px; border: 0.5px solid var(--c-blue-mid); background: var(--c-surface); color: var(--c-blue); border-radius: var(--r-sm); font-weight: 600; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs);">
-                        <i class="ph ph-swap"></i> Switch
-                    </button>
-                    <button type="button" id="btnViewMap"  style="padding: 8px 12px; border: none; background: var(--c-orange); color: #fff; border-radius: var(--r-sm); font-weight: 600; cursor: pointer; font-size: 12px; display: none; align-items: center; gap: 4px; box-shadow: var(--shadow-xs);"><i class="ph ph-map-pin"></i> Map</button>
-                    <button type="button" id="btnUnbindRoute" style="padding: 8px 12px; border: none; background: #dc2626; color: #fff; border-radius: var(--r-sm); font-weight: 600; cursor: pointer; font-size: 12px; display: none; align-items: center; gap: 4px; box-shadow: var(--shadow-xs);"><i class="ph ph-link-break"></i> Undo Bind</button>
-                </div>
-            </div>
-        </div>
 
         <!-- Route Workspace Tabs -->
         <div class="scroll-tabs" id="routeWorkspaceTabs" style="display: none; border-bottom: 2px solid #cbd5e1; margin-bottom: 0;">
-            <button id="auto-evt-button-4" class="scroll-tab-btn active" ><i class="ph ph-clipboard-text"></i> 1. Route Details</button>
-            <button id="auto-evt-button-6" class="scroll-tab-btn" ><i class="ph ph-gear"></i> 2. Bill Adjustments</button>
-            <button id="auto-evt-button-7" class="scroll-tab-btn" ><i class="ph ph-truck"></i> 3. Loading</button>
-            <button id="auto-evt-button-8" class="scroll-tab-btn" ><i class="ph ph-scales"></i> 4. Variance Audit</button>
-            <button id="auto-evt-button-9" class="scroll-tab-btn" ><i class="ph ph-map-trifold"></i> 5. Delivery Arrangement</button>
-            <button id="auto-evt-button-11" class="scroll-tab-btn" ><i class="ph ph-steering-wheel"></i> 6. Delivery</button>
-            <button id="btnTabExpenses" class="scroll-tab-btn" ><i class="ph ph-receipt"></i> 7. Expenses</button>
-            <button id="auto-evt-button-10" class="scroll-tab-btn" ><i class="ph ph-currency-dollar"></i> 8. Reconciliation</button>
-            <button id="auto-evt-button-12" class="scroll-tab-btn" ><i class="ph ph-package"></i> 9. Return Stock Verification</button>
-            <button id="auto-evt-button-13" class="scroll-tab-btn" ><i class="ph ph-briefcase"></i> 10. Payments</button>
-            <button id="btnTabMarketReturns" class="scroll-tab-btn" ><i class="ph ph-arrow-counter-clockwise"></i> 11. Market Returns</button>
-            <button id="btnTabFinalize" class="scroll-tab-btn" ><i class="ph ph-flag-checkered"></i> 12. Finalize</button>
+            <button id="auto-evt-button-4" class="scroll-tab-btn active" ><i class="ph ph-clipboard-text"></i> Route Details</button>
+            <button id="auto-evt-button-6" class="scroll-tab-btn" ><i class="ph ph-file-text"></i> Bill Adjustments</button>
+            <button id="auto-evt-button-7" class="scroll-tab-btn" ><i class="ph ph-truck"></i> Loading Checklist</button>
+            <button id="auto-evt-button-8" class="scroll-tab-btn" ><i class="ph ph-scales"></i> Variance Audit</button>
+            <button id="auto-evt-button-9" class="scroll-tab-btn" ><i class="ph ph-map-trifold"></i> Delivery Arrangement</button>
+            <button id="auto-evt-button-11" class="scroll-tab-btn" ><i class="ph ph-steering-wheel"></i> Delivery Execution</button>
+            <button id="btnTabExpenses" class="scroll-tab-btn" ><i class="ph ph-receipt"></i> Expenses</button>
+            <button id="auto-evt-button-10" class="scroll-tab-btn" ><i class="ph ph-currency-dollar"></i> Reconciliation</button>
+            <button id="auto-evt-button-12" class="scroll-tab-btn" ><i class="ph ph-package"></i> Return Stock</button>
+            <button id="auto-evt-button-13" class="scroll-tab-btn" ><i class="ph ph-credit-card"></i> Payments</button>
+            <button id="btnTabMarketReturns" class="scroll-tab-btn" ><i class="ph ph-arrow-counter-clockwise"></i> Market Returns</button>
+            <button id="btnTabFinalize" class="scroll-tab-btn" ><i class="ph ph-flag-checkered"></i> Finalize</button>
         </div>
 
                 <!-- Workspace Layout Container (Sidebar + Content Body) -->
@@ -70,84 +27,84 @@
             <!-- Left Side: Workflow Sidebar (Hover Expandable with Icons) -->
             <div class="workflow-sidebar" id="workflowSidebar">
                 <div class="workflow-sidebar-steps">
-                    <div class="sidebar-step-item active" id="sb-step-1" title="1. Route Details">
+                    <div class="sidebar-step-item active" id="sb-step-1" title="Route Details">
                         <div class="step-dot"><i class="ph-bold ph-clipboard-text"></i></div>
                         <div class="step-info">
                             <span class="step-title">Route Details</span>
                             <span class="step-desc">Representative & Odo</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-3" title="2. Bill Adjustments">
+                    <div class="sidebar-step-item" id="sb-step-3" title="Bill Adjustments">
                         <div class="step-dot"><i class="ph-bold ph-file-text"></i></div>
                         <div class="step-info">
                             <span class="step-title">Bill Adjustments</span>
                             <span class="step-desc">Attach/detach SOs</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-4" title="3. Loading Checklist">
+                    <div class="sidebar-step-item" id="sb-step-4" title="Loading Checklist">
                         <div class="step-dot"><i class="ph-bold ph-truck"></i></div>
                         <div class="step-info">
                             <span class="step-title">Loading Checklist</span>
                             <span class="step-desc">Verify loaded stock</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-5" title="4. Variance Audit">
+                    <div class="sidebar-step-item" id="sb-step-5" title="Variance Audit">
                         <div class="step-dot"><i class="ph-bold ph-scales"></i></div>
                         <div class="step-info">
                             <span class="step-title">Variance Audit</span>
                             <span class="step-desc">Confirm product variances</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-6" title="5. Delivery Arrange">
+                    <div class="sidebar-step-item" id="sb-step-6" title="Delivery Arrangement">
                         <div class="step-dot"><i class="ph-bold ph-map-trifold"></i></div>
                         <div class="step-info">
                             <span class="step-title">Delivery Arrange</span>
                             <span class="step-desc">Assign driver & vehicle</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-8" title="6. Delivery Execution">
+                    <div class="sidebar-step-item" id="sb-step-8" title="Delivery Execution">
                         <div class="step-dot"><i class="ph-bold ph-steering-wheel"></i></div>
                         <div class="step-info">
                             <span class="step-title">Delivery Execution</span>
                             <span class="step-desc">Track live status</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-12" title="7. Expenses">
+                    <div class="sidebar-step-item" id="sb-step-12" title="Expenses">
                         <div class="step-dot"><i class="ph-bold ph-receipt"></i></div>
                         <div class="step-info">
                             <span class="step-title">Expenses</span>
                             <span class="step-desc">Record route expenses</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-7" title="8. Reconciliation">
+                    <div class="sidebar-step-item" id="sb-step-7" title="Reconciliation">
                         <div class="step-dot"><i class="ph-bold ph-currency-dollar"></i></div>
                         <div class="step-info">
                             <span class="step-title">Reconciliation</span>
                             <span class="step-desc">Discrepancies & cash</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-9" title="9. Return Stock">
+                    <div class="sidebar-step-item" id="sb-step-9" title="Return Stock">
                         <div class="step-dot"><i class="ph-bold ph-package"></i></div>
                         <div class="step-info">
                             <span class="step-title">Return Stock</span>
                             <span class="step-desc">Verify returned items</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-10" title="10. Payments">
+                    <div class="sidebar-step-item" id="sb-step-10" title="Payments">
                         <div class="step-dot"><i class="ph-bold ph-credit-card"></i></div>
                         <div class="step-info">
                             <span class="step-title">Payments</span>
                             <span class="step-desc">Verify & approve payments</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-13" title="11. Market Returns">
+                    <div class="sidebar-step-item" id="sb-step-13" title="Market Returns">
                         <div class="step-dot"><i class="ph-bold ph-arrow-counter-clockwise"></i></div>
                         <div class="step-info">
                             <span class="step-title">Market Returns</span>
                             <span class="step-desc">Representative returns</span>
                         </div>
                     </div>
-                    <div class="sidebar-step-item" id="sb-step-11" title="12. Finalize">
+                    <div class="sidebar-step-item" id="sb-step-11" title="Finalize">
                         <div class="step-dot"><i class="ph-bold ph-flag-checkered"></i></div>
                         <div class="step-info">
                             <span class="step-title">Finalize</span>

@@ -505,15 +505,15 @@
                 });
         }
 
-        document.getElementById('mhRouteName').innerText = routeName;
-        document.getElementById('mhRepName').innerText = repName;
-        document.getElementById('mhStart').innerText = d.getAttribute('data-start');
-        document.getElementById('mhEnd').innerText = d.getAttribute('data-end');
-        document.getElementById('mhSales').innerText = d.getAttribute('data-sales');
-        document.getElementById('mhBills').innerText = d.getAttribute('data-bills');
+        if (document.getElementById('mhRouteName')) document.getElementById('mhRouteName').innerText = routeName;
+        if (document.getElementById('mhRepName')) document.getElementById('mhRepName').innerText = repName;
+        if (document.getElementById('mhStart')) document.getElementById('mhStart').innerText = d.getAttribute('data-start');
+        if (document.getElementById('mhEnd')) document.getElementById('mhEnd').innerText = d.getAttribute('data-end');
+        if (document.getElementById('mhSales')) document.getElementById('mhSales').innerText = d.getAttribute('data-sales');
+        if (document.getElementById('mhBills')) document.getElementById('mhBills').innerText = d.getAttribute('data-bills');
 
         const formattedRouteNo = '#RT-' + String(routeId).padStart(5, '0');
-        document.getElementById('mhRouteNumber').innerText = 'Route ' + formattedRouteNo;
+        if (document.getElementById('mhRouteNumber')) document.getElementById('mhRouteNumber').innerText = 'Route ' + formattedRouteNo;
         
         const statusBadge = document.getElementById('mhRouteStatusBadge');
         if (statusBadge) {
@@ -552,11 +552,14 @@
                 });
         }
 
-        document.getElementById('midHeader').style.visibility = 'visible';
-        document.getElementById('midHeader').style.display = 'flex';
+        const midHeaderEl = document.getElementById('midHeader');
+        if (midHeaderEl) {
+            midHeaderEl.style.visibility = 'visible';
+            midHeaderEl.style.display = 'flex';
+        }
         document.getElementById('midEmptyState').style.display = 'none';
         document.getElementById('workspaceLayoutWrapper').style.display = 'flex';
-        document.getElementById('btnViewMap').style.display = 'inline-flex';
+        if (document.getElementById('btnViewMap')) document.getElementById('btnViewMap').style.display = 'inline-flex';
 
         const btnUnbind = document.getElementById('btnUnbindRoute');
         const btnUnbindTab1 = document.getElementById('btnUnbindRouteTab1');
