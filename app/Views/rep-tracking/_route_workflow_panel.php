@@ -70,9 +70,13 @@
         <div id="workspaceLayoutWrapper" style="display: none; flex: 1; flex-direction: row; min-height: 0; width: 100%;">
             <!-- Left Side: Workflow Sidebar -->
             <div class="workflow-sidebar" id="workflowSidebar">
-                <div style="padding: 0 8px 16px 8px; border-bottom: 1.5px solid var(--c-separator); margin-bottom: 16px;">
-                    <button id="auto-evt-button-14" type="button"  style="width: 100%; background: var(--c-fill); border: 0.5px solid var(--c-separator); color: var(--c-blue); font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: var(--r-md); transition: 0.2s;">
-                        <i class="ph ph-arrow-left" style="font-weight: bold;"></i> Back to Route List
+                <div style="padding: 0 4px 12px 4px; border-bottom: 0.5px solid var(--c-separator); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                    <button id="auto-evt-button-14" type="button" class="sidebar-back-btn" style="flex: 1; background: var(--c-fill); border: 0.5px solid var(--c-separator); color: var(--c-blue); font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 6px; border-radius: var(--r-md); transition: all 0.2s ease; overflow: hidden; white-space: nowrap;">
+                        <i class="ph ph-arrow-left" style="font-weight: bold; flex-shrink: 0;"></i> 
+                        <span class="sidebar-text">Back to Routes</span>
+                    </button>
+                    <button id="btnToggleWorkflowSidebar" type="button" title="Toggle Sidebar" style="background: var(--c-fill); border: 0.5px solid var(--c-separator); color: var(--t-secondary); border-radius: var(--r-md); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.2s ease;">
+                        <i class="ph ph-sidebar-simple" id="sidebarToggleIcon" style="font-size: 18px;"></i>
                     </button>
                 </div>
                 <div class="workflow-sidebar-steps">

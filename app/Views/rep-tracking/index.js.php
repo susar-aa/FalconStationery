@@ -5289,14 +5289,36 @@
         document.getElementById('floatingSearchInput')?.addEventListener('input', (event) => { searchRouteList(); });
         document.getElementById('auto-evt-button-28')?.addEventListener('click', (event) => { openCreateRouteModal(); });
         document.getElementById('btnOpenRouteBinding')?.addEventListener('click', (event) => { openRouteBindingModal(); });
-        document.getElementById('btnUnbindRoute')?.addEventListener('click', (event) => { unbindActiveRoute(); });
+        document.getElementById('btnToggleWorkflowSidebar')?.addEventListener('click', (event) => { toggleWorkflowSidebar(); });
         document.getElementById('auto-evt-button-29')?.addEventListener('click', (event) => { window.location.reload(); });
+
+        // Restore saved sidebar collapse state
+        const savedState = localStorage.getItem('rep_workflow_sidebar_collapsed');
+        const sidebar = document.getElementById('workflowSidebar');
+        if (sidebar && savedState === '1') {
+            sidebar.classList.add('collapsed');
+            const icon = document.getElementById('sidebarToggleIcon');
+            if (icon) icon.className = 'ph ph-caret-double-right';
+        }
     };
+
+    function toggleWorkflowSidebar() {
+        const sidebar = document.getElementById('workflowSidebar');
+        if (!sidebar) return;
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('rep_workflow_sidebar_collapsed', isCollapsed ? '1' : '0');
+        const icon = document.getElementById('sidebarToggleIcon');
+        if (icon) {
+            icon.className = isCollapsed ? 'ph ph-caret-double-right' : 'ph ph-sidebar-simple';
+        }
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initCentrallyRegisteredListeners);
     } else {
         initCentrallyRegisteredListeners();
     }
+    window.toggleWorkflowSidebar = toggleWorkflowSidebar;
 window.buildAccountOptions = buildAccountOptions;
     window.getAccountIdByCode = getAccountIdByCode;
     window.fetchRoutesList = fetchRoutesList;

@@ -1204,12 +1204,23 @@ if (!function_exists('hasPermission')) {
             $currentPageName .= ' &middot; ' . ucwords(str_replace(['-', '_'], ' ', $pageParts[1]));
         }
     ?>
+    <script>
+    function goBackSmartly() {
+        if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+            window.location.href = document.referrer;
+        } else if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = '<?= APP_URL ?>/dashboard';
+        }
+    }
+    </script>
 
     <!-- FLOATING NAV BAR -->
     <nav class="glass-nav">
 
         <!-- Back Button -->
-        <a href="javascript:history.back()" class="nav-back-btn" title="Go Back">
+        <a href="javascript:void(0)" onclick="goBackSmartly(); return false;" class="nav-back-btn" title="Go Back">
             <i class="ph ph-arrow-left" style="font-size: 20px;"></i>
         </a>
 

@@ -635,16 +635,57 @@
         box-shadow: var(--shadow-xs);
     }
 
-    /* Premium Workflow Sidebar Styling */
+    /* Premium Workflow Sidebar Styling (Glassmorphism & Collapsible) */
     .workflow-sidebar {
         width: 260px;
-        background: var(--c-surface);
+        background: rgba(255, 255, 255, 0.78) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
         border-right: 0.5px solid var(--c-separator);
         display: flex;
         flex-direction: column;
         overflow-y: auto;
+        overflow-x: hidden;
         padding: 16px 8px;
         flex-shrink: 0;
+        transition: width 0.28s cubic-bezier(0.25, 1, 0.5, 1), background 0.28s ease, padding 0.28s ease, border-color 0.28s ease;
+        position: relative;
+        z-index: 15;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .workflow-sidebar {
+            background: rgba(26, 26, 38, 0.82) !important;
+            border-right-color: rgba(255, 255, 255, 0.12);
+        }
+    }
+
+    /* Collapsed Sidebar Mode (Icons Only & Transparent Background) */
+    .workflow-sidebar.collapsed {
+        width: 60px !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-right-color: transparent !important;
+        box-shadow: none !important;
+        padding: 16px 4px !important;
+    }
+    .workflow-sidebar.collapsed .sidebar-text,
+    .workflow-sidebar.collapsed .step-info {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+    .workflow-sidebar.collapsed .sidebar-step-item {
+        justify-content: center !important;
+        padding: 8px 0 !important;
+        gap: 0 !important;
+    }
+    .workflow-sidebar.collapsed .workflow-sidebar-steps::before {
+        left: 25px !important;
+    }
+    .workflow-sidebar.collapsed .sidebar-back-btn {
+        padding: 9px 0 !important;
     }
     
     .workflow-sidebar-steps {
