@@ -291,18 +291,17 @@
 
     function updateSidebarProgress() {
         const steps = [
-            { id: 1, num: 1, name: 'Route Details', statusKey: 'Active', icon: 'ph-bold ph-clipboard-text' },
-            { id: 3, num: 2, name: 'Bill Adjustments', statusKey: 'Adjustments', icon: 'ph-bold ph-sliders-horizontal' },
-            { id: 4, num: 3, name: 'Loading Checklist', statusKey: 'Loading', icon: 'ph-bold ph-package' },
-            { id: 5, num: 4, name: 'Variance Audit', statusKey: 'Variance Adjustment', icon: 'ph-bold ph-scales' },
-            { id: 6, num: 5, name: 'Delivery Arrange', statusKey: 'Finalizing', icon: 'ph-bold ph-truck' },
-            { id: 8, num: 6, name: 'Delivery Execution', statusKey: 'Finalizing', icon: 'ph-bold ph-steering-wheel' },
-            { id: 12, num: 7, name: 'Expenses', statusKey: 'Finalizing', icon: 'ph-bold ph-wallet' },
-            { id: 7, num: 8, name: 'Reconciliation', statusKey: 'Finalizing', icon: 'ph-bold ph-calculator' },
-            { id: 9, num: 9, name: 'Return Stock', statusKey: 'Finalizing', icon: 'ph-bold ph-arrow-counter-clockwise' },
-            { id: 10, num: 10, name: 'Payments', statusKey: 'Finalizing', icon: 'ph-bold ph-bank' },
-            { id: 13, num: 11, name: 'Market Returns', statusKey: 'Finalizing', icon: 'ph-bold ph-storefront' },
-            { id: 11, num: 12, name: 'Finalize', statusKey: 'Finalizing', icon: 'ph-bold ph-flag-checkered' }
+            { id: 1, num: 1, name: 'Route Details', statusKey: 'Active' },
+            { id: 3, num: 2, name: 'Bill Adjustments', statusKey: 'Adjustments' },
+            { id: 4, num: 3, name: 'Loading', statusKey: 'Loading' },
+            { id: 5, num: 4, name: 'Variance Audit', statusKey: 'Variance Adjustment' },
+            { id: 6, num: 5, name: 'Delivery Arrange', statusKey: 'Finalizing' },
+            { id: 8, num: 6, name: 'Delivery Execution', statusKey: 'Finalizing' },
+            { id: 12, num: 7, name: 'Expenses', statusKey: 'Finalizing' },
+            { id: 7, num: 8, name: 'Reconciliation', statusKey: 'Finalizing' },
+            { id: 9, num: 9, name: 'Return Stock', statusKey: 'Finalizing' },
+            { id: 10, num: 10, name: 'Payments', statusKey: 'Finalizing' },
+            { id: 11, num: 11, name: 'Finalize', statusKey: 'Finalizing' }
         ];
 
         const statusSequence = ['Active', 'Pending GL', 'Adjustments', 'Loading', 'Variance Adjustment', 'Finalizing', 'Completed', 'Finalized'];
@@ -321,6 +320,7 @@
             
             // Step dot element
             const dot = el.querySelector('.step-dot');
+            dot.innerHTML = step.num; // Default back to step sequence number
 
             // Determine active tab
             if (step.id === currentTabIndex) {
@@ -412,10 +412,9 @@
 
             if (isStepCompleted) {
                 el.classList.add('completed');
-                dot.innerHTML = `<i class="${step.icon}"></i><span class="step-check-badge"><i class="ph-bold ph-check"></i></span>`;
+                dot.innerHTML = '<i class="fa-solid fa-check"></i>';
             } else {
                 el.classList.add('pending');
-                dot.innerHTML = `<i class="${step.icon}"></i>`;
             }
         });
     }
@@ -5184,13 +5183,6 @@
         document.getElementById('auto-evt-button-1')?.addEventListener('mouseover', function(event) { this.style.background='var(--c-fill)'; this.style.color='var(--t-primary)';; });
         document.getElementById('auto-evt-button-1')?.addEventListener('mouseout', function(event) { this.style.background='var(--c-surface2)'; this.style.color='var(--t-secondary)';; });
         document.getElementById('auto-evt-button-2')?.addEventListener('click', (event) => { goBackToRoutes(); });
-        document.querySelector('.nav-back-btn')?.addEventListener('click', (event) => {
-            if (document.body.classList.contains('workspace-showing')) {
-                event.preventDefault();
-                event.stopPropagation();
-                goBackToRoutes();
-            }
-        });
         document.getElementById('auto-evt-button-3')?.addEventListener('click', (event) => { openRouteSwitcherModal(); });
         document.getElementById('btnViewMap')?.addEventListener('click', (event) => { openMapModal(); });
         document.getElementById('auto-evt-button-4')?.addEventListener('click', function(event) { switchRouteTab(1, this); });

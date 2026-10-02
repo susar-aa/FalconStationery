@@ -1209,7 +1209,7 @@ if (!function_exists('hasPermission')) {
     <nav class="glass-nav">
 
         <!-- Back Button -->
-        <a href="javascript:void(0);" class="nav-back-btn" title="Go Back">
+        <a href="javascript:history.back()" class="nav-back-btn" title="Go Back">
             <i class="ph ph-arrow-left" style="font-size: 20px;"></i>
         </a>
 
@@ -2756,38 +2756,6 @@ if (!function_exists('hasPermission')) {
                 }
                 return originalSend.apply(this, arguments);
             };
-
-            // 6. Global Smart Back Navigation Handler
-            document.addEventListener('DOMContentLoaded', function() {
-                const navBackBtn = document.querySelector('.nav-back-btn');
-                if (navBackBtn) {
-                    navBackBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        // Custom SPA / workspace page back handler check (e.g. RepTracking)
-                        if (typeof window.goBackToRoutes === 'function' && document.body.classList.contains('workspace-showing')) {
-                            window.goBackToRoutes();
-                            return;
-                        }
-                        if (typeof window.customGoBack === 'function') {
-                            if (window.customGoBack() === true) return;
-                        }
-
-                        // Smart History Navigation
-                        const currentUrl = window.location.href;
-                        const referrerUrl = document.referrer;
-                        
-                        if (referrerUrl && referrerUrl.indexOf(window.location.host) !== -1 && referrerUrl !== currentUrl) {
-                            window.location.href = referrerUrl;
-                        } else if (window.history.length > 1) {
-                            window.history.back();
-                        } else {
-                            window.location.href = '<?= APP_URL ?>/dashboard';
-                        }
-                    });
-                }
-            });
         })();
     </script>
     

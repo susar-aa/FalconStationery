@@ -635,80 +635,28 @@
         box-shadow: var(--shadow-xs);
     }
 
-    /* Premium Collapsible Workflow Sidebar */
+    /* Premium Workflow Sidebar Styling */
     .workflow-sidebar {
-        width: 58px;
-        min-width: 58px;
+        width: 260px;
         background: var(--c-surface);
         border-right: 0.5px solid var(--c-separator);
         display: flex;
         flex-direction: column;
         overflow-y: auto;
-        overflow-x: hidden;
-        padding: 16px 6px;
+        padding: 16px 8px;
         flex-shrink: 0;
-        transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), padding 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02);
-        z-index: 100;
-        position: relative;
-    }
-    .workflow-sidebar:hover {
-        width: 260px;
-        min-width: 260px;
-        padding: 16px 10px;
-        box-shadow: 6px 0 24px rgba(0, 0, 0, 0.08);
     }
     
-    .workflow-sidebar-header {
-        padding-bottom: 12px;
-        border-bottom: 1px solid var(--c-separator);
-        margin-bottom: 14px;
-        overflow: hidden;
-    }
-
-    .workflow-sidebar-back-btn {
-        width: 100%;
-        background: var(--c-fill);
-        border: 0.5px solid var(--c-separator);
-        color: var(--c-blue);
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 10px;
-        padding: 9px 12px;
-        border-radius: var(--r-md);
-        transition: background 0.2s, border-color 0.2s;
-        white-space: nowrap;
-    }
-    .workflow-sidebar-back-btn:hover {
-        background: var(--c-blue-light);
-        border-color: var(--c-blue-mid);
-    }
-
-    .sidebar-btn-text {
-        opacity: 0;
-        visibility: hidden;
-        white-space: nowrap;
-        transition: opacity 0.2s ease, visibility 0.2s ease;
-    }
-    .workflow-sidebar:hover .sidebar-btn-text {
-        opacity: 1;
-        visibility: visible;
-    }
-
     .workflow-sidebar-steps {
         position: relative;
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
     }
     .workflow-sidebar-steps::before {
         content: '';
         position: absolute;
-        left: 21px; /* Align with center of 32px step-dot */
+        left: 25px; /* Align with center of 26px step-dot */
         top: 20px;
         bottom: 20px;
         width: 1.5px;
@@ -721,14 +669,13 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 6px;
+        padding: 8px 12px;
         border-radius: var(--r-md);
         cursor: pointer;
         user-select: none;
-        transition: background var(--dur-fast), border-color var(--dur-fast);
+        transition: background var(--dur-fast), transform var(--dur-fast);
         border: 0.5px solid transparent;
         background: transparent;
-        white-space: nowrap;
     }
     .sidebar-step-item:hover {
         background: var(--c-fill);
@@ -737,57 +684,41 @@
         background: var(--c-blue-light);
         border-color: var(--c-blue-mid);
     }
+    .sidebar-step-item.locked {
+        opacity: 1;
+    }
     
     .step-dot {
-        width: 32px;
-        height: 32px;
-        border-radius: 9px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 11px;
         font-weight: 700;
         flex-shrink: 0;
         background: var(--c-surface);
         color: var(--t-secondary);
-        transition: all 0.2s ease;
+        transition: background var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast);
         border: 1px solid var(--c-separator);
         z-index: 2;
-        position: relative;
     }
     .sidebar-step-item.active .step-dot {
         background: var(--c-blue);
         color: #fff;
         border-color: var(--c-blue);
-        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
+        box-shadow: 0 0 0 3.5px rgba(0, 122, 255, 0.15);
     }
     .sidebar-step-item.completed .step-dot {
-        background: #f0fdf4;
-        color: #16a34a;
-        border-color: #bbf7d0;
+        background: var(--c-green-light);
+        color: var(--c-green);
+        border-color: var(--c-green);
     }
-    .sidebar-step-item.active.completed .step-dot {
-        background: #16a34a;
-        color: #fff;
-        border-color: #16a34a;
-        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.25);
-    }
-
-    .step-check-badge {
-        position: absolute;
-        top: -4px;
-        right: -4px;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        background: #16a34a;
-        color: #fff;
-        font-size: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1.5px solid #fff;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    .sidebar-step-item.locked .step-dot {
+        background: var(--c-surface);
+        color: var(--t-secondary);
+        border-color: var(--c-separator);
     }
 
     .step-info {
@@ -796,15 +727,6 @@
         gap: 2px;
         flex: 1;
         min-width: 0;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateX(-8px);
-        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
-    }
-    .workflow-sidebar:hover .step-info {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(0);
     }
     .step-title {
         font-size: 13.5px;
