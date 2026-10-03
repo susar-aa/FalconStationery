@@ -35,6 +35,8 @@
     let currentRouteId = null;
     let routeMap = null;
     let routeMapLayers = [];
+    let tab1Map = null;
+    let tab1MapLayers = [];
     let rbSlotsCount = 2;
     let activeRouteBills = [];
     let currentDeliveryDetails = null;
@@ -755,21 +757,22 @@
 
         const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
         const notesTextarea = document.getElementById('tab1RouteNotes');
-        const saveNotesBtn = document.getElementById('btnSaveRouteNotes');
+        if (notesTextarea) {
+            notesTextarea.readOnly = isReadOnly;
+            fetchSecure('<?= APP_URL ?>/RepTracking/api_get_route_details/' + routeId)
+                .then(res => res.json())
+                .then(data => { notesTextarea.value = data.notes || ''; });
+        }
 
-        notesTextarea.readOnly = isReadOnly;
-        saveNotesBtn.disabled = isReadOnly;
-        saveNotesBtn.style.opacity = isReadOnly ? '0.5' : '1';
-        saveNotesBtn.style.cursor = isReadOnly ? 'not-allowed' : 'pointer';
-
-        fetchSecure('<?= APP_URL ?>/RepTracking/api_get_route_details/' + routeId)
-            .then(res => res.json())
-            .then(data => {
-                notesTextarea.value = data.notes || '';
-            });
+        // Update inline map route name labels
+        const mapNameEl = document.getElementById('tab1MapRouteName');
+        if (mapNameEl) mapNameEl.innerText = document.getElementById('tab1RouteName')?.innerText || 'Route';
 
         // Load Unproductive Visits for Route Details Tab
         loadTab1UnproductiveVisits(routeId);
+
+        // Load inline GPS map
+        loadTab1RoutePath(routeId);
     }
 
     function loadTab1UnproductiveVisits(routeId) {
@@ -779,7 +782,7 @@
 
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:15px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading unproductive visits...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:15px;"><i class="ph ph-spinner"></i> Loading unproductive visits...</td></tr>';
 
         fetchSecure('<?= APP_URL ?>/RepTracking/api_get_unproductive_visits/' + routeId)
             .then(res => res.json())
@@ -792,7 +795,7 @@
                 if (badge) badge.innerText = count + (count === 1 ? ' Visit' : ' Visits');
 
                 if (count === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888; padding:15px;">No unproductive visits recorded for this route.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:12px;">No unproductive visits recorded for this route.</td></tr>';
                     return;
                 }
 
@@ -817,11 +820,10 @@
 
                     html += `
                         <tr style="border-bottom:1px solid #f1f5f9;">
-                            <td style="padding:10px; font-weight:500; font-family:monospace; color:#475569;">${visitTime}</td>
-                            <td style="padding:10px; font-weight:bold; color:#1e293b;">${custName}</td>
-                            <td style="padding:10px;"><span style="background:#fff7ed; color:#c2410c; padding:3px 8px; border-radius:4px; font-weight:600; font-size:11px; border:0.5px solid #fed7aa;">${reasonDisplay}</span></td>
-                            <td style="padding:10px; font-family:monospace; color:#64748b; font-size:11px;">${locationDisplay}</td>
-                            <td style="padding:10px; text-align:center;">${mapBtnHtml}</td>
+                            <td style="padding:8px; font-weight:500; font-family:monospace; color:#475569; font-size:11px;">${visitTime}</td>
+                            <td style="padding:8px; font-weight:bold; color:#1e293b; font-size:11px;">${custName}</td>
+                            <td style="padding:8px;"><span style="background:#fff7ed; color:#c2410c; padding:2px 7px; border-radius:4px; font-weight:600; font-size:10px; border:0.5px solid #fed7aa;">${reasonDisplay}</span></td>
+                            <td style="padding:8px; text-align:center;">${mapBtnHtml}</td>
                         </tr>
                     `;
                 });
@@ -829,7 +831,7 @@
             })
             .catch(err => {
                 console.error('[Route Details] Error loading unproductive visits:', err);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#dc2626; padding:15px;">Failed to load unproductive visits.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#dc2626; padding:12px;">Failed to load unproductive visits.</td></tr>';
             });
     }
 
@@ -4445,6 +4447,114 @@
     function clearRoutePathMap() {
         routeMapLayers.forEach(layer => routeMap.removeLayer(layer));
         routeMapLayers = [];
+    }
+
+    // ─── Inline Tab 1 Map Functions ─────────────────────────────────────────
+    function initTab1Map() {
+        if (tab1Map !== null) return;
+        const el = document.getElementById('tab1RoutePathMap');
+        if (!el || typeof L === 'undefined') return;
+        initMapIcons();
+        tab1Map = L.map('tab1RoutePathMap').setView([7.8731, 80.7718], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(tab1Map);
+    }
+
+    function clearTab1Map() {
+        tab1MapLayers.forEach(layer => tab1Map.removeLayer(layer));
+        tab1MapLayers = [];
+    }
+
+    function loadTab1RoutePath(routeId) {
+        const emptyOverlay = document.getElementById('tab1MapEmptyOverlay');
+        const emptyMsg = document.getElementById('tab1MapEmptyMsg');
+        const stepList = document.getElementById('tab1PathStepList');
+        const stepEmpty = document.getElementById('tab1PathStepEmpty');
+        if (!emptyOverlay) return;
+
+        emptyOverlay.style.display = 'flex';
+        if (emptyMsg) emptyMsg.innerText = 'Loading GPS path...';
+        if (stepList) stepList.style.display = 'none';
+        if (stepEmpty) stepEmpty.style.display = 'block';
+
+        initTab1Map();
+        if (tab1Map) clearTab1Map();
+
+        fetch('<?= APP_URL ?>/RepTracking/api_get_route_path/' + routeId)
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== 'success' || !data.path) {
+                    if (emptyMsg) emptyMsg.innerText = data.message || 'No GPS path available for this route.';
+                    return;
+                }
+                renderTab1RoutePath(data.path);
+            })
+            .catch(err => {
+                console.error('[Tab1 Map] Fetch error:', err);
+                if (emptyMsg) emptyMsg.innerText = 'Failed to load GPS path.';
+            });
+    }
+
+    function renderTab1RoutePath(path) {
+        const emptyOverlay = document.getElementById('tab1MapEmptyOverlay');
+        const stepList = document.getElementById('tab1PathStepList');
+        const stepEmpty = document.getElementById('tab1PathStepEmpty');
+        const stepOl = document.getElementById('tab1PathStepOl');
+        const pointCountEl = document.getElementById('tab1PathPointCount');
+        const mapNameEl = document.getElementById('tab1MapRouteName');
+        const mapPointCountEl = document.getElementById('tab1MapPointCount');
+
+        const wps = path.waypoints || [];
+        if (mapNameEl) mapNameEl.innerText = path.route_name || '';
+        if (mapPointCountEl) mapPointCountEl.innerText = wps.length ? `(${wps.length} pts)` : '';
+        if (pointCountEl) pointCountEl.innerText = wps.length ? `${wps.length} points` : '';
+
+        if (stepOl) stepOl.innerHTML = '';
+
+        if (wps.length === 0) {
+            if (emptyOverlay) emptyOverlay.style.display = 'flex';
+            const emptyMsg = document.getElementById('tab1MapEmptyMsg');
+            if (emptyMsg) emptyMsg.innerText = 'No GPS points recorded for this route.';
+            if (stepList) stepList.style.display = 'none';
+            if (stepEmpty) stepEmpty.style.display = 'block';
+            if (tab1Map) setTimeout(() => tab1Map.invalidateSize(), 150);
+            return;
+        }
+
+        if (emptyOverlay) emptyOverlay.style.display = 'none';
+        if (stepList) { stepList.style.display = 'block'; }
+        if (stepEmpty) stepEmpty.style.display = 'none';
+
+        const latlngs = [];
+        wps.forEach((wp) => {
+            const latlng = [wp.lat, wp.lng];
+            latlngs.push(latlng);
+            let icon = pathBlueIcon;
+            if (wp.type === 'start') icon = pathGreenIcon;
+            else if (wp.type === 'end') icon = pathRedIcon;
+            else if (wp.type === 'unproductive') icon = pathOrangeIcon;
+
+            const wpTitle = wp.label || wp.name || '';
+            const wpDesc = wp.detail || wp.description || '';
+            const marker = L.marker(latlng, { icon: icon }).addTo(tab1Map);
+            marker.bindPopup(`<strong>${wpTitle}</strong><br>${wpDesc}<br><span style="font-size:10px;color:#666;">${wp.time}</span>`);
+            tab1MapLayers.push(marker);
+
+            if (stepOl) {
+                const typeClass = wp.type === 'start' ? 'path-step-start' : wp.type === 'end' ? 'path-step-end' : wp.type === 'unproductive' ? 'path-step-unproductive' : 'path-step-invoice';
+                stepOl.innerHTML += `<li class="${typeClass}"><strong>${wp.time}</strong> — ${wpTitle}</li>`;
+            }
+        });
+
+        if (latlngs.length > 1) {
+            const poly = L.polyline(latlngs, { color: '#2563eb', weight: 4, opacity: 0.75 }).addTo(tab1Map);
+            tab1MapLayers.push(poly);
+            tab1Map.fitBounds(poly.getBounds(), { padding: [40, 40] });
+        } else {
+            tab1Map.setView(latlngs[0], 14);
+        }
+        setTimeout(() => tab1Map.invalidateSize(), 150);
     }
 
     function loadRoutePath(routeId) {

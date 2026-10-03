@@ -836,6 +836,14 @@
         opacity: 0.85;
     }
 
+    /* Tab 1: Fullscreen Map Panel */
+    #tabpanel-1:not([style*="display:none"]) { min-height: 600px; }
+    #tab1PathStepList ol { list-style-type: decimal; }
+    #tab1PathStepList li { font-size: 11px; color: #475569; padding: 2px 0; }
+    #tab1PathStepList li.path-step-start strong { color: #059669; }
+    #tab1PathStepList li.path-step-end strong { color: #dc2626; }
+    #tab1PathStepList li.path-step-unproductive strong { color: #d97706; }
+
     /* Modern Dashboard Navigation flow toggles */
     .app-workspace.workspace-active .pane-left {
         display: none !important;
