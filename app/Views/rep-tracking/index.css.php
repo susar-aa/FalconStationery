@@ -845,7 +845,7 @@
     #tab1PathStepList::-webkit-scrollbar { width: 3px; }
     #tab1PathStepList::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
     #tab1PathStepList ol { list-style-type: decimal; }
-    #tab1PathStepList li { font-size: 11px; color: #475569; padding: 2px 0; }
+    #tab1PathStepList li { font-size: 12px; color: #334155; padding: 3px 0; }
     #tab1PathStepList li.path-step-start strong { color: #059669; }
     #tab1PathStepList li.path-step-end strong { color: #dc2626; }
     #tab1PathStepList li.path-step-unproductive strong { color: #d97706; }
