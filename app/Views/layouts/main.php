@@ -1206,8 +1206,32 @@ if (!function_exists('hasPermission')) {
     ?>
     <script>
     function goBackSmartly() {
-        if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
-            window.location.href = document.referrer;
+        // 1. Page-level custom back action (e.g., Rep Tracking workflow panel)
+        if (typeof window.customGoBack === 'function') {
+            try {
+                if (window.customGoBack() === true) {
+                    return;
+                }
+            } catch (e) {
+                console.warn('customGoBack error:', e);
+            }
+        }
+
+        // 2. Check if a modal is currently open and close it
+        const openModal = document.querySelector('.modal.show, .sf-modal[style*="display: block"]');
+        if (openModal) {
+            const closeBtn = openModal.querySelector('.btn-close, .modal-close, [data-bs-dismiss="modal"]');
+            if (closeBtn) {
+                closeBtn.click();
+                return;
+            }
+        }
+
+        // 3. Smart history navigation
+        const currentUrl = window.location.href;
+        const ref = document.referrer;
+        if (ref && ref.indexOf(window.location.host) !== -1 && ref !== currentUrl) {
+            window.location.href = ref;
         } else if (window.history.length > 1) {
             window.history.back();
         } else {

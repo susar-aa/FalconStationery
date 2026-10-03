@@ -285,7 +285,8 @@
     function goBackToRoutes() {
         currentRouteId = null;
         document.body.classList.remove('workspace-showing');
-        document.querySelector('.app-workspace').classList.remove('workspace-active');
+        const ws = document.querySelector('.app-workspace');
+        if (ws) ws.classList.remove('workspace-active');
         
         document.querySelectorAll('.route-item').forEach(i => i.classList.remove('active'));
         
@@ -294,6 +295,24 @@
         url.searchParams.delete('route_id');
         window.history.replaceState({}, '', url);
     }
+
+    // Register custom back handler for top navbar back button
+    window.customGoBack = function() {
+        const ws = document.querySelector('.app-workspace');
+        if (ws && ws.classList.contains('workspace-active')) {
+            goBackToRoutes();
+            return true; // Back action handled within Rep Tracking module!
+        }
+        return false; // Not handled, fallback to default navigation
+    };
+
+    // Handle native browser / mobile physical back button
+    window.addEventListener('popstate', function(e) {
+        const ws = document.querySelector('.app-workspace');
+        if (ws && ws.classList.contains('workspace-active')) {
+            goBackToRoutes();
+        }
+    });
 
     const CSRF_TOKEN = '<?= $_SESSION['csrf_token'] ?? '' ?>';
     let currentTabIndex = 1;
