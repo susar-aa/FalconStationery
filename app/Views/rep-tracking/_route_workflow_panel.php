@@ -140,231 +140,221 @@
                 </div>
 
                 <!-- TAB 1: DETAILS -->
-                <div class="workspace-tab-panel" id="tabpanel-1" style="display:none; position:relative; overflow:hidden; margin: -16px; height: calc(100% + 32px);">
+                <div class="workspace-tab-panel" id="tabpanel-1" style="display:none; position:relative; overflow:hidden; margin:-16px; height:calc(100vh - 120px); min-height:500px;">
 
-                    <!-- ══════════════════════════════════════
-                         FULL SCREEN MAP BACKGROUND
-                    ══════════════════════════════════════ -->
-                    <div style="position:absolute; inset:0; z-index:0;">
-                        <div id="tab1MapEmptyOverlay" class="map-empty-overlay" style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:rgba(241,245,249,0.9);font-size:14px;font-weight:600;color:#64748b;gap:10px;flex-direction:column;">
-                            <i class="ph ph-map-trifold" style="font-size:48px;color:#94a3b8;"></i>
-                            <span id="tab1MapEmptyMsg">Select a route to view GPS path</span>
+                    <!-- ── FULLSCREEN MAP LAYER ── -->
+                    <div style="position:absolute;inset:0;z-index:0;">
+                        <div id="tab1MapEmptyOverlay" style="position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8f9fb;gap:12px;">
+                            <i class="ph ph-map-trifold" style="font-size:52px;color:#c1c8d0;"></i>
+                            <span id="tab1MapEmptyMsg" style="font-size:13px;font-weight:600;color:#9ba5b0;letter-spacing:0.02em;">Select a route to view GPS path</span>
                         </div>
                         <div id="tab1RoutePathMap" style="height:100%;width:100%;"></div>
                     </div>
 
-                    <!-- ══════════════════════════════════════
-                         TOP MAP TOOLBAR (transparent bar)
-                    ══════════════════════════════════════ -->
-                    <div style="position:absolute; top:0; left:0; right:0; z-index:20; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; background:linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%); pointer-events:none;">
-                        <div style="display:flex; align-items:center; gap:10px; pointer-events:auto;">
-                            <div style="background:rgba(255,255,255,0.18); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.35); border-radius:10px; padding:6px 14px; display:flex; align-items:center; gap:8px;">
-                                <i class="ph ph-map-pin" style="font-size:15px; color:#fff;"></i>
-                                <span id="tab1MapRouteName" style="font-size:13px; font-weight:700; color:#fff; letter-spacing:0.02em;">No Route Selected</span>
-                                <span id="tab1MapPointCount" style="font-size:11px; color:rgba(255,255,255,0.75); margin-left:4px;"></span>
-                            </div>
-                            <span id="tab1Status" style="font-size:10px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); color:#fff; border:1px solid rgba(255,255,255,0.35); letter-spacing:0.05em;">-</span>
+                    <!-- ── TOP HEADER BAR ── -->
+                    <div style="position:absolute;top:0;left:0;right:320px;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);border-bottom:1px solid #e8eaed;">
+                        <!-- Route label -->
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:7px;height:7px;border-radius:50%;background:#18181b;flex-shrink:0;"></div>
+                            <span id="tab1MapRouteName" style="font-size:13px;font-weight:700;color:#18181b;letter-spacing:-0.01em;">No Route Selected</span>
+                            <span id="tab1MapPointCount" style="font-size:11px;color:#94a3b8;font-weight:500;"></span>
+                            <span id="tab1Status" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;letter-spacing:0.04em;margin-left:4px;">—</span>
                         </div>
-                        <!-- Quick actions -->
-                        <div style="display:flex; gap:8px; pointer-events:auto;">
-                            <button id="auto-evt-button-19" type="button" title="Switch Route" style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.18);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.35);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s ease;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">
-                                <i class="ph ph-swap"></i>
+                        <!-- Action buttons -->
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <button id="auto-evt-button-19" type="button" title="Switch Route" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;font-weight:600;color:#374151;cursor:pointer;transition:all 0.15s;">
+                                <i class="ph ph-swap" style="font-size:13px;"></i> Switch Route
                             </button>
-                            <button id="btnUnbindRouteTab1" type="button" onclick="unbindCombinedRoute()" title="Undo Binding" style="display:none;width:36px;height:36px;border-radius:10px;background:rgba(220,38,38,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,100,100,0.4);color:#fff;font-size:16px;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s ease;">
-                                <i class="ph ph-link-break"></i>
+                            <button id="btnUnbindRouteTab1" type="button" onclick="unbindCombinedRoute()" title="Undo Binding" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #fca5a5;border-radius:8px;font-size:11px;font-weight:600;color:#dc2626;cursor:pointer;transition:all 0.15s;">
+                                <i class="ph ph-link-break" style="font-size:13px;"></i> Undo Bind
                             </button>
-                            <button id="auto-evt-button-20" type="button" title="Delete Route" style="width:36px;height:36px;border-radius:10px;background:rgba(220,38,38,0.6);backdrop-filter:blur(12px);border:1px solid rgba(255,100,100,0.35);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s ease;" onmouseover="this.style.background='rgba(220,38,38,0.85)'" onmouseout="this.style.background='rgba(220,38,38,0.6)'">
-                                <i class="ph ph-trash"></i>
+                            <button id="auto-evt-button-20" type="button" title="Delete Route" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#fff;border:1px solid #fca5a5;border-radius:8px;font-size:11px;font-weight:600;color:#dc2626;cursor:pointer;transition:all 0.15s;">
+                                <i class="ph ph-trash" style="font-size:13px;"></i> Delete
                             </button>
                         </div>
                     </div>
 
-                    <!-- ══════════════════════════════════════
-                         RIGHT OVERLAY PANEL (floating cards)
-                    ══════════════════════════════════════ -->
-                    <div style="position:absolute; top:60px; right:14px; bottom:14px; width:300px; z-index:15; display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-bottom:4px; scrollbar-width:thin;">
+                    <!-- ── RIGHT FLOATING PANEL ── -->
+                    <div id="tab1RightPanel" style="position:absolute;top:0;right:0;bottom:0;width:310px;z-index:15;display:flex;flex-direction:column;background:rgba(255,255,255,0.96);backdrop-filter:blur(20px);border-left:1px solid #e8eaed;overflow-y:auto;overflow-x:hidden;">
 
-                        <!-- Bound Route Summary (hidden until bound) -->
-                        <div id="boundRouteSummaryContainer" style="display:none; background:rgba(239,246,255,0.95); backdrop-filter:blur(20px); border:1px solid rgba(191,219,254,0.8); border-radius:14px; padding:14px; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
-                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                                <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#1e40af;">
-                                    <i class="ph ph-link"></i> Bound Route
-                                </div>
-                                <button type="button" onclick="unbindCombinedRoute()" style="padding:4px 10px; background:#dc2626; color:#fff; border:none; border-radius:6px; font-weight:700; cursor:pointer; font-size:11px; display:inline-flex; align-items:center; gap:4px;">
-                                    <i class="ph ph-link-break"></i> Undo
-                                </button>
-                            </div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                                <div style="display:flex;flex-direction:column;"><span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Routes</span><strong id="brsConstituentsList" style="font-size:11px;color:#1e293b;margin-top:2px;">-</strong></div>
-                                <div style="display:flex;flex-direction:column;"><span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Customers</span><strong id="brsTotalCustomers" style="font-size:11px;color:#1e293b;margin-top:2px;">-</strong></div>
-                                <div style="display:flex;flex-direction:column;"><span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Invoices</span><strong id="brsTotalInvoices" style="font-size:11px;color:#1e293b;margin-top:2px;">-</strong></div>
-                                <div style="display:flex;flex-direction:column;"><span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Total Value</span><strong id="brsTotalValue" style="font-size:11px;color:#10b981;margin-top:2px;">-</strong></div>
-                                <div style="display:flex;flex-direction:column;grid-column:span 2;"><span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Items Breakdown</span><strong id="brsTotalProducts" style="font-size:11px;color:#1e293b;margin-top:2px;">-</strong></div>
-                            </div>
-                        </div>
+                        <!-- Panel scrollable content -->
+                        <div style="display:flex;flex-direction:column;gap:0;flex:1;">
 
-                        <!-- Route Info Card -->
-                        <div style="background:rgba(255,255,255,0.88); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.7); border-radius:14px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
-                            <div style="background:linear-gradient(135deg,#1e40af 0%,#4f46e5 100%); padding:10px 14px; display:flex; align-items:center; gap:8px; color:#fff;">
-                                <i class="ph-bold ph-clipboard-text" style="font-size:14px;"></i>
-                                <span style="font-weight:700; font-size:12px; letter-spacing:0.03em; flex:1;">Route & Representative</span>
-                            </div>
-                            <div style="padding:0;">
-                                <div style="display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid rgba(0,0,0,0.06);">
-                                    <div style="padding:10px 12px; border-right:1px solid rgba(0,0,0,0.06);">
-                                        <div style="font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">Route Code</div>
-                                        <div id="tab1RouteNumber" style="font-weight:800; font-family:var(--f-mono); font-size:13px; color:#2563eb;">-</div>
-                                    </div>
-                                    <div style="padding:10px 12px;">
-                                        <div style="font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">Route Name</div>
-                                        <div id="tab1RouteName" style="font-weight:700; font-size:12px; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">-</div>
-                                    </div>
-                                </div>
-                                <div style="display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid rgba(0,0,0,0.06);">
-                                    <div style="padding:10px 12px; border-right:1px solid rgba(0,0,0,0.06);">
-                                        <div style="font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">Representative</div>
-                                        <div style="font-weight:700; font-size:12px; color:#1e293b; display:flex; align-items:center; gap:5px;"><i class="ph ph-user-circle" style="color:#2563eb; font-size:14px;"></i><span id="tab1RepName">-</span></div>
-                                    </div>
-                                    <div style="padding:10px 12px;">
-                                        <div style="font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">Start Time</div>
-                                        <div id="tab1StartTime" style="font-weight:600; font-size:12px; color:#1e293b; font-family:var(--f-mono);">-</div>
-                                    </div>
-                                </div>
-                                <div style="display:grid; grid-template-columns:1fr 1fr;">
-                                    <div style="padding:10px 12px; border-right:1px solid rgba(0,0,0,0.06);">
-                                        <div style="font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">End Time</div>
-                                        <div id="tab1EndTime" style="font-weight:600; font-size:12px; color:#1e293b; font-family:var(--f-mono);">-</div>
-                                    </div>
-                                    <div style="padding:10px 12px;">
-                                        <div style="font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px;">ODO: Start → End</div>
-                                        <div style="font-weight:700; font-size:11px; color:#7c3aed; font-family:var(--f-mono);"><span id="tab1StartMeter">-</span> → <span id="tab1EndMeter">-</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- KPI Stats Card -->
-                        <div style="background:rgba(255,255,255,0.88); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.7); border-radius:14px; padding:12px; box-shadow:0 8px 32px rgba(0,0,0,0.12); display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                            <!-- Rep Sales -->
-                            <div style="background:linear-gradient(135deg,#0f766e,#14b8a6); border-radius:10px; padding:10px; color:#fff; position:relative; overflow:hidden;">
-                                <div style="position:absolute;right:-6px;top:-6px;width:40px;height:40px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
-                                <div style="font-size:9px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Rep Sales</div>
-                                <div id="tab1SalesValue" style="font-size:14px; font-weight:800; font-family:var(--f-mono); margin-top:2px;">-</div>
-                                <div style="font-size:9px; opacity:0.75; margin-top:2px; display:flex; align-items:center; gap:3px;"><i class="ph ph-user"></i> Rep Total</div>
-                            </div>
-                            <!-- Actual Sales -->
-                            <div style="background:linear-gradient(135deg,#047857,#10b981); border-radius:10px; padding:10px; color:#fff; position:relative; overflow:hidden;">
-                                <div style="position:absolute;right:-6px;top:-6px;width:40px;height:40px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
-                                <div style="font-size:9px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Actual Sales</div>
-                                <div id="tab1ActualSalesValue" style="font-size:14px; font-weight:800; font-family:var(--f-mono); margin-top:2px;">-</div>
-                                <div style="font-size:9px; opacity:0.75; margin-top:2px; display:flex; align-items:center; gap:3px;"><i class="ph ph-check-circle"></i> Adjusted</div>
-                            </div>
-                            <!-- Bills -->
-                            <div style="background:linear-gradient(135deg,#1e40af,#3b82f6); border-radius:10px; padding:10px; color:#fff; position:relative; overflow:hidden;">
-                                <div style="position:absolute;right:-6px;top:-6px;width:40px;height:40px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
-                                <div style="font-size:9px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Total Bills</div>
-                                <div id="tab1BillsCount" style="font-size:14px; font-weight:800; font-family:var(--f-mono); margin-top:2px;">-</div>
-                                <div style="font-size:9px; opacity:0.75; margin-top:2px; display:flex; align-items:center; gap:3px;"><i class="ph ph-receipt"></i> Invoices</div>
-                            </div>
-                            <!-- Distance -->
-                            <div style="background:linear-gradient(135deg,#7c3aed,#a855f7); border-radius:10px; padding:10px; color:#fff; position:relative; overflow:hidden;">
-                                <div style="position:absolute;right:-6px;top:-6px;width:40px;height:40px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
-                                <div style="font-size:9px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Distance</div>
-                                <div id="tab1Distance" style="font-size:14px; font-weight:800; font-family:var(--f-mono); margin-top:2px;">-</div>
-                                <div style="font-size:9px; opacity:0.75; margin-top:2px; display:flex; align-items:center; gap:3px;"><i class="ph ph-gauge"></i> ODO Range</div>
-                            </div>
-                            <!-- Unproductive -->
-                            <div style="background:linear-gradient(135deg,#9a3412,#ea580c); border-radius:10px; padding:10px; color:#fff; position:relative; overflow:hidden; grid-column:span 2;">
-                                <div style="position:absolute;right:-6px;top:-6px;width:50px;height:50px;background:rgba(255,255,255,0.1);border-radius:50%;"></div>
-                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                            <!-- ┌─ SECTION: ROUTE IDENTITY ─────────────────────────────┐ -->
+                            <div style="padding:16px 16px 12px;border-bottom:1px solid #f1f5f9;">
+                                <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Route Identity</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
                                     <div>
-                                        <div style="font-size:9px; font-weight:700; opacity:0.85; text-transform:uppercase; letter-spacing:0.06em;">Unproductive Visits</div>
-                                        <div id="tab1UnproductiveCount" style="font-size:18px; font-weight:800; font-family:var(--f-mono); margin-top:2px;">0</div>
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Route Code</div>
+                                        <div id="tab1RouteNumber" style="font-size:14px;font-weight:800;color:#18181b;font-family:var(--f-mono);">—</div>
                                     </div>
-                                    <i class="ph ph-x-circle" style="font-size:28px; opacity:0.3;"></i>
+                                    <div>
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Status</div>
+                                        <div id="tab1StatusBadge" style="display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">—</div>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">Route Name</div>
+                                    <div id="tab1RouteName" style="font-size:13px;font-weight:700;color:#18181b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                                    <i class="ph ph-user-circle" style="font-size:18px;color:#64748b;flex-shrink:0;"></i>
+                                    <div>
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Representative</div>
+                                        <div id="tab1RepName" style="font-size:12px;font-weight:700;color:#18181b;">—</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- GPS Step List Card -->
-                        <div style="background:rgba(255,255,255,0.88); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.7); border-radius:14px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
-                            <div style="background:linear-gradient(135deg,#0f172a 0%,#334155 100%); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; color:#fff;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <i class="ph-bold ph-map-trifold" style="font-size:14px;"></i>
-                                    <span style="font-weight:700; font-size:12px; letter-spacing:0.03em;">GPS Waypoints</span>
+                            <!-- ┌─ SECTION: TIME & ODOMETER ────────────────────────────┐ -->
+                            <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;">
+                                <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Time & Odometer</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                                    <div style="padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Start</div>
+                                        <div id="tab1StartTime" style="font-size:11px;font-weight:700;color:#18181b;font-family:var(--f-mono);">—</div>
+                                    </div>
+                                    <div style="padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;">
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">End</div>
+                                        <div id="tab1EndTime" style="font-size:11px;font-weight:700;color:#18181b;font-family:var(--f-mono);">—</div>
+                                    </div>
                                 </div>
-                                <span id="tab1PathPointCount" style="font-size:10px; color:rgba(255,255,255,0.7);"></span>
-                            </div>
-                            <div class="path-step-list" id="tab1PathStepList" style="display:none; max-height:180px; overflow-y:auto;">
-                                <ol id="tab1PathStepOl" style="margin:0; padding:10px 14px 10px 30px; display:flex; flex-direction:column; gap:4px;"></ol>
-                            </div>
-                            <div id="tab1PathStepEmpty" style="padding:16px; text-align:center; color:#94a3b8; font-size:12px;">No GPS data available</div>
-                        </div>
-
-                        <!-- Quick Print Card -->
-                        <div style="background:rgba(255,255,255,0.88); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.7); border-radius:14px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
-                            <div style="background:linear-gradient(135deg,#1e1b4b 0%,#4338ca 100%); padding:10px 14px; display:flex; align-items:center; gap:8px; color:#fff;">
-                                <i class="ph-bold ph-printer" style="font-size:14px; color:#a5b4fc;"></i>
-                                <span style="font-weight:700; font-size:12px; letter-spacing:0.03em;">Quick Print Center</span>
-                            </div>
-                            <div style="padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px;">
-                                <button type="button" id="btnQuickPrintAllInvoices" onclick="printRouteInvoices()" style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;text-align:left;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="ph-bold ph-files" style="font-size:15px;flex-shrink:0;"></i><div><div style="font-weight:700;line-height:1.2;">All Invoices</div></div>
-                                </button>
-                                <button type="button" id="btnQuickPrintInvoiceSummary" onclick="printRouteInvoicesSummary()" style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:linear-gradient(135deg,#3730a3,#4f46e5);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;text-align:left;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="ph-bold ph-file-text" style="font-size:15px;flex-shrink:0;"></i><div><div style="font-weight:700;line-height:1.2;">Inv. Summary</div></div>
-                                </button>
-                                <button type="button" id="btnQuickPrintLoadingSheet" onclick="printLoadingSheet('full')" style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:linear-gradient(135deg,#065f46,#059669);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;text-align:left;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="ph-bold ph-truck" style="font-size:15px;flex-shrink:0;"></i><div><div style="font-weight:700;line-height:1.2;">Loading Sheet</div></div>
-                                </button>
-                                <button type="button" id="btnQuickPrintLoadingSummary" onclick="printLoadingSheet('summary')" style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;text-align:left;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="ph-bold ph-list-checks" style="font-size:15px;flex-shrink:0;"></i><div><div style="font-weight:700;line-height:1.2;">Load Summary</div></div>
-                                </button>
-                                <button type="button" id="btnQuickPrintReturnStock" onclick="printReturnStock()" style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:linear-gradient(135deg,#b45309,#d97706);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;text-align:left;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="ph-bold ph-package" style="font-size:15px;flex-shrink:0;"></i><div><div style="font-weight:700;line-height:1.2;">Return Stock</div></div>
-                                </button>
-                                <button type="button" id="btnQuickPrintBalancingReport" onclick="printBalancingReport()" style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:linear-gradient(135deg,#7e22ce,#9333ea);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;text-align:left;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="ph-bold ph-scales" style="font-size:15px;flex-shrink:0;"></i><div><div style="font-weight:700;line-height:1.2;">Balancing Rpt.</div></div>
-                                </button>
-                                <button type="button" id="btnQuickPrintSpreadsheet" onclick="printLoadingSheetSpreadsheet()" style="display:flex;align-items:center;gap:7px;padding:8px 10px;background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;text-align:left;transition:opacity 0.15s;grid-column:span 2;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                                    <i class="ph-bold ph-file-xls" style="font-size:15px;flex-shrink:0;"></i><div><div style="font-weight:700;line-height:1.2;">Export Loading Sheet (Excel)</div></div>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Unproductive Visits Card -->
-                        <div style="background:rgba(255,255,255,0.88); backdrop-filter:blur(24px); border:1px solid rgba(255,255,255,0.7); border-radius:14px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.12);">
-                            <div style="background:linear-gradient(135deg,#9a3412,#ea580c); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; color:#fff;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <i class="ph-bold ph-x-circle" style="font-size:14px;"></i>
-                                    <span style="font-weight:700; font-size:12px;">Unproductive Visits</span>
+                                <div style="padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+                                    <div>
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Odometer Range</div>
+                                        <div style="font-size:11px;font-weight:700;color:#18181b;font-family:var(--f-mono);"><span id="tab1StartMeter">—</span> <span style="color:#94a3b8;font-weight:400;">→</span> <span id="tab1EndMeter">—</span></div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Distance</div>
+                                        <div id="tab1Distance" style="font-size:13px;font-weight:800;color:#18181b;font-family:var(--f-mono);">—</div>
+                                    </div>
                                 </div>
-                                <span id="tab1UnproductiveBadge" style="background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.35);padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;">0 Visits</span>
                             </div>
-                            <div style="overflow-x:auto; max-height:200px; overflow-y:auto;">
-                                <table class="data-table" style="margin-top:0; width:100%; font-size:11px;">
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Customer</th>
-                                            <th>Reason</th>
-                                            <th style="text-align:center;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tab1UnproductiveTbody">
-                                        <tr><td colspan="4" style="text-align:center; color:#888; padding:12px;">No unproductive visits recorded.</td></tr>
-                                    </tbody>
-                                </table>
+
+                            <!-- ┌─ SECTION: PERFORMANCE ────────────────────────────────┐ -->
+                            <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;">
+                                <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Performance</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                                    <div style="padding:10px;background:#18181b;border-radius:10px;">
+                                        <div style="font-size:9px;font-weight:600;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Rep Sales</div>
+                                        <div id="tab1SalesValue" style="font-size:13px;font-weight:800;color:#fff;font-family:var(--f-mono);line-height:1.2;">—</div>
+                                        <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:3px;display:flex;align-items:center;gap:3px;"><i class="ph ph-user" style="font-size:10px;"></i> Rep Total</div>
+                                    </div>
+                                    <div style="padding:10px;background:#fff;border-radius:10px;border:1px solid #e8eaed;">
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Actual Sales</div>
+                                        <div id="tab1ActualSalesValue" style="font-size:13px;font-weight:800;color:#18181b;font-family:var(--f-mono);line-height:1.2;">—</div>
+                                        <div style="font-size:9px;color:#b0bac7;margin-top:3px;display:flex;align-items:center;gap:3px;"><i class="ph ph-check-circle" style="font-size:10px;"></i> Adjusted</div>
+                                    </div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                                    <div style="padding:10px;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;display:flex;flex-direction:column;align-items:flex-start;">
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Total Bills</div>
+                                        <div id="tab1BillsCount" style="font-size:20px;font-weight:800;color:#18181b;font-family:var(--f-mono);line-height:1;">—</div>
+                                        <div style="font-size:9px;color:#b0bac7;margin-top:4px;display:flex;align-items:center;gap:3px;"><i class="ph ph-receipt" style="font-size:10px;"></i> Invoices</div>
+                                    </div>
+                                    <div style="padding:10px;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9;display:flex;flex-direction:column;align-items:flex-start;">
+                                        <div style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Failed Visits</div>
+                                        <div id="tab1UnproductiveCount" style="font-size:20px;font-weight:800;color:#18181b;font-family:var(--f-mono);line-height:1;">0</div>
+                                        <div style="font-size:9px;color:#b0bac7;margin-top:4px;display:flex;align-items:center;gap:3px;"><i class="ph ph-x-circle" style="font-size:10px;"></i> Unproductive</div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Hidden: tab1RouteNotes (keeps save functionality, hidden from view) -->
-                        <textarea id="tab1RouteNotes" style="display:none;" placeholder="Route notes..."></textarea>
+                            <!-- ┌─ SECTION: GPS WAYPOINTS ──────────────────────────────┐ -->
+                            <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                    <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">GPS Waypoints</div>
+                                    <span id="tab1PathPointCount" style="font-size:10px;color:#94a3b8;font-weight:600;"></span>
+                                </div>
+                                <div id="tab1PathStepEmpty" style="font-size:11px;color:#b0bac7;text-align:center;padding:10px 0;">No GPS data available</div>
+                                <div id="tab1PathStepList" style="display:none;max-height:140px;overflow-y:auto;">
+                                    <ol id="tab1PathStepOl" style="margin:0;padding:0 0 0 16px;display:flex;flex-direction:column;gap:3px;"></ol>
+                                </div>
+                            </div>
 
-                    </div><!-- /right overlay panel -->
+                            <!-- ┌─ SECTION: BOUND ROUTE (hidden by default) ────────────┐ -->
+                            <div id="boundRouteSummaryContainer" style="display:none;padding:12px 16px;border-bottom:1px solid #f1f5f9;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                    <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;"><i class="ph ph-link"></i> Bound Route</div>
+                                    <button type="button" onclick="unbindCombinedRoute()" style="padding:3px 10px;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px;display:inline-flex;align-items:center;gap:4px;">
+                                        <i class="ph ph-link-break"></i> Undo
+                                    </button>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
+                                    <div><span style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:2px;">Routes</span><strong id="brsConstituentsList" style="color:#18181b;">—</strong></div>
+                                    <div><span style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:2px;">Customers</span><strong id="brsTotalCustomers" style="color:#18181b;">—</strong></div>
+                                    <div><span style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:2px;">Invoices</span><strong id="brsTotalInvoices" style="color:#18181b;">—</strong></div>
+                                    <div><span style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:2px;">Total Value</span><strong id="brsTotalValue" style="color:#18181b;">—</strong></div>
+                                    <div style="grid-column:span 2;"><span style="font-size:9px;font-weight:600;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:2px;">Items</span><strong id="brsTotalProducts" style="color:#18181b;">—</strong></div>
+                                </div>
+                            </div>
+
+                            <!-- ┌─ SECTION: UNPRODUCTIVE VISITS ───────────────────────┐ -->
+                            <div style="padding:12px 16px;border-bottom:1px solid #f1f5f9;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                    <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;">Unproductive Visits</div>
+                                    <span id="tab1UnproductiveBadge" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">0 Visits</span>
+                                </div>
+                                <div style="overflow-x:auto;max-height:160px;overflow-y:auto;">
+                                    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                                        <thead>
+                                            <tr style="border-bottom:1px solid #e8eaed;">
+                                                <th style="text-align:left;padding:5px 8px;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;">Time</th>
+                                                <th style="text-align:left;padding:5px 8px;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Customer</th>
+                                                <th style="text-align:left;padding:5px 8px;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Reason</th>
+                                                <th style="text-align:center;padding:5px 8px;font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;">Map</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tab1UnproductiveTbody">
+                                            <tr><td colspan="4" style="text-align:center;color:#b0bac7;padding:12px;font-size:11px;">No unproductive visits recorded.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- ┌─ SECTION: PRINT CENTER ──────────────────────────────┐ -->
+                            <div style="padding:12px 16px;">
+                                <div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">Print & Export</div>
+                                <div style="display:flex;flex-direction:column;gap:5px;">
+                                    <button type="button" id="btnQuickPrintAllInvoices" onclick="printRouteInvoices()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e8eaed;border-radius:8px;font-size:11px;font-weight:600;color:#18181b;cursor:pointer;transition:background 0.12s;text-align:left;width:100%;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                        <i class="ph ph-files" style="font-size:14px;color:#64748b;flex-shrink:0;"></i>
+                                        <span>Print All Invoices</span>
+                                    </button>
+                                    <button type="button" id="btnQuickPrintInvoiceSummary" onclick="printRouteInvoicesSummary()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e8eaed;border-radius:8px;font-size:11px;font-weight:600;color:#18181b;cursor:pointer;transition:background 0.12s;text-align:left;width:100%;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                        <i class="ph ph-file-text" style="font-size:14px;color:#64748b;flex-shrink:0;"></i>
+                                        <span>Print Invoice Summary</span>
+                                    </button>
+                                    <button type="button" id="btnQuickPrintLoadingSheet" onclick="printLoadingSheet('full')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e8eaed;border-radius:8px;font-size:11px;font-weight:600;color:#18181b;cursor:pointer;transition:background 0.12s;text-align:left;width:100%;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                        <i class="ph ph-truck" style="font-size:14px;color:#64748b;flex-shrink:0;"></i>
+                                        <span>Print Loading Sheet</span>
+                                    </button>
+                                    <button type="button" id="btnQuickPrintLoadingSummary" onclick="printLoadingSheet('summary')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e8eaed;border-radius:8px;font-size:11px;font-weight:600;color:#18181b;cursor:pointer;transition:background 0.12s;text-align:left;width:100%;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                        <i class="ph ph-list-checks" style="font-size:14px;color:#64748b;flex-shrink:0;"></i>
+                                        <span>Print Loading Summary</span>
+                                    </button>
+                                    <button type="button" id="btnQuickPrintReturnStock" onclick="printReturnStock()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e8eaed;border-radius:8px;font-size:11px;font-weight:600;color:#18181b;cursor:pointer;transition:background 0.12s;text-align:left;width:100%;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                        <i class="ph ph-package" style="font-size:14px;color:#64748b;flex-shrink:0;"></i>
+                                        <span>Print Return Stock</span>
+                                    </button>
+                                    <button type="button" id="btnQuickPrintBalancingReport" onclick="printBalancingReport()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fff;border:1px solid #e8eaed;border-radius:8px;font-size:11px;font-weight:600;color:#18181b;cursor:pointer;transition:background 0.12s;text-align:left;width:100%;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                        <i class="ph ph-scales" style="font-size:14px;color:#64748b;flex-shrink:0;"></i>
+                                        <span>Print Balancing Report</span>
+                                    </button>
+                                    <button type="button" id="btnQuickPrintSpreadsheet" onclick="printLoadingSheetSpreadsheet()" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#18181b;border:none;border-radius:8px;font-size:11px;font-weight:600;color:#fff;cursor:pointer;transition:opacity 0.12s;text-align:left;width:100%;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                                        <i class="ph ph-file-xls" style="font-size:14px;flex-shrink:0;"></i>
+                                        <span>Export Loading Sheet (Excel)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div><!-- /scrollable content -->
+
+                        <!-- Hidden notes textarea (functional, not displayed) -->
+                        <textarea id="tab1RouteNotes" style="display:none;"></textarea>
+
+                    </div><!-- /right panel -->
 
                 </div>
-
                 <!-- TAB 2: CREDIT COLLECTIONS -->
 
                 <!-- TAB 3: ADJUSTMENTS -->

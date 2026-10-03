@@ -730,12 +730,23 @@
         document.getElementById('tab1RepName').innerText = d.getAttribute('data-rep') || '';
         
         const status = d.getAttribute('data-status') || '';
+        const isFinished = (status === 'Completed' || status === 'Finalized');
+
+        // Top toolbar status chip
         const statusBadge = document.getElementById('tab1Status');
         if (statusBadge) {
-            statusBadge.innerText = status;
-            statusBadge.style.background = (status === 'Completed' || status === 'Finalized') ? '#e2f0d9' : '#fff3cd';
-            statusBadge.style.color = (status === 'Completed' || status === 'Finalized') ? '#2e7d32' : '#d97706';
-            statusBadge.style.borderColor = (status === 'Completed' || status === 'Finalized') ? '#2e7d32' : '#d97706';
+            statusBadge.innerText = status || '—';
+            statusBadge.style.background = isFinished ? '#dcfce7' : '#fef9c3';
+            statusBadge.style.color = isFinished ? '#166534' : '#854d0e';
+            statusBadge.style.borderColor = isFinished ? '#bbf7d0' : '#fde68a';
+        }
+        // Right panel status badge (B&W)
+        const statusBadge2 = document.getElementById('tab1StatusBadge');
+        if (statusBadge2) {
+            statusBadge2.innerText = status || '—';
+            statusBadge2.style.background = isFinished ? '#f0fdf4' : '#f8fafc';
+            statusBadge2.style.color = isFinished ? '#166534' : '#475569';
+            statusBadge2.style.borderColor = isFinished ? '#86efac' : '#e2e8f0';
         }
 
         const repSales = d.getAttribute('data-rep-sales') || d.getAttribute('data-sales') || '0.00';
