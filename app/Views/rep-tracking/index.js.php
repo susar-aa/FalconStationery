@@ -4516,6 +4516,19 @@
             });
     }
 
+    function isValidLatLng(lat, lng) {
+        if (lat === null || lat === undefined || lng === null || lng === undefined) return false;
+        const nLat = parseFloat(lat);
+        const nLng = parseFloat(lng);
+        if (isNaN(nLat) || isNaN(nLng)) return false;
+        if (nLat === 0 && nLng === 0) return false;
+        // Katunayake dummy default fallback check (7.1824, 79.8801)
+        if (Math.abs(nLat - 7.1824) < 0.001 && Math.abs(nLng - 79.8801) < 0.001) return false;
+        // Sri Lanka bounding box (5.5 - 10.5 N, 79.0 - 82.5 E)
+        if (nLat < 5.5 || nLat > 10.5 || nLng < 79.0 || nLng > 82.5) return false;
+        return true;
+    }
+
     function renderTab1RoutePath(path) {
         const emptyOverlay = document.getElementById('tab1MapEmptyOverlay');
         const stepList = document.getElementById('tab1PathStepList');
@@ -4525,7 +4538,8 @@
         const mapNameEl = document.getElementById('tab1MapRouteName');
         const mapPointCountEl = document.getElementById('tab1MapPointCount');
 
-        const wps = path.waypoints || [];
+        const rawWps = path.waypoints || [];
+        const wps = rawWps.filter(wp => isValidLatLng(wp.lat, wp.lng));
         if (mapNameEl) mapNameEl.innerText = path.route_name || '';
         if (mapPointCountEl) mapPointCountEl.innerText = wps.length ? `(${wps.length} pts)` : '';
         if (pointCountEl) pointCountEl.innerText = wps.length ? `${wps.length} points` : '';
@@ -4562,8 +4576,47 @@
             tab1MapLayers.push(marker);
 
             if (stepOl) {
-                const typeClass = wp.type === 'start' ? 'path-step-start' : wp.type === 'end' ? 'path-step-end' : wp.type === 'unproductive' ? 'path-step-unproductive' : 'path-step-invoice';
-                stepOl.innerHTML += `<li class="${typeClass}"><strong>${wp.time}</strong> — ${wpTitle}</li>`;
+                let cardIcon = '<i class="ph ph-receipt" style="font-size:18px; color:#2563eb;"></i>';
+                let cardBg = '#eff6ff';
+                let badgeBg = '#dbeafe';
+                let badgeColor = '#1e40af';
+                let typeTitle = 'Invoice Issued';
+
+                if (wp.type === 'start') {
+                    cardIcon = '<i class="ph ph-flag" style="font-size:18px; color:#059669;"></i>';
+                    cardBg = '#ecfdf5'; badgeBg = '#d1fae5'; badgeColor = '#065f46';
+                    typeTitle = 'Route Started';
+                } else if (wp.type === 'end') {
+                    cardIcon = '<i class="ph ph-flag-checkered" style="font-size:18px; color:#dc2626;"></i>';
+                    cardBg = '#fef2f2'; badgeBg = '#fee2e2'; badgeColor = '#991b1b';
+                    typeTitle = 'Route End';
+                } else if (wp.type === 'unproductive') {
+                    cardIcon = '<i class="ph ph-x-circle" style="font-size:18px; color:#d97706;"></i>';
+                    cardBg = '#fffbeb'; badgeBg = '#fef3c7'; badgeColor = '#92400e';
+                    typeTitle = 'Unproductive Visit';
+                }
+
+                const amountStr = wp.amount ? ` • <strong>Rs. ${parseFloat(wp.amount).toLocaleString('en-US', {minimumFractionDigits:2})}</strong>` : '';
+
+                stepOl.innerHTML += `
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition:all 0.15s;">
+                        <div style="width:40px; height:40px; border-radius:12px; background:${cardBg}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            ${cardIcon}
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+                                <span style="font-size:13px; font-weight:700; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${wpTitle}</span>
+                                <span style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px; background:${badgeBg}; color:${badgeColor}; white-space:nowrap; flex-shrink:0;">${typeTitle}</span>
+                            </div>
+                            <div style="font-size:11px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${wpDesc}${amountStr}
+                            </div>
+                            <div style="font-size:10px; font-family:var(--f-mono); color:#94a3b8; margin-top:3px; display:flex; align-items:center; gap:4px;">
+                                <i class="ph ph-clock" style="font-size:11px;"></i> ${wp.time}
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
         });
 
@@ -4621,7 +4674,9 @@
 
     function renderRoutePath(path) {
         console.log('[Map Tracking] Rendering route path waypoints:', path);
-        const wps = path.waypoints || [];
+        const rawWps = path.waypoints || [];
+        const wps = rawWps.filter(wp => isValidLatLng(wp.lat, wp.lng));
+
         document.getElementById('pathPointCount').innerText = wps.length ? `(${wps.length} points)` : '(no GPS)';
         document.getElementById('modalRouteName').innerText = path.route_name || '';
 

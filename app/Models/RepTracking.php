@@ -350,6 +350,21 @@ class RepTracking {
     }
 
     /**
+     * Validate whether coordinates are realistic and non-fallback
+     */
+    public function isValidRouteCoordinate($lat, $lng) {
+        if ($lat === null || $lng === null) return false;
+        $lat = (float) $lat;
+        $lng = (float) $lng;
+        if ($lat == 0.0 && $lng == 0.0) return false;
+        // Check Katunayake dummy default fallback (7.1824, 79.8801)
+        if (abs($lat - 7.1824) < 0.001 && abs($lng - 79.8801) < 0.001) return false;
+        // Sri Lanka realistic bounding box check (lat 5.5 to 10.5, lng 79.0 to 82.5)
+        if ($lat < 5.5 || $lat > 10.5 || $lng < 79.0 || $lng > 82.5) return false;
+        return true;
+    }
+
+    /**
      * Chronological GPS path: day start → each invoice → day end.
      */
     public function getRoutePath($routeId) {
@@ -380,7 +395,7 @@ class RepTracking {
                 $primaryRoute = $route;
             }
 
-            if (!empty($route->start_lat) && !empty($route->start_lng)) {
+            if ($this->isValidRouteCoordinate($route->start_lat, $route->start_lng)) {
                 $waypoints[] = [
                     'type' => 'start',
                     'lat' => (float) $route->start_lat,
@@ -393,60 +408,84 @@ class RepTracking {
 
             $this->db->query("
                 SELECT i.id, i.invoice_number, i.created_at, i.latitude, i.longitude, c.name as customer_name,
+                c.latitude as cust_lat, c.longitude as cust_lng,
                 (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as true_grand_total
                 FROM invoices i
                 JOIN customers c ON i.customer_id = c.id
                 WHERE i.rep_route_id = :rid AND i.status != 'Voided'
-                  AND i.latitude IS NOT NULL AND i.longitude IS NOT NULL
                 ORDER BY i.created_at ASC
             ");
             $this->db->bind(':rid', $rid);
-            $bills = $this->db->resultSet();
+            $bills = $this->db->resultSet() ?: [];
 
             foreach ($bills as $bill) {
-                $waypoints[] = [
-                    'type' => 'invoice',
-                    'id' => (int) $bill->id,
-                    'lat' => (float) $bill->latitude,
-                    'lng' => (float) $bill->longitude,
-                    'time' => $bill->created_at,
-                    'label' => $bill->invoice_number,
-                    'detail' => $bill->customer_name,
-                    'amount' => (float) $bill->true_grand_total,
-                    'sequence' => $seq++,
-                ];
+                $lat = null;
+                $lng = null;
+                if ($this->isValidRouteCoordinate($bill->latitude, $bill->longitude)) {
+                    $lat = (float) $bill->latitude;
+                    $lng = (float) $bill->longitude;
+                } elseif ($this->isValidRouteCoordinate($bill->cust_lat, $bill->cust_lng)) {
+                    $lat = (float) $bill->cust_lat;
+                    $lng = (float) $bill->cust_lng;
+                }
+
+                if ($lat !== null && $lng !== null) {
+                    $waypoints[] = [
+                        'type' => 'invoice',
+                        'id' => (int) $bill->id,
+                        'lat' => $lat,
+                        'lng' => $lng,
+                        'time' => $bill->created_at,
+                        'label' => $bill->invoice_number,
+                        'detail' => $bill->customer_name,
+                        'amount' => (float) $bill->true_grand_total,
+                        'sequence' => $seq++,
+                    ];
+                }
             }
 
             $this->db->query("
-                SELECT uv.id, uv.reason, uv.custom_reason, uv.visit_time, uv.latitude, uv.longitude, c.name as customer_name
+                SELECT uv.id, uv.reason, uv.custom_reason, uv.visit_time, uv.latitude, uv.longitude, c.name as customer_name,
+                c.latitude as cust_lat, c.longitude as cust_lng
                 FROM unproductive_visits uv
                 JOIN customers c ON uv.customer_id = c.id
                 WHERE uv.rep_route_id = :rid
-                  AND uv.latitude IS NOT NULL AND uv.longitude IS NOT NULL
                 ORDER BY uv.visit_time ASC
             ");
             $this->db->bind(':rid', $rid);
             $unprodVisits = $this->db->resultSet() ?: [];
 
             foreach ($unprodVisits as $uv) {
-                $reasonStr = $uv->reason;
-                if ($reasonStr === 'Other' && !empty($uv->custom_reason)) {
-                    $reasonStr .= ' (' . $uv->custom_reason . ')';
+                $lat = null;
+                $lng = null;
+                if ($this->isValidRouteCoordinate($uv->latitude, $uv->longitude)) {
+                    $lat = (float) $uv->latitude;
+                    $lng = (float) $uv->longitude;
+                } elseif ($this->isValidRouteCoordinate($uv->cust_lat, $uv->cust_lng)) {
+                    $lat = (float) $uv->cust_lat;
+                    $lng = (float) $uv->cust_lng;
                 }
-                $waypoints[] = [
-                    'type' => 'unproductive',
-                    'id' => (int) $uv->id,
-                    'lat' => (float) $uv->latitude,
-                    'lng' => (float) $uv->longitude,
-                    'time' => $uv->visit_time,
-                    'label' => 'Unproductive: ' . $reasonStr,
-                    'detail' => $uv->customer_name,
-                    'reason' => $reasonStr,
-                    'custom_reason' => $uv->custom_reason
-                ];
+
+                if ($lat !== null && $lng !== null) {
+                    $reasonStr = $uv->reason;
+                    if ($reasonStr === 'Other' && !empty($uv->custom_reason)) {
+                        $reasonStr .= ' (' . $uv->custom_reason . ')';
+                    }
+                    $waypoints[] = [
+                        'type' => 'unproductive',
+                        'id' => (int) $uv->id,
+                        'lat' => $lat,
+                        'lng' => $lng,
+                        'time' => $uv->visit_time,
+                        'label' => 'Unproductive: ' . $reasonStr,
+                        'detail' => $uv->customer_name,
+                        'reason' => $reasonStr,
+                        'custom_reason' => $uv->custom_reason
+                    ];
+                }
             }
 
-            if (!empty($route->end_lat) && !empty($route->end_lng)) {
+            if ($this->isValidRouteCoordinate($route->end_lat, $route->end_lng)) {
                 $waypoints[] = [
                     'type' => 'end',
                     'lat' => (float) $route->end_lat,
