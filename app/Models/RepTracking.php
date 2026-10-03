@@ -501,9 +501,32 @@ class RepTracking {
             return null;
         }
 
-        // Sort waypoints chronologically by time
-        usort($waypoints, function($a, $b) {
-            return strtotime($a['time']) - strtotime($b['time']);
+        // Sort waypoints: Day Start first, Day End last, middle activity chronologically ascending
+        $parseTime = function($item) use ($primaryRoute) {
+            $t = $item['time'] ?? null;
+            if (empty($t) || $t === 'N/A') {
+                return 0;
+            }
+            if (preg_match('/^\d{2}:\d{2}(:\d{2})?$/', trim($t))) {
+                $routeDate = (!empty($primaryRoute->start_time) && strlen($primaryRoute->start_time) >= 10) ? substr($primaryRoute->start_time, 0, 10) : date('Y-m-d');
+                $t = $routeDate . ' ' . trim($t);
+            }
+            $ts = strtotime($t);
+            return ($ts !== false && $ts > 0) ? $ts : 0;
+        };
+
+        usort($waypoints, function($a, $b) use ($parseTime) {
+            if ($a['type'] === 'start' && $b['type'] !== 'start') return -1;
+            if ($b['type'] === 'start' && $a['type'] !== 'start') return 1;
+            if ($a['type'] === 'end' && $b['type'] !== 'end') return 1;
+            if ($b['type'] === 'end' && $a['type'] !== 'end') return -1;
+
+            $timeA = $parseTime($a);
+            $timeB = $parseTime($b);
+            if ($timeA === $timeB) {
+                return ($a['id'] ?? 0) <=> ($b['id'] ?? 0);
+            }
+            return $timeA <=> $timeB;
         });
 
         // Re-assign sequences chronologically

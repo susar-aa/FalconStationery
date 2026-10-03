@@ -4559,6 +4559,25 @@
 
         const rawWps = path.waypoints || [];
         const wps = rawWps.filter(wp => isValidLatLng(wp.lat, wp.lng));
+
+        // Sort waypoints: Day Start first, Day End last, middle activities chronologically ascending
+        const parseWpTime = (item) => {
+            if (!item.time || item.time === 'N/A') return 0;
+            const t = Date.parse(item.time);
+            return isNaN(t) ? 0 : t;
+        };
+
+        wps.sort((a, b) => {
+            if (a.type === 'start' && b.type !== 'start') return -1;
+            if (b.type === 'start' && a.type !== 'start') return 1;
+            if (a.type === 'end' && b.type !== 'end') return 1;
+            if (b.type === 'end' && a.type !== 'end') return -1;
+
+            const tA = parseWpTime(a);
+            const tB = parseWpTime(b);
+            return tA - tB;
+        });
+
         if (mapNameEl) mapNameEl.innerText = path.route_name || '';
         if (mapPointCountEl) mapPointCountEl.innerText = wps.length ? `(${wps.length} pts)` : '';
         if (pointCountEl) pointCountEl.innerText = wps.length ? `${wps.length} points` : '';
