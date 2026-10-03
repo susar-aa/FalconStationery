@@ -838,12 +838,12 @@
 
     /* Tab 1: Fullscreen Map Panel */
     #tabpanel-1:not([style*="display:none"]) { min-height: 600px; }
-    #tab1RightPanel { scrollbar-width: thin; scrollbar-color: #e2e8f0 transparent; }
-    #tab1RightPanel::-webkit-scrollbar { width: 4px; }
-    #tab1RightPanel::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-    #tab1PathStepList { scrollbar-width: thin; scrollbar-color: #e2e8f0 transparent; }
+    #tab1PanelOverview, #tab1PanelPrint { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
+    #tab1PanelOverview::-webkit-scrollbar, #tab1PanelPrint::-webkit-scrollbar { width: 4px; }
+    #tab1PanelOverview::-webkit-scrollbar-thumb, #tab1PanelPrint::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+    #tab1PathStepList { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
     #tab1PathStepList::-webkit-scrollbar { width: 3px; }
-    #tab1PathStepList::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+    #tab1PathStepList::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
     #tab1PathStepList ol { list-style-type: decimal; }
     #tab1PathStepList li { font-size: 11px; color: #475569; padding: 2px 0; }
     #tab1PathStepList li.path-step-start strong { color: #059669; }

@@ -673,6 +673,15 @@
         const activePanel = document.getElementById('tabpanel-' + tabIndex);
         if (activePanel) {
             activePanel.style.display = 'block';
+            // If Tab 1 is shown, the map container is now visible — re-init if needed and invalidate size
+            if (tabIndex === 1 && tab1Map) {
+                setTimeout(() => {
+                    tab1Map.invalidateSize();
+                    if (window._tab1MapBounds) {
+                        try { tab1Map.fitBounds(window._tab1MapBounds, { padding: [60, 60], maxZoom: 15 }); } catch(e) {}
+                    }
+                }, 200);
+            }
         }
         
         updateSidebarProgress();
@@ -4559,13 +4568,25 @@
         });
 
         if (latlngs.length > 1) {
-            const poly = L.polyline(latlngs, { color: '#2563eb', weight: 4, opacity: 0.75 }).addTo(tab1Map);
+            const poly = L.polyline(latlngs, { color: '#2563eb', weight: 3.5, opacity: 0.8 }).addTo(tab1Map);
             tab1MapLayers.push(poly);
-            tab1Map.fitBounds(poly.getBounds(), { padding: [40, 40] });
-        } else {
-            tab1Map.setView(latlngs[0], 14);
+            window._tab1MapBounds = poly.getBounds();
+            // Invalidate first, then fit — ensures container has correct dimensions
+            setTimeout(() => {
+                tab1Map.invalidateSize();
+                tab1Map.fitBounds(window._tab1MapBounds, { padding: [60, 60], maxZoom: 15 });
+            }, 150);
+            setTimeout(() => {
+                tab1Map.invalidateSize();
+                tab1Map.fitBounds(window._tab1MapBounds, { padding: [60, 60], maxZoom: 15 });
+            }, 500);
+        } else if (latlngs.length === 1) {
+            window._tab1MapBounds = null;
+            setTimeout(() => {
+                tab1Map.invalidateSize();
+                tab1Map.setView(latlngs[0], 14);
+            }, 150);
         }
-        setTimeout(() => tab1Map.invalidateSize(), 150);
     }
 
     function loadRoutePath(routeId) {
