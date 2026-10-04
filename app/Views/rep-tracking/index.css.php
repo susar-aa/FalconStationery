@@ -1,4 +1,40 @@
 <style>
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_semibold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_bold.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+}
+
+body, button, input, select, textarea, .app-workspace, .workspace-tab-panel, .modal-panel, table, td, th {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
     /* Workspace Active Visual Density Optimizations */
     body.workspace-showing .app-container {
         margin-top: 68px !important;
@@ -140,7 +176,7 @@
 
         --primary:        #007aff;
 
-        --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
+        --f-system: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
 
         --t-primary:   #1c1c1e;
