@@ -436,8 +436,10 @@ class RepTracking {
                         'lat' => $lat,
                         'lng' => $lng,
                         'time' => $bill->created_at,
-                        'label' => $bill->invoice_number,
-                        'detail' => $bill->customer_name,
+                        'label' => $bill->customer_name,
+                        'customer_name' => $bill->customer_name,
+                        'invoice_number' => $bill->invoice_number,
+                        'detail' => 'Invoice #' . $bill->invoice_number,
                         'amount' => (float) $bill->true_grand_total,
                         'sequence' => $seq++,
                     ];
@@ -477,8 +479,9 @@ class RepTracking {
                         'lat' => $lat,
                         'lng' => $lng,
                         'time' => $uv->visit_time,
-                        'label' => 'Unproductive: ' . $reasonStr,
-                        'detail' => $uv->customer_name,
+                        'label' => $uv->customer_name,
+                        'customer_name' => $uv->customer_name,
+                        'detail' => 'Reason: ' . $reasonStr,
                         'reason' => $reasonStr,
                         'custom_reason' => $uv->custom_reason
                     ];

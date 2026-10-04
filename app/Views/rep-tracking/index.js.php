@@ -4504,7 +4504,12 @@
 
     function createCustomCircleIcon(wp) {
         const type = wp.type || 'default';
-        const shopName = wp.label || wp.name || 'Location';
+        let shopName = wp.customer_name || '';
+        if (!shopName && (type === 'invoice' || type === 'unproductive')) {
+            shopName = wp.detail || wp.label || wp.name || 'Location';
+        } else if (!shopName) {
+            shopName = wp.label || wp.name || 'Location';
+        }
         
         let iconClass = 'ph ph-map-pin';
         if (type === 'start') iconClass = 'ph ph-flag';
@@ -4544,8 +4549,18 @@
             badgeBg = '#fef3c7'; badgeColor = '#92400e'; badgeText = 'Unproductive Visit'; iconClass = 'ph ph-x-circle';
         }
 
-        const title = wp.label || wp.name || 'Location';
-        const desc = wp.detail || wp.description || '';
+        let shopTitle = wp.customer_name || '';
+        if (!shopTitle && (wp.type === 'invoice' || wp.type === 'unproductive')) {
+            shopTitle = wp.detail || wp.label || wp.name || 'Location';
+        } else if (!shopTitle) {
+            shopTitle = wp.label || wp.name || 'Location';
+        }
+
+        let desc = wp.detail || wp.description || '';
+        if (wp.invoice_number) {
+            desc = 'Invoice #' + wp.invoice_number;
+        }
+
         const amountStr = wp.amount ? `<div style="font-size:13px; font-weight:700; color:#2563eb; margin-top:6px; margin-bottom:4px;">Rs. ${parseFloat(wp.amount).toLocaleString('en-US', {minimumFractionDigits:2})}</div>` : '';
 
         return `
@@ -4554,7 +4569,7 @@
                     <span class="map-popup-badge" style="background:${badgeBg}; color:${badgeColor};">${badgeText}</span>
                     <span style="font-size:14px; color:#64748b;"><i class="${iconClass}"></i></span>
                 </div>
-                <div class="map-popup-title">${title}</div>
+                <div class="map-popup-title">${shopTitle}</div>
                 ${desc ? `<div class="map-popup-desc">${desc}</div>` : ''}
                 ${amountStr}
                 <div class="map-popup-footer">
@@ -4724,8 +4739,11 @@
                     typeTitle = 'Unproductive Visit';
                 }
 
-                const wpTitle = wp.label || wp.name || '';
-                const wpDesc = wp.detail || wp.description || '';
+                const wpTitle = wp.customer_name || (wp.type === 'invoice' || wp.type === 'unproductive' ? wp.detail || wp.label : wp.label || wp.name || '');
+                let wpDesc = wp.detail || wp.description || '';
+                if (wp.invoice_number) {
+                    wpDesc = 'Invoice #' + wp.invoice_number;
+                }
                 const amountStr = wp.amount ? ` • <strong>Rs. ${parseFloat(wp.amount).toLocaleString('en-US', {minimumFractionDigits:2})}</strong>` : '';
 
                 stepOl.innerHTML += `
