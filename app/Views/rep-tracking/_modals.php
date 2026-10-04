@@ -217,45 +217,114 @@
     </div>
 </div>
 
-<!-- Attach Sales Order Modal -->
-<div class="modal-backdrop" id="attachInvoiceModal">
-    <div class="modal-panel" style="max-width: 580px; width: 90%;">
-        <div class="modal-header" style="background: #5c6bc0;">
-            <span><i class="ph ph-link"></i> Attach Sales Orders to Route</span>
-            <button onclick="closeAttachInvoiceModal()" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
-        </div>
-        <div class="modal-body">
+<!-- Attach Sales Order Modal (iOS 2-Panel Split Layout) -->
+<div class="modal-backdrop" id="attachInvoiceModal" style="display:none; align-items:center; justify-content:center; z-index:10000; background:rgba(15,23,42,0.4); backdrop-filter:blur(8px);">
+    <div class="modal-panel" style="max-width: 920px; width: 94%; border-radius: 24px; background: #ffffff; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22); border: 1px solid rgba(226, 232, 240, 0.8); font-family: var(--f-system); display: flex; flex-direction: column;">
+        
+        <!-- Modal Header -->
+        <div style="padding: 18px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
             <div>
-                <label>Search Sales Order or Customer</label>
-                <input type="text" id="invoiceSearchInput" onkeyup="searchUnattachedInvoices()" placeholder="Type SO-XXXX or customer name...">
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>
-                    <label>Start Date</label>
-                    <input type="date" id="soFilterStartDate" onchange="searchUnattachedInvoices()">
+                <div style="font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                    <i class="ph ph-link-simple" style="color: #007aff; font-size: 20px;"></i> Attach Sales Orders to Route
                 </div>
-                <div>
-                    <label>End Date</label>
-                    <input type="date" id="soFilterEndDate" onchange="searchUnattachedInvoices()">
+                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Filter and attach unassigned pending sales orders to this route</div>
+            </div>
+            <button type="button" onclick="closeAttachInvoiceModal()" style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 1px solid #cbd5e1; color: #64748b; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b'">✕</button>
+        </div>
+
+        <!-- Modal Body (2-Panel Split View) -->
+        <div style="display: flex; min-height: 440px; max-height: 65vh; overflow: hidden;">
+            
+            <!-- LEFT PANEL: Filters & Realtime Search (310px) -->
+            <div style="width: 310px; flex-shrink: 0; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                
+                <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;">
+                    <i class="ph ph-funnel" style="font-size: 14px; color: #007aff;"></i> Search & Filters
                 </div>
+
+                <!-- Realtime Search -->
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">Search Keywords</label>
+                    <div style="position: relative;">
+                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #94a3b8;"></i>
+                        <input type="text" id="invoiceSearchInput" oninput="searchUnattachedInvoices()" placeholder="SO number or customer..." style="width: 100%; padding: 10px 12px 10px 36px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; background: #ffffff; outline: none; transition: all 0.15s;" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.15)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">From Date</label>
+                        <input type="date" id="soFilterStartDate" onchange="searchUnattachedInvoices()" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 12px; background: #ffffff;">
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">To Date</label>
+                        <input type="date" id="soFilterEndDate" onchange="searchUnattachedInvoices()" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 12px; background: #ffffff;">
+                    </div>
+                </div>
+
+                <!-- Sales Rep Filter -->
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">Filter by Representative</label>
+                    <select id="soFilterRepSelect" onchange="searchUnattachedInvoices()" style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; background: #ffffff;">
+                        <option value="">All Representatives</option>
+                        <?php if (!empty($data['reps'])): ?>
+                            <?php foreach ($data['reps'] as $rep): ?>
+                                <option value="<?= $rep->id ?>"><?= htmlspecialchars($rep->name ?? ($rep->first_name . ' ' . $rep->last_name)) ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+
+                <!-- Route Filter -->
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">Filter by Route / Territory</label>
+                    <select id="soFilterRouteSelect" onchange="searchUnattachedInvoices()" style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13px; background: #ffffff;">
+                        <option value="">All Routes</option>
+                        <?php if (!empty($data['routes_list'])): ?>
+                            <?php foreach ($data['routes_list'] as $rt): ?>
+                                <option value="<?= $rt->id ?>"><?= htmlspecialchars($rt->name ?? $rt->route_name) ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+
+                <!-- Reset Filters Button -->
+                <button type="button" onclick="resetSalesOrderFilters()" style="margin-top: auto; padding: 10px 14px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 12px; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b'">
+                    <i class="ph ph-arrow-counter-clockwise" style="font-size: 14px;"></i> Reset All Filters
+                </button>
             </div>
-            <div>
-                <label>Status Filter</label>
-                <select id="soFilterStatus" onchange="searchUnattachedInvoices()" style="width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; background: white;">
-                    <option value="">All Statuses</option>
-                    <option value="Unpaid">Unpaid</option>
-                    <option value="Paid">Paid</option>
-                    <option value="Pending">Pending</option>
-                </select>
-            </div>
-            <div id="unattachedInvoicesContainer" style="border: 1px solid #ccc; border-radius: 6px; padding: 10px; max-height: 200px; overflow-y: auto; background: #fafafa; font-size: 12px; margin-top: 5px;">
-                <p style="text-align: center; color: #888; margin: 10px 0;">Start typing to search...</p>
+
+            <!-- RIGHT PANEL: Sales Orders Cards List (Flex: 1) -->
+            <div style="flex: 1; display: flex; flex-direction: column; background: #ffffff; padding: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+                    <div style="font-size: 12px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em;">
+                        Available Orders (<span id="unattachedCount">0</span>)
+                    </div>
+                    <button type="button" onclick="toggleSelectAllUnattached()" style="font-size: 12px; font-weight: 700; color: #007aff; background: none; border: none; cursor: pointer;">
+                        Select All
+                    </button>
+                </div>
+
+                <div id="unattachedInvoicesContainer" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+                    <p style="text-align: center; color: #94a3b8; margin: 60px 0; font-size: 13px;">Type search text or modify filters to query unattached sales orders...</p>
+                </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="qb-btn" onclick="closeAttachInvoiceModal()" style="border:1px solid #ccc; padding:6px 14px; border-radius:4px; font-size:12px; cursor:pointer;">Cancel</button>
-            <button class="qb-btn" onclick="confirmAttachInvoices()" style="background:#5c6bc0; color:#fff; border:none; padding:6px 14px; border-radius:4px; font-size:12px; cursor:pointer; font-weight: bold;">Attach Selected</button>
+
+        <!-- Modal Footer -->
+        <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+                Selected: <strong style="color: #007aff;" id="attachSelectedCount">0</strong> sales order(s)
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="closeAttachInvoiceModal()" style="padding: 10px 20px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 100px; font-size: 13px; font-weight: 700; color: #334155; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">Cancel</button>
+                <button type="button" onclick="confirmAttachInvoices()" style="padding: 10px 24px; background: #007aff; border: none; border-radius: 100px; font-size: 13px; font-weight: 700; color: #ffffff; cursor: pointer; box-shadow: 0 3px 12px rgba(0,122,255,0.3); transition: all 0.15s;" onmouseover="this.style.transform='scale(1.03)'; this.style.background='#0066cc'" onmouseout="this.style.transform='scale(1)'; this.style.background='#007aff'">
+                    <i class="ph ph-link" style="font-size: 16px; margin-right: 4px;"></i> Attach Selected
+                </button>
+            </div>
         </div>
+
     </div>
 </div>
 

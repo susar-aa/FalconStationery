@@ -2047,9 +2047,8 @@ class RepTrackingController extends Controller {
     public function api_get_unattached_invoices() {
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') { die("Invalid Request"); }
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-        $startDate = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
-        $endDate = isset($_GET['end_date']) ? trim($_GET['end_date']) : '';
-        $status = isset($_GET['status']) ? trim($_GET['status']) : '';
+        $repId = isset($_GET['rep_id']) ? trim($_GET['rep_id']) : (isset($_GET['rep']) ? trim($_GET['rep']) : '');
+        $routeId = isset($_GET['route_id']) ? trim($_GET['route_id']) : (isset($_GET['route']) ? trim($_GET['route']) : '');
         
         $invoicesList = [];
         
@@ -2077,6 +2076,15 @@ class RepTrackingController extends Controller {
             if (!empty($endDate)) {
                 $queryStr .= " AND i.invoice_date <= :end_date";
                 $params['end_date'] = $endDate;
+            }
+            if (!empty($repId)) {
+                $queryStr .= " AND (i.user_id = :rep_id OR c.sales_rep_id = :rep_id2)";
+                $params['rep_id'] = $repId;
+                $params['rep_id2'] = $repId;
+            }
+            if (!empty($routeId)) {
+                $queryStr .= " AND c.route_id = :route_id";
+                $params['route_id'] = $routeId;
             }
             if (!empty($status)) {
                 $queryStr .= " AND i.status = :status";
@@ -2123,6 +2131,15 @@ class RepTrackingController extends Controller {
             if (!empty($endDate)) {
                 $soQueryStr .= " AND so.order_date <= :end_date";
                 $soParams['end_date'] = $endDate;
+            }
+            if (!empty($repId)) {
+                $soQueryStr .= " AND (so.created_by = :rep_id OR c.sales_rep_id = :rep_id2)";
+                $soParams['rep_id'] = $repId;
+                $soParams['rep_id2'] = $repId;
+            }
+            if (!empty($routeId)) {
+                $soQueryStr .= " AND c.route_id = :route_id";
+                $soParams['route_id'] = $routeId;
             }
             $soQueryStr .= " ORDER BY so.order_number DESC LIMIT 50";
             $db = new Database();

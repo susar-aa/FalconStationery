@@ -5129,9 +5129,17 @@
         document.getElementById('invoiceSearchInput').value = '';
         document.getElementById('soFilterStartDate').value = '';
         document.getElementById('soFilterEndDate').value = '';
-        document.getElementById('soFilterStatus').value = '';
-        document.getElementById('unattachedInvoicesContainer').innerHTML = '<p style="text-align: center; color: #888;">Type search text or modify filters to query unattached sales orders...</p>';
+        if (document.getElementById('soFilterRepSelect')) document.getElementById('soFilterRepSelect').value = '';
+        if (document.getElementById('soFilterRouteSelect')) document.getElementById('soFilterRouteSelect').value = '';
+        
+        const countElem = document.getElementById('attachSelectedCount');
+        if (countElem) countElem.innerText = '0';
+        
+        const unattachedBadge = document.getElementById('unattachedCount');
+        if (unattachedBadge) unattachedBadge.innerText = '0 orders';
+
         document.getElementById('attachInvoiceModal').style.display = 'flex';
+        searchUnattachedInvoices();
     }
 
     function closeAttachInvoiceModal() {
@@ -5142,41 +5150,120 @@
         const query = document.getElementById('invoiceSearchInput').value;
         const startDate = document.getElementById('soFilterStartDate').value;
         const endDate = document.getElementById('soFilterEndDate').value;
-        const status = document.getElementById('soFilterStatus').value;
+        const repId = document.getElementById('soFilterRepSelect') ? document.getElementById('soFilterRepSelect').value : '';
+        const routeId = document.getElementById('soFilterRouteSelect') ? document.getElementById('soFilterRouteSelect').value : '';
         const container = document.getElementById('unattachedInvoicesContainer');
         
-        container.innerHTML = '<p style="text-align: center; color: #888; margin: 10px 0;">Searching... </p>';
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 16px; color: #64748b; gap: 10px;">
+                <div style="width: 28px; height: 28px; border: 3px solid #cbd5e1; border-top-color: #007aff; border-radius: 50%; animation: iosSpin 0.8s linear infinite;"></div>
+                <span style="font-size: 13px; font-weight: 500;">Searching unattached sales orders...</span>
+            </div>
+            <style>@keyframes iosSpin { to { transform: rotate(360deg); } }</style>
+        `;
         
         let url = '<?= APP_URL ?>/RepTracking/api_get_unattached_invoices?search=' + encodeURIComponent(query);
         if (startDate) url += '&start_date=' + encodeURIComponent(startDate);
         if (endDate) url += '&end_date=' + encodeURIComponent(endDate);
-        if (status) url += '&status=' + encodeURIComponent(status);
+        if (repId) url += '&rep_id=' + encodeURIComponent(repId);
+        if (routeId) url += '&route_id=' + encodeURIComponent(routeId);
         
         fetch(url)
             .then(res => res.json())
             .then(data => {
                 if (data.status !== 'success' || !data.invoices || data.invoices.length === 0) {
-                    container.innerHTML = '<p style="text-align: center; color: #888; margin: 10px 0;">No unattached sales orders found.</p>';
+                    container.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 16px; color: #94a3b8; text-align: center;">
+                            <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom: 8px; opacity: 0.6;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                            </svg>
+                            <div style="font-weight: 600; font-size: 14px; color: #64748b;">No Unattached Sales Orders Found</div>
+                            <div style="font-size: 12px; margin-top: 2px;">Try adjusting your search criteria or date filters.</div>
+                        </div>
+                    `;
+                    const unattachedBadge = document.getElementById('unattachedCount');
+                    if (unattachedBadge) unattachedBadge.innerText = '0 orders';
+                    updateAttachSelectedCount();
                     return;
                 }
                 
-                let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+                const unattachedBadge = document.getElementById('unattachedCount');
+                if (unattachedBadge) unattachedBadge.innerText = data.invoices.length + ' orders';
+                
+                let html = '<div style="display: grid; grid-template-columns: 1fr; gap: 10px;">';
                 data.invoices.forEach(inv => {
-                    let amtFormatted = parseFloat(inv.true_grand_total).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                    let amtFormatted = parseFloat(inv.true_grand_total || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    let repName = inv.sales_rep_name || inv.rep_name || inv.salesperson || 'Unassigned Rep';
+                    let routeName = inv.route_name || inv.territory || '';
+                    
                     html += `
-                        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 6px; border-bottom: 1px solid #f0f0f0; margin-bottom: 0;">
-                            <input type="checkbox" class="attach-invoice-checkbox" value="${inv.id}" style="width: 16px; height: 16px;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: bold; color: #333;">${inv.invoice_number} <span style="font-size: 10px; font-weight: bold; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${inv.status}</span></div>
-                                <div style="font-size: 11px; color: #666;">Customer: <strong>${inv.customer_name}</strong> | Date: ${inv.invoice_date}</div>
+                        <div class="unattached-so-card" onclick="toggleUnattachedCardCheck(this, event)" style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; cursor: pointer; transition: all 0.18s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                            <input type="checkbox" class="attach-invoice-checkbox" value="${inv.id}" onclick="event.stopPropagation(); updateAttachSelectedCount();" style="width: 18px; height: 18px; accent-color: #007aff; cursor: pointer; flex-shrink: 0;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+                                    <span style="font-weight: 700; font-size: 14px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${inv.customer_name}</span>
+                                    <span style="font-weight: 800; font-family: monospace; font-size: 14px; color: #059669; white-space: nowrap;">Rs ${amtFormatted}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; color: #64748b;">
+                                    <span style="background: #eff6ff; color: #1d4ed8; font-weight: 700; padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 11px;">${inv.invoice_number}</span>
+                                    <span>📅 ${inv.invoice_date}</span>
+                                    <span>👤 ${repName}</span>
+                                    ${routeName ? `<span style="background: #f1f5f9; color: #475569; padding: 1px 6px; border-radius: 4px;">🛣️ ${routeName}</span>` : ''}
+                                </div>
                             </div>
-                            <div style="font-weight: bold; font-family: monospace; color: #2e7d32;">Rs ${amtFormatted}</div>
-                        </label>
+                        </div>
                     `;
                 });
                 html += '</div>';
                 container.innerHTML = html;
+                updateAttachSelectedCount();
+            })
+            .catch(err => {
+                console.error('[searchUnattachedInvoices Error]', err);
+                container.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px; font-size: 13px;">Failed to load sales orders. Please try again.</div>`;
             });
+    }
+
+    function toggleUnattachedCardCheck(card, event) {
+        const checkbox = card.querySelector('.attach-invoice-checkbox');
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            updateAttachSelectedCount();
+        }
+    }
+
+    function updateAttachSelectedCount() {
+        const checkboxes = document.querySelectorAll('.attach-invoice-checkbox');
+        let checkedCount = 0;
+        checkboxes.forEach(cb => {
+            const card = cb.closest('.unattached-so-card');
+            if (cb.checked) {
+                checkedCount++;
+                if (card) {
+                    card.style.borderColor = '#007aff';
+                    card.style.background = '#f0f7ff';
+                    card.style.boxShadow = '0 0 0 1px #007aff';
+                }
+            } else {
+                if (card) {
+                    card.style.borderColor = '#e2e8f0';
+                    card.style.background = '#ffffff';
+                    card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)';
+                }
+            }
+        });
+        const countElem = document.getElementById('attachSelectedCount');
+        if (countElem) countElem.innerText = checkedCount;
+    }
+
+    function toggleSelectAllUnattached() {
+        const checkboxes = document.querySelectorAll('.attach-invoice-checkbox');
+        if (checkboxes.length === 0) return;
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+        });
+        updateAttachSelectedCount();
     }
 
     function confirmAttachInvoices() {
@@ -5209,7 +5296,8 @@
         document.getElementById('invoiceSearchInput').value = '';
         document.getElementById('soFilterStartDate').value = '';
         document.getElementById('soFilterEndDate').value = '';
-        document.getElementById('soFilterStatus').value = '';
+        if (document.getElementById('soFilterRepSelect')) document.getElementById('soFilterRepSelect').value = '';
+        if (document.getElementById('soFilterRouteSelect')) document.getElementById('soFilterRouteSelect').value = '';
         searchUnattachedInvoices();
     }
 
@@ -6289,6 +6377,9 @@ window.buildAccountOptions = buildAccountOptions;
     window.searchUnattachedInvoices = searchUnattachedInvoices;
     window.confirmAttachInvoices = confirmAttachInvoices;
     window.resetSalesOrderFilters = resetSalesOrderFilters;
+    window.toggleUnattachedCardCheck = toggleUnattachedCardCheck;
+    window.updateAttachSelectedCount = updateAttachSelectedCount;
+    window.toggleSelectAllUnattached = toggleSelectAllUnattached;
     window.toggleDotsMenu = toggleDotsMenu;
     window.closeAllDotsMenus = closeAllDotsMenus;
     window.updateSingleInvoiceDeliveryStatus = updateSingleInvoiceDeliveryStatus;
