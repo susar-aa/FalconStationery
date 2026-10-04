@@ -2232,7 +2232,7 @@
         if (!sel || sel.dataset.searchableInit === 'true') return;
         sel.dataset.searchableInit = 'true';
 
-        sel.style.display = 'none';
+        sel.style.setProperty('display', 'none', 'important');
 
         const wrapper = document.createElement('div');
         wrapper.className = 'custom-searchable-select';

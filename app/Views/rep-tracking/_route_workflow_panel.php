@@ -509,7 +509,7 @@
 
                     <!-- Form View -->
                     <div id="adjDeliveryFormView">
-                        <form id="adjDeliveryArrangeForm" style="max-width: 580px; margin: 0 auto;">
+                        <form id="adjDeliveryArrangeForm" style="max-width: 820px; margin: 0 auto;">
                             
                             <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 20px rgba(15,23,42,0.05); padding:24px;">
                                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #f1f5f9;">
@@ -522,49 +522,56 @@
                                     </div>
                                 </div>
 
-                                <div style="display:flex; flex-direction:column; gap:18px;">
-                                    <div>
-                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Delivery Date</label>
-                                        <input type="date" id="adjDaDate" value="<?= date('Y-m-d') ?>" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                                <!-- 2-Column Grid Layout -->
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px 24px; margin-bottom:20px;">
+                                    <!-- Left Column: Date & Vehicle -->
+                                    <div style="display:flex; flex-direction:column; gap:18px;">
+                                        <div>
+                                            <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Delivery Date</label>
+                                            <input type="date" id="adjDaDate" value="<?= date('Y-m-d') ?>" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                                        </div>
+
+                                        <div>
+                                            <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Vehicle Number *</label>
+                                            <select id="adjDaVehicle" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
+                                                <option value="">-- Select Vehicle --</option>
+                                                <?php foreach($data['vehicles'] as $v): ?>
+                                                    <?php if($v->status === 'Active'): ?>
+                                                        <option value="<?= htmlspecialchars($v->vehicle_number) ?>"><?= htmlspecialchars($v->vehicle_number) ?></option>
+                                                    <?php endif; ?>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Vehicle Number *</label>
-                                        <select id="adjDaVehicle" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;">
-                                            <option value="">-- Select Vehicle --</option>
-                                            <?php foreach($data['vehicles'] as $v): ?>
-                                                <?php if($v->status === 'Active'): ?>
-                                                    <option value="<?= htmlspecialchars($v->vehicle_number) ?>"><?= htmlspecialchars($v->vehicle_number) ?></option>
-                                                <?php endif; ?>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
+                                    <!-- Right Column: Driver & Partner -->
+                                    <div style="display:flex; flex-direction:column; gap:18px;">
+                                        <div>
+                                            <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Driver Name *</label>
+                                            <select id="adjDaDriver" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
+                                                <option value="">-- Select Driver --</option>
+                                                <?php foreach($data['drivers'] as $d): ?>
+                                                    <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
 
-                                    <div>
-                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Driver Name *</label>
-                                        <select id="adjDaDriver" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;">
-                                            <option value="">-- Select Driver --</option>
-                                            <?php foreach($data['drivers'] as $d): ?>
-                                                <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <div>
+                                            <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Partner / Helper</label>
+                                            <select id="adjDaPartner" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
+                                                <option value="">-- None --</option>
+                                                <?php foreach($data['drivers'] as $d): ?>
+                                                    <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                     </div>
+                                </div>
 
-                                    <div>
-                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Partner / Helper</label>
-                                        <select id="adjDaPartner" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;">
-                                            <option value="">-- None --</option>
-                                            <?php foreach($data['drivers'] as $d): ?>
-                                                <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-
-                                    <div style="margin-top: 10px;">
-                                        <button id="auto-evt-button-22" type="button" style="width:100%; padding:12px; background:#007aff; border:none; color:#ffffff; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(0,122,255,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.02)'; this.style.background='#0062cc'" onmouseout="this.style.transform='scale(1)'; this.style.background='#007aff'">
-                                            <i class="ph ph-truck" style="font-size:18px;"></i> Save Delivery Arrangement
-                                        </button>
-                                    </div>
+                                <div style="margin-top: 10px;">
+                                    <button id="auto-evt-button-22" type="button" style="width:100%; padding:12px; background:#007aff; border:none; color:#ffffff; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(0,122,255,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.01)'; this.style.background='#0062cc'" onmouseout="this.style.transform='scale(1)'; this.style.background='#007aff'">
+                                        <i class="ph ph-truck" style="font-size:18px;"></i> Save Delivery Arrangement
+                                    </button>
                                 </div>
                             </div>
 
