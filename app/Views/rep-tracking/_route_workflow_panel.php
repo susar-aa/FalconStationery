@@ -13,6 +13,7 @@
             <button id="auto-evt-button-7" class="scroll-tab-btn" ><i class="ph ph-truck"></i> Loading Checklist</button>
             <button id="auto-evt-button-8" class="scroll-tab-btn" ><i class="ph ph-scales"></i> Variance Audit</button>
             <button id="auto-evt-button-9" class="scroll-tab-btn" ><i class="ph ph-map-trifold"></i> Delivery Arrangement</button>
+            <button id="btnTabCreditBills" class="scroll-tab-btn" ><i class="ph ph-receipt"></i> Credit Bills</button>
             <button id="auto-evt-button-11" class="scroll-tab-btn" ><i class="ph ph-steering-wheel"></i> Delivery Execution</button>
             <button id="btnTabExpenses" class="scroll-tab-btn" ><i class="ph ph-receipt"></i> Expenses</button>
             <button id="auto-evt-button-10" class="scroll-tab-btn" ><i class="ph ph-currency-dollar"></i> Reconciliation</button>
@@ -60,6 +61,13 @@
                         <div class="step-info">
                             <span class="step-title">Delivery Arrange</span>
                             <span class="step-desc">Assign driver & vehicle</span>
+                        </div>
+                    </div>
+                    <div class="sidebar-step-item" id="sb-step-14" title="Credit Bills">
+                        <div class="step-dot"><i class="ph-bold ph-receipt"></i></div>
+                        <div class="step-info">
+                            <span class="step-title">Credit Bills</span>
+                            <span class="step-desc">Select credit invoices</span>
                         </div>
                     </div>
                     <div class="sidebar-step-item" id="sb-step-8" title="Delivery Execution">
@@ -479,32 +487,32 @@
                     <div id="varianceAuditBox" style="flex:1; min-height:0; overflow-y:auto; padding:20px 24px 110px 24px;"></div>
                 </div>
 
-                <!-- TAB 6: DISPATCH -->
+                <!-- TAB 6: DISPATCH / DELIVERY ARRANGEMENT -->
                 <div class="workspace-tab-panel" id="tabpanel-6" style="display:none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <div>
-                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Logistics Binding & Dispatch</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Assign driver, vehicle, helper and select outstanding credit bills to dispatch with this delivery manifest.</p>
+                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Delivery Arrangement</h3>
+                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Assign driver, vehicle, and helper for this delivery manifest.</p>
                         </div>
                         <div>
-                            <button id="auto-evt-button-21" type="button"  class="macos-btn-secondary">
+                            <button id="auto-evt-button-21" type="button" class="macos-btn-secondary">
                                 <i class="ph ph-printer"></i> Print Loading Summary
                             </button>
                         </div>
                     </div>
                     
                     <!-- Global Status Banner -->
-                    <div id="adjDeliveryStatusBanner" class="macos-banner" style="display:none;">
+                    <div id="adjDeliveryStatusBanner" class="macos-banner" style="display:none; margin-bottom: 20px;">
                         <i class="ph-bold ph-paperclip" style="font-size: 16px;"></i>
                         <span>Delivery Manifest <strong id="adjDeliveryStatusId">#--</strong> successfully generated. Ready for warehouse.</span>
                     </div>
 
-                    <!-- Form View (Always Visible macOS Split Layout) -->
+                    <!-- Form View (Delivery Details Only) -->
                     <div id="adjDeliveryFormView">
-                        <form id="adjDeliveryArrangeForm" style="display: flex; flex-wrap: wrap; gap: 20px; max-width: 1150px; margin: 0 auto; align-items: stretch;">
+                        <form id="adjDeliveryArrangeForm" style="max-width: 620px; margin: 0 auto;">
                             
-                            <!-- Left Card: Delivery Details -->
-                            <div class="macos-window" style="flex: 1 1 380px; margin: 0; display: flex; flex-direction: column;">
+                            <!-- Delivery Details Card -->
+                            <div class="macos-window" style="margin: 0; display: flex; flex-direction: column;">
                                 <div class="macos-titlebar">
                                     <div class="macos-dots">
                                         <span class="macos-dot close"></span>
@@ -513,83 +521,96 @@
                                     </div>
                                     <span class="macos-title">Delivery Details</span>
                                 </div>
-                                <div class="macos-content" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                                    <div style="display: flex; flex-direction: column; gap: 15px;">
-                                        <div>
-                                            <label class="macos-label">Delivery Date</label>
-                                            <input type="date" id="adjDaDate" class="macos-input" value="<?= date('Y-m-d') ?>">
-                                        </div>
-
-                                        <div>
-                                            <label class="macos-label">Vehicle Number *</label>
-                                            <select id="adjDaVehicle" class="macos-select" required>
-                                                <option value="">-- Select Vehicle --</option>
-                                                <?php foreach($data['vehicles'] as $v): ?>
-                                                    <?php if($v->status === 'Active'): ?>
-                                                        <option value="<?= htmlspecialchars($v->vehicle_number) ?>"><?= htmlspecialchars($v->vehicle_number) ?></option>
-                                                    <?php endif; ?>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label class="macos-label">Driver Name *</label>
-                                            <select id="adjDaDriver" class="macos-select" required>
-                                                <option value="">-- Select Driver --</option>
-                                                <?php foreach($data['drivers'] as $d): ?>
-                                                    <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <label class="macos-label">Partner / Helper</label>
-                                            <select id="adjDaPartner" class="macos-select">
-                                                <option value="">-- None --</option>
-                                                <?php foreach($data['drivers'] as $d): ?>
-                                                    <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
+                                <div class="macos-content" style="padding: 20px; display: flex; flex-direction: column; gap: 18px;">
+                                    <div>
+                                        <label class="macos-label">Delivery Date</label>
+                                        <input type="date" id="adjDaDate" class="macos-input" value="<?= date('Y-m-d') ?>">
                                     </div>
 
-                                    <div style="text-align: right; margin-top: 20px;">
-                                        <button id="auto-evt-button-22" type="button"  class="macos-btn-primary" style="width: 100%; justify-content: center; padding: 10px;">
+                                    <div>
+                                        <label class="macos-label">Vehicle Number *</label>
+                                        <select id="adjDaVehicle" class="macos-select" required>
+                                            <option value="">-- Select Vehicle --</option>
+                                            <?php foreach($data['vehicles'] as $v): ?>
+                                                <?php if($v->status === 'Active'): ?>
+                                                    <option value="<?= htmlspecialchars($v->vehicle_number) ?>"><?= htmlspecialchars($v->vehicle_number) ?></option>
+                                                <?php endif; ?>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="macos-label">Driver Name *</label>
+                                        <select id="adjDaDriver" class="macos-select" required>
+                                            <option value="">-- Select Driver --</option>
+                                            <?php foreach($data['drivers'] as $d): ?>
+                                                <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="macos-label">Partner / Helper</label>
+                                        <select id="adjDaPartner" class="macos-select">
+                                            <option value="">-- None --</option>
+                                            <?php foreach($data['drivers'] as $d): ?>
+                                                <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+
+                                    <div style="text-align: right; margin-top: 10px;">
+                                        <button id="auto-evt-button-22" type="button" class="macos-btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
                                             <i class="ph ph-truck"></i> Save Delivery Arrangement
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Right Card: Credit Bills Dispatch -->
-                            <div class="macos-window" style="flex: 1.2 1 480px; margin: 0; display: flex; flex-direction: column;">
-                                <div class="macos-titlebar">
-                                    <div class="macos-dots">
-                                        <span class="macos-dot close"></span>
-                                        <span class="macos-dot minimize"></span>
-                                        <span class="macos-dot zoom"></span>
-                                    </div>
-                                    <span class="macos-title">Credit Bills Selection</span>
-                                </div>
-                                <div class="macos-content" style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
-                                    <label class="macos-label" style="margin-bottom: 0;">Select Territory Credit Invoices to dispatch with this vehicle</label>
-                                    
-                                    <!-- Search & Route Filter controls -->
-                                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 5px;">
-                                        <input type="text" id="creditBillsSearch" placeholder="Search by customer or invoice..." style="flex: 1.5; padding: 6px 10px; border: 1px solid var(--c-separator); border-radius: var(--r-sm); background: var(--c-bg); color: var(--t-primary); font-size: 12px; outline: none;" >
-                                        <select id="creditBillsRouteFilter" style="flex: 1; padding: 6px 10px; border: 1px solid var(--c-separator); border-radius: var(--r-sm); background: var(--c-bg); color: var(--t-primary); font-size: 12px; outline: none;" >
-                                            <option value="all">All Routes</option>
-                                            <option value="none">No Route / Unassigned</option>
-                                        </select>
-                                    </div>
+                        </form>
+                    </div>
+                </div>
 
-                                    <div id="adjDaBillsContainer" class="macos-checkbox-list" style="flex: 1; min-height: 280px; max-height: none;">
-                                        <!-- Outstanding credit bills list -->
-                                    </div>
-                                </div>
+                <!-- TAB 14: CREDIT BILLS SELECTION -->
+                <div class="workspace-tab-panel" id="tabpanel-14" style="display:none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div>
+                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Credit Bills Selection</h3>
+                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Select territory credit invoices to dispatch with this vehicle delivery manifest.</p>
+                        </div>
+                    </div>
+
+                    <div class="macos-window" style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column;">
+                        <div class="macos-titlebar">
+                            <div class="macos-dots">
+                                <span class="macos-dot close"></span>
+                                <span class="macos-dot minimize"></span>
+                                <span class="macos-dot zoom"></span>
+                            </div>
+                            <span class="macos-title">Credit Bills Selection</span>
+                        </div>
+                        <div class="macos-content" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                            <label class="macos-label" style="margin-bottom: 0;">Select Territory Credit Invoices to dispatch with this vehicle</label>
+                            
+                            <!-- Search & Route Filter controls -->
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px;">
+                                <input type="text" id="creditBillsSearch" placeholder="Search by customer or invoice..." style="flex: 1.5; padding: 8px 12px; border: 1px solid var(--c-separator); border-radius: var(--r-sm); background: var(--c-bg); color: var(--t-primary); font-size: 13px; outline: none;" >
+                                <select id="creditBillsRouteFilter" style="flex: 1; padding: 8px 12px; border: 1px solid var(--c-separator); border-radius: var(--r-sm); background: var(--c-bg); color: var(--t-primary); font-size: 13px; outline: none;" >
+                                    <option value="all">All Routes</option>
+                                    <option value="none">No Route / Unassigned</option>
+                                </select>
                             </div>
 
-                        </form>
+                            <div id="adjDaBillsContainer" class="macos-checkbox-list" style="flex: 1; min-height: 380px; max-height: none;">
+                                <!-- Outstanding credit bills list -->
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <button type="button" onclick="submitAdjustmentsLogisticsArrange()" class="macos-btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
+                                    <i class="ph ph-check-circle"></i> Save Credit Bills Selection
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

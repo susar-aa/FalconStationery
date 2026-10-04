@@ -367,6 +367,7 @@
             { id: 4, icon: '<i class="ph-bold ph-truck"></i>', name: 'Loading', statusKey: 'Loading' },
             { id: 5, icon: '<i class="ph-bold ph-scales"></i>', name: 'Variance Audit', statusKey: 'Variance Adjustment' },
             { id: 6, icon: '<i class="ph-bold ph-map-trifold"></i>', name: 'Delivery Arrange', statusKey: 'Finalizing' },
+            { id: 14, icon: '<i class="ph-bold ph-receipt"></i>', name: 'Credit Bills', statusKey: 'Finalizing' },
             { id: 8, icon: '<i class="ph-bold ph-steering-wheel"></i>', name: 'Delivery Execution', statusKey: 'Finalizing' },
             { id: 12, icon: '<i class="ph-bold ph-receipt"></i>', name: 'Expenses', statusKey: 'Finalizing' },
             { id: 7, icon: '<i class="ph-bold ph-currency-dollar"></i>', name: 'Reconciliation', statusKey: 'Finalizing' },
@@ -669,6 +670,7 @@
             4: 'auto-evt-button-7',
             5: 'auto-evt-button-8',
             6: 'auto-evt-button-9',
+            14: 'btnTabCreditBills',
             7: 'auto-evt-button-10',
             8: 'auto-evt-button-11',
             9: 'auto-evt-button-12',
@@ -721,6 +723,7 @@
                 loadVarianceAdjustmentStage(currentRouteId);
                 break;
             case 6:
+            case 14:
                 loadDispatchStage(currentRouteId);
                 break;
             case 7:
@@ -5774,6 +5777,7 @@
         document.getElementById('auto-evt-button-7')?.addEventListener('click', function(event) { switchRouteTab(4, this); });
         document.getElementById('auto-evt-button-8')?.addEventListener('click', function(event) { switchRouteTab(5, this); });
         document.getElementById('auto-evt-button-9')?.addEventListener('click', function(event) { switchRouteTab(6, this); });
+        document.getElementById('btnTabCreditBills')?.addEventListener('click', function(event) { switchRouteTab(14, this); });
         document.getElementById('auto-evt-button-11')?.addEventListener('click', function(event) { switchRouteTab(8, this); });
         document.getElementById('btnTabExpenses')?.addEventListener('click', function(event) { switchRouteTab(12, this); });
         document.getElementById('auto-evt-button-10')?.addEventListener('click', function(event) { switchRouteTab(7, this); });
@@ -5786,6 +5790,7 @@
         document.getElementById('sb-step-4')?.addEventListener('click', (event) => { switchRouteTab(4); });
         document.getElementById('sb-step-5')?.addEventListener('click', (event) => { switchRouteTab(5); });
         document.getElementById('sb-step-6')?.addEventListener('click', (event) => { switchRouteTab(6); });
+        document.getElementById('sb-step-14')?.addEventListener('click', (event) => { switchRouteTab(14); });
         document.getElementById('sb-step-8')?.addEventListener('click', (event) => { switchRouteTab(8); });
         document.getElementById('sb-step-12')?.addEventListener('click', (event) => { switchRouteTab(12); });
         document.getElementById('sb-step-7')?.addEventListener('click', (event) => { switchRouteTab(7); });
