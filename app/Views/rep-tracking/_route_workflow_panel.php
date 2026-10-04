@@ -428,8 +428,8 @@
 
 
 
-                        </div>
-                    </div>
+
+
 
                         <table class="data-table" style="margin-top:0;">
                             <thead>
@@ -450,6 +450,22 @@
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+                    <!-- Floating Action Bar Fixed to Bottom Center -->
+                    <div style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:center; gap:8px; padding:8px 12px; background:rgba(255, 255, 255, 0.88); backdrop-filter:blur(20px) saturate(190%); -webkit-backdrop-filter:blur(20px) saturate(190%); border:1px solid rgba(226, 232, 240, 0.9); border-radius:100px; box-shadow:0 12px 32px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(0,0,0,0.04);">
+                        <button id="btnTab3CreateSO" type="button" style="padding:9px 18px; background:#007aff; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(0, 122, 255, 0.25); transition:all 0.15s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="ph ph-plus-circle" style="font-size:16px;"></i> Create Sales Order
+                        </button>
+                        <button id="btnTab3AttachSO" type="button" style="padding:9px 18px; background:#5c6bc0; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 8px rgba(92, 107, 192, 0.25); transition:all 0.15s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="ph ph-link" style="font-size:16px;"></i> Attach Sales Order
+                        </button>
+                        <div style="width:1px; height:20px; background:#e2e8f0; margin:0 4px;"></div>
+                        <button id="btnTab3PrintInvoices" type="button" style="padding:9px 16px; background:#f1f5f9; border:1px solid #cbd5e1; color:#0f172a; border-radius:100px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                            <i class="ph ph-printer" style="font-size:16px; color:#475569;"></i> Print All Invoices
+                        </button>
+                        <button id="btnTab3PrintSummary" type="button" style="padding:9px 16px; background:#f1f5f9; border:1px solid #cbd5e1; color:#0f172a; border-radius:100px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.15s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                            <i class="ph ph-file-text" style="font-size:16px; color:#475569;"></i> Print Invoice Summary
+                        </button>
                     </div>
                 </div>
 
