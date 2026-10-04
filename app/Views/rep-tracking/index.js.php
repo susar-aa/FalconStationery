@@ -1863,8 +1863,12 @@
             let invoiceRows = '';
             let currentTotal = 0;
 
+            item.invoices.forEach(inv => {
+                currentTotal += (parseFloat(inv.quantity) || 0);
+            });
+
             const unbalancedVal = item.final_loaded_qty - currentTotal;
-            const isBalanced = (Math.abs(unbalancedVal) < 0.01);
+            const isBalanced = (item.invoices.length === 0 || Math.abs(unbalancedVal) < 0.01);
 
             const cardBg = isBalanced ? '#f0fdf4' : '#ffffff';
             const cardBorder = isBalanced ? '1px solid #86efac' : '1px solid #e2e8f0';
@@ -1875,8 +1879,6 @@
             const cubeIconColor = isBalanced ? '#16a34a' : '#007aff';
 
             item.invoices.forEach((inv, index) => {
-                currentTotal += inv.quantity;
-
                  let actionSelect = '';
                  if (inv.quantity === 0) {
                      actionSelect = `
@@ -1986,16 +1988,17 @@
             </div>
         `;
 
-        if (substitutionHtml) {
-            html += substitutionHtml;
-        }
-
         // 2. Bill Reconciliation Engine Cards Section (Grid layout)
         html += `
             <div id="varianceEngineContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap:16px; margin-bottom:20px;">
                 ${reconciliationPanels}
             </div>
         `;
+
+        // 3. Product Substitutions Section (Below engine cards, above item list)
+        if (substitutionHtml) {
+            html += substitutionHtml;
+        }
 
         // 3. Product Loading Variances Table Section
         html += `
