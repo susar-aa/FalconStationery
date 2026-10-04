@@ -30,6 +30,20 @@ class CustomerController extends Controller {
             }
         }
 
+        if (!$id && isset($_GET['customer_id']) && is_numeric($_GET['customer_id'])) {
+            $id = intval($_GET['customer_id']);
+        }
+        if (!$id && isset($_GET['search']) && !empty(trim($_GET['search']))) {
+            $searchTerm = trim($_GET['search']);
+            $this->db->query("SELECT id FROM customers WHERE name LIKE :st OR id = :id_val LIMIT 1");
+            $this->db->bind(':st', '%' . $searchTerm . '%');
+            $this->db->bind(':id_val', is_numeric($searchTerm) ? intval($searchTerm) : 0);
+            $found = $this->db->single();
+            if ($found) {
+                $id = $found->id;
+            }
+        }
+
         if ($id) {
             $selectedCustomer = $this->customerModel->getCustomerById($id);
             if ($selectedCustomer) {

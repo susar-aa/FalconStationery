@@ -1116,7 +1116,7 @@
                             <button class="dots-dropdown-item" onclick="event.stopPropagation(); printInvoice(${bill.id})">
                                 <i class="ph ph-printer"></i> Print
                             </button>
-                            <button class="dots-dropdown-item" data-customer="${bill.customer_name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); viewCustomerProfile(this.getAttribute('data-customer'))">
+                            <button class="dots-dropdown-item" data-customer-id="${bill.customer_id || 0}" data-customer="${(bill.customer_name || '').replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); viewCustomerProfile(this.getAttribute('data-customer-id'), this.getAttribute('data-customer'))">
                                 <i class="ph ph-user"></i> View Customer
                             </button>
                             <button class="dots-dropdown-item" onclick="event.stopPropagation(); downloadInvoicePdf(${bill.id})">
@@ -5428,8 +5428,14 @@
         window.open('<?= APP_URL ?>/sales/show/' + id + '?print=1', '_blank');
     }
 
-    function viewCustomerProfile(customerName) {
-        window.open('<?= APP_URL ?>/customers?search=' + encodeURIComponent(customerName), '_blank');
+    function viewCustomerProfile(customerId, customerName) {
+        if (customerId && !isNaN(customerId) && parseInt(customerId) > 0) {
+            window.open('<?= APP_URL ?>/customer/index/' + parseInt(customerId), '_blank');
+        } else if (customerName && customerName !== 'null') {
+            window.open('<?= APP_URL ?>/customer?search=' + encodeURIComponent(customerName), '_blank');
+        } else {
+            window.open('<?= APP_URL ?>/customer', '_blank');
+        }
     }
 
     function downloadInvoicePdf(id) {
