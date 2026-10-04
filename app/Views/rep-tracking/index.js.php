@@ -1308,24 +1308,24 @@
                 const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
 
                 listHtml += `
-                    <tr style="border-bottom:1px solid #e2e8f0; ${rowBg}">
-                        <td style="padding:10px 14px;">${nameHtml}</td>
-                        <td style="padding:10px 14px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px; color:#334155;">${req}</td>
-                        <td style="padding:10px 14px; text-align:center;">
+                    <tr>
+                        <td style="padding:12px 18px;">${nameHtml}</td>
+                        <td style="padding:12px 18px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px; color:#334155;">${req}</td>
+                        <td style="padding:12px 18px; text-align:center;">
                             <div style="display:inline-flex; align-items:center; gap:4px;">
-                                <button type="button" onclick="adjustLoadingQty(${item.id}, ${loaded - 1})" ${isReadOnly ? 'disabled' : ''} style="width:28px; height:28px; border:1px solid #cbd5e1; background:#fff; border-radius:4px; font-weight:bold; cursor:pointer; font-size:14px; color:#334155;">-</button>
-                                <input type="number" step="1" min="0" value="${loaded}" onchange="adjustLoadingQty(${item.id}, this.value)" ${isReadOnly ? 'disabled' : ''} style="width:65px; text-align:center; padding:4px; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; font-family:monospace; font-size:13px;">
-                                <button type="button" onclick="adjustLoadingQty(${item.id}, ${loaded + 1})" ${isReadOnly ? 'disabled' : ''} style="width:28px; height:28px; border:1px solid #cbd5e1; background:#fff; border-radius:4px; font-weight:bold; cursor:pointer; font-size:14px; color:#334155;">+</button>
+                                <button type="button" onclick="adjustLoadingQty(${item.id}, ${loaded - 1})" ${isReadOnly ? 'disabled' : ''} style="width:28px; height:28px; border:1px solid #cbd5e1; background:#fff; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; color:#334155;">-</button>
+                                <input type="number" step="1" min="0" value="${loaded}" onchange="adjustLoadingQty(${item.id}, this.value)" ${isReadOnly ? 'disabled' : ''} style="width:65px; text-align:center; padding:4px; border:1px solid #cbd5e1; border-radius:6px; font-weight:bold; font-family:monospace; font-size:13px;">
+                                <button type="button" onclick="adjustLoadingQty(${item.id}, ${loaded + 1})" ${isReadOnly ? 'disabled' : ''} style="width:28px; height:28px; border:1px solid #cbd5e1; background:#fff; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; color:#334155;">+</button>
                             </div>
                         </td>
-                        <td style="padding:10px 14px; text-align:center;">${statusBadge}</td>
-                        <td style="padding:10px 14px; text-align:center;">
+                        <td style="padding:12px 18px; text-align:center;">${statusBadge}</td>
+                        <td style="padding:12px 18px; text-align:center;">
                             <div style="display:inline-flex; align-items:center; gap:6px;">
-                                <button type="button" onclick="toggleItemVerified(${item.id}, ${isVerified ? 0 : 1})" ${isReadOnly ? 'disabled' : ''} style="padding:5px 12px; border:none; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; background:${isVerified ? '#16a34a' : '#64748b'}; color:#fff; display:inline-flex; align-items:center; gap:4px; transition:0.2s;">
+                                <button type="button" onclick="toggleItemVerified(${item.id}, ${isVerified ? 0 : 1})" ${isReadOnly ? 'disabled' : ''} style="padding:6px 12px; border:none; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; background:${isVerified ? '#16a34a' : '#64748b'}; color:#fff; display:inline-flex; align-items:center; gap:4px; transition:0.2s;">
                                     <i class="ph ${isVerified ? 'ph-check-circle' : 'ph-circle'}"></i> ${isVerified ? 'Verified ✓' : 'Verify'}
                                 </button>
                                 ${(!item.replaced_by_name && !item.replaces_name && req > 0 && !isReadOnly) ? `
-                                    <button type="button" onclick="openReplaceProductModal(${item.id})" style="padding:5px 10px; background:#673ab7; color:#fff; border:none; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                                    <button type="button" onclick="openReplaceProductModal(${item.id})" style="padding:6px 10px; background:#673ab7; color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
                                         <i class="ph ph-swap"></i> Replace
                                     </button>
                                 ` : ''}
@@ -1339,48 +1339,46 @@
         const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
 
         box.innerHTML = `
-            <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:18px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; border-bottom:1px solid #f1f5f9; padding-bottom:14px;">
-                    <div>
-                        <h3 style="margin:0; font-size:16px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px;">
-                            <i class="ph ph-truck" style="color:#0284c7;"></i> Warehouse Loading Verification Module
-                        </h3>
-                        <div style="font-size:12px; color:#64748b; margin-top:4px;">
-                            Manifest Delivery ID: <strong>#${currentLoadingDeliveryId}</strong> | Progress: <strong style="color:#0284c7;">${verifiedCount} / ${totalCount} Items Verified</strong>
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                        <button type="button" onclick="printLoadingSheet('final')" style="padding:8px 14px; background:#1e293b; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                            <i class="ph ph-printer"></i> Print Loading Sheet
-                        </button>
-                        ${!isReadOnly ? `
-                            <button type="button" onclick="verifyAllLoadingItems()" style="padding:8px 14px; background:#0284c7; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                                <i class="ph ph-checks"></i> Verify All Items
-                            </button>
-                            <button type="button" onclick="completeLoadingVerification()" style="padding:8px 16px; background:#16a34a; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 4px rgba(22,163,74,0.2);">
-                                <i class="ph ph-arrow-right"></i> Complete Loading Verification
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-
-                <div style="margin-bottom:14px;">
-                    <input type="text" id="searchLoadingProductsInput" value="${escapeHtml(searchVal)}" oninput="renderLoadingStageUI()" placeholder="Search loading products by name..." style="width:100%; padding:9px 14px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; background:#f8fafc;">
-                </div>
-
+            <div style="background:transparent; margin-bottom:20px;">
                 <div style="overflow-x:auto;">
                     <table class="data-table" style="margin:0; width:100%;">
                         <thead>
                             <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
-                                <th style="padding:10px 14px; text-align:left;">Product Name</th>
-                                <th style="padding:10px 14px; text-align:center; width:110px;">Required Qty</th>
-                                <th style="padding:10px 14px; text-align:center; width:160px;">Verified Loaded Qty</th>
-                                <th style="padding:10px 14px; text-align:center; width:130px;">Variance Status</th>
-                                <th style="padding:10px 14px; text-align:center; width:180px;">Actions</th>
+                                <th style="padding:14px 18px; text-align:left;">Product Name</th>
+                                <th style="padding:14px 18px; text-align:center; width:120px;">Required Qty</th>
+                                <th style="padding:14px 18px; text-align:center; width:170px;">Verified Loaded Qty</th>
+                                <th style="padding:14px 18px; text-align:center; width:140px;">Variance Status</th>
+                                <th style="padding:14px 18px; text-align:center; width:190px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>${listHtml}</tbody>
                     </table>
+                </div>
+
+                <!-- Dark Pill Floating Dock with Search & Labeled Action Buttons -->
+                <div id="tab4FloatingDock" style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:1000; display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(30, 41, 59, 0.96); backdrop-filter:blur(24px) saturate(200%); -webkit-backdrop-filter:blur(24px) saturate(200%); border:1px solid rgba(255, 255, 255, 0.15); border-radius:100px; box-shadow:0 16px 40px rgba(15, 23, 42, 0.35);">
+                    
+                    <!-- Search Input Pill inside Dark Bar -->
+                    <div style="display:flex; align-items:center; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:6px 14px; gap:8px; width:220px; transition:all 0.18s;">
+                        <i class="ph ph-magnifying-glass" style="color:#94a3b8; font-size:16px;"></i>
+                        <input type="text" id="searchLoadingProductsInput" value="${escapeHtml(searchVal)}" oninput="renderLoadingStageUI()" placeholder="Search loading items..." style="background:transparent; border:none; outline:none; color:#ffffff; font-size:13px; width:100%; font-family:inherit;" onfocus="this.parentElement.style.borderColor='#007aff'; this.parentElement.style.background='rgba(255,255,255,0.18)'" onblur="this.parentElement.style.borderColor='rgba(255,255,255,0.18)'; this.parentElement.style.background='rgba(255,255,255,0.12)'">
+                    </div>
+
+                    <div style="width:1px; height:22px; background:rgba(255,255,255,0.2); margin:0 2px;"></div>
+
+                    <!-- Labeled Buttons with Icons -->
+                    <button type="button" onclick="printLoadingSheet('final')" style="padding:9px 16px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; transition:all 0.18s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.12)'">
+                        <i class="ph ph-printer" style="font-size:16px;"></i> Print Loading Sheet
+                    </button>
+
+                    ${!isReadOnly ? `
+                        <button type="button" onclick="verifyAllLoadingItems()" style="padding:9px 16px; background:#0284c7; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(2,132,199,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#0369a1'" onmouseout="this.style.transform='scale(1)'; this.style.background='#0284c7'">
+                            <i class="ph ph-checks" style="font-size:16px;"></i> Verify All Items (${verifiedCount}/${totalCount})
+                        </button>
+                        <button type="button" onclick="completeLoadingVerification()" style="padding:9px 18px; background:#16a34a; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(22,163,74,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#15803d'" onmouseout="this.style.transform='scale(1)'; this.style.background='#16a34a'">
+                            <i class="ph ph-check-circle" style="font-size:16px;"></i> Complete Loading
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;

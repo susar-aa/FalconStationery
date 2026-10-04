@@ -470,8 +470,8 @@
                 </div>
 
                 <!-- TAB 4: LOADING -->
-                <div class="workspace-tab-panel" id="tabpanel-4" style="display:none;">
-                    <div id="loadingBox" style="margin-bottom:20px;"></div>
+                <div class="workspace-tab-panel" id="tabpanel-4" style="display:none; position:relative; margin:-16px -20px; min-height:550px; background:var(--c-surface); flex-direction:column; overflow:hidden;">
+                    <div id="loadingBox" style="flex:1; min-height:0; overflow-y:auto; padding:20px 24px 110px 24px;"></div>
                 </div>
 
                 <!-- TAB 5: VARIANCE -->

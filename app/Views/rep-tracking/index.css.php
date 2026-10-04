@@ -1575,4 +1575,51 @@ body, button, input, select, textarea, .app-workspace, .workspace-tab-panel, .mo
         padding: 16px 18px !important;
         border-top: 2px solid #e2e8f0 !important;
     }
+
+    /* Tab 4 Loading Checklist Zebra Striping & Modern UI */
+    #tabpanel-4 {
+        height: calc(100vh - 170px) !important;
+        min-height: 500px !important;
+        overflow: hidden !important;
+    }
+    #tabpanel-4:not([style*="display: none"]):not([style*="display:none"]) {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    #tabpanel-4 .data-table {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        border-radius: 14px !important;
+        overflow: hidden !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+    }
+    #tabpanel-4 .data-table th {
+        background: #f8fafc !important;
+        color: #64748b !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        padding: 14px 18px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+    #tabpanel-4 .data-table tbody tr:nth-child(even) {
+        background-color: #f8fafc !important;
+    }
+    #tabpanel-4 .data-table tbody tr:nth-child(odd) {
+        background-color: #ffffff !important;
+    }
+    #tabpanel-4 .data-table tbody tr:hover {
+        background-color: #f0f7ff !important;
+        transition: background-color 0.15s ease;
+    }
+    #tabpanel-4 .data-table td {
+        padding: 12px 18px !important;
+        font-size: 13px !important;
+        color: #0f172a !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        vertical-align: middle !important;
+    }
 </style>
