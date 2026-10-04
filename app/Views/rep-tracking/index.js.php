@@ -2227,6 +2227,119 @@
         window.open('<?= APP_URL ?>/RepTracking/print_loading/' + currentRouteId + '?type=' + type, '_blank');
     }
 
+    function makeSelectSearchable(selectId) {
+        const sel = document.getElementById(selectId);
+        if (!sel || sel.dataset.searchableInit === 'true') return;
+        sel.dataset.searchableInit = 'true';
+
+        sel.style.display = 'none';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-searchable-select';
+        wrapper.style.cssText = 'position:relative; width:100%; font-family:inherit;';
+
+        const trigger = document.createElement('div');
+        trigger.className = 'custom-select-trigger';
+        trigger.style.cssText = 'padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; color:#0f172a; font-size:13px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.18s; user-select:none;';
+        
+        const textSpan = document.createElement('span');
+        textSpan.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+        textSpan.textContent = (sel.options[sel.selectedIndex]?.text && sel.value) ? sel.options[sel.selectedIndex].text : '-- Select --';
+        
+        const arrow = document.createElement('i');
+        arrow.className = 'ph ph-caret-down';
+        arrow.style.cssText = 'color:#64748b; font-size:14px; transition:transform 0.18s; margin-left:8px; flex-shrink:0;';
+
+        trigger.appendChild(textSpan);
+        trigger.appendChild(arrow);
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'custom-select-dropdown';
+        dropdown.style.cssText = 'display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; box-shadow:0 10px 30px rgba(15,23,42,0.15); z-index:1000; padding:8px;';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Type to search...';
+        searchInput.style.cssText = 'width:100%; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; outline:none; background:#f8fafc; margin-bottom:8px; box-sizing:border-box; font-family:inherit;';
+
+        const optionsList = document.createElement('div');
+        optionsList.style.cssText = 'max-height:190px; overflow-y:auto; display:flex; flex-direction:column; gap:2px;';
+
+        const updateOptions = () => {
+            optionsList.innerHTML = '';
+            const q = searchInput.value.toLowerCase().trim();
+            let count = 0;
+            Array.from(sel.options).forEach(opt => {
+                const txt = opt.text;
+                const val = opt.value;
+                if (!q || txt.toLowerCase().includes(q)) {
+                    count++;
+                    const item = document.createElement('div');
+                    const isSelected = String(sel.value) === String(val);
+                    item.style.cssText = `padding:8px 12px; border-radius:6px; font-size:13px; cursor:pointer; font-weight:${isSelected ? '700' : '500'}; background:${isSelected ? '#eff6ff' : 'transparent'}; color:${isSelected ? '#1d4ed8' : '#0f172a'}; transition:background 0.12s;`;
+                    item.textContent = txt;
+                    item.onmouseover = () => { if (!isSelected) item.style.background = '#f1f5f9'; };
+                    item.onmouseout = () => { if (!isSelected) item.style.background = 'transparent'; };
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        sel.value = val;
+                        sel.dispatchEvent(new Event('change', { bubbles: true }));
+                        closeDropdown();
+                    };
+                    optionsList.appendChild(item);
+                }
+            });
+            if (count === 0) {
+                const noRes = document.createElement('div');
+                noRes.style.cssText = 'padding:10px; text-align:center; color:#94a3b8; font-size:12px;';
+                noRes.textContent = 'No matching options';
+                optionsList.appendChild(noRes);
+            }
+        };
+
+        dropdown.appendChild(searchInput);
+        dropdown.appendChild(optionsList);
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(dropdown);
+
+        sel.parentNode.insertBefore(wrapper, sel);
+        wrapper.appendChild(sel);
+
+        const openDropdown = () => {
+            dropdown.style.display = 'block';
+            trigger.style.borderColor = '#007aff';
+            trigger.style.boxShadow = '0 0 0 3px rgba(0,122,255,0.12)';
+            arrow.style.transform = 'rotate(180deg)';
+            searchInput.value = '';
+            updateOptions();
+            setTimeout(() => searchInput.focus(), 50);
+        };
+
+        const closeDropdown = () => {
+            dropdown.style.display = 'none';
+            trigger.style.borderColor = '#cbd5e1';
+            trigger.style.boxShadow = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+        };
+
+        trigger.onclick = (e) => {
+            e.stopPropagation();
+            if (dropdown.style.display === 'block') closeDropdown(); else openDropdown();
+        };
+
+        searchInput.oninput = () => updateOptions();
+        searchInput.onclick = (e) => e.stopPropagation();
+
+        document.addEventListener('click', (e) => {
+            if (!wrapper.contains(e.target)) closeDropdown();
+        });
+
+        sel.addEventListener('change', () => {
+            const selectedOpt = sel.options[sel.selectedIndex];
+            textSpan.textContent = (selectedOpt && sel.value) ? selectedOpt.text : '-- Select --';
+        });
+    }
+
     function setSelectValue(selectId, val) {
         const sel = document.getElementById(selectId);
         if (!sel) return;
@@ -2235,6 +2348,7 @@
         if (!cleanVal) {
             sel.value = '';
             sel.selectedIndex = 0;
+            sel.dispatchEvent(new Event('change', { bubbles: true }));
             return;
         }
 
@@ -2282,6 +2396,10 @@
         console.log('[loadDispatchStage] Called for routeId:', routeId);
         const formView = document.getElementById('adjDeliveryFormView');
         if (!formView) return;
+
+        makeSelectSearchable('adjDaVehicle');
+        makeSelectSearchable('adjDaDriver');
+        makeSelectSearchable('adjDaPartner');
 
         const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
 

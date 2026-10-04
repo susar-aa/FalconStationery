@@ -488,48 +488,49 @@
                 </div>
 
                 <!-- TAB 6: DISPATCH / DELIVERY ARRANGEMENT -->
-                <div class="workspace-tab-panel" id="tabpanel-6" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="workspace-tab-panel" id="tabpanel-6" style="display:none; padding: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <div>
-                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Delivery Arrangement</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Assign driver, vehicle, and helper for this delivery manifest.</p>
+                            <h3 style="margin:0; font-size:20px; font-weight:700; color:#0f172a; font-family:var(--font-sf);">Delivery Arrangement</h3>
+                            <p style="margin:4px 0 0 0; font-size:13px; color:#64748b;">Assign vehicle, driver, and partner helper for this route delivery manifest.</p>
                         </div>
                         <div>
-                            <button id="auto-evt-button-21" type="button" class="macos-btn-secondary">
-                                <i class="ph ph-printer"></i> Print Loading Summary
+                            <button id="auto-evt-button-21" type="button" style="padding:9px 18px; background:#ffffff; border:1px solid #cbd5e1; color:#334155; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.05); transition:all 0.18s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                                <i class="ph ph-printer" style="font-size:16px;"></i> Print Loading Summary
                             </button>
                         </div>
                     </div>
                     
                     <!-- Global Status Banner -->
-                    <div id="adjDeliveryStatusBanner" class="macos-banner" style="display:none; margin-bottom: 20px;">
-                        <i class="ph-bold ph-paperclip" style="font-size: 16px;"></i>
+                    <div id="adjDeliveryStatusBanner" style="display:none; margin-bottom: 20px; padding:12px 18px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; color:#1d4ed8; font-size:13px; font-weight:600; align-items:center; gap:10px;">
+                        <i class="ph ph-check-circle" style="font-size: 18px;"></i>
                         <span>Delivery Manifest <strong id="adjDeliveryStatusId">#--</strong> successfully generated. Ready for warehouse.</span>
                     </div>
 
-                    <!-- Form View (Delivery Details Only) -->
+                    <!-- Form View -->
                     <div id="adjDeliveryFormView">
-                        <form id="adjDeliveryArrangeForm" style="max-width: 620px; margin: 0 auto;">
+                        <form id="adjDeliveryArrangeForm" style="max-width: 580px; margin: 0 auto;">
                             
-                            <!-- Delivery Details Card -->
-                            <div class="macos-window" style="margin: 0; display: flex; flex-direction: column;">
-                                <div class="macos-titlebar">
-                                    <div class="macos-dots">
-                                        <span class="macos-dot close"></span>
-                                        <span class="macos-dot minimize"></span>
-                                        <span class="macos-dot zoom"></span>
+                            <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 20px rgba(15,23,42,0.05); padding:24px;">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid #f1f5f9;">
+                                    <div style="width:38px; height:38px; border-radius:10px; background:#eff6ff; color:#007aff; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                                        <i class="ph ph-truck"></i>
                                     </div>
-                                    <span class="macos-title">Delivery Details</span>
-                                </div>
-                                <div class="macos-content" style="padding: 20px; display: flex; flex-direction: column; gap: 18px;">
                                     <div>
-                                        <label class="macos-label">Delivery Date</label>
-                                        <input type="date" id="adjDaDate" class="macos-input" value="<?= date('Y-m-d') ?>">
+                                        <div style="font-size:16px; font-weight:700; color:#0f172a; font-family:var(--font-sf);">Delivery Details</div>
+                                        <div style="font-size:12px; color:#64748b;">Configure logistics parameters for dispatch</div>
+                                    </div>
+                                </div>
+
+                                <div style="display:flex; flex-direction:column; gap:18px;">
+                                    <div>
+                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Delivery Date</label>
+                                        <input type="date" id="adjDaDate" value="<?= date('Y-m-d') ?>" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
                                     </div>
 
                                     <div>
-                                        <label class="macos-label">Vehicle Number *</label>
-                                        <select id="adjDaVehicle" class="macos-select" required>
+                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Vehicle Number *</label>
+                                        <select id="adjDaVehicle" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;">
                                             <option value="">-- Select Vehicle --</option>
                                             <?php foreach($data['vehicles'] as $v): ?>
                                                 <?php if($v->status === 'Active'): ?>
@@ -540,8 +541,8 @@
                                     </div>
 
                                     <div>
-                                        <label class="macos-label">Driver Name *</label>
-                                        <select id="adjDaDriver" class="macos-select" required>
+                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Driver Name *</label>
+                                        <select id="adjDaDriver" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;">
                                             <option value="">-- Select Driver --</option>
                                             <?php foreach($data['drivers'] as $d): ?>
                                                 <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
@@ -550,8 +551,8 @@
                                     </div>
 
                                     <div>
-                                        <label class="macos-label">Partner / Helper</label>
-                                        <select id="adjDaPartner" class="macos-select">
+                                        <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Partner / Helper</label>
+                                        <select id="adjDaPartner" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit;">
                                             <option value="">-- None --</option>
                                             <?php foreach($data['drivers'] as $d): ?>
                                                 <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
@@ -559,9 +560,9 @@
                                         </select>
                                     </div>
 
-                                    <div style="text-align: right; margin-top: 10px;">
-                                        <button id="auto-evt-button-22" type="button" class="macos-btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
-                                            <i class="ph ph-truck"></i> Save Delivery Arrangement
+                                    <div style="margin-top: 10px;">
+                                        <button id="auto-evt-button-22" type="button" style="width:100%; padding:12px; background:#007aff; border:none; color:#ffffff; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(0,122,255,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.02)'; this.style.background='#0062cc'" onmouseout="this.style.transform='scale(1)'; this.style.background='#007aff'">
+                                            <i class="ph ph-truck" style="font-size:18px;"></i> Save Delivery Arrangement
                                         </button>
                                     </div>
                                 </div>
@@ -572,42 +573,47 @@
                 </div>
 
                 <!-- TAB 14: CREDIT BILLS SELECTION -->
-                <div class="workspace-tab-panel" id="tabpanel-14" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="workspace-tab-panel" id="tabpanel-14" style="display:none; padding: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                         <div>
-                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Credit Bills Selection</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Select territory credit invoices to dispatch with this vehicle delivery manifest.</p>
+                            <h3 style="margin:0; font-size:20px; font-weight:700; color:#0f172a; font-family:var(--font-sf);">Credit Bills Selection</h3>
+                            <p style="margin:4px 0 0 0; font-size:13px; color:#64748b;">Select territory credit invoices to dispatch with this vehicle delivery manifest.</p>
                         </div>
                     </div>
 
-                    <div class="macos-window" style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column;">
-                        <div class="macos-titlebar">
-                            <div class="macos-dots">
-                                <span class="macos-dot close"></span>
-                                <span class="macos-dot minimize"></span>
-                                <span class="macos-dot zoom"></span>
+                    <div style="max-width: 920px; margin: 0 auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 20px rgba(15,23,42,0.05); padding:24px;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid #f1f5f9;">
+                            <div style="width:38px; height:38px; border-radius:10px; background:#f0fdf4; color:#16a34a; display:flex; align-items:center; justify-content:center; font-size:20px;">
+                                <i class="ph ph-receipt"></i>
                             </div>
-                            <span class="macos-title">Credit Bills Selection</span>
+                            <div>
+                                <div style="font-size:16px; font-weight:700; color:#0f172a; font-family:var(--font-sf);">Territory Credit Invoices</div>
+                                <div style="font-size:12px; color:#64748b;">Select outstanding invoices for delivery dispatch</div>
+                            </div>
                         </div>
-                        <div class="macos-content" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
-                            <label class="macos-label" style="margin-bottom: 0;">Select Territory Credit Invoices to dispatch with this vehicle</label>
-                            
+
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
                             <!-- Search & Route Filter controls -->
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 5px;">
-                                <input type="text" id="creditBillsSearch" placeholder="Search by customer or invoice..." style="flex: 1.5; padding: 8px 12px; border: 1px solid var(--c-separator); border-radius: var(--r-sm); background: var(--c-bg); color: var(--t-primary); font-size: 13px; outline: none;" >
-                                <select id="creditBillsRouteFilter" style="flex: 1; padding: 8px 12px; border: 1px solid var(--c-separator); border-radius: var(--r-sm); background: var(--c-bg); color: var(--t-primary); font-size: 13px; outline: none;" >
-                                    <option value="all">All Routes</option>
-                                    <option value="none">No Route / Unassigned</option>
-                                </select>
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                <div style="flex: 1.5; position:relative; display:flex; align-items:center;">
+                                    <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; color:#94a3b8; font-size:16px;"></i>
+                                    <input type="text" id="creditBillsSearch" placeholder="Search by customer or invoice..." style="width:100%; padding:10px 12px 10px 36px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#0f172a; font-size:13px; outline:none; transition:all 0.18s;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'; this.style.boxShadow='none'">
+                                </div>
+                                <div style="flex: 1; min-width:180px;">
+                                    <select id="creditBillsRouteFilter" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#0f172a; font-size:13px; outline:none; transition:all 0.18s;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'">
+                                        <option value="all">All Routes</option>
+                                        <option value="none">No Route / Unassigned</option>
+                                    </select>
+                                </div>
                             </div>
 
-                            <div id="adjDaBillsContainer" class="macos-checkbox-list" style="flex: 1; min-height: 380px; max-height: none;">
+                            <div id="adjDaBillsContainer" class="macos-checkbox-list" style="flex: 1; min-height: 380px; max-height: none; background:#ffffff; border:1px solid #f1f5f9; border-radius:12px; padding:12px;">
                                 <!-- Outstanding credit bills list -->
                             </div>
 
                             <div style="margin-top: 10px;">
-                                <button type="button" onclick="submitAdjustmentsLogisticsArrange()" class="macos-btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700;">
-                                    <i class="ph ph-check-circle"></i> Save Credit Bills Selection
+                                <button type="button" onclick="submitAdjustmentsLogisticsArrange()" style="width:100%; padding:12px; background:#16a34a; border:none; color:#ffffff; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(22,163,74,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.02)'; this.style.background='#15803d'" onmouseout="this.style.transform='scale(1)'; this.style.background='#16a34a'">
+                                    <i class="ph ph-check-circle" style="font-size:18px;"></i> Save Credit Bills Selection
                                 </button>
                             </div>
                         </div>
