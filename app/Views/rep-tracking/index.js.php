@@ -4478,9 +4478,9 @@
     function initRoutePathMap() {
         if (routeMap !== null) return;
         routeMap = L.map('routePathMap').setView([7.8731, 80.7718], 8);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS',
-            maxZoom: 19
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps',
+            maxZoom: 20
         }).addTo(routeMap);
     }
 
@@ -4496,9 +4496,9 @@
         if (!el || typeof L === 'undefined') return;
         initMapIcons();
         tab1Map = L.map('tab1RoutePathMap').setView([7.8731, 80.7718], 8);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS',
-            maxZoom: 19
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps',
+            maxZoom: 20
         }).addTo(tab1Map);
     }
 
