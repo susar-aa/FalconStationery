@@ -1863,6 +1863,17 @@
             let invoiceRows = '';
             let currentTotal = 0;
 
+            const unbalancedVal = item.final_loaded_qty - currentTotal;
+            const isBalanced = (Math.abs(unbalancedVal) < 0.01);
+
+            const cardBg = isBalanced ? '#f0fdf4' : '#ffffff';
+            const cardBorder = isBalanced ? '1px solid #86efac' : '1px solid #e2e8f0';
+            const rowBg = isBalanced ? '#ffffff' : '#f8fafc';
+            const rowBorder = isBalanced ? '1px solid #dcfce7' : '1px solid #f1f5f9';
+            const footerBg = isBalanced ? '#dcfce7' : '#f8fafc';
+            const footerBorder = isBalanced ? '1px solid #86efac' : '1px solid #e2e8f0';
+            const cubeIconColor = isBalanced ? '#16a34a' : '#007aff';
+
             item.invoices.forEach((inv, index) => {
                 currentTotal += inv.quantity;
 
@@ -1876,7 +1887,7 @@
                  }
 
                 invoiceRows += `
-                    <div style="display:grid; grid-template-columns: 1fr auto auto auto; gap:12px; align-items:center; padding:8px 12px; background:#f8fafc; border-radius:8px; margin-bottom:6px; border:1px solid #f1f5f9;">
+                    <div style="display:grid; grid-template-columns: 1fr auto auto auto; gap:12px; align-items:center; padding:8px 12px; background:${rowBg}; border-radius:8px; margin-bottom:6px; border:${rowBorder};">
                         <div style="font-size:12px; font-weight:600; color:#0f172a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(inv.customer_name)}">
                             <span>${escapeHtml(inv.customer_name)}</span>
                             ${actionSelect}
@@ -1901,10 +1912,9 @@
                 invoiceRows = `<p style="color:#64748b; font-size:12px; margin:8px 0; font-style:italic;">No invoices contain this product on this route.</p>`;
             }
 
-            const unbalancedVal = item.final_loaded_qty - currentTotal;
-            const panelStatus = (Math.abs(unbalancedVal) < 0.01)
-                ? `<span style="background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle" style="font-size:13px;"></i> Balanced</span>`
-                : `<span style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-warning" style="font-size:13px;"></i> Unbalanced (${unbalancedVal > 0 ? '+' : ''}${unbalancedVal.toFixed(1)} pcs)</span>`;
+            const panelStatus = isBalanced
+                ? `<span style="background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px; border:1px solid #86efac;"><i class="ph ph-check-circle" style="font-size:13px;"></i> Balanced</span>`
+                : `<span style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px; border:1px solid #fca5a5;"><i class="ph ph-warning" style="font-size:13px;"></i> Unbalanced (${unbalancedVal > 0 ? '+' : ''}${unbalancedVal.toFixed(1)} pcs)</span>`;
 
             let autoDistBtn = isReadOnly ? '' : `
                 <button onclick="autoDistributeVariance('${stateKey}')" style="padding:5px 10px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; border-radius:100px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.18s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
@@ -1915,12 +1925,12 @@
             let varColor = item.variance > 0 ? '#d97706' : '#dc2626';
 
             reconciliationPanels += `
-                <div class="variance-engine-card" data-item-name="${escapeHtml(item.item_name.toLowerCase())}" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 16px; box-shadow:0 2px 8px rgba(15,23,42,0.04); display:flex; flex-direction:column; justify-space-between; transition:all 0.18s ease;">
+                <div class="variance-engine-card" data-item-name="${escapeHtml(item.item_name.toLowerCase())}" style="background:${cardBg}; border:${cardBorder}; border-radius:14px; padding:14px 16px; box-shadow:0 2px 8px rgba(15,23,42,0.04); display:flex; flex-direction:column; justify-content:space-between; transition:all 0.18s ease;">
                     <div>
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #f1f5f9; padding-bottom:10px; margin-bottom:10px; gap:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid ${isBalanced ? '#dcfce7' : '#f1f5f9'}; padding-bottom:10px; margin-bottom:10px; gap:10px;">
                             <div>
                                 <div style="font-weight:700; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
-                                    <i class="ph ph-cube" style="color:#007aff; font-size:16px;"></i> ${escapeHtml(item.item_name)}
+                                    <i class="ph ph-cube" style="color:${cubeIconColor}; font-size:16px;"></i> ${escapeHtml(item.item_name)}
                                 </div>
                                 ${subBadge ? `<div style="margin-top:2px;">${subBadge}</div>` : ''}
                                 <div style="font-size:11px; color:#64748b; margin-top:3px;">
@@ -1934,7 +1944,7 @@
                         </div>
                         <div>${invoiceRows}</div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:11px; color:#475569; background:#f8fafc; padding:8px 12px; border-radius:100px; border:1px solid #e2e8f0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:11px; color:#475569; background:${footerBg}; padding:8px 12px; border-radius:100px; border:${footerBorder};">
                         <span>Allocated: <strong style="font-family:monospace; font-size:12px; color:#0f172a;">${currentTotal.toFixed(1)}</strong></span>
                         <span>Remaining: <strong style="font-family:monospace; font-size:12px; color:${unbalancedVal !== 0 ? '#dc2626' : '#16a34a'};">${unbalancedVal.toFixed(1)}</strong></span>
                     </div>
