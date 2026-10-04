@@ -1511,6 +1511,18 @@
     #tabpanel-3 .data-table tbody tr:nth-child(odd) {
         background-color: #ffffff !important;
     }
+    #tabpanel-3 {
+        height: calc(100vh - 170px) !important;
+        min-height: 500px !important;
+        overflow: hidden !important;
+    }
+    #tabpanel-3:not([style*="display: none"]):not([style*="display:none"]) {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    #tabpanel-3 .data-table tbody tr {
+        cursor: pointer !important;
+    }
     #tabpanel-3 .data-table tbody tr:hover {
         background-color: #eff6ff !important;
         transition: background-color 0.15s ease;

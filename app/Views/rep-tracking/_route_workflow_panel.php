@@ -419,9 +419,9 @@
                 <!-- TAB 2: CREDIT COLLECTIONS -->
 
                 <!-- TAB 3: ADJUSTMENTS -->
-                <div class="workspace-tab-panel" id="tabpanel-3" style="display:none; position:relative; margin:-16px -20px; height:calc(100vh - 120px); background:var(--c-surface); flex-direction:column; overflow:hidden;">
+                <div class="workspace-tab-panel" id="tabpanel-3" style="display:none; position:relative; margin:-16px -20px; min-height:550px; background:var(--c-surface); flex-direction:column; overflow:hidden;">
                     <!-- Table Scrollable Area -->
-                    <div style="flex:1; overflow-y:auto; padding:20px 24px 100px 24px;">
+                    <div style="flex:1; min-height:0; overflow-y:auto; padding:20px 24px 110px 24px;">
 
 
 
@@ -452,7 +452,7 @@
                         </table>
                     </div>
                     <!-- Floating Action Bar Fixed to Bottom Center -->
-                    <div id="tab3FloatingDock" style="position:absolute; bottom:20px; left:50%; transform:translateX(-50%); z-index:50; display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(255, 255, 255, 0.94); backdrop-filter:blur(24px) saturate(200%); -webkit-backdrop-filter:blur(24px) saturate(200%); border:1px solid rgba(203, 213, 225, 0.9); border-radius:100px; box-shadow:0 16px 40px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(0,0,0,0.06);">
+                    <div id="tab3FloatingDock" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:1000; display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(255, 255, 255, 0.94); backdrop-filter:blur(24px) saturate(200%); -webkit-backdrop-filter:blur(24px) saturate(200%); border:1px solid rgba(203, 213, 225, 0.9); border-radius:100px; box-shadow:0 16px 40px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(0,0,0,0.06);">
                         <button id="btnTab3CreateSO" type="button" style="padding:10px 20px; background:#007aff; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(0, 122, 255, 0.3); transition:all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#0066cc'" onmouseout="this.style.transform='scale(1)'; this.style.background='#007aff'">
                             <i class="ph ph-plus-circle" style="font-size:18px;"></i> Create Sales Order
                         </button>

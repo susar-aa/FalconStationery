@@ -1139,12 +1139,12 @@
                         `;
 
                         tbody.innerHTML += `
-                            <tr>
-                                <td style="font-weight:bold; color:var(--primary); cursor:pointer;" onclick="openInvoiceSlider(${bill.id})">${bill.invoice_number}</td>
+                            <tr onclick="openInvoiceSlider(${bill.id})" style="cursor:pointer;">
+                                <td style="font-weight:bold; color:var(--primary);">${bill.invoice_number}</td>
                                 <td>${time}</td>
                                 <td><strong>${bill.customer_name}</strong></td>
                                 <td style="text-align:right; font-family:monospace; font-weight:bold;">${parseFloat(bill.true_grand_total).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-                                <td style="text-align:center;">${actionBtn}</td>
+                                <td style="text-align:center;" onclick="event.stopPropagation();">${actionBtn}</td>
                             </tr>
                         `;
                     });
