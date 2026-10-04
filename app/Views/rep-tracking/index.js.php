@@ -4478,8 +4478,10 @@
     function initRoutePathMap() {
         if (routeMap !== null) return;
         routeMap = L.map('routePathMap').setView([7.8731, 80.7718], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
         }).addTo(routeMap);
     }
 
@@ -4495,10 +4497,102 @@
         if (!el || typeof L === 'undefined') return;
         initMapIcons();
         tab1Map = L.map('tab1RoutePathMap').setView([7.8731, 80.7718], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
         }).addTo(tab1Map);
     }
+
+    function createCustomCircleIcon(wp) {
+        const type = wp.type || 'default';
+        const shopName = wp.label || wp.name || 'Location';
+        
+        let iconClass = 'ph ph-map-pin';
+        if (type === 'start') iconClass = 'ph ph-flag';
+        else if (type === 'end') iconClass = 'ph ph-flag-checkered';
+        else if (type === 'invoice') iconClass = 'ph ph-receipt';
+        else if (type === 'unproductive') iconClass = 'ph ph-x-circle';
+
+        const html = `
+            <div class="custom-circle-pin-container">
+                <div class="pin-shop-badge" title="${shopName.replace(/"/g, '&quot;')}">${shopName}</div>
+                <div class="pin-circle pin-type-${type}">
+                    <i class="${iconClass}"></i>
+                </div>
+            </div>
+        `;
+
+        return L.divIcon({
+            html: html,
+            className: 'custom-leaflet-div-icon',
+            iconSize: [140, 60],
+            iconAnchor: [70, 56],
+            popupAnchor: [0, -56]
+        });
+    }
+
+    function createMapPopupCardHtml(wp) {
+        let badgeBg = '#dbeafe';
+        let badgeColor = '#1e40af';
+        let badgeText = 'Invoice Issued';
+        let iconClass = 'ph ph-receipt';
+
+        if (wp.type === 'start') {
+            badgeBg = '#d1fae5'; badgeColor = '#065f46'; badgeText = 'Route Started'; iconClass = 'ph ph-flag';
+        } else if (wp.type === 'end') {
+            badgeBg = '#fee2e2'; badgeColor = '#991b1b'; badgeText = 'Route End'; iconClass = 'ph ph-flag-checkered';
+        } else if (wp.type === 'unproductive') {
+            badgeBg = '#fef3c7'; badgeColor = '#92400e'; badgeText = 'Unproductive Visit'; iconClass = 'ph ph-x-circle';
+        }
+
+        const title = wp.label || wp.name || 'Location';
+        const desc = wp.detail || wp.description || '';
+        const amountStr = wp.amount ? `<div style="font-size:13px; font-weight:700; color:#2563eb; margin-top:6px; margin-bottom:4px;">Rs. ${parseFloat(wp.amount).toLocaleString('en-US', {minimumFractionDigits:2})}</div>` : '';
+
+        return `
+            <div class="map-popup-card">
+                <div class="map-popup-header">
+                    <span class="map-popup-badge" style="background:${badgeBg}; color:${badgeColor};">${badgeText}</span>
+                    <span style="font-size:14px; color:#64748b;"><i class="${iconClass}"></i></span>
+                </div>
+                <div class="map-popup-title">${title}</div>
+                ${desc ? `<div class="map-popup-desc">${desc}</div>` : ''}
+                ${amountStr}
+                <div class="map-popup-footer">
+                    <span><i class="ph ph-clock"></i> ${wp.time || 'N/A'}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    window.focusTab1Waypoint = function(index, lat, lng) {
+        if (!tab1Map) return;
+        
+        tab1Map.flyTo([lat, lng], 16, {
+            animate: true,
+            duration: 0.8
+        });
+
+        setTimeout(() => {
+            if (window._tab1Markers && window._tab1Markers[index]) {
+                window._tab1Markers[index].openPopup();
+            }
+        }, 250);
+
+        const cards = document.querySelectorAll('.activity-log-item');
+        cards.forEach((c, idx) => {
+            if (idx === index) {
+                c.style.borderColor = '#2563eb';
+                c.style.boxShadow = '0 0 0 2px rgba(37, 99, 235, 0.25)';
+                c.style.background = '#f8fafc';
+            } else {
+                c.style.borderColor = '#e2e8f0';
+                c.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+                c.style.background = '#ffffff';
+            }
+        });
+    };
 
     function clearTab1Map() {
         tab1MapLayers.forEach(layer => tab1Map.removeLayer(layer));
@@ -4598,20 +4692,18 @@
         if (stepList) { stepList.style.display = 'block'; }
         if (stepEmpty) stepEmpty.style.display = 'none';
 
+        window._tab1Markers = [];
         const latlngs = [];
-        wps.forEach((wp) => {
+        wps.forEach((wp, index) => {
             const latlng = [wp.lat, wp.lng];
             latlngs.push(latlng);
-            let icon = pathBlueIcon;
-            if (wp.type === 'start') icon = pathGreenIcon;
-            else if (wp.type === 'end') icon = pathRedIcon;
-            else if (wp.type === 'unproductive') icon = pathOrangeIcon;
-
-            const wpTitle = wp.label || wp.name || '';
-            const wpDesc = wp.detail || wp.description || '';
-            const marker = L.marker(latlng, { icon: icon }).addTo(tab1Map);
-            marker.bindPopup(`<strong>${wpTitle}</strong><br>${wpDesc}<br><span style="font-size:10px;color:#666;">${wp.time}</span>`);
+            
+            const circleIcon = createCustomCircleIcon(wp);
+            const popupContent = createMapPopupCardHtml(wp);
+            const marker = L.marker(latlng, { icon: circleIcon }).addTo(tab1Map);
+            marker.bindPopup(popupContent, { offset: [0, -10] });
             tab1MapLayers.push(marker);
+            window._tab1Markers.push(marker);
 
             if (stepOl) {
                 let cardIcon = '<i class="ph ph-receipt" style="font-size:18px; color:#2563eb;"></i>';
@@ -4634,10 +4726,12 @@
                     typeTitle = 'Unproductive Visit';
                 }
 
+                const wpTitle = wp.label || wp.name || '';
+                const wpDesc = wp.detail || wp.description || '';
                 const amountStr = wp.amount ? ` • <strong>Rs. ${parseFloat(wp.amount).toLocaleString('en-US', {minimumFractionDigits:2})}</strong>` : '';
 
                 stepOl.innerHTML += `
-                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition:all 0.15s;">
+                    <div class="activity-log-item" onclick="focusTab1Waypoint(${index}, ${wp.lat}, ${wp.lng})" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition:all 0.15s;">
                         <div style="width:40px; height:40px; border-radius:12px; background:${cardBg}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                             ${cardIcon}
                         </div>

@@ -1325,4 +1325,163 @@
             color: #f5f5f7;
         }
     }
+    /* Modern Leaflet Map Styling & Custom Pins */
+    .custom-circle-pin-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        pointer-events: auto;
+        cursor: pointer;
+        filter: drop-shadow(0 4px 10px rgba(15, 23, 42, 0.18));
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .custom-circle-pin-container:hover {
+        transform: scale(1.14) translateY(-3px);
+        z-index: 99999 !important;
+    }
+
+    .pin-shop-badge {
+        background: #ffffff;
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 11px;
+        padding: 3px 9px;
+        border-radius: 100px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        white-space: nowrap;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 4px;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+    }
+
+    .pin-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 15px;
+        border: 2.5px solid #ffffff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .pin-circle.pin-type-start {
+        background: #059669;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.25), 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .pin-circle.pin-type-end {
+        background: #dc2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.25), 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .pin-circle.pin-type-invoice {
+        background: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .pin-circle.pin-type-unproductive {
+        background: #d97706;
+        box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25), 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .pin-circle.pin-type-default {
+        background: #475569;
+        box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.25), 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    /* Custom White Card Leaflet Popup Overrides */
+    .leaflet-popup-content-wrapper {
+        background: #ffffff !important;
+        border-radius: 16px !important;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.06) !important;
+        border: 1px solid rgba(226, 232, 240, 0.9) !important;
+        padding: 0 !important;
+        overflow: hidden;
+    }
+    .leaflet-popup-content {
+        margin: 0 !important;
+        line-height: 1.4 !important;
+        width: 240px !important;
+    }
+    .leaflet-popup-tip-container {
+        width: 20px !important;
+        height: 10px !important;
+    }
+    .leaflet-popup-tip {
+        background: #ffffff !important;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1) !important;
+    }
+    .leaflet-container a.leaflet-popup-close-button {
+        top: 8px !important;
+        right: 8px !important;
+        color: #94a3b8 !important;
+        font-size: 16px !important;
+        width: 22px !important;
+        height: 22px !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: background 0.15s, color 0.15s !important;
+    }
+    .leaflet-container a.leaflet-popup-close-button:hover {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+    }
+
+    .map-popup-card {
+        padding: 14px 16px;
+        font-family: var(--f-system);
+    }
+    .map-popup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .map-popup-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 100px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .map-popup-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.25;
+        margin-bottom: 4px;
+    }
+    .map-popup-desc {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+    .map-popup-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 8px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 11px;
+        color: #94a3b8;
+    }
+
+    /* Activity log item focus hover effect */
+    .activity-log-item {
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .activity-log-item:hover {
+        border-color: #cbd5e1 !important;
+        transform: translateX(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+    }
 </style>
