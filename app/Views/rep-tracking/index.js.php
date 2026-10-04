@@ -2240,7 +2240,7 @@
 
         const trigger = document.createElement('div');
         trigger.className = 'custom-select-trigger';
-        trigger.style.cssText = 'padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; color:#0f172a; font-size:13px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.18s; user-select:none;';
+        trigger.style.cssText = 'height:42px; padding:0 14px; border:1px solid #cbd5e1; border-radius:10px; background:#ffffff; color:#0f172a; font-size:13px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.18s; user-select:none; box-sizing:border-box;';
         
         const textSpan = document.createElement('span');
         textSpan.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';

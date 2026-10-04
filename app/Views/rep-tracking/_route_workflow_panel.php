@@ -528,7 +528,7 @@
                                     <div style="display:flex; flex-direction:column; gap:18px;">
                                         <div>
                                             <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Delivery Date</label>
-                                            <input type="date" id="adjDaDate" value="<?= date('Y-m-d') ?>" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                                            <input type="date" id="adjDaDate" value="<?= date('Y-m-d') ?>" style="width:100%; height:42px; padding:0 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
                                         </div>
 
                                         <div>

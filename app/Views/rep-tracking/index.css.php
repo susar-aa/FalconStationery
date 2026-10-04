@@ -35,6 +35,16 @@ body, button, input, select, textarea, .app-workspace, .workspace-tab-panel, .mo
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
+.custom-searchable-select select {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
     /* Workspace Active Visual Density Optimizations */
     body.workspace-showing .app-container {
         margin-top: 68px !important;
