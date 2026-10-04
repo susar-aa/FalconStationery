@@ -1336,7 +1336,15 @@
             });
         }
 
-        const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
+        const tbody = document.getElementById('loadingChecklistTbody');
+        if (tbody) {
+            tbody.innerHTML = listHtml;
+            const btnVerify = document.getElementById('btnVerifyAllItemsText');
+            if (btnVerify) {
+                btnVerify.innerHTML = `<i class="ph ph-checks" style="font-size:16px;"></i> Verify All Items (${verifiedCount}/${totalCount})`;
+            }
+            return;
+        }
 
         box.innerHTML = `
             <div style="background:transparent; margin-bottom:20px;">
@@ -1351,7 +1359,7 @@
                                 <th style="padding:14px 18px; text-align:center; width:190px;">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>${listHtml}</tbody>
+                        <tbody id="loadingChecklistTbody">${listHtml}</tbody>
                     </table>
                 </div>
 
@@ -1372,7 +1380,7 @@
                     </button>
 
                     ${!isReadOnly ? `
-                        <button type="button" onclick="verifyAllLoadingItems()" style="padding:9px 16px; background:#0284c7; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(2,132,199,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#0369a1'" onmouseout="this.style.transform='scale(1)'; this.style.background='#0284c7'">
+                        <button type="button" onclick="verifyAllLoadingItems()" id="btnVerifyAllItemsText" style="padding:9px 16px; background:#0284c7; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(2,132,199,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#0369a1'" onmouseout="this.style.transform='scale(1)'; this.style.background='#0284c7'">
                             <i class="ph ph-checks" style="font-size:16px;"></i> Verify All Items (${verifiedCount}/${totalCount})
                         </button>
                         <button type="button" onclick="completeLoadingVerification()" style="padding:9px 18px; background:#16a34a; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(22,163,74,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#15803d'" onmouseout="this.style.transform='scale(1)'; this.style.background='#16a34a'">
@@ -1690,6 +1698,18 @@
             });
     }
 
+    function filterVarianceBySearch(query) {
+        const q = (query || '').toLowerCase().trim();
+        document.querySelectorAll('.variance-engine-card').forEach(card => {
+            const name = (card.getAttribute('data-item-name') || '').toLowerCase();
+            card.style.display = (!q || name.includes(q)) ? '' : 'none';
+        });
+        document.querySelectorAll('.variance-table-row').forEach(row => {
+            const name = (row.getAttribute('data-item-name') || '').toLowerCase();
+            row.style.display = (!q || name.includes(q)) ? '' : 'none';
+        });
+    }
+
     function renderVarianceReconciliation() {
         const box = document.getElementById('varianceAuditBox');
         if (!box) return;
@@ -1707,13 +1727,13 @@
             if (variance < 0) totalShortages += Math.abs(variance);
             if (variance > 0) totalOverages += variance;
 
-            let varColor = '#2e7d32';
+            let varColor = '#059669';
             let varText = 'Match (0)';
             if (variance < 0) {
-                varColor = '#c62828';
+                varColor = '#dc2626';
                 varText = `${variance} (Shortage)`;
             } else if (variance > 0) {
-                varColor = '#ef6c00';
+                varColor = '#d97706';
                 varText = `+${variance} (Overage)`;
             }
 
@@ -1732,17 +1752,17 @@
             }
 
             const statusBadge = isItemBalanced 
-                ? `<span style="background:#d1fae5; color:#065f46; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle" style="font-size:13px;"></i> Balanced</span>`
-                : `<span style="background:#fee2e2; color:#991b1b; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:bold; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-warning" style="font-size:13px;"></i> Unbalanced</span>`;
+                ? `<span style="background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle" style="font-size:13px;"></i> Balanced</span>`
+                : `<span style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-warning" style="font-size:13px;"></i> Unbalanced</span>`;
 
             tableRows += `
-                <tr style="border-bottom:1px solid #e2e8f0;">
-                    <td style="padding:10px; font-weight:bold; color:#1e293b;">${item.item_name}</td>
-                    <td style="padding:10px; text-align:center; font-weight:bold; font-family:monospace;">${item.required_qty}</td>
-                    <td style="padding:10px; text-align:center; font-family:monospace;">${item.pre_loaded_qty}</td>
-                    <td style="padding:10px; text-align:center; font-weight:bold; font-family:monospace; background:#f8fafc;">${item.final_loaded_qty}</td>
-                    <td style="padding:10px; text-align:center; font-weight:bold; color:${varColor}; font-family:monospace;">${varText}</td>
-                    <td style="padding:10px; text-align:center;">${statusBadge}</td>
+                <tr class="variance-table-row" data-item-name="${escapeHtml(item.item_name.toLowerCase())}">
+                    <td style="padding:12px 18px; font-weight:700; color:#0f172a;">${escapeHtml(item.item_name)}</td>
+                    <td style="padding:12px 18px; text-align:center; font-weight:700; font-family:monospace;">${item.required_qty}</td>
+                    <td style="padding:12px 18px; text-align:center; font-family:monospace;">${item.pre_loaded_qty}</td>
+                    <td style="padding:12px 18px; text-align:center; font-weight:700; font-family:monospace; background:#f8fafc;">${item.final_loaded_qty}</td>
+                    <td style="padding:12px 18px; text-align:center; font-weight:700; color:${varColor}; font-family:monospace;">${varText}</td>
+                    <td style="padding:12px 18px; text-align:center;">${statusBadge}</td>
                 </tr>
             `;
         });
@@ -1758,12 +1778,12 @@
                         <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
                             <div>
                                 <label style="font-size:11px; font-weight:bold; color:#475569; margin-right:5px;">Pricing Decision:</label>
-                                <select id="pricing_choice_${sub.id}" style="padding:4px 8px; font-size:11px; border-radius:4px; border:1px solid #cbd5e1; background:#fff;">
+                                <select id="pricing_choice_${sub.id}" style="padding:4px 8px; font-size:11px; border-radius:6px; border:1px solid #cbd5e1; background:#fff;">
                                     <option value="original">Use Original Product Price</option>
                                     <option value="replacement" selected>Use Replacement Product Price</option>
                                 </select>
                             </div>
-                            <button onclick="applyProductSubstitution(${sub.id})" style="padding:6px 12px; background:#673ab7; color:#fff; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">
+                            <button onclick="applyProductSubstitution(${sub.id})" style="padding:6px 12px; background:#673ab7; color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">
                                 Apply Substitution To Bills
                             </button>
                         </div>
@@ -1782,8 +1802,8 @@
                 subRows += `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #e2e8f0; gap:15px;">
                         <div style="line-height:1.5; font-size:12px;">
-                            Original Product: <strong style="color:#ef6c00;">${sub.original_item_name}</strong> (Required Qty: <strong>${parseFloat(sub.required_qty)}</strong>)<br>
-                            Replacement Product: <strong style="color:#2e7d32;">${sub.replacement_item_name}</strong> (Loaded Qty: <strong>${parseFloat(sub.loaded_qty)}</strong>)<br>
+                            Original Product: <strong style="color:#ef6c00;">${escapeHtml(sub.original_item_name)}</strong> (Required Qty: <strong>${parseFloat(sub.required_qty)}</strong>)<br>
+                            Replacement Product: <strong style="color:#2e7d32;">${escapeHtml(sub.replacement_item_name)}</strong> (Loaded Qty: <strong>${parseFloat(sub.loaded_qty)}</strong>)<br>
                             Status: <span style="font-weight:bold; color:${sub.status === 'Applied' ? '#16a34a' : '#e65100'};">${sub.status}</span>
                         </div>
                         ${actionPart}
@@ -1792,8 +1812,10 @@
             });
 
             substitutionHtml = `
-                <h5 style="margin:0 0 10px 0; font-size:13px; color:#475569; text-transform:uppercase; font-weight:bold; display:flex; align-items:center; gap:6px;"><i class="ph ph-swap"></i> Product Substitutions</h5>
-                <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px; margin-bottom:25px;">
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:16px; margin-bottom:20px; box-shadow:0 1px 4px rgba(15,23,42,0.04);">
+                    <div style="font-size:12px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+                        <i class="ph ph-swap" style="color:#007aff;"></i> Product Substitutions
+                    </div>
                     ${subRows}
                 </div>
             `;
@@ -1812,9 +1834,9 @@
             const subInfo = currentSubstitutions.find(s => parseInt(s.replacement_item_id) === parseInt(item.item_id) || parseInt(s.original_item_id) === parseInt(item.item_id));
             if (subInfo) {
                 if (parseInt(subInfo.replacement_item_id) === parseInt(item.item_id)) {
-                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; padding:2px 6px; background:#eff6ff; color:#1d4ed8; border-radius:4px; font-size:10px; font-weight:bold; margin-bottom:5px;"><i class="ph ph-swap"></i> Replaced "${subInfo.original_item_name}"</span>`;
+                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; padding:2px 8px; background:#eff6ff; color:#1d4ed8; border-radius:6px; font-size:10px; font-weight:700;"><i class="ph ph-swap"></i> Replaced "${escapeHtml(subInfo.original_item_name)}"</span>`;
                 } else {
-                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; padding:2px 6px; background:#fef2f2; color:#b91c1c; border-radius:4px; font-size:10px; font-weight:bold; margin-bottom:5px;"><i class="ph ph-swap"></i> Replaced by "${subInfo.replacement_item_name}"</span>`;
+                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; padding:2px 8px; background:#fef2f2; color:#b91c1c; border-radius:6px; font-size:10px; font-weight:700;"><i class="ph ph-swap"></i> Replaced by "${escapeHtml(subInfo.replacement_item_name)}"</span>`;
                 }
             }
 
@@ -1827,29 +1849,29 @@
                  let actionSelect = '';
                  if (inv.quantity === 0) {
                      actionSelect = `
-                         <div style="margin-top:5px; color:#dc2626; font-size:11px; font-weight:bold; display:flex; align-items:center; gap:4px;">
+                         <div style="margin-top:4px; color:#dc2626; font-size:11px; font-weight:700; display:flex; align-items:center; gap:4px;">
                              <i class="ph ph-warning"></i> Product will be removed from invoice
                          </div>
                      `;
                  }
 
                 invoiceRows += `
-                    <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr 1.2fr; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #f1f5f9;">
-                        <div style="font-size:12px; font-weight:500;">
-                            <span style="font-size:12px; color:#0f172a; font-weight:bold;">${inv.customer_name}</span>
+                    <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr 1.2fr; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9;">
+                        <div style="font-size:13px; font-weight:600; color:#0f172a;">
+                            <span>${escapeHtml(inv.customer_name)}</span>
                             ${actionSelect}
                         </div>
-                        <div style="text-align:center; font-family:monospace;">
-                            Original: <strong>${inv.original_qty}</strong>
+                        <div style="text-align:center; font-family:monospace; font-size:12px; color:#64748b;">
+                            Original: <strong style="color:#0f172a;">${inv.original_qty}</strong>
                         </div>
                         <div style="text-align:center;">
                             <input type="number" step="1" min="0" value="${inv.quantity}" 
                                    oninput="updateInvoiceAllocation('${stateKey}', ${inv.invoice_id}, this.value)" 
                                    ${isReadOnly ? 'disabled' : ''}
-                                   style="width:70px; padding:4px 8px; border:1px solid #cbd5e1; border-radius:4px; text-align:center; font-weight:bold; font-family:monospace;" />
+                                   style="width:75px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px;" />
                         </div>
                         <div style="text-align:right;">
-                            <span style="font-size:11px; color:#64748b;">Rs. ${(inv.quantity * inv.unit_price).toFixed(2)}</span>
+                            <span style="font-size:12px; font-weight:700; color:#0f172a; font-family:monospace;">Rs. ${(inv.quantity * inv.unit_price).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                         </div>
                     </div>
                 `;
@@ -1861,32 +1883,38 @@
 
             const unbalancedVal = item.final_loaded_qty - currentTotal;
             const panelStatus = (Math.abs(unbalancedVal) < 0.01)
-                ? `<span style="color:#16a34a; font-weight:bold; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle" style="font-size:14px;"></i> Balanced</span>`
-                : `<span style="color:#dc2626; font-weight:bold; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-warning" style="font-size:14px;"></i> Unbalanced (${unbalancedVal > 0 ? '+' : ''}${unbalancedVal.toFixed(1)} pcs)</span>`;
+                ? `<span style="background:#dcfce7; color:#15803d; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle" style="font-size:13px;"></i> Balanced</span>`
+                : `<span style="background:#fee2e2; color:#b91c1c; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-warning" style="font-size:13px;"></i> Unbalanced (${unbalancedVal > 0 ? '+' : ''}${unbalancedVal.toFixed(1)} pcs)</span>`;
 
             let autoDistBtn = isReadOnly ? '' : `
-                <button onclick="autoDistributeVariance('${stateKey}')" style="padding:4px 10px; background:#3b82f6; color:#fff; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; margin-right:10px; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-lightning"></i> Auto-Distribute</button>
+                <button onclick="autoDistributeVariance('${stateKey}')" style="padding:6px 12px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; border-radius:100px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.18s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                    <i class="ph ph-lightning" style="font-size:13px;"></i> Auto-Distribute
+                </button>
             `;
 
+            let varColor = item.variance > 0 ? '#d97706' : '#dc2626';
+
             reconciliationPanels += `
-                <div style="border:1px solid #cbd5e1; border-radius:8px; padding:15px; margin-bottom:20px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+                <div class="variance-engine-card" data-item-name="${escapeHtml(item.item_name.toLowerCase())}" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 18px; margin-bottom:16px; box-shadow:0 2px 8px rgba(15,23,42,0.04); transition:all 0.18s ease;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:12px; margin-bottom:12px;">
                         <div>
-                            <strong style="font-size:13px; color:#0f172a;"><i class="ph ph-wrench"></i> Reconcile: ${item.item_name}</strong><br>
-                            ${subBadge ? subBadge + '<br>' : ''}
-                            <span style="font-size:11px; color:#475569;">Variance: <strong>${item.variance > 0 ? '+' : ''}${item.variance}</strong> | Required: <strong>${item.required_qty}</strong> | Final Loaded: <strong>${item.final_loaded_qty}</strong></span>
+                            <div style="font-weight:700; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                                <i class="ph ph-wrench" style="color:#007aff;"></i> Reconcile: ${escapeHtml(item.item_name)}
+                            </div>
+                            ${subBadge ? `<div style="margin-top:2px;">${subBadge}</div>` : ''}
+                            <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                                Variance: <strong style="color:${varColor}">${item.variance > 0 ? '+' : ''}${item.variance}</strong> | Required: <strong>${item.required_qty}</strong> | Final Loaded: <strong>${item.final_loaded_qty}</strong>
+                            </div>
                         </div>
-                        <div style="text-align:right;">
+                        <div style="display:flex; align-items:center; gap:10px;">
                             ${autoDistBtn}
                             ${panelStatus}
                         </div>
                     </div>
-                    <div>
-                        ${invoiceRows}
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:11px; color:#475569; background:#f8fafc; padding:8px; border-radius:4px;">
-                        <span>Allocated: <strong style="font-family:monospace; font-size:12px;">${currentTotal.toFixed(1)}</strong></span>
-                        <span>Remaining to Allocate: <strong style="font-family:monospace; font-size:12px; color:${unbalancedVal !== 0 ? '#dc2626' : '#16a34a'};">${unbalancedVal.toFixed(1)}</strong></span>
+                    <div>${invoiceRows}</div>
+                    <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:12px; color:#475569; background:#f8fafc; padding:10px 14px; border-radius:100px; border:1px solid #e2e8f0;">
+                        <span>Allocated: <strong style="font-family:monospace; font-size:13px; color:#0f172a;">${currentTotal.toFixed(1)}</strong></span>
+                        <span>Remaining to Allocate: <strong style="font-family:monospace; font-size:13px; color:${unbalancedVal !== 0 ? '#dc2626' : '#16a34a'};">${unbalancedVal.toFixed(1)}</strong></span>
                     </div>
                 </div>
             `;
@@ -1894,69 +1922,94 @@
 
         if (!hasAnyVariance) {
             reconciliationPanels = `
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:20px; text-align:center; color:#166534; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    <i class="ph ph-check-circle" style="font-size:16px;"></i> All items are fully balanced! No billing adjustments required.
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:20px; text-align:center; color:#166534; font-weight:700; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                    <i class="ph ph-check-circle" style="font-size:18px;"></i> All items are fully balanced! No billing adjustments required.
                 </div>
             `;
         }
 
-        // --- CONSTRUCT THE HTML: Reconciliation Engine at the Top, Table and totals at the bottom ---
+        // --- CONSTRUCT THE HTML ---
         
-        // 1. Bill Reconciliation Engine & Submit/Approve Button
+        // 1. Top Shortages / Overages Total Metric Cards
         html += `
-            <h5 style="margin:0 0 10px 0; font-size:13px; color:#475569; text-transform:uppercase; font-weight:bold; display:flex; align-items:center; gap:6px;"><i class="ph ph-scales"></i> Bill Reconciliation Engine</h5>
-            ${reconciliationPanels}
-        `;
-
-        if (!isReadOnly) {
-            html += `
-                <div style="text-align:right; margin-top:10px; margin-bottom:25px; display:flex; justify-content:flex-end; gap:10px;">
-            `;
-            if (hasUnbalanced) {
-                html += `
-                    <button id="btnForceSubmitVarianceAdjustments" onclick="submitVarianceAdjustments(true)" 
-                            style="padding:10px 20px; background:#b91c1c; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                        <i class="ph ph-warning-octagon"></i> Force Approve (Bypass Variance)
-                    </button>
-                `;
-            }
-            html += `
-                    <button id="btnSubmitVarianceAdjustments" onclick="submitVarianceAdjustments(false)" 
-                            ${hasUnbalanced ? 'disabled' : ''}
-                            style="padding:10px 20px; background:#2e7d32; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:${hasUnbalanced ? 'not-allowed' : 'pointer'}; opacity:${hasUnbalanced ? 0.5 : 1}; display:inline-flex; align-items:center; gap:6px;">
-                        <i class="ph ph-scales"></i> Approve & Apply Billing Adjustments
-                    </button>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="width:40px; height:40px; border-radius:10px; background:#fee2e2; color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+                        <i class="ph ph-trend-down"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:12px; font-weight:700; color:#991b1b; text-transform:uppercase; letter-spacing:0.04em;">Shortages to Reconcile</div>
+                        <div style="font-size:20px; font-weight:800; color:#7f1d1d; font-family:monospace; margin-top:2px;">${totalShortages} pcs</div>
+                    </div>
                 </div>
-            `;
-        }
-
-        // 2. Shortages / Overages Total Cards
-        html += `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
-                <div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:6px; padding:12px; text-align:center; color:#991b1b;">
-                    <span>Shortages to Reconcile</span><br><strong style="font-size:16px;">${totalShortages} pcs</strong>
-                </div>
-                <div style="background:#fff3e0; border:1px solid #ffe0b2; border-radius:6px; padding:12px; text-align:center; color:#e65100;">
-                    <span>Overages to Reconcile</span><br><strong style="font-size:16px;">${totalOverages} pcs</strong>
+                <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="width:40px; height:40px; border-radius:10px; background:#ffedd5; color:#f97316; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+                        <i class="ph ph-trend-up"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:12px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.04em;">Overages to Reconcile</div>
+                        <div style="font-size:20px; font-weight:800; color:#9a3412; font-family:monospace; margin-top:2px;">${totalOverages} pcs</div>
+                    </div>
                 </div>
             </div>
-            
-            <h5 style="margin:0 0 10px 0; font-size:13px; color:#475569; text-transform:uppercase; font-weight:bold; display:flex; align-items:center; gap:6px;"><i class="ph ph-package"></i> Product Loading Variances</h5>
-            <table class="data-table" style="margin-bottom:25px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden;">
-                <thead>
-                    <tr style="background:#f1f5f9;">
-                        <th style="padding:10px; text-align:left;">Product Name</th>
-                        <th style="padding:10px; text-align:center;">Required</th>
-                        <th style="padding:10px; text-align:center;">Pre-Loaded</th>
-                        <th style="padding:10px; text-align:center; background:#e2e8f0;">Final Loaded</th>
-                        <th style="padding:10px; text-align:center;">Variance</th>
-                        <th style="padding:10px; text-align:center;">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${tableRows}
-                </tbody>
-            </table>
+        `;
+
+        if (substitutionHtml) {
+            html += substitutionHtml;
+        }
+
+        // 2. Bill Reconciliation Engine Cards Section
+        html += `
+            <div id="varianceEngineContainer" style="margin-bottom:20px;">
+                ${reconciliationPanels}
+            </div>
+        `;
+
+        // 3. Product Loading Variances Table Section
+        html += `
+            <div style="overflow-x:auto; margin-bottom:20px;">
+                <table class="data-table" style="margin:0; width:100%;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                            <th style="padding:14px 18px; text-align:left;">Product Name</th>
+                            <th style="padding:14px 18px; text-align:center;">Required</th>
+                            <th style="padding:14px 18px; text-align:center;">Pre-Loaded</th>
+                            <th style="padding:14px 18px; text-align:center; background:#f1f5f9;">Final Loaded</th>
+                            <th style="padding:14px 18px; text-align:center;">Variance</th>
+                            <th style="padding:14px 18px; text-align:center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        // 4. Dark Pill Floating Dock with Search & Labeled Action Buttons
+        html += `
+            <div id="tab5FloatingDock" style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:1000; display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(30, 41, 59, 0.96); backdrop-filter:blur(24px) saturate(200%); -webkit-backdrop-filter:blur(24px) saturate(200%); border:1px solid rgba(255, 255, 255, 0.15); border-radius:100px; box-shadow:0 16px 40px rgba(15, 23, 42, 0.35);">
+                
+                <!-- Search Input Pill inside Dark Bar -->
+                <div style="display:flex; align-items:center; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:6px 14px; gap:8px; width:220px; transition:all 0.18s;">
+                    <i class="ph ph-magnifying-glass" style="color:#94a3b8; font-size:16px;"></i>
+                    <input type="text" id="searchVarianceProductsInput" oninput="filterVarianceBySearch(this.value)" placeholder="Search items & engine..." style="background:transparent; border:none; outline:none; color:#ffffff; font-size:13px; width:100%; font-family:inherit;" onfocus="this.parentElement.style.borderColor='#007aff'; this.parentElement.style.background='rgba(255,255,255,0.18)'" onblur="this.parentElement.style.borderColor='rgba(255,255,255,0.18)'; this.parentElement.style.background='rgba(255,255,255,0.12)'">
+                </div>
+
+                <div style="width:1px; height:22px; background:rgba(255,255,255,0.2); margin:0 2px;"></div>
+
+                <!-- Labeled Buttons with Icons -->
+                ${!isReadOnly ? `
+                    ${hasUnbalanced ? `
+                        <button id="btnForceSubmitVarianceAdjustments" type="button" onclick="submitVarianceAdjustments(true)" style="padding:9px 16px; background:#dc2626; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(220,38,38,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#b91c1c'" onmouseout="this.style.transform='scale(1)'; this.style.background='#dc2626'">
+                            <i class="ph ph-warning-octagon" style="font-size:16px;"></i> Force Approve (Bypass)
+                        </button>
+                    ` : ''}
+                    <button id="btnSubmitVarianceAdjustments" type="button" onclick="submitVarianceAdjustments(false)" ${hasUnbalanced ? 'disabled' : ''} style="padding:9px 18px; background:#16a34a; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:${hasUnbalanced ? 'not-allowed' : 'pointer'}; opacity:${hasUnbalanced ? 0.5 : 1}; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(22,163,74,0.3); transition:all 0.18s;" onmouseover="${hasUnbalanced ? '' : 'this.style.transform=\'scale(1.04)\'; this.style.background=\'#15803d\''}" onmouseout="${hasUnbalanced ? '' : 'this.style.transform=\'scale(1)\'; this.style.background=\'#16a34a\''}">
+                        <i class="ph ph-scales" style="font-size:16px;"></i> Approve & Apply Adjustments
+                    </button>
+                ` : ''}
+            </div>
         `;
 
         box.innerHTML = html;
@@ -5824,6 +5877,7 @@ window.buildAccountOptions = buildAccountOptions;
     window.updateInvoiceAllocation = updateInvoiceAllocation;
     window.autoDistributeVariance = autoDistributeVariance;
     window.submitVarianceAdjustments = submitVarianceAdjustments;
+    window.filterVarianceBySearch = filterVarianceBySearch;
     window.printLoadingSheet = printLoadingSheet;
     window.loadDispatchStage = loadDispatchStage;
     window.loadDeliveryLiveStage = loadDeliveryLiveStage;
