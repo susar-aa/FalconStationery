@@ -4478,9 +4478,8 @@
     function initRoutePathMap() {
         if (routeMap !== null) return;
         routeMap = L.map('routePathMap').setView([7.8731, 80.7718], 8);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS',
             maxZoom: 19
         }).addTo(routeMap);
     }
@@ -4497,9 +4496,8 @@
         if (!el || typeof L === 'undefined') return;
         initMapIcons();
         tab1Map = L.map('tab1RoutePathMap').setView([7.8731, 80.7718], 8);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri, HERE, Garmin, USGS, NGA, EPA, USDA, NPS',
             maxZoom: 19
         }).addTo(tab1Map);
     }
