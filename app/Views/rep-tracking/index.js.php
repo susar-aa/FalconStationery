@@ -1802,11 +1802,31 @@
                 subRows += `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #e2e8f0; gap:15px;">
                         <div style="line-height:1.5; font-size:12px;">
-                            Original Product: <strong style="color:#ef6c00;">${escapeHtml(sub.original_item_name)}</strong> (Required Qty: <strong>${parseFloat(sub.required_qty)}</strong>)<br>
-                            Replacement Product: <strong style="color:#2e7d32;">${escapeHtml(sub.replacement_item_name)}</strong> (Loaded Qty: <strong>${parseFloat(sub.loaded_qty)}</strong>)<br>
+                            Original Product: <strong style="color:#ef6c00;">${escapeHtml(sub.original_item_name)}</strong> (Required Qty: <strong>${parseFloat(sub.required_qty || 0)}</strong>)<br>
+                            Replacement Product: <strong style="color:#2e7d32;">${escapeHtml(sub.replacement_item_name)}</strong> (Loaded Qty: <strong>${parseFloat(sub.loaded_qty || 0)}</strong>)<br>
                             Status: <span style="font-weight:bold; color:${sub.status === 'Applied' ? '#16a34a' : '#e65100'};">${sub.status}</span>
                         </div>
-                        ${actionPart}
+                        ${sub.status === 'Pending Bill Update' ? `
+                            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                                <div>
+                                    <label style="font-size:11px; font-weight:bold; color:#475569; margin-right:5px;">Pricing Decision:</label>
+                                    <select id="pricing_choice_${sub.id}" style="padding:4px 8px; font-size:11px; border-radius:6px; border:1px solid #cbd5e1; background:#fff;">
+                                        <option value="original">Use Original Product Price</option>
+                                        <option value="replacement" selected>Use Replacement Product Price</option>
+                                    </select>
+                                </div>
+                                <button onclick="applyProductSubstitution(${sub.id})" style="padding:6px 12px; background:#673ab7; color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;">
+                                    Apply Substitution To Bills
+                                </button>
+                            </div>
+                        ` : `
+                            <div style="text-align:right; font-size:11px; color:#64748b; line-height:1.4;">
+                                Applied by: <strong>${sub.creator_name || 'System'}</strong><br>
+                                Date: <strong>${sub.applied_at || 'N/A'}</strong><br>
+                                Original Bill Value: <strong>Rs. ${(parseFloat(sub.original_bill_value) || 0).toFixed(2)}</strong><br>
+                                Updated Bill Value: <strong>Rs. ${(parseFloat(sub.updated_bill_value) || 0).toFixed(2)}</strong>
+                            </div>
+                        `}
                     </div>
                 `;
             });
@@ -1834,9 +1854,9 @@
             const subInfo = currentSubstitutions.find(s => parseInt(s.replacement_item_id) === parseInt(item.item_id) || parseInt(s.original_item_id) === parseInt(item.item_id));
             if (subInfo) {
                 if (parseInt(subInfo.replacement_item_id) === parseInt(item.item_id)) {
-                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; padding:2px 8px; background:#eff6ff; color:#1d4ed8; border-radius:6px; font-size:10px; font-weight:700;"><i class="ph ph-swap"></i> Replaced "${escapeHtml(subInfo.original_item_name)}"</span>`;
+                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:2px; padding:2px 8px; background:#eff6ff; color:#1d4ed8; border-radius:6px; font-size:10px; font-weight:700;"><i class="ph ph-swap"></i> Replaced "${escapeHtml(subInfo.original_item_name)}"</span>`;
                 } else {
-                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:4px; padding:2px 8px; background:#fef2f2; color:#b91c1c; border-radius:6px; font-size:10px; font-weight:700;"><i class="ph ph-swap"></i> Replaced by "${escapeHtml(subInfo.replacement_item_name)}"</span>`;
+                    subBadge = `<span style="display:inline-flex; align-items:center; gap:4px; margin-top:2px; padding:2px 8px; background:#fef2f2; color:#b91c1c; border-radius:6px; font-size:10px; font-weight:700;"><i class="ph ph-swap"></i> Replaced by "${escapeHtml(subInfo.replacement_item_name)}"</span>`;
                 }
             }
 
@@ -1849,28 +1869,28 @@
                  let actionSelect = '';
                  if (inv.quantity === 0) {
                      actionSelect = `
-                         <div style="margin-top:4px; color:#dc2626; font-size:11px; font-weight:700; display:flex; align-items:center; gap:4px;">
-                             <i class="ph ph-warning"></i> Product will be removed from invoice
+                         <div style="margin-top:2px; color:#dc2626; font-size:10px; font-weight:700; display:flex; align-items:center; gap:3px;">
+                             <i class="ph ph-warning"></i> Will be removed from invoice
                          </div>
                      `;
                  }
 
                 invoiceRows += `
-                    <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr 1.2fr; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #f1f5f9;">
-                        <div style="font-size:13px; font-weight:600; color:#0f172a;">
+                    <div style="display:grid; grid-template-columns: 1fr auto auto auto; gap:12px; align-items:center; padding:8px 12px; background:#f8fafc; border-radius:8px; margin-bottom:6px; border:1px solid #f1f5f9;">
+                        <div style="font-size:12px; font-weight:600; color:#0f172a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(inv.customer_name)}">
                             <span>${escapeHtml(inv.customer_name)}</span>
                             ${actionSelect}
                         </div>
-                        <div style="text-align:center; font-family:monospace; font-size:12px; color:#64748b;">
-                            Original: <strong style="color:#0f172a;">${inv.original_qty}</strong>
+                        <div style="text-align:center; font-family:monospace; font-size:11px; color:#64748b; white-space:nowrap;">
+                            Orig: <strong style="color:#0f172a;">${inv.original_qty}</strong>
                         </div>
                         <div style="text-align:center;">
                             <input type="number" step="1" min="0" value="${inv.quantity}" 
                                    oninput="updateInvoiceAllocation('${stateKey}', ${inv.invoice_id}, this.value)" 
                                    ${isReadOnly ? 'disabled' : ''}
-                                   style="width:75px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px;" />
+                                   style="width:65px; padding:4px 6px; border:1px solid #cbd5e1; border-radius:6px; text-align:center; font-weight:bold; font-family:monospace; font-size:12px; background:#ffffff;" />
                         </div>
-                        <div style="text-align:right;">
+                        <div style="text-align:right; min-width:85px;">
                             <span style="font-size:12px; font-weight:700; color:#0f172a; font-family:monospace;">Rs. ${(inv.quantity * inv.unit_price).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                         </div>
                     </div>
@@ -1878,43 +1898,45 @@
             });
 
             if (item.invoices.length === 0) {
-                invoiceRows = `<p style="color:#64748b; font-size:12px; margin:10px 0; font-style:italic;">No invoices contain this product on this route.</p>`;
+                invoiceRows = `<p style="color:#64748b; font-size:12px; margin:8px 0; font-style:italic;">No invoices contain this product on this route.</p>`;
             }
 
             const unbalancedVal = item.final_loaded_qty - currentTotal;
             const panelStatus = (Math.abs(unbalancedVal) < 0.01)
-                ? `<span style="background:#dcfce7; color:#15803d; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle" style="font-size:13px;"></i> Balanced</span>`
-                : `<span style="background:#fee2e2; color:#b91c1c; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-warning" style="font-size:13px;"></i> Unbalanced (${unbalancedVal > 0 ? '+' : ''}${unbalancedVal.toFixed(1)} pcs)</span>`;
+                ? `<span style="background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-check-circle" style="font-size:13px;"></i> Balanced</span>`
+                : `<span style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><i class="ph ph-warning" style="font-size:13px;"></i> Unbalanced (${unbalancedVal > 0 ? '+' : ''}${unbalancedVal.toFixed(1)} pcs)</span>`;
 
             let autoDistBtn = isReadOnly ? '' : `
-                <button onclick="autoDistributeVariance('${stateKey}')" style="padding:6px 12px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; border-radius:100px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.18s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
-                    <i class="ph ph-lightning" style="font-size:13px;"></i> Auto-Distribute
+                <button onclick="autoDistributeVariance('${stateKey}')" style="padding:5px 10px; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; border-radius:100px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.18s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                    <i class="ph ph-lightning" style="font-size:12px;"></i> Auto-Distribute
                 </button>
             `;
 
             let varColor = item.variance > 0 ? '#d97706' : '#dc2626';
 
             reconciliationPanels += `
-                <div class="variance-engine-card" data-item-name="${escapeHtml(item.item_name.toLowerCase())}" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:16px 18px; margin-bottom:16px; box-shadow:0 2px 8px rgba(15,23,42,0.04); transition:all 0.18s ease;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:12px; margin-bottom:12px;">
-                        <div>
-                            <div style="font-weight:700; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:8px;">
-                                <i class="ph ph-wrench" style="color:#007aff;"></i> Reconcile: ${escapeHtml(item.item_name)}
+                <div class="variance-engine-card" data-item-name="${escapeHtml(item.item_name.toLowerCase())}" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:14px 16px; box-shadow:0 2px 8px rgba(15,23,42,0.04); display:flex; flex-direction:column; justify-space-between; transition:all 0.18s ease;">
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid #f1f5f9; padding-bottom:10px; margin-bottom:10px; gap:10px;">
+                            <div>
+                                <div style="font-weight:700; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                                    <i class="ph ph-cube" style="color:#007aff; font-size:16px;"></i> ${escapeHtml(item.item_name)}
+                                </div>
+                                ${subBadge ? `<div style="margin-top:2px;">${subBadge}</div>` : ''}
+                                <div style="font-size:11px; color:#64748b; margin-top:3px;">
+                                    Variance: <strong style="color:${varColor}">${item.variance > 0 ? '+' : ''}${item.variance}</strong> | Req: <strong>${item.required_qty}</strong> | Loaded: <strong>${item.final_loaded_qty}</strong>
+                                </div>
                             </div>
-                            ${subBadge ? `<div style="margin-top:2px;">${subBadge}</div>` : ''}
-                            <div style="font-size:12px; color:#64748b; margin-top:4px;">
-                                Variance: <strong style="color:${varColor}">${item.variance > 0 ? '+' : ''}${item.variance}</strong> | Required: <strong>${item.required_qty}</strong> | Final Loaded: <strong>${item.final_loaded_qty}</strong>
+                            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                                ${autoDistBtn}
+                                ${panelStatus}
                             </div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            ${autoDistBtn}
-                            ${panelStatus}
-                        </div>
+                        <div>${invoiceRows}</div>
                     </div>
-                    <div>${invoiceRows}</div>
-                    <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:12px; color:#475569; background:#f8fafc; padding:10px 14px; border-radius:100px; border:1px solid #e2e8f0;">
-                        <span>Allocated: <strong style="font-family:monospace; font-size:13px; color:#0f172a;">${currentTotal.toFixed(1)}</strong></span>
-                        <span>Remaining to Allocate: <strong style="font-family:monospace; font-size:13px; color:${unbalancedVal !== 0 ? '#dc2626' : '#16a34a'};">${unbalancedVal.toFixed(1)}</strong></span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-size:11px; color:#475569; background:#f8fafc; padding:8px 12px; border-radius:100px; border:1px solid #e2e8f0;">
+                        <span>Allocated: <strong style="font-family:monospace; font-size:12px; color:#0f172a;">${currentTotal.toFixed(1)}</strong></span>
+                        <span>Remaining: <strong style="font-family:monospace; font-size:12px; color:${unbalancedVal !== 0 ? '#dc2626' : '#16a34a'};">${unbalancedVal.toFixed(1)}</strong></span>
                     </div>
                 </div>
             `;
@@ -1922,7 +1944,7 @@
 
         if (!hasAnyVariance) {
             reconciliationPanels = `
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:20px; text-align:center; color:#166534; font-weight:700; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:14px; padding:20px; text-align:center; color:#166534; font-weight:700; margin-bottom:20px; display:flex; align-items:center; justify-center; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,0.03); grid-column: 1 / -1;">
                     <i class="ph ph-check-circle" style="font-size:18px;"></i> All items are fully balanced! No billing adjustments required.
                 </div>
             `;
@@ -1933,22 +1955,22 @@
         // 1. Top Shortages / Overages Total Metric Cards
         html += `
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
-                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-                    <div style="width:40px; height:40px; border-radius:10px; background:#fee2e2; color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="width:38px; height:38px; border-radius:10px; background:#fee2e2; color:#ef4444; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
                         <i class="ph ph-trend-down"></i>
                     </div>
                     <div>
-                        <div style="font-size:12px; font-weight:700; color:#991b1b; text-transform:uppercase; letter-spacing:0.04em;">Shortages to Reconcile</div>
-                        <div style="font-size:20px; font-weight:800; color:#7f1d1d; font-family:monospace; margin-top:2px;">${totalShortages} pcs</div>
+                        <div style="font-size:11px; font-weight:700; color:#991b1b; text-transform:uppercase; letter-spacing:0.04em;">Shortages to Reconcile</div>
+                        <div style="font-size:18px; font-weight:800; color:#7f1d1d; font-family:monospace; margin-top:2px;">${totalShortages} pcs</div>
                     </div>
                 </div>
-                <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-                    <div style="width:40px; height:40px; border-radius:10px; background:#ffedd5; color:#f97316; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+                <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="width:38px; height:38px; border-radius:10px; background:#ffedd5; color:#f97316; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
                         <i class="ph ph-trend-up"></i>
                     </div>
                     <div>
-                        <div style="font-size:12px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.04em;">Overages to Reconcile</div>
-                        <div style="font-size:20px; font-weight:800; color:#9a3412; font-family:monospace; margin-top:2px;">${totalOverages} pcs</div>
+                        <div style="font-size:11px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.04em;">Overages to Reconcile</div>
+                        <div style="font-size:18px; font-weight:800; color:#9a3412; font-family:monospace; margin-top:2px;">${totalOverages} pcs</div>
                     </div>
                 </div>
             </div>
@@ -1958,9 +1980,9 @@
             html += substitutionHtml;
         }
 
-        // 2. Bill Reconciliation Engine Cards Section
+        // 2. Bill Reconciliation Engine Cards Section (Grid layout)
         html += `
-            <div id="varianceEngineContainer" style="margin-bottom:20px;">
+            <div id="varianceEngineContainer" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap:16px; margin-bottom:20px;">
                 ${reconciliationPanels}
             </div>
         `;
