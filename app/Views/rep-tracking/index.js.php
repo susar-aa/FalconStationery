@@ -1065,8 +1065,8 @@
 
         const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
 
-        // Hide/Show operational buttons header in Tab 3
-        const opsHeader = document.querySelector("#tabpanel-3 button")?.parentElement;
+        // Hide/Show operational buttons floating dock in Tab 3
+        const opsHeader = document.getElementById('tab3FloatingDock');
         if (opsHeader) {
             opsHeader.style.display = isReadOnly ? 'none' : 'flex';
         }
