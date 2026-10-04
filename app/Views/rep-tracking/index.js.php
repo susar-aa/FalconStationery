@@ -1262,21 +1262,27 @@
             });
     }
 
+    function filterLoadingProductsBySearch(query) {
+        const q = (query || '').toLowerCase().trim();
+        document.querySelectorAll('.loading-table-row').forEach(row => {
+            const name = (row.getAttribute('data-item-name') || '').toLowerCase();
+            row.style.display = (!q || name.includes(q)) ? '' : 'none';
+        });
+    }
+
     function renderLoadingStageUI() {
         const box = document.getElementById('loadingBox');
         if (!box) return;
 
-        const searchVal = (document.getElementById('searchLoadingProductsInput')?.value || '').toLowerCase();
-        const filteredItems = currentLoadingStageItems.filter(item => item.item_name.toLowerCase().includes(searchVal));
-
+        const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
         const verifiedCount = currentLoadingStageItems.filter(item => item.is_verified === 1).length;
         const totalCount = currentLoadingStageItems.length;
 
         let listHtml = '';
-        if (filteredItems.length === 0) {
-            listHtml = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b; font-size:13px;">No matching products found.</td></tr>';
+        if (currentLoadingStageItems.length === 0) {
+            listHtml = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b; font-size:13px;">No loading items found.</td></tr>';
         } else {
-            filteredItems.forEach(item => {
+            currentLoadingStageItems.forEach(item => {
                 const req = parseFloat(item.required_qty);
                 const loaded = item.final_loaded_qty !== null ? parseFloat(item.final_loaded_qty) : req;
                 const diff = loaded - req;
@@ -1305,10 +1311,9 @@
                 }
 
                 const isVerified = (item.is_verified === 1);
-                const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
 
                 listHtml += `
-                    <tr>
+                    <tr class="loading-table-row" data-item-name="${escapeHtml(item.item_name.toLowerCase())}" style="${rowBg}">
                         <td style="padding:12px 18px;">${nameHtml}</td>
                         <td style="padding:12px 18px; text-align:center; font-weight:bold; font-family:monospace; font-size:13px; color:#334155;">${req}</td>
                         <td style="padding:12px 18px; text-align:center;">
@@ -1369,7 +1374,7 @@
                     <!-- Search Input Pill inside Dark Bar -->
                     <div style="display:flex; align-items:center; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:6px 14px; gap:8px; width:220px; transition:all 0.18s;">
                         <i class="ph ph-magnifying-glass" style="color:#94a3b8; font-size:16px;"></i>
-                        <input type="text" id="searchLoadingProductsInput" value="${escapeHtml(searchVal)}" oninput="renderLoadingStageUI()" placeholder="Search loading items..." style="background:transparent; border:none; outline:none; color:#ffffff; font-size:13px; width:100%; font-family:inherit;" onfocus="this.parentElement.style.borderColor='#007aff'; this.parentElement.style.background='rgba(255,255,255,0.18)'" onblur="this.parentElement.style.borderColor='rgba(255,255,255,0.18)'; this.parentElement.style.background='rgba(255,255,255,0.12)'">
+                        <input type="text" id="searchLoadingProductsInput" oninput="filterLoadingProductsBySearch(this.value)" placeholder="Search loading items..." style="background:transparent; border:none; outline:none; color:#ffffff; font-size:13px; width:100%; font-family:inherit;" onfocus="this.parentElement.style.borderColor='#007aff'; this.parentElement.style.background='rgba(255,255,255,0.18)'" onblur="this.parentElement.style.borderColor='rgba(255,255,255,0.18)'; this.parentElement.style.background='rgba(255,255,255,0.12)'">
                     </div>
 
                     <div style="width:1px; height:22px; background:rgba(255,255,255,0.2); margin:0 2px;"></div>
@@ -5895,6 +5900,7 @@ window.buildAccountOptions = buildAccountOptions;
     window.submitAdjustmentsLogisticsArrange = submitAdjustmentsLogisticsArrange;
     window.loadLoadingStage = loadLoadingStage;
     window.renderLoadingStageUI = renderLoadingStageUI;
+    window.filterLoadingProductsBySearch = filterLoadingProductsBySearch;
     window.adjustLoadingQty = adjustLoadingQty;
     window.toggleItemVerified = toggleItemVerified;
     window.verifyAllLoadingItems = verifyAllLoadingItems;
