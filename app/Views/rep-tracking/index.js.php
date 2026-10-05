@@ -2540,31 +2540,34 @@
 
                 tbody.innerHTML = '';
                 if (invoices.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No invoices dispatched.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:32px; color:#94a3b8; font-size:13px;">No invoices dispatched.</td></tr>';
                     return;
                 }
 
+                let rowIndex = 0;
                 invoices.forEach(inv => {
+                    rowIndex++;
                     let dColor = '#d05d00';
-                    if (inv.delivery_status === 'Delivered') dColor = '#2e7d32';
-                    else if (inv.delivery_status === 'Cancelled') dColor = '#ef4444';
-                    else if (inv.delivery_status === 'Postponed') dColor = '#6b7280';
+                    if (inv.delivery_status === 'Delivered') dColor = '#166534';
+                    else if (inv.delivery_status === 'Cancelled') dColor = '#dc2626';
+                    else if (inv.delivery_status === 'Postponed') dColor = '#475569';
 
                     let isCancelled = (inv.status === 'Cancelled' || inv.delivery_status === 'Cancelled');
-                    let pColor = inv.status === 'Paid' ? '#2e7d32' : (isCancelled ? '#ef4444' : '#d05d00');
+                    let pColor = inv.status === 'Paid' ? '#166534' : (isCancelled ? '#dc2626' : '#c2410c');
+                    let pBg = inv.status === 'Paid' ? '#f0fdf4' : (isCancelled ? '#fef2f2' : '#fff7ed');
                     let displayPaymentStatus = isCancelled ? 'Cancelled' : (inv.status || 'Unpaid');
                     
                     let actionHtml = '';
                     if (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized') {
-                        actionHtml = `<span style="color:#888; font-size:11px; font-weight:bold;">Closed</span>`;
+                        actionHtml = `<span style="color:#94a3b8; font-size:12px; font-weight:600;">Closed</span>`;
                     } else if (inv.delivery_status !== 'Pending') {
-                        actionHtml = `<span style="color:#6b7280; font-size:11px; font-weight:bold;">Processed</span>`;
+                        actionHtml = `<span style="color:#0284c7; font-size:11px; font-weight:700; background:#e0f2fe; padding:4px 10px; border-radius:100px;">Processed</span>`;
                     } else {
                         actionHtml = `
-                            <button onclick="openServerDeliveryProcessModal(${inv.id}, ${inv.customer_id}, '${inv.invoice_number}', '${inv.customer_name.replace(/'/g, "\\'")}', ${inv.true_grand_total})" 
-                                    class="btn-premium primary" 
-                                    style="padding:4px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; font-weight:bold; cursor:pointer;">
-                                <i class="ph ph-gear"></i> Process Visit
+                            <button type="button" onclick="openServerDeliveryProcessModal(${inv.id}, ${inv.customer_id}, '${inv.invoice_number}', '${inv.customer_name.replace(/'/g, "\\'")}', ${inv.true_grand_total})" 
+                                    style="padding:6px 14px; background:#007aff; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(0,122,255,0.25); transition:all 0.18s;"
+                                    onmouseover="this.style.transform='scale(1.04)'; this.style.background='#0062cc'" onmouseout="this.style.transform='scale(1)'; this.style.background='#007aff'">
+                                <i class="ph ph-gear" style="font-size:14px;"></i> Process Visit
                             </button>
                         `;
                     }
@@ -2572,27 +2575,37 @@
                     let statusSelectHtml = '';
                     const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
                     if (isReadOnly) {
-                        statusSelectHtml = `<span style="color:${dColor}; font-weight:bold;">${inv.delivery_status || 'Pending'}</span>`;
+                        statusSelectHtml = `<span style="color:${dColor}; font-weight:700;">${inv.delivery_status || 'Pending'}</span>`;
                     } else {
                         statusSelectHtml = `
                             <select onchange="updateSingleInvoiceDeliveryStatus(${inv.id}, ${inv.customer_id}, this.value)" 
-                                    style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: bold; color: ${dColor}; background: #fff; outline: none; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-xs);">
-                                <option value="Pending" ${inv.delivery_status === 'Pending' ? 'selected' : ''} style="color:#d05d00;">Pending</option>
-                                <option value="Delivered" ${inv.delivery_status === 'Delivered' ? 'selected' : ''} style="color:#2e7d32;">Delivered</option>
-                                <option value="Cancelled" ${inv.delivery_status === 'Cancelled' ? 'selected' : ''} style="color:#ef4444;">Cancelled</option>
-                                <option value="Postponed" ${inv.delivery_status === 'Postponed' ? 'selected' : ''} style="color:#6b7280;">Postponed</option>
+                                    style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; font-weight:700; color:${dColor}; background:#ffffff; outline:none; cursor:pointer; transition:all 0.18s;">
+                                <option value="Pending" ${inv.delivery_status === 'Pending' ? 'selected' : ''} style="color:#d05d00; background:#fff;">Pending</option>
+                                <option value="Delivered" ${inv.delivery_status === 'Delivered' ? 'selected' : ''} style="color:#166534; background:#fff;">Delivered</option>
+                                <option value="Cancelled" ${inv.delivery_status === 'Cancelled' ? 'selected' : ''} style="color:#dc2626; background:#fff;">Cancelled</option>
+                                <option value="Postponed" ${inv.delivery_status === 'Postponed' ? 'selected' : ''} style="color:#475569; background:#fff;">Postponed</option>
                             </select>
                         `;
                     }
 
+                    const bg = (rowIndex % 2 === 0) ? '#f8fafc' : '#ffffff';
+
                     tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${inv.customer_name}</strong></td>
-                            <td style="font-weight:bold; color:var(--primary);">${inv.invoice_number}</td>
-                            <td style="text-align:right; font-family:monospace; font-weight:bold;">Rs ${parseFloat(inv.true_grand_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                            <td style="text-align:center;">${statusSelectHtml}</td>
-                            <td style="text-align:center; color:${pColor}; font-weight:bold;">${displayPaymentStatus}</td>
-                            <td style="text-align:center;">${actionHtml}</td>
+                        <tr style="background:${bg}; border-bottom:1px solid #f1f5f9; transition:background 0.15s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='${bg}'">
+                            <td style="padding:12px 16px; vertical-align:middle;">
+                                <strong style="font-size:13px; color:#0f172a;">${inv.customer_name}</strong>
+                            </td>
+                            <td style="padding:12px 16px; vertical-align:middle; font-weight:700; color:#1e293b; font-family:monospace; font-size:13px;">
+                                ${inv.invoice_number}
+                            </td>
+                            <td style="padding:12px 16px; text-align:right; font-family:monospace; font-weight:700; color:#059669; font-size:13px; vertical-align:middle;">
+                                Rs ${parseFloat(inv.true_grand_total).toLocaleString('en-US', {minimumFractionDigits: 2})}
+                            </td>
+                            <td style="padding:12px 16px; text-align:center; vertical-align:middle;">${statusSelectHtml}</td>
+                            <td style="padding:12px 16px; text-align:center; vertical-align:middle;">
+                                <span style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:100px; color:${pColor}; background:${pBg}; border:1px solid ${pColor}33;">${displayPaymentStatus}</span>
+                            </td>
+                            <td style="padding:12px 16px; text-align:center; vertical-align:middle;">${actionHtml}</td>
                         </tr>
                     `;
                 });

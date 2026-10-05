@@ -354,60 +354,78 @@
 </div>
 
 <!-- Server-side Delivery Process Modal -->
-<div class="modal-backdrop" id="serverDeliveryProcessModal" style="display: none; align-items: center; justify-content: center;">
-    <div class="modal-panel" style="max-width: 1100px; width: 95%; height: 85vh; max-height: 85vh; display: flex; flex-direction: column;">
-        <div class="modal-header" style="background: #0066cc; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff; font-weight: bold; flex-shrink: 0;">
-            <span><i class="ph ph-steering-wheel"></i> Process Visit: <span id="sdpCustomerName"></span></span>
-            <button onclick="closeServerDeliveryProcessModal()" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+<div class="modal-backdrop" id="serverDeliveryProcessModal" style="display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6); z-index: 2000;">
+    <div class="modal-panel" style="max-width: 1120px; width: 95%; height: 88vh; max-height: 88vh; display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35); background: #ffffff;">
+        
+        <!-- Header Bar -->
+        <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; color: #ffffff; flex-shrink: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0, 122, 255, 0.2); border: 1px solid rgba(0, 122, 255, 0.4); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                    <i class="ph ph-truck"></i>
+                </div>
+                <div>
+                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: 700;">Process Customer Visit</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #ffffff;" id="sdpCustomerName">--</div>
+                </div>
+            </div>
+            <button onclick="closeServerDeliveryProcessModal()" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.18s;" onmouseover="this.style.background='rgba(239,68,68,0.8)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">✕</button>
         </div>
-        <div class="modal-body" style="flex: 1; padding: 20px; display: flex !important; flex-direction: row !important; gap: 20px; background: #fafafa; overflow: hidden !important; min-height: 0;">
+
+        <!-- Body Section -->
+        <div class="modal-body" style="flex: 1; padding: 20px; display: flex !important; flex-direction: row !important; gap: 20px; background: #f8fafc; overflow: hidden !important; min-height: 0;">
             
-            <!-- Left Column: Adjust Invoice Items (Bill Quantity) -->
-            <div style="flex: 1.3; display: flex; flex-direction: column; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; height: 100%; min-height: 0;">
-                <h4 style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold; color: #333; display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                    <i class="ph ph-package" style="color:#0066cc;"></i> Adjust Invoice Items (Bill Quantity)
-                </h4>
+            <!-- Left Column: Adjust Invoice Items -->
+            <div style="flex: 1.2; display: flex; flex-direction: column; background: #ffffff; padding: 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(15,23,42,0.03); height: 100%; min-height: 0;">
                 
-                <!-- Search Option -->
-                <div style="margin-bottom: 10px; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0;">
+                    <div style="font-size: 14px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                        <i class="ph ph-package" style="color: #007aff; font-size: 18px;"></i> Delivered Quantities
+                    </div>
+                    <span style="font-size: 11px; color: #64748b; font-weight: 500;">Adjust quantities if items rejected</span>
+                </div>
+                
+                <!-- Item Search Input -->
+                <div style="margin-bottom: 12px; flex-shrink: 0;">
                     <div style="position: relative;">
+                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 15px;"></i>
                         <input type="text" id="sdpItemSearch" placeholder="Search item description..." oninput="filterSdpItems()"
-                               style="width: 100%; padding: 8px 12px 8px 35px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; outline: none; transition: border 0.2s;" />
-                        <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 14px;"></i>
+                               style="width: 100%; padding: 9px 12px 9px 36px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; outline: none; background: #f8fafc; transition: all 0.18s; font-family: inherit;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'; this.style.boxShadow='none'" />
                     </div>
                 </div>
                 
-                <div style="border: 1px solid #e2e8f0; border-radius: 6px; flex: 1; overflow-y: auto; min-height: 0;">
-                    <table class="data-table" style="margin-top: 0; font-size: 12px; width: 100%;">
+                <!-- Items Table Container -->
+                <div style="border: 1px solid #e2e8f0; border-radius: 10px; flex: 1; overflow-y: auto; min-height: 0; background: #ffffff;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-family: inherit; font-size: 12px;">
                         <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 5;">
-                            <tr>
-                                <th>Item Description</th>
-                                <th style="text-align: right; width: 80px;">Loaded</th>
-                                <th style="text-align: right; width: 120px;">Delivered Qty</th>
+                            <tr style="color: #475569; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">
+                                <th style="padding: 10px 14px; text-align: left; border-bottom: 1px solid #e2e8f0;">Item Description</th>
+                                <th style="padding: 10px 14px; text-align: right; border-bottom: 1px solid #e2e8f0; width: 70px;">Loaded</th>
+                                <th style="padding: 10px 14px; text-align: right; border-bottom: 1px solid #e2e8f0; width: 110px;">Delivered Qty</th>
                             </tr>
                         </thead>
                         <tbody id="sdpItemsTbody">
-                            <!-- Populated in JS -->
+                            <!-- Dynamic rows -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Right Column: Visit Status, Outstanding, and Collections on a separate panel -->
-            <div style="flex: 1; display: flex; flex-direction: column; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; gap: 15px; height: 100%; min-height: 0; overflow-y: auto;">
-                <!-- Hidden details -->
+            <!-- Right Column: Visit Status & Payment Collections -->
+            <div style="flex: 1; display: flex; flex-direction: column; background: #ffffff; padding: 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 10px rgba(15,23,42,0.03); gap: 14px; height: 100%; min-height: 0; overflow-y: auto;">
+                
+                <!-- Hidden inputs -->
                 <input type="hidden" id="sdpInvoiceId" />
                 <input type="hidden" id="sdpCustomerId" />
 
-                <!-- Visit Status & Info -->
-                <div style="background: #f8fafc; padding: 12px 15px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-shrink: 0;">
+                <!-- Visit Status Card -->
+                <div style="background: #f8fafc; padding: 14px 16px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-shrink: 0;">
                     <div>
-                        <div style="font-size: 11px; text-transform: uppercase; color: #888; font-weight: bold;">Processing Invoice</div>
-                        <strong id="sdpInvoiceNumber" style="font-size: 15px; color: #0066cc;"></strong>
+                        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; font-weight: 700;">Invoice Ref</div>
+                        <strong id="sdpInvoiceNumber" style="font-size: 15px; color: #007aff; font-family: monospace;">--</strong>
                     </div>
                     <div>
-                        <div style="font-size: 11px; text-transform: uppercase; color: #888; font-weight: bold;">Delivery Status</div>
-                        <select id="sdpDeliveryStatus" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; font-size: 13px;">
+                        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #64748b; font-weight: 700; margin-bottom: 4px;">Delivery Result</div>
+                        <select id="sdpDeliveryStatus" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 12px; background: #ffffff; color: #0f172a; outline: none; cursor: pointer; transition: all 0.18s;">
                             <option value="Pending">Pending</option>
                             <option value="Delivered">Delivered</option>
                             <option value="Cancelled">Cancelled</option>
@@ -416,51 +434,54 @@
                     </div>
                 </div>
 
-                <!-- Arrears & Outstanding Info -->
-                <div id="sdpArrearsInfoBox" style="background: #fffbeb; padding: 12px 15px; border-radius: 6px; border: 1px solid #fef3c7; color: #b45309; font-size: 13px; font-weight: 500; flex-shrink: 0;">
-                    <i class="ph ph-warning"></i> Customer Outstanding Balance: <strong id="sdpOutstandingArrears">Rs 0.00</strong>
+                <!-- Customer Arrears Alert Box -->
+                <div id="sdpArrearsInfoBox" style="background: #fffbeb; padding: 12px 16px; border-radius: 10px; border: 1px solid #fef3c7; color: #b45309; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <i class="ph ph-warning" style="font-size: 16px;"></i> Customer Arrears: <strong id="sdpOutstandingArrears" style="margin-left: 2px;">Rs 0.00</strong>
                 </div>
 
-                <!-- Collections Section (Record Payments & Credit Collections) -->
+                <!-- Collections Section -->
                 <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-                    <h4 style="margin: 0 0 12px 0; font-size: 13px; font-weight: bold; color: #333; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; flex-shrink: 0;">
-                        <i class="ph ph-coins" style="color:#2e7d32;"></i> Record Payments & Collections
-                    </h4>
+                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 12px; flex-shrink: 0;">
+                        <i class="ph ph-coins" style="color: #16a34a; font-size: 18px;"></i> Record Payments & Collections
+                    </div>
                     
-                    <!-- Balance Summary Row -->
-                    <div style="background: #f8fafc; padding: 10px 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 11px; flex-shrink: 0;">
+                    <!-- Balance Summary Pills -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; flex-shrink: 0;">
                         <div>
-                            <div style="color: #64748b; font-weight: bold;">INVOICE TOTAL</div>
-                            <strong id="sdpInvoiceTotal" style="font-size: 12px; color: #334155;">Rs 0.00</strong>
+                            <div style="color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Invoice Total</div>
+                            <strong id="sdpInvoiceTotal" style="font-size: 13px; color: #0f172a; font-family: monospace; display: block; margin-top: 2px;">Rs 0.00</strong>
                         </div>
                         <div>
-                            <div style="color: #64748b; font-weight: bold;">TOTAL COLLECTED</div>
-                            <strong id="sdpTotalCollected" style="font-size: 12px; color: #2e7d32;">Rs 0.00</strong>
+                            <div style="color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Collected</div>
+                            <strong id="sdpTotalCollected" style="font-size: 13px; color: #16a34a; font-family: monospace; display: block; margin-top: 2px;">Rs 0.00</strong>
                         </div>
                         <div>
-                            <div style="color: #64748b; font-weight: bold;">REMAINING BALANCE</div>
-                            <strong id="sdpRemainingBalance" style="font-size: 12px; color: #c62828;">Rs 0.00</strong>
+                            <div style="color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;">Remaining</div>
+                            <strong id="sdpRemainingBalance" style="font-size: 13px; color: #dc2626; font-family: monospace; display: block; margin-top: 2px;">Rs 0.00</strong>
                         </div>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; flex-shrink: 0;">
+                    <!-- Cash & Bank inputs -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; flex-shrink: 0;">
                         <div>
-                            <label style="font-size: 11px; font-weight: bold; color: #475569; display: block; margin-bottom: 4px;">Cash Amount (Rs)</label>
-                            <input type="number" step="0.01" min="0" id="sdpCashAmount" oninput="updateSdpBalance()" style="width:100%; padding:8px 12px; border:1px solid #ccc; border-radius:6px; font-size: 12px;" value="0.00">
+                            <label style="font-size: 11px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em;">Cash Amount (Rs)</label>
+                            <input type="number" step="0.01" min="0" id="sdpCashAmount" oninput="updateSdpBalance()" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; font-family: monospace; outline: none; transition: all 0.18s; background: #ffffff;" value="0.00" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
                         </div>
                         <div>
-                            <label style="font-size: 11px; font-weight: bold; color: #475569; display: block; margin-bottom: 4px;">Bank Transfer (Rs)</label>
-                            <input type="number" step="0.01" min="0" id="sdpBankAmount" oninput="updateSdpBalance()" style="width:100%; padding:8px 12px; border:1px solid #ccc; border-radius:6px; font-size: 12px;" value="0.00">
+                            <label style="font-size: 11px; font-weight: 700; color: #334155; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.03em;">Bank Transfer (Rs)</label>
+                            <input type="number" step="0.01" min="0" id="sdpBankAmount" oninput="updateSdpBalance()" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 700; font-family: monospace; outline: none; transition: all 0.18s; background: #ffffff;" value="0.00" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
                         </div>
                     </div>
 
-                    <!-- Cheques list section -->
-                    <div style="border-top: 1px dashed #e2e8f0; padding-top: 15px; flex: 1; overflow-y: auto; min-height: 0;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-shrink: 0;">
-                            <strong style="font-size:12px; color:#555;">Cheque Collections</strong>
-                            <button type="button" onclick="addSdpChequeRow()" class="btn-premium secondary" style="padding:4px 8px; font-size:11px; cursor:pointer;"><i class="ph ph-plus"></i> Add Cheque</button>
+                    <!-- Cheques Container -->
+                    <div style="border-top: 1px dashed #cbd5e1; padding-top: 12px; flex: 1; overflow-y: auto; min-height: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;">
+                            <strong style="font-size: 12px; color: #334155; font-weight: 700;">Cheque Collections</strong>
+                            <button type="button" onclick="addSdpChequeRow()" style="padding: 5px 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #0284c7; border-radius: 100px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.18s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                                <i class="ph ph-plus" style="font-size: 13px;"></i> Add Cheque
+                            </button>
                         </div>
-                        <div id="sdpChequesContainer" style="display:flex; flex-direction:column; gap:10px;">
+                        <div id="sdpChequesContainer" style="display: flex; flex-direction: column; gap: 8px;">
                             <!-- Cheque rows go here -->
                         </div>
                     </div>
@@ -468,9 +489,13 @@
             </div>
 
         </div>
-        <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0;">
-            <button class="qb-btn" onclick="closeServerDeliveryProcessModal()" style="border:1px solid #ccc; padding:8px 18px; border-radius:6px; font-size:12px; cursor:pointer;">Cancel</button>
-            <button class="qb-btn" onclick="submitServerDeliveryProcess()" style="background:#0066cc; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-size:12px; cursor:pointer; font-weight: bold;">Save & Process Visit</button>
+
+        <!-- Footer Bar -->
+        <div class="modal-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 14px 24px; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-shrink: 0;">
+            <button type="button" onclick="closeServerDeliveryProcessModal()" style="padding: 9px 18px; background: #ffffff; border: 1px solid #cbd5e1; color: #475569; border-radius: 100px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.18s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">Cancel</button>
+            <button type="button" onclick="submitServerDeliveryProcess()" style="padding: 9px 22px; background: #16a34a; border: none; color: #ffffff; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(22,163,74,0.3); transition: all 0.18s;" onmouseover="this.style.transform='scale(1.03)'; this.style.background='#15803d'" onmouseout="this.style.transform='scale(1)'; this.style.background='#16a34a'">
+                <i class="ph ph-check-circle" style="font-size: 16px;"></i> Save & Process Visit
+            </button>
         </div>
     </div>
 </div>

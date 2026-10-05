@@ -636,36 +636,29 @@
                 </div>
 
                 <!-- TAB 8: DELIVERY (LIVE MONITORING) -->
-                <div class="workspace-tab-panel" id="tabpanel-8" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <div>
-                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Delivery Live Execution Status</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Track live progress of customer dispatches and collections on the route.</p>
+                <div class="workspace-tab-panel" id="tabpanel-8" style="display:none; padding:0; position:relative;">
+                    <!-- Hidden element to maintain JS compatibility without error -->
+                    <div id="deliveryTabSummaryCards" style="display:none;"></div>
+
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 20px rgba(15,23,42,0.05); overflow:hidden;">
+                        <!-- Full Area Zebra Striped Table -->
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:separate; border-spacing:0; font-family:inherit;">
+                                <thead>
+                                    <tr style="background:#f8fafc; color:#475569; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">
+                                        <th style="padding:12px 16px; text-align:left; border-bottom:1px solid #e2e8f0;">Customer Name</th>
+                                        <th style="padding:12px 16px; text-align:left; border-bottom:1px solid #e2e8f0;">Invoice Number</th>
+                                        <th style="padding:12px 16px; text-align:right; border-bottom:1px solid #e2e8f0;">Grand Total (Rs)</th>
+                                        <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0;">Delivery Status</th>
+                                        <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0;">Payment Status</th>
+                                        <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deliveryTabInvoicesTbody">
+                                    <!-- Full area zebra striped invoices list -->
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
-                    <div style="border:0.5px solid var(--c-separator); border-radius:var(--r-lg); padding:20px; background:var(--c-surface); box-shadow:var(--shadow-sm); margin-bottom:20px;">
-                        <h4 style="margin:0 0 15px 0; color:var(--primary); font-size:15px; font-weight:bold;"><i class="ph ph-chart-bar"></i> Delivery Performance Summary</h4>
-                        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:15px;" id="deliveryTabSummaryCards">
-                            <!-- Populated dynamically -->
-                        </div>
-                    </div>
-                    <div style="border:0.5px solid var(--c-separator); border-radius:var(--r-lg); padding:20px; background:var(--c-surface); box-shadow:var(--shadow-sm);">
-                        <h4 style="margin:0 0 15px 0; color:var(--primary); font-size:15px; font-weight:bold;"><i class="ph ph-map-pin"></i> Customer Visit & Dispatch Status</h4>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Customer Name</th>
-                                    <th>Invoice Number</th>
-                                    <th style="text-align:right;">Grand Total (Rs)</th>
-                                    <th style="text-align:center;">Delivery Status</th>
-                                    <th style="text-align:center;">Payment Status</th>
-                                    <th style="text-align:center;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="deliveryTabInvoicesTbody">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
                     </div>
                 </div>
 
