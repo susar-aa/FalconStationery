@@ -616,8 +616,8 @@
                         <!-- Route Filter Select Pill -->
                         <div style="display:flex; align-items:center; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:4px 10px; transition:all 0.18s;">
                             <select id="creditBillsRouteFilter" onchange="filterCreditBillsList()" style="background:transparent; border:none; outline:none; color:#ffffff; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;">
-                                <option value="all" style="background:#1e293b; color:#fff;">All Routes</option>
-                                <option value="none" style="background:#1e293b; color:#fff;">No Route / Unassigned</option>
+                                <option value="all" style="background:#ffffff; color:#0f172a;">All Routes</option>
+                                <option value="none" style="background:#ffffff; color:#0f172a;">No Route / Unassigned</option>
                             </select>
                         </div>
 

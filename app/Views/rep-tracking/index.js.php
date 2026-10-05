@@ -928,8 +928,8 @@
                     const routeFilter = document.getElementById('creditBillsRouteFilter');
                     if (routeFilter) {
                         routeFilter.innerHTML = `
-                            <option value="all">All Routes</option>
-                            <option value="none">No Route / Unassigned</option>
+                            <option value="all" style="background:#ffffff; color:#0f172a;">All Routes</option>
+                            <option value="none" style="background:#ffffff; color:#0f172a;">No Route / Unassigned</option>
                         `;
                         
                         // Extract unique routes
@@ -947,6 +947,7 @@
                             const opt = document.createElement('option');
                             opt.value = rid;
                             opt.textContent = routeMap[rid];
+                            opt.style.cssText = 'background:#ffffff; color:#0f172a;';
                             routeFilter.appendChild(opt);
                         });
                     }

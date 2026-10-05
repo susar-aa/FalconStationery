@@ -45,6 +45,11 @@ body, button, input, select, textarea, .app-workspace, .workspace-tab-panel, .mo
     pointer-events: none !important;
 }
 
+select option {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
+
     /* Workspace Active Visual Density Optimizations */
     body.workspace-showing .app-container {
         margin-top: 68px !important;
