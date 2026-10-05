@@ -2663,21 +2663,30 @@
                     tbody.innerHTML = '';
                     
                     if (!data.items || data.items.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#888;">No items in this invoice.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:24px; color:#94a3b8; font-size:13px;">No items in this invoice.</td></tr>';
                     } else {
+                        let itemIdx = 0;
                         data.items.forEach(item => {
+                            itemIdx++;
+                            const bg = (itemIdx % 2 === 0) ? '#f8fafc' : '#ffffff';
                             tbody.innerHTML += `
-                                <tr data-item-id="${item.id}">
-                                    <td><strong>${item.description}</strong></td>
-                                    <td style="text-align:right; font-family:monospace;">${parseInt(item.loaded_quantity)}</td>
-                                    <td style="text-align:right;">
+                                <tr data-item-id="${item.id}" style="background:${bg}; border-bottom:1px solid #f1f5f9; transition:background 0.15s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='${bg}'">
+                                    <td style="padding:10px 14px; vertical-align:middle;">
+                                        <strong style="font-size:13px; color:#0f172a;">${item.description}</strong>
+                                    </td>
+                                    <td style="padding:10px 14px; text-align:right; font-family:monospace; font-weight:700; color:#475569; font-size:13px; vertical-align:middle;">
+                                        ${parseInt(item.loaded_quantity)}
+                                    </td>
+                                    <td style="padding:10px 14px; text-align:right; vertical-align:middle;">
                                         <input type="number" step="1" min="0" max="${parseInt(item.loaded_quantity)}" class="sdp-delivered-qty" 
                                                value="${parseInt(item.quantity)}" 
                                                data-price="${parseFloat(item.unit_price || 0)}"
                                                data-discount-type="${item.discount_type || 'Rs'}"
                                                data-discount-val="${parseFloat(item.discount_value || 0)}"
                                                oninput="recalculateSdpInvoiceTotal()"
-                                               style="width: 80px; text-align: right; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px;" />
+                                               style="width: 76px; text-align: center; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; font-family: monospace; font-size: 13px; outline: none; background: #ffffff;"
+                                               onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'"
+                                               onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'" />
                                     </td>
                                 </tr>
                             `;
@@ -2729,9 +2738,9 @@
         document.getElementById('sdpRemainingBalance').innerText = 'Rs ' + balance.toLocaleString('en-US', {minimumFractionDigits: 2});
         
         if (balance <= 0) {
-            document.getElementById('sdpRemainingBalance').style.color = '#2e7d32';
+            document.getElementById('sdpRemainingBalance').style.color = '#16a34a';
         } else {
-            document.getElementById('sdpRemainingBalance').style.color = '#c62828';
+            document.getElementById('sdpRemainingBalance').style.color = '#dc2626';
         }
     }
 
@@ -2776,21 +2785,14 @@
         const container = document.getElementById('sdpChequesContainer');
         const row = document.createElement('div');
         row.className = 'sdp-cheque-row';
-        row.style.display = 'grid';
-        row.style.gridTemplateColumns = '1.5fr 1fr 1.2fr 1fr 40px';
-        row.style.gap = '10px';
-        row.style.alignItems = 'center';
-        row.style.background = '#f8fafc';
-        row.style.padding = '10px';
-        row.style.borderRadius = '6px';
-        row.style.border = '1px solid #e2e8f0';
+        row.style.cssText = 'display:grid; grid-template-columns:1.5fr 1fr 1.2fr 1fr 36px; gap:8px; align-items:center; background:#f8fafc; padding:8px 10px; border-radius:10px; border:1px solid #e2e8f0; transition:all 0.18s;';
         
         row.innerHTML = `
-            <input type="text" placeholder="Bank Name" class="sdp-ch-bank" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px; width:100%;" required />
-            <input type="text" placeholder="Cheque #" class="sdp-ch-number" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '');" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px; width:100%;" required />
-            <input type="date" class="sdp-ch-date" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px; width:100%;" required />
-            <input type="number" step="0.01" min="0" placeholder="Amount" class="sdp-ch-amount" oninput="updateSdpBalance()" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px; width:100%;" required />
-            <button type="button" onclick="this.closest('.sdp-cheque-row').remove(); updateSdpBalance();" style="background:none; border:none; color:#ef4444; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;"><i class="ph ph-trash"></i></button>
+            <input type="text" placeholder="Bank Name" class="sdp-ch-bank" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; width:100%; outline:none; background:#ffffff;" required />
+            <input type="text" placeholder="Cheque #" class="sdp-ch-number" maxlength="6" oninput="this.value = this.value.replace(/[^0-9]/g, '');" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; width:100%; outline:none; background:#ffffff;" required />
+            <input type="date" class="sdp-ch-date" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; width:100%; outline:none; background:#ffffff;" required />
+            <input type="number" step="0.01" min="0" placeholder="Amount" class="sdp-ch-amount" oninput="updateSdpBalance()" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; font-weight:700; font-family:monospace; width:100%; outline:none; background:#ffffff;" required />
+            <button type="button" onclick="this.closest('.sdp-cheque-row').remove(); updateSdpBalance();" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; width:32px; height:32px; border-radius:8px; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.18s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"><i class="ph ph-trash"></i></button>
         `;
         container.appendChild(row);
     }
