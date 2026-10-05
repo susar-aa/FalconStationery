@@ -3860,33 +3860,40 @@
 
         const isReadOnly = (currentRouteStatus === 'Completed' || currentRouteStatus === 'Finalized');
 
-        currentTab10AttachedBills.forEach(bill => {
+        currentTab10AttachedBills.forEach((bill, idx) => {
             const grandTotal = parseFloat(bill.true_grand_total || bill.total_amount || 0);
             const amountPaid = parseFloat(bill.amount_paid || 0);
             const balanceDue = Math.max(0, grandTotal - amountPaid);
             
-            let statusBadge = '<span style="font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700; background:#fef3c7; color:#d97706;">Unpaid</span>';
+            let statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#fef3c7; color:#d97706; text-transform:uppercase;">Unpaid</span>';
             if (balanceDue <= 0.01) {
-                statusBadge = '<span style="font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700; background:#dcfce7; color:#16a34a;">Paid</span>';
+                statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#dcfce7; color:#16a34a; text-transform:uppercase;">Paid</span>';
             } else if (amountPaid > 0) {
-                statusBadge = '<span style="font-size:10px; padding:2px 6px; border-radius:4px; font-weight:700; background:#e0f2fe; color:#0369a1;">Partially Paid</span>';
+                statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#e0f2fe; color:#0369a1; text-transform:uppercase;">Partially Paid</span>';
             }
 
+            const rowBg = (idx % 2 === 0) ? '#ffffff' : '#f8fafc';
             const tr = document.createElement('tr');
+            tr.style.background = rowBg;
+            tr.style.borderBottom = '1px solid #f1f5f9';
+            tr.style.transition = 'background 0.15s';
+            tr.onmouseover = () => { tr.style.background = '#f1f5f9'; };
+            tr.onmouseout = () => { tr.style.background = rowBg; };
+
             tr.innerHTML = `
-                <td><strong>${escapeHtml(bill.customer_name || 'N/A')}</strong></td>
-                <td><span style="font-family:monospace; font-weight:700; color:#0284c7;">${escapeHtml(bill.invoice_number)}</span></td>
-                <td>${bill.invoice_date || '-'}</td>
-                <td style="text-align:right; font-family:monospace;">Rs ${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                <td style="text-align:right; font-family:monospace; font-weight:700; color:${balanceDue > 0 ? '#dc2626' : '#16a34a'};">Rs ${balanceDue.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-                <td style="text-align:center;">${statusBadge}</td>
-                <td style="text-align:center;">
+                <td style="padding:10px 12px; font-weight:600; color:#0f172a; border-bottom:1px solid #f1f5f9;">${escapeHtml(bill.customer_name || 'N/A')}</td>
+                <td style="padding:10px 12px; border-bottom:1px solid #f1f5f9;"><span style="font-family:monospace; font-weight:700; color:#0284c7;">${escapeHtml(bill.invoice_number)}</span></td>
+                <td style="padding:10px 12px; color:#64748b; font-size:11px; border-bottom:1px solid #f1f5f9;">${bill.invoice_date || '-'}</td>
+                <td style="padding:10px 12px; text-align:right; font-family:monospace; font-weight:600; color:#334155; border-bottom:1px solid #f1f5f9;">Rs ${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="padding:10px 12px; text-align:right; font-family:monospace; font-weight:700; color:${balanceDue > 0 ? '#dc2626' : '#16a34a'}; font-size:13px; border-bottom:1px solid #f1f5f9;">Rs ${balanceDue.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="padding:10px 12px; text-align:center; border-bottom:1px solid #f1f5f9;">${statusBadge}</td>
+                <td style="padding:10px 12px; text-align:center; border-bottom:1px solid #f1f5f9;">
                     ${balanceDue > 0.01 && !isReadOnly ? `
-                        <button type="button" onclick="openApplyCreditPaymentModal(${bill.id})" style="padding:4px 10px; background:#0284c7; color:#fff; border:none; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                        <button type="button" onclick="openApplyCreditPaymentModal(${bill.id})" style="padding:5px 12px; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,132,199,0.25);">
                             <i class="ph ph-currency-dollar"></i> Apply Pay
                         </button>
                     ` : `
-                        <span style="font-size:11px; color:#94a3b8; font-style:italic;">${isReadOnly ? 'Read Only' : 'Settled'}</span>
+                        <span style="font-size:11px; color:#94a3b8; font-weight:600; font-style:italic;">${isReadOnly ? 'Read Only' : 'Settled'}</span>
                     `}
                 </td>
             `;

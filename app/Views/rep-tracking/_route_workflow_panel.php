@@ -1066,13 +1066,13 @@
                         </table>
                     </div>
 
-                    <!-- Bottom Floating Dock Pill Bar -->
-                    <div style="position: sticky; bottom: 20px; z-index: 100; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); border-radius: 9999px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);">
+                    <!-- Bottom Floating Dock Pill Bar (Centered & Compact) -->
+                    <div style="position: sticky; bottom: 20px; z-index: 100; max-width: 820px; width: 100%; margin: 0 auto; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); border-radius: 9999px; padding: 8px 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.15);">
                         <!-- Left: Search Box & Verification Checkbox -->
-                        <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
                             <div style="position: relative;">
                                 <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px;"></i>
-                                <input type="text" id="searchReturnStock" onkeyup="filterReturnStockTable()" placeholder="Search product name..." style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; padding: 7px 14px 7px 34px; font-size: 12px; color: #ffffff; width: 240px; outline: none;">
+                                <input type="text" id="searchReturnStock" onkeyup="filterReturnStockTable()" placeholder="Search product name..." style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; padding: 6px 12px 6px 32px; font-size: 12px; color: #ffffff; width: 220px; outline: none;">
                             </div>
 
                             <label style="font-weight: 600; font-size: 12px; color: #e2e8f0; display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -1083,10 +1083,10 @@
 
                         <!-- Right: Action Buttons -->
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <button id="btnPrintReturnStock" style="padding: 8px 16px; background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                            <button id="btnPrintReturnStock" style="padding: 7px 14px; background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
                                 <i class="ph ph-printer" style="font-size: 15px;"></i> Print Report
                             </button>
-                            <button id="btnSaveReturnStockDraft" style="padding: 8px 18px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; border: none; border-radius: 9999px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(22,163,74,0.3); transition: all 0.2s;">
+                            <button id="btnSaveReturnStockDraft" style="padding: 7px 16px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; border: none; border-radius: 9999px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(22,163,74,0.3); transition: all 0.2s;">
                                 <i class="ph ph-floppy-disk" style="font-size: 15px;"></i> Save Return Stock Draft
                             </button>
                         </div>
@@ -1095,10 +1095,16 @@
 
                 <!-- TAB 10: PAYMENTS -->
                 <div class="workspace-tab-panel" id="tabpanel-10" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <div>
-                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Payments & Settlements</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Verify collected payments and map route transactions to general ledger postings.</p>
+                    <!-- Section Header -->
+                    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(15,23,42,0.12);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(2,132,199,0.15); border: 1px solid rgba(2,132,199,0.3); display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 20px;">
+                                <i class="ph ph-credit-card"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">Payments & Settlements</h3>
+                                <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">Verify collected payments and map route transactions to general ledger postings.</p>
+                            </div>
                         </div>
                     </div>
 
@@ -1128,34 +1134,40 @@
 
                     <div id="tab10ContentContainer">
                         <!-- Attached Credit Bills Payment Panel Card -->
-                        <div style="border:0.5px solid var(--c-separator); border-radius:var(--r-lg); padding:20px; background:var(--c-surface); box-shadow:var(--shadow-sm); margin-bottom:20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                <h4 style="margin:0; color:var(--primary); font-size:15px; font-weight:bold; display:flex; align-items:center; gap:8px;">
-                                    <i class="ph ph-receipt" style="color: #0284c7;"></i> Attached Credit Bills & Payments
-                                </h4>
-                                <span style="font-size:11px; background:#e0f2fe; color:#0369a1; padding:3px 10px; border-radius:12px; font-weight:700;">
+                        <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                                <div>
+                                    <h4 style="margin: 0; color: #0f172a; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                        <span style="width: 28px; height: 28px; border-radius: 6px; background: #e0f2fe; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #0284c7;">
+                                            <i class="ph ph-receipt"></i>
+                                        </span>
+                                        Attached Credit Bills & Payments
+                                    </h4>
+                                    <p style="margin: 4px 0 0 36px; font-size: 12px; color: #64748b;">
+                                        Outstanding credit bills attached to this route/delivery. Apply payments directly with Cash, Bank Transfer, or Cheque options.
+                                    </p>
+                                </div>
+                                <span style="font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 9999px; font-weight: 700;">
                                     Direct Credit Settlement
                                 </span>
                             </div>
-                            <p style="margin:0 0 15px 0; font-size:12px; color:var(--t-secondary);">
-                                Outstanding credit bills attached to this route/delivery. Apply payments directly with Cash, Bank Transfer, or Cheque options.
-                            </p>
-                            <div style="overflow-x:auto;">
-                                <table class="data-table" style="margin-top:0; width:100%; font-size:12px;">
+
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px;">
                                     <thead>
-                                        <tr>
-                                            <th>Customer</th>
-                                            <th>Invoice #</th>
-                                            <th>Invoice Date</th>
-                                            <th style="text-align:right;">Grand Total</th>
-                                            <th style="text-align:right;">Balance Due</th>
-                                            <th style="text-align:center;">Status</th>
-                                            <th style="text-align:center; width:130px;">Action</th>
+                                        <tr style="background: #f8fafc; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 0.3px;">
+                                            <th style="padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; border-top-left-radius: 6px;">Customer</th>
+                                            <th style="padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0;">Invoice #</th>
+                                            <th style="padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0;">Invoice Date</th>
+                                            <th style="padding: 10px 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">Grand Total</th>
+                                            <th style="padding: 10px 12px; text-align: right; border-bottom: 1px solid #e2e8f0;">Balance Due</th>
+                                            <th style="padding: 10px 12px; text-align: center; border-bottom: 1px solid #e2e8f0;">Status</th>
+                                            <th style="padding: 10px 12px; text-align: center; width: 130px; border-bottom: 1px solid #e2e8f0; border-top-right-radius: 6px;">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tab10CreditBillsTbody">
                                         <tr>
-                                            <td colspan="7" style="text-align:center; color:#888; padding:15px;">Loading attached credit bills...</td>
+                                            <td colspan="7" style="text-align:center; color:#94a3b8; padding:24px; font-weight:500;">Loading attached credit bills...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1163,19 +1175,35 @@
                         </div>
 
                         <!-- General Ledger account double entry mappings card -->
-                        <div style="border:0.5px solid var(--c-separator); border-radius:var(--r-lg); padding:20px; background:var(--c-surface); box-shadow:var(--shadow-sm); margin-bottom:20px;">
-                            <h4 style="margin:0 0 15px 0; color:var(--primary); font-size:15px; font-weight:bold;"><i class="ph ph-briefcase"></i> Account Mappings</h4>
-                            <div style="display: flex; gap: 10px; border-bottom: 1px solid #eee; margin-bottom: 15px;">
-                                <button type="button" class="left-tab-btn active" id="settleDeTabCollectionsBtn" ><i class="ph ph-coins"></i> Cash/Cheques Posting</button>
-                                <button type="button" class="left-tab-btn" id="settleDeTabSalesBtn" ><i class="ph ph-file-text"></i> Invoices Sales Posting</button>
+                        <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                                <h4 style="margin: 0; color: #0f172a; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                    <span style="width: 28px; height: 28px; border-radius: 6px; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #d97706;">
+                                        <i class="ph ph-briefcase"></i>
+                                    </span>
+                                    Account Mappings
+                                </h4>
+
+                                <!-- Inner Sub-Tabs Header (Pill Nav) -->
+                                <div style="display: flex; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 8px;">
+                                    <button type="button" class="left-tab-btn active" id="settleDeTabCollectionsBtn" style="padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                                        <i class="ph ph-coins"></i> Cash/Cheques Posting
+                                    </button>
+                                    <button type="button" class="left-tab-btn" id="settleDeTabSalesBtn" style="padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+                                        <i class="ph ph-file-text"></i> Invoices Sales Posting
+                                    </button>
+                                </div>
                             </div>
+
                             <div id="settleDeCollectionsContainer"></div>
                             <div id="settleDeSalesContainer" style="display:none;"></div>
-                            <div style="text-align:right; margin-top:20px;">
-                                <button id="btnSaveAccountingDraft"  style="padding:10px 20px; background:#2e7d32; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer;"><i class="ph ph-floppy-disk"></i> Save Account Mappings Draft</button>
+
+                            <div style="text-align: right; margin-top: 20px; padding-top: 16px; border-top: 1px dashed #cbd5e1;">
+                                <button id="btnSaveAccountingDraft" style="padding: 9px 20px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(22,163,74,0.25);">
+                                    <i class="ph ph-floppy-disk" style="font-size: 16px;"></i> Save Account Mappings Draft
+                                </button>
                             </div>
                         </div>
-
                     </div>
                     <div id="tab10GuardContainer" style="display:none;"></div>
 
