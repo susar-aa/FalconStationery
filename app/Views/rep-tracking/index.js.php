@@ -6227,17 +6227,20 @@ window.buildAccountOptions = buildAccountOptions;
                     tbody.innerHTML = '';
                     const returns = data.returns || [];
                     if (returns.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--t-secondary); padding: 20px;">No market returns logged for this route yet.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">No market returns logged for this route yet.</td></tr>';
                     } else {
-                        returns.forEach(r => {
+                        returns.forEach((r, idx) => {
                             const tr = document.createElement('tr');
+                            if (idx % 2 === 1) {
+                                tr.style.backgroundColor = '#f8fafc';
+                            }
                             tr.innerHTML = `
-                                <td style="font-family: var(--f-mono); font-weight: bold;">${r.credit_note_number}</td>
-                                <td>${r.customer_name}</td>
-                                <td>${r.note_date}</td>
-                                <td style="text-align: right; font-weight: bold; color: var(--c-green);">Rs ${parseFloat(r.total_amount).toFixed(2)}</td>
-                                <td style="text-align: center;">
-                                    <button type="button" onclick="window.open('<?= APP_URL ?>/RepTracking/print_market_return/${r.id}', '_blank')" style="padding: 4px 8px; background: var(--c-surface2); border: 0.5px solid var(--c-separator); border-radius: var(--r-xs); cursor: pointer; font-size: 11px; font-weight: 600;"><i class="ph ph-printer"></i> Print</button>
+                                <td style="font-family: var(--f-mono); font-weight: 700; color: #0284c7; padding: 10px 14px;">${r.credit_note_number}</td>
+                                <td style="padding: 10px 14px; font-weight: 600; color: #0f172a;">${r.customer_name}</td>
+                                <td style="padding: 10px 14px; color: #64748b;">${r.note_date}</td>
+                                <td style="text-align: right; font-weight: 700; color: #16a34a; padding: 10px 14px;">Rs ${parseFloat(r.total_amount).toFixed(2)}</td>
+                                <td style="text-align: center; padding: 10px 14px;">
+                                    <button type="button" onclick="window.open('<?= APP_URL ?>/RepTracking/print_market_return/${r.id}', '_blank')" style="padding: 5px 12px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i class="ph ph-printer"></i> Print</button>
                                 </td>
                             `;
                             tbody.appendChild(tr);
@@ -6490,19 +6493,22 @@ window.buildAccountOptions = buildAccountOptions;
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:10px; color:var(--t-secondary);">No previous invoices found for this customer.</td></tr>';
                     return;
                 }
-                history.forEach(h => {
+                history.forEach((h, idx) => {
                     const maxRet = parseFloat(h.max_returnable);
                     if (maxRet <= 0) return;
 
                     const tr = document.createElement('tr');
                     tr.style.cursor = 'pointer';
+                    if (idx % 2 === 1) {
+                        tr.style.backgroundColor = '#f8fafc';
+                    }
                     tr.innerHTML = `
-                        <td style="font-family: var(--f-mono); font-weight: bold; color: var(--c-blue);">${h.invoice_number}</td>
-                        <td>${h.invoice_date}</td>
-                        <td style="text-align: right;">${parseFloat(h.quantity).toFixed(0)}</td>
-                        <td style="text-align: right; font-weight: bold;">Rs ${parseFloat(h.unit_price).toFixed(2)}</td>
-                        <td style="text-align: center;">
-                            <button type="button" class="btn" style="padding: 2px 6px; font-size: 10px; background: var(--c-blue); color: #fff; border: none; border-radius: 3px;" onclick="applyMrHistoryPrice(${h.invoice_id}, ${h.invoice_item_id}, ${h.unit_price})">Select</button>
+                        <td style="font-family: var(--f-mono); font-weight: 700; color: #0284c7; padding: 8px 10px;">${h.invoice_number}</td>
+                        <td style="padding: 8px 10px; color: #64748b;">${h.invoice_date}</td>
+                        <td style="text-align: right; padding: 8px 10px; font-weight: 600;">${parseFloat(h.quantity).toFixed(0)}</td>
+                        <td style="text-align: right; font-weight: 700; color: #0f172a; padding: 8px 10px;">Rs ${parseFloat(h.unit_price).toFixed(2)}</td>
+                        <td style="text-align: center; padding: 8px 10px;">
+                            <button type="button" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: #0284c7; color: #ffffff; border: none; border-radius: 6px; cursor: pointer;" onclick="applyMrHistoryPrice(${h.invoice_id}, ${h.invoice_item_id}, ${h.unit_price})">Select</button>
                         </td>
                     `;
                     tbody.appendChild(tr);

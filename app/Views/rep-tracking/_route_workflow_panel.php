@@ -1095,19 +1095,6 @@
 
                 <!-- TAB 10: PAYMENTS -->
                 <div class="workspace-tab-panel" id="tabpanel-10" style="display:none;">
-                    <!-- Section Header -->
-                    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(15,23,42,0.12);">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(2,132,199,0.15); border: 1px solid rgba(2,132,199,0.3); display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 20px;">
-                                <i class="ph ph-credit-card"></i>
-                            </div>
-                            <div>
-                                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">Payments & Settlements</h3>
-                                <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">Verify collected payments and map route transactions to general ledger postings.</p>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Dispatch Assignment Section inside Accounting final tab (Hidden to streamline interface) -->
                     <div style="display:none;">
                         <select id="settleDaVehicle">
@@ -1312,101 +1299,122 @@
 
                 <!-- TAB 13: MARKET RETURNS -->
                 <div class="workspace-tab-panel" id="tabpanel-13" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <div>
-                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Market Returns</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Process customer product returns, select previous selling prices, and post entries.</p>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; margin-bottom: 25px; align-items: start;">
-                        <!-- Left Side: New Return Form -->
-                        <div style="background: var(--c-surface); border: 0.5px solid var(--c-separator); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow-sm);">
-                            <h4 style="margin: 0 0 15px 0; font-size: 14px; font-weight: bold; color: var(--primary);"><i class="ph ph-plus-circle"></i> Create Market Return</h4>
+                    
+                    <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; margin-bottom: 20px; align-items: start;">
+                        <!-- Left Side: New Return Form Card -->
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                        <i class="ph ph-arrow-u-up-left"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">Create Market Return</h4>
+                                        <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Log customer return items and apply selling prices</p>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <form id="marketReturnForm" onsubmit="submitMarketReturn(event)">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 14px; margin-bottom: 16px;">
                                      <div style="display: flex; flex-direction: column; gap: 6px;">
-                                         <label style="font-size: 11px; font-weight: bold; color: var(--t-label); text-transform: uppercase;">Search Customer *</label>
+                                         <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.3px;">Search Customer *</label>
                                          <div style="position: relative; width: 100%;">
-                                             <input type="text" id="mrCustomerSearchInput" placeholder="Type customer name to search..." onfocus="showMrCustomerSuggestions(this)" oninput="filterMrCustomerSuggestions(this)" style="width: 100%; padding: 8px 12px; border: 0.5px solid var(--c-separator); border-radius: var(--r-xs); font-size: 13px; background: var(--c-surface2); color: var(--t-primary); outline: none;" required autocomplete="off">
-                                             <div id="mrCustomerSuggestions" style="display: none; position: absolute; left: 0; right: 0; z-index: 99999; background: var(--c-surface); border: 0.5px solid var(--c-separator); border-radius: var(--r-xs); max-height: 180px; overflow-y: auto; box-shadow: var(--shadow-md); width: 100%;"></div>
+                                             <input type="text" id="mrCustomerSearchInput" placeholder="Type customer name to search..." onfocus="showMrCustomerSuggestions(this)" oninput="filterMrCustomerSuggestions(this)" style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #f8fafc; color: #0f172a; outline: none; transition: border-color 0.2s;" required autocomplete="off">
+                                             <div id="mrCustomerSuggestions" style="display: none; position: absolute; left: 0; right: 0; z-index: 99999; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; margin-top: 4px;"></div>
                                              <input type="hidden" id="mrCustomerSelect" value="" required>
                                          </div>
                                      </div>
                                     <div style="display: flex; flex-direction: column; gap: 6px;">
-                                        <label style="font-size: 11px; font-weight: bold; color: var(--t-label); text-transform: uppercase;">Date</label>
-                                        <input type="date" id="mrNoteDate" value="<?= date('Y-m-d') ?>" style="padding: 7px 12px; border: 0.5px solid var(--c-separator); border-radius: var(--r-xs); font-size: 13px; background: var(--c-surface2); color: var(--t-primary); outline: none; width: 100%;" required>
+                                        <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.3px;">Return Date *</label>
+                                        <input type="date" id="mrNoteDate" value="<?= date('Y-m-d') ?>" style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; background: #f8fafc; color: #0f172a; outline: none; width: 100%;" required>
                                     </div>
                                 </div>
 
-                                <div id="mrCustomerInfoCard" style="display: none; background: rgba(0, 102, 204, 0.04); border: 0.5px solid rgba(0, 102, 204, 0.15); border-radius: 6px; padding: 12px 16px; margin-bottom: 15px; font-size: 12.5px;">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                        <div><strong>Customer:</strong> <span id="mrCustName">-</span></div>
-                                        <div><strong>Outstanding Balance:</strong> <span id="mrCustOutstanding" style="color: #b91c1c; font-weight: bold;">Rs 0.00</span></div>
-                                        <div><strong>Credit Limit:</strong> <span id="mrCustLimit">Rs 0.00</span></div>
-                                        <div><strong>Phone:</strong> <span id="mrCustPhone">-</span></div>
+                                <div id="mrCustomerInfoCard" style="display: none; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 12.5px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px;">
+                                        <div><span style="color: #0369a1; font-weight: 600;">Customer:</span> <strong id="mrCustName" style="color: #0f172a;">-</strong></div>
+                                        <div><span style="color: #0369a1; font-weight: 600;">Arrears / Outstanding:</span> <span id="mrCustOutstanding" style="color: #dc2626; font-weight: 700; background: #fef2f2; padding: 2px 8px; border-radius: 6px; border: 1px solid #fecaca; display: inline-block;">Rs 0.00</span></div>
+                                        <div><span style="color: #0369a1; font-weight: 600;">Credit Limit:</span> <strong id="mrCustLimit" style="color: #0f172a;">Rs 0.00</strong></div>
+                                        <div><span style="color: #0369a1; font-weight: 600;">Phone:</span> <span id="mrCustPhone" style="color: #334155;">-</span></div>
                                     </div>
                                 </div>
 
-                                 <style>
-                                     #mrLinesTable, #mrLinesTable tbody, #mrLinesTable tr, #mrLinesTable td {
-                                         overflow: visible !important;
-                                     }
-                                 </style>
-                                 <table class="data-table" style="width: 100%; margin-bottom: 15px; overflow: visible !important;" id="mrLinesTable">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 35%;">Product</th>
-                                            <th style="width: 12%; text-align: right;">Qty</th>
-                                            <th style="width: 15%; text-align: right;">Price (Rs)</th>
-                                            <th style="width: 18%;">Condition</th>
-                                            <th style="width: 15%;">Remarks</th>
-                                            <th style="width: 5%;"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="mrLinesBody">
-                                        <!-- Appended dynamically -->
-                                    </tbody>
-                                </table>
+                                <style>
+                                    #mrLinesTable, #mrLinesTable tbody, #mrLinesTable tr, #mrLinesTable td {
+                                        overflow: visible !important;
+                                    }
+                                    #mrLinesTable tbody tr:nth-child(even) {
+                                        background-color: #f8fafc;
+                                    }
+                                    #mrLinesTable tbody tr:hover {
+                                        background-color: #f1f5f9;
+                                    }
+                                </style>
+                                <div style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: visible; margin-bottom: 16px;">
+                                    <table class="data-table" style="width: 100%; overflow: visible !important; border-collapse: collapse;" id="mrLinesTable">
+                                        <thead>
+                                            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                                <th style="width: 34%; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Product</th>
+                                                <th style="width: 12%; text-align: right; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Qty</th>
+                                                <th style="width: 16%; text-align: right; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Price (Rs)</th>
+                                                <th style="width: 18%; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Condition</th>
+                                                <th style="width: 15%; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Remarks</th>
+                                                <th style="width: 5%; text-align: center; padding: 10px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="mrLinesBody">
+                                            <!-- Appended dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                                    <button type="button" onclick="addMrLine()" style="padding: 8px 12px; background: var(--c-surface2); color: var(--t-secondary); border: 0.5px solid var(--c-separator); border-radius: var(--r-sm); font-size: 12px; font-weight: 600; cursor: pointer;">
-                                        <i class="ph ph-plus"></i> Add Line
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; background: #f8fafc; padding: 12px 16px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                    <button type="button" onclick="addMrLine()" style="padding: 8px 14px; background: #ffffff; color: #0284c7; border: 1px solid #0284c7; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                        <i class="ph ph-plus-circle" style="font-size: 15px;"></i> Add Return Line
                                     </button>
-                                    <div style="font-size: 15px; font-weight: bold; color: var(--primary);">
-                                        Total Return Value: <span id="mrGrandTotalText" style="color: #b91c1c;">Rs 0.00</span>
+                                    <div style="font-size: 14px; font-weight: 600; color: #334155;">
+                                        Total Return Value: <span id="mrGrandTotalText" style="color: #dc2626; font-weight: 800; font-size: 17px; margin-left: 6px;">Rs 0.00</span>
                                     </div>
                                 </div>
 
-                                <div style="text-align: right; margin-top: 20px; border-top: 0.5px solid var(--c-separator); padding-top: 15px;">
-                                    <button type="submit" style="padding: 10px 20px; background: #0066cc; color: #fff; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; box-shadow: var(--shadow-sm);">
-                                        <i class="ph ph-check-square"></i> Save & Post Market Return
+                                <div style="text-align: right; margin-top: 18px;">
+                                    <button type="submit" style="padding: 10px 24px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(2,132,199,0.25); display: inline-flex; align-items: center; gap: 8px;">
+                                        <i class="ph ph-check-circle" style="font-size: 16px;"></i> Save & Post Market Return
                                     </button>
                                 </div>
                             </form>
                         </div>
 
-                        <!-- Right Side: Historical Selling Prices -->
+                        <!-- Right Side: Historical Selling Prices Card -->
                         <div style="display: flex; flex-direction: column; gap: 20px;">
-                            <div style="background: var(--c-surface); border: 0.5px solid var(--c-separator); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow-sm);">
-                                <h4 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold; color: #ff9f0a; display: flex; align-items: center; gap: 6px;">
-                                    <span>📊</span> Historical Selling Prices
-                                </h4>
-                                <p style="font-size: 11.5px; color: var(--t-secondary); margin: 0 0 15px 0;">Click on a product search box on the left, then select one of their previous invoice prices below to apply it.</p>
+                            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                                    <div style="width: 34px; height: 34px; border-radius: 8px; background: #fffbeeb; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                        <i class="ph ph-clock-counter-clockwise"></i>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">Historical Selling Prices</h4>
+                                        <p style="margin: 2px 0 0 0; font-size: 11.5px; color: #64748b;">Previous purchase history for selected customer & item</p>
+                                    </div>
+                                </div>
+                                <p style="font-size: 11.5px; color: #64748b; margin: 0 0 14px 0; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                                    Click on a product search box on the left to display invoice price history below, then click <strong>Select</strong> to apply the price.
+                                </p>
                                 
-                                <div id="mrHistoryContainer" style="min-height: 120px; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--c-separator); border-radius: 6px; background: rgba(0, 0, 0, 0.01); width: 100%;">
-                                    <div id="mrHistoryPlaceholder" style="color: var(--t-secondary); text-align: center; font-size: 12px; padding: 20px; width: 100%;">
+                                <div id="mrHistoryContainer" style="min-height: 140px; display: flex; align-items: center; justify-content: center; border: 1px dashed #cbd5e1; border-radius: 10px; background: #fafafa; width: 100%; overflow: hidden;">
+                                    <div id="mrHistoryPlaceholder" style="color: #94a3b8; text-align: center; font-size: 12px; padding: 24px; width: 100%;">
+                                        <i class="ph ph-magnifying-glass-plus" style="font-size: 28px; color: #cbd5e1; display: block; margin: 0 auto 6px auto;"></i>
                                         Select a customer and focus on a product field to view purchase history.
                                     </div>
-                                    <table class="data-table" id="mrHistoryTable" style="display: none; width: 100%; font-size: 12px;">
+                                    <table class="data-table" id="mrHistoryTable" style="display: none; width: 100%; font-size: 12px; border-collapse: collapse;">
                                         <thead>
-                                            <tr>
-                                                <th>Invoice</th>
-                                                <th>Date</th>
-                                                <th style="text-align: right;">Qty</th>
-                                                <th style="text-align: right;">Price (Rs)</th>
-                                                <th></th>
+                                            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                                <th style="padding: 8px 10px; font-size: 11px; text-transform: uppercase; color: #475569;">Invoice</th>
+                                                <th style="padding: 8px 10px; font-size: 11px; text-transform: uppercase; color: #475569;">Date</th>
+                                                <th style="text-align: right; padding: 8px 10px; font-size: 11px; text-transform: uppercase; color: #475569;">Qty</th>
+                                                <th style="text-align: right; padding: 8px 10px; font-size: 11px; text-transform: uppercase; color: #475569;">Price (Rs)</th>
+                                                <th style="text-align: center; padding: 8px 10px;"></th>
                                             </tr>
                                         </thead>
                                         <tbody id="mrHistoryBody"></tbody>
@@ -1416,25 +1424,38 @@
                         </div>
                     </div>
 
-                    <!-- Previously Saved Market Returns List -->
-                    <div style="background: var(--c-surface); border: 0.5px solid var(--c-separator); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow-sm);">
-                        <h4 style="margin: 0 0 15px 0; font-size: 14px; font-weight: bold; color: var(--t-primary);"><i class="ph ph-clock-counter-clockwise"></i> Route Market Return Notes</h4>
-                        <table class="data-table" style="width: 100%;">
-                            <thead>
-                                <tr>
-                                    <th>Return Note #</th>
-                                    <th>Customer</th>
-                                    <th>Date</th>
-                                    <th style="text-align: right;">Total Amount (Rs)</th>
-                                    <th style="text-align: center;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="mrSavedNotesBody">
-                                <tr>
-                                    <td colspan="5" style="text-align: center; color: var(--t-secondary); padding: 20px;">No market returns logged for this route yet.</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Previously Saved Market Returns List Card -->
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 34px; height: 34px; border-radius: 8px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="ph ph-receipt"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">Route Market Return Notes</h4>
+                                    <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Logged market return records for this route</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;">
+                            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                                        <th style="padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Return Note #</th>
+                                        <th style="padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Customer</th>
+                                        <th style="padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Date</th>
+                                        <th style="text-align: right; padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Total Amount (Rs)</th>
+                                        <th style="text-align: center; padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #475569;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mrSavedNotesBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; color: #94a3b8; padding: 24px;">No market returns logged for this route yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
