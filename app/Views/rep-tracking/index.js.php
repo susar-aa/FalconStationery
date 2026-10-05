@@ -984,7 +984,9 @@
         const selectedRoute = routeFilter ? routeFilter.value : 'all';
 
         let filteredBillsCount = 0;
-        let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+        let totalSelectedAmount = 0;
+        let html = '';
+        let rowIndex = 0;
 
         cachedOutstandingBills.forEach(cust => {
             const customerName = cust.customer_name.toLowerCase();
@@ -1007,48 +1009,85 @@
                 return true;
             });
 
-            if (matchedBills.length > 0) {
-                html += `
-                    <div style="margin-bottom:5px; border-bottom: 0.5px solid var(--c-separator); padding-bottom: 5px;">
-                        <div style="font-weight:700; font-size:12px; color:var(--t-primary); background:var(--c-surface2); padding:4px 8px; border-radius:var(--r-xs); display:flex; justify-content:space-between; align-items:center;">
-                            <span>${cust.customer_name}</span>
-                            <span style="font-weight:normal; font-size:10px; color:#64748b;">${cust.mca_name}</span>
-                        </div>
-                        <div style="padding-left:8px;">
-                `;
+            matchedBills.forEach(b => {
+                filteredBillsCount++;
+                rowIndex++;
+                const isChecked = selectedCreditBills.includes(parseInt(b.id));
+                const trueVal = parseFloat(b.true_grand_total) || 0;
+                if (isChecked) {
+                    totalSelectedAmount += trueVal;
+                }
 
-                matchedBills.forEach(b => {
-                    filteredBillsCount++;
-                    let amtFormatted = parseFloat(b.true_grand_total).toLocaleString('en-IN', {minimumFractionDigits:2});
-                    const isChecked = selectedCreditBills.includes(parseInt(b.id)) ? 'checked' : '';
-                    const routeTag = b.route_name ? `<span style="font-size:9px; background:#e0f2fe; color:#0369a1; padding:1px 4px; border-radius:3px; margin-left:5px; font-weight:600;">${b.route_name}</span>` : `<span style="font-size:9px; background:#f1f5f9; color:#475569; padding:1px 4px; border-radius:3px; margin-left:5px; font-weight:600;">No Route</span>`;
-                    
-                    html += `
-                        <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:6px; border-bottom:0.5px dashed var(--c-separator);">
-                            <input type="checkbox" class="adj-da-bill-checkbox" value="${b.id}" style="width:16px; height:16px; margin-top:2px;" ${isReadOnly ? 'disabled' : ''} ${isChecked} onchange="toggleCreditBillSelection(this)">
-                            <div style="flex:1;">
-                                <div style="font-weight:bold; font-size:12px; color:var(--t-primary);">${b.invoice_number} ${routeTag}</div>
-                                <div style="font-size:11px; color:var(--t-secondary);">Date: ${b.invoice_date}</div>
-                            </div>
-                            <div style="font-weight:bold; font-family:monospace; color:#c62828; font-size:12px; margin-top:2px;">Rs ${amtFormatted}</div>
-                        </label>
-                    `;
-                });
+                let amtFormatted = trueVal.toLocaleString('en-IN', {minimumFractionDigits:2});
+                const routeTag = b.route_name ? `<span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; margin-left:6px; font-weight:600;">${b.route_name}</span>` : `<span style="font-size:10px; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px; margin-left:6px; font-weight:600;">Unassigned</span>`;
+                
+                const bg = (rowIndex % 2 === 0) ? '#f8fafc' : '#ffffff';
+                const rowBg = isChecked ? '#f0fdf4' : bg;
 
                 html += `
-                        </div>
-                    </div>
+                    <tr style="background:${rowBg}; transition:background 0.15s; border-bottom:1px solid #f1f5f9;" onmouseover="if(!this.querySelector('.adj-da-bill-checkbox').checked) this.style.background='#eff6ff'" onmouseout="if(!this.querySelector('.adj-da-bill-checkbox').checked) this.style.background='${bg}'">
+                        <td style="padding:12px 16px; text-align:center; vertical-align:middle;">
+                            <input type="checkbox" class="adj-da-bill-checkbox" value="${b.id}" style="width:16px; height:16px; cursor:pointer;" ${isReadOnly ? 'disabled' : ''} ${isChecked ? 'checked' : ''} onchange="toggleCreditBillSelection(this)">
+                        </td>
+                        <td style="padding:12px 16px; vertical-align:middle;">
+                            <div style="font-weight:700; font-size:13px; color:#0f172a;">${cust.customer_name}</div>
+                            ${cust.mca_name ? `<div style="font-size:11px; color:#64748b; margin-top:2px;"><i class="ph ph-map-pin" style="font-size:11px;"></i> ${cust.mca_name}</div>` : ''}
+                        </td>
+                        <td style="padding:12px 16px; vertical-align:middle;">
+                            <span style="font-weight:700; font-size:13px; color:#1e293b; font-family:monospace;">${b.invoice_number}</span>
+                            ${routeTag}
+                        </td>
+                        <td style="padding:12px 16px; text-align:center; vertical-align:middle; font-size:12px; color:#475569; font-weight:500;">
+                            ${b.invoice_date}
+                        </td>
+                        <td style="padding:12px 16px; text-align:right; vertical-align:middle; font-weight:700; font-family:monospace; color:#059669; font-size:13px;">
+                            Rs ${amtFormatted}
+                        </td>
+                    </tr>
                 `;
-            }
+            });
         });
 
-        html += '</div>';
-
         if (filteredBillsCount === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#888; margin:10px 0; font-size:12px;">No credit bills match the search/filter criteria.</p>';
+            container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:32px; color:#94a3b8; font-size:13px;">No credit bills match the search/filter criteria.</td></tr>`;
         } else {
             container.innerHTML = html;
         }
+
+        // Update Dock Counter & Total
+        const countText = document.getElementById('creditBillsCountText');
+        if (countText) {
+            let amtStr = totalSelectedAmount.toLocaleString('en-IN', {minimumFractionDigits:2});
+            countText.innerHTML = `<strong style="color:#38bdf8;">${selectedCreditBills.length}</strong> bills <span style="font-weight:normal; color:#cbd5e1; margin:0 4px;">|</span> <strong style="color:#4ade80;">Rs ${amtStr}</strong>`;
+        }
+
+        // Update Master Select All checkbox state
+        const masterCb = document.getElementById('selectAllCreditBills');
+        if (masterCb) {
+            const allCbs = document.querySelectorAll('.adj-da-bill-checkbox');
+            if (allCbs.length > 0) {
+                masterCb.checked = Array.from(allCbs).every(cb => cb.checked);
+            } else {
+                masterCb.checked = false;
+            }
+        }
+    }
+
+    function toggleSelectAllCreditBills(masterCheckbox) {
+        const checkboxes = document.querySelectorAll('.adj-da-bill-checkbox');
+        checkboxes.forEach(cb => {
+            if (!cb.disabled) {
+                const billId = parseInt(cb.value);
+                if (masterCheckbox.checked) {
+                    if (!selectedCreditBills.includes(billId)) {
+                        selectedCreditBills.push(billId);
+                    }
+                } else {
+                    selectedCreditBills = selectedCreditBills.filter(id => id !== billId);
+                }
+            }
+        });
+        filterCreditBillsList();
     }
 
     function toggleCreditBillSelection(checkbox) {
@@ -1060,6 +1099,7 @@
         } else {
             selectedCreditBills = selectedCreditBills.filter(id => id !== billId);
         }
+        filterCreditBillsList();
     }
 
     function loadAdjustmentsStage(routeId) {

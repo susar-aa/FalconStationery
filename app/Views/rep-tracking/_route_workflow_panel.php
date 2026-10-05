@@ -580,50 +580,58 @@
                 </div>
 
                 <!-- TAB 14: CREDIT BILLS SELECTION -->
-                <div class="workspace-tab-panel" id="tabpanel-14" style="display:none; padding: 10px 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                        <div>
-                            <h3 style="margin:0; font-size:20px; font-weight:700; color:#0f172a; font-family:var(--font-sf);">Credit Bills Selection</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:#64748b;">Select territory credit invoices to dispatch with this vehicle delivery manifest.</p>
+                <div class="workspace-tab-panel" id="tabpanel-14" style="display:none; padding: 0; position:relative;">
+                    
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 20px rgba(15,23,42,0.05); overflow:hidden; margin-bottom:90px;">
+                        <!-- Full Area Zebra Striped Table -->
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:separate; border-spacing:0; font-family:inherit;">
+                                <thead>
+                                    <tr style="background:#f8fafc; color:#475569; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">
+                                        <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0; width:48px;">
+                                            <input type="checkbox" id="selectAllCreditBills" onchange="toggleSelectAllCreditBills(this)" style="width:16px; height:16px; cursor:pointer;" title="Select / Deselect All">
+                                        </th>
+                                        <th style="padding:12px 16px; text-align:left; border-bottom:1px solid #e2e8f0;">Customer / Area</th>
+                                        <th style="padding:12px 16px; text-align:left; border-bottom:1px solid #e2e8f0;">Invoice #</th>
+                                        <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0;">Invoice Date</th>
+                                        <th style="padding:12px 16px; text-align:right; border-bottom:1px solid #e2e8f0;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adjDaBillsContainer">
+                                    <!-- Full area zebra striped credit bills list -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <div style="max-width: 920px; margin: 0 auto; background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 4px 20px rgba(15,23,42,0.05); padding:24px;">
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid #f1f5f9;">
-                            <div style="width:38px; height:38px; border-radius:10px; background:#f0fdf4; color:#16a34a; display:flex; align-items:center; justify-content:center; font-size:20px;">
-                                <i class="ph ph-receipt"></i>
-                            </div>
-                            <div>
-                                <div style="font-size:16px; font-weight:700; color:#0f172a; font-family:var(--font-sf);">Territory Credit Invoices</div>
-                                <div style="font-size:12px; color:#64748b;">Select outstanding invoices for delivery dispatch</div>
-                            </div>
+                    <!-- Dark Pill Floating Dock with Search, Route Filter & Action Button -->
+                    <div id="tab14FloatingDock" style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:1000; display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(30, 41, 59, 0.96); backdrop-filter:blur(24px) saturate(200%); -webkit-backdrop-filter:blur(24px) saturate(200%); border:1px solid rgba(255, 255, 255, 0.15); border-radius:100px; box-shadow:0 16px 40px rgba(15, 23, 42, 0.35);">
+                        
+                        <!-- Search Input Pill inside Dark Bar -->
+                        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:6px 14px; gap:8px; width:220px; transition:all 0.18s;">
+                            <i class="ph ph-magnifying-glass" style="color:#94a3b8; font-size:16px;"></i>
+                            <input type="text" id="creditBillsSearch" oninput="filterCreditBillsList()" placeholder="Search customer or invoice..." style="background:transparent; border:none; outline:none; color:#ffffff; font-size:13px; width:100%; font-family:inherit;" onfocus="this.parentElement.style.borderColor='#007aff'; this.parentElement.style.background='rgba(255,255,255,0.18)'" onblur="this.parentElement.style.borderColor='rgba(255,255,255,0.18)'; this.parentElement.style.background='rgba(255,255,255,0.12)'">
                         </div>
 
-                        <div style="display: flex; flex-direction: column; gap: 16px;">
-                            <!-- Search & Route Filter controls -->
-                            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                                <div style="flex: 1.5; position:relative; display:flex; align-items:center;">
-                                    <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; color:#94a3b8; font-size:16px;"></i>
-                                    <input type="text" id="creditBillsSearch" placeholder="Search by customer or invoice..." style="width:100%; padding:10px 12px 10px 36px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#0f172a; font-size:13px; outline:none; transition:all 0.18s;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'; this.style.boxShadow='none'">
-                                </div>
-                                <div style="flex: 1; min-width:180px;">
-                                    <select id="creditBillsRouteFilter" style="display:none; width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#0f172a; font-size:13px; outline:none; transition:all 0.18s;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'">
-                                        <option value="all">All Routes</option>
-                                        <option value="none">No Route / Unassigned</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div id="adjDaBillsContainer" class="macos-checkbox-list" style="flex: 1; min-height: 380px; max-height: none; background:#ffffff; border:1px solid #f1f5f9; border-radius:12px; padding:12px;">
-                                <!-- Outstanding credit bills list -->
-                            </div>
-
-                            <div style="margin-top: 10px;">
-                                <button type="button" onclick="submitAdjustmentsLogisticsArrange()" style="width:100%; padding:12px; background:#16a34a; border:none; color:#ffffff; border-radius:12px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(22,163,74,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.02)'; this.style.background='#15803d'" onmouseout="this.style.transform='scale(1)'; this.style.background='#16a34a'">
-                                    <i class="ph ph-check-circle" style="font-size:18px;"></i> Save Credit Bills Selection
-                                </button>
-                            </div>
+                        <!-- Route Filter Select Pill -->
+                        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.18); border-radius:100px; padding:4px 10px; transition:all 0.18s;">
+                            <select id="creditBillsRouteFilter" onchange="filterCreditBillsList()" style="background:transparent; border:none; outline:none; color:#ffffff; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit;">
+                                <option value="all" style="background:#1e293b; color:#fff;">All Routes</option>
+                                <option value="none" style="background:#1e293b; color:#fff;">No Route / Unassigned</option>
+                            </select>
                         </div>
+
+                        <div style="width:1px; height:22px; background:rgba(255,255,255,0.2); margin:0 2px;"></div>
+
+                        <!-- Live Counter & Total Pill -->
+                        <div id="creditBillsDockCounter" style="color:#e2e8f0; font-size:12px; font-weight:600; padding:0 6px; white-space:nowrap;">
+                            Selected: <span id="creditBillsCountText" style="color:#38bdf8; font-weight:700;">0 bills</span>
+                        </div>
+
+                        <!-- Save Action Button -->
+                        <button type="button" onclick="submitAdjustmentsLogisticsArrange()" style="padding:9px 18px; background:#16a34a; border:none; color:#ffffff; border-radius:100px; font-weight:700; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; white-space:nowrap; box-shadow:0 3px 12px rgba(22,163,74,0.3); transition:all 0.18s;" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#15803d'" onmouseout="this.style.transform='scale(1)'; this.style.background='#16a34a'">
+                            <i class="ph ph-check-circle" style="font-size:16px;"></i> Save Credit Bills Selection
+                        </button>
                     </div>
                 </div>
 
