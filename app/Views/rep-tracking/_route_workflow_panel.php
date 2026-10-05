@@ -866,30 +866,49 @@
 
                 <!-- TAB 7: RECONCILIATION -->
                 <div class="workspace-tab-panel" id="tabpanel-7" style="display:none;">
-                    <!-- Section Header -->
-                    <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(15,23,42,0.12);">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); display: flex; align-items: center; justify-content: center; color: #4ade80; font-size: 20px;">
-                                <i class="ph ph-scales"></i>
-                            </div>
-                            <div>
-                                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px;">Route Collections & Variance Reconciliation</h3>
-                                <p style="margin: 2px 0 0 0; font-size: 12px; color: #94a3b8;">Count cash, verify cheques and document financial variances. Save draft or submit for final settlement.</p>
-                            </div>
-                        </div>
-
-                        <!-- Top Header Save Draft Button -->
-                        <button id="btnSaveReconciliationDraft" style="padding: 10px 18px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(22,163,74,0.3); transition: all 0.2s;">
-                            <i class="ph ph-floppy-disk" style="font-size: 16px;"></i> Save Reconciliation Draft
-                        </button>
-                    </div>
-
                     <!-- Hidden Audit Notes Textarea for JS compatibility -->
                     <textarea id="reconAuditNotes" style="display:none;"></textarea>
 
                     <div id="tab7ContentContainer">
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                            <!-- Left Column: Cash Collections Counter & Denominations -->
+                            <!-- Left Column: Cheques Verification Card -->
+                            <div>
+                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 100%; display: flex; flex-direction: column;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #2563eb;">
+                                                <i class="ph ph-bank"></i>
+                                            </span>
+                                            <div>
+                                                <h4 style="margin: 0; color: #0f172a; font-size: 15px; font-weight: 700;">Cheques Verification</h4>
+                                                <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Verify all collected cheques for this route</p>
+                                            </div>
+                                        </div>
+
+                                        <button id="btnSaveReconciliationDraft" style="padding: 8px 14px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(22,163,74,0.25); transition: all 0.2s;">
+                                            <i class="ph ph-floppy-disk" style="font-size: 15px;"></i> Save Draft
+                                        </button>
+                                    </div>
+
+                                    <div style="flex: 1; overflow-y: auto;">
+                                        <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">
+                                            <thead>
+                                                <tr style="background:#f8fafc; color:#64748b; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:0.3px;">
+                                                    <th style="padding:10px; text-align:left; border-bottom:1px solid #e2e8f0; border-top-left-radius:6px;">Customer Name</th>
+                                                    <th style="padding:10px; text-align:left; border-bottom:1px solid #e2e8f0;">Cheque Number</th>
+                                                    <th style="padding:10px; text-align:right; border-bottom:1px solid #e2e8f0;">Amount (Rs)</th>
+                                                    <th style="padding:10px; text-align:center; border-bottom:1px solid #e2e8f0; border-top-right-radius:6px;">Approve</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="reconChequesTbody">
+                                                <!-- Dynamically populated -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Cash Collections Counter & Denominations -->
                             <div>
                                 <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
@@ -1009,37 +1028,6 @@
                                                     <td style="padding:6px 8px; text-align:center;"><input type="number" step="0.01" min="0" id="actValCoins" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
                                                     <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actValCoinsTotal">0.00</td>
                                                 </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Right Column: Cheques Verification Card -->
-                            <div>
-                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 100%; display: flex; flex-direction: column;">
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
-                                        <span style="width: 28px; height: 28px; border-radius: 6px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #2563eb;">
-                                            <i class="ph ph-bank"></i>
-                                        </span>
-                                        <div>
-                                            <h4 style="margin: 0; color: #0f172a; font-size: 14px; font-weight: 700;">Cheques Verification</h4>
-                                            <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Verify all collected cheques for this route</p>
-                                        </div>
-                                    </div>
-
-                                    <div style="flex: 1; overflow-y: auto;">
-                                        <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">
-                                            <thead>
-                                                <tr style="background:#f8fafc; color:#64748b; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:0.3px;">
-                                                    <th style="padding:10px; text-align:left; border-bottom:1px solid #e2e8f0; border-top-left-radius:6px;">Customer Name</th>
-                                                    <th style="padding:10px; text-align:left; border-bottom:1px solid #e2e8f0;">Cheque Number</th>
-                                                    <th style="padding:10px; text-align:right; border-bottom:1px solid #e2e8f0;">Amount (Rs)</th>
-                                                    <th style="padding:10px; text-align:center; border-bottom:1px solid #e2e8f0; border-top-right-radius:6px;">Approve</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="reconChequesTbody">
-                                                <!-- Dynamically populated -->
                                             </tbody>
                                         </table>
                                     </div>
