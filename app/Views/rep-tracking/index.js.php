@@ -3637,9 +3637,9 @@
 
                 tbody.innerHTML = '';
                 if (!data.balancing.stock_items || data.balancing.stock_items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">No stock items loaded.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:30px; font-weight:500;">No stock items loaded.</td></tr>';
                 } else {
-                    data.balancing.stock_items.forEach(st => {
+                    data.balancing.stock_items.forEach((st, idx) => {
                         let expectedReturned = parseInt(st.loaded_qty) - parseInt(st.delivered_qty);
                         if (expectedReturned < 0) expectedReturned = 0;
                         
@@ -3651,18 +3651,19 @@
                             }
                         }
 
+                        const rowBg = (idx % 2 === 0) ? '#ffffff' : '#f8fafc';
                         tbody.innerHTML += `
-                            <tr>
-                                <td><strong>${st.item_name}</strong></td>
-                                <td style="text-align:center; font-weight:bold;">${parseInt(st.loaded_qty)}</td>
-                                <td style="text-align:center; color:#2e7d32; font-weight:bold;">${parseInt(st.delivered_qty)}</td>
-                                <td style="text-align:center; font-weight:bold; font-family:monospace; background:#fafafa;">${expectedReturned}</td>
-                                <td style="text-align:right;">
+                            <tr class="return-stock-row" style="background:${rowBg}; border-bottom:1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${rowBg}'">
+                                <td style="padding:12px 16px; font-weight:600; color:#0f172a;" class="return-stock-name">${st.item_name}</td>
+                                <td style="padding:12px 16px; text-align:center; font-weight:700; color:#334155;">${parseInt(st.loaded_qty)}</td>
+                                <td style="padding:12px 16px; text-align:center; color:#16a34a; font-weight:700;">${parseInt(st.delivered_qty)}</td>
+                                <td style="padding:12px 16px; text-align:center; font-weight:700; font-family:monospace; color:#2563eb; background:rgba(37,99,235,0.04);">${expectedReturned}</td>
+                                <td style="padding:12px 16px; text-align:right;">
                                     <input type="number" class="actual-returned-input" 
                                            data-name="${st.item_name}" data-item-id="${st.item_id}" data-var-id="${st.variation_option_id || 0}"
                                            data-loaded="${st.loaded_qty}" data-delivered="${st.delivered_qty}" 
                                            value="${actualCounted}" min="0" ${isReadOnly ? 'disabled' : ''}
-                                           style="width:80px; text-align:right; padding:4px; font-family:monospace; font-weight:bold;" />
+                                           style="width:90px; text-align:right; padding:6px 10px; font-family:monospace; font-weight:800; font-size:13px; color:#0f172a; border:1px solid #cbd5e1; border-radius:6px; outline:none;" />
                                 </td>
                             </tr>
                         `;
@@ -3672,6 +3673,21 @@
                 checkSettleVerification();
             });
     }
+
+    function filterReturnStockTable() {
+        const q = (document.getElementById('searchReturnStock')?.value || '').toLowerCase().trim();
+        const rows = document.querySelectorAll('#settleStockTableBody tr.return-stock-row');
+        rows.forEach(r => {
+            const nameEl = r.querySelector('.return-stock-name');
+            const text = nameEl ? nameEl.innerText.toLowerCase() : '';
+            if (!q || text.includes(q)) {
+                r.style.display = '';
+            } else {
+                r.style.display = 'none';
+            }
+        });
+    }
+    window.filterReturnStockTable = filterReturnStockTable;
 
     function saveReturnStockDraft() {
         if (!currentRouteId || !currentDeliveryDetails) {

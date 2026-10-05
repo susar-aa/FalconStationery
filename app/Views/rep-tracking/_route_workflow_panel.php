@@ -1047,42 +1047,48 @@
                 </div>
 
                 <!-- TAB 9: RETURN STOCK VERIFICATION -->
-                <div class="workspace-tab-panel" id="tabpanel-9" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <div>
-                            <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--t-primary);">Return Stock Verification</h3>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:var(--t-secondary);">Verify returned physical stocks and confirm route inventory updates.</p>
-                        </div>
-                        <div>
-                            <button id="btnPrintReturnStock" style="padding:10px 16px; background:#475569; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px;">
-                                🖨️ Print Return Stock Report
-                            </button>
-                        </div>
-                    </div>
-                    <div style="border:0.5px solid var(--c-separator); border-radius:var(--r-lg); padding:20px; background:var(--c-surface); box-shadow:var(--shadow-sm); margin-bottom:20px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <h4 style="margin:0; color:var(--primary); font-size:15px; font-weight:bold;">Returned Stock Settle Verification</h4>
-                            <label style="font-weight:bold; font-size:12px; display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="checkbox" id="settleVerifyStock"  style="width:16px; height:16px;">
-                                I have physically verified all returned inventory and confirm quantities are correct.
-                            </label>
-                        </div>
-                        <table class="data-table">
+                <div class="workspace-tab-panel" id="tabpanel-9" style="display:none; position:relative; min-height: 500px;">
+                    <!-- Full-width Product List Table Container -->
+                    <div style="border:1px solid #e2e8f0; border-radius:12px; background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.04); overflow:hidden; margin-bottom:70px;">
+                        <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">
                             <thead>
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th style="text-align:center;">Loaded</th>
-                                    <th style="text-align:center;">Delivered</th>
-                                    <th style="text-align:center;">Expected Returned</th>
-                                    <th style="text-align:right; width:150px;">Actual Counted Returns</th>
+                                <tr style="background:#f8fafc; color:#64748b; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:0.4px;">
+                                    <th style="padding:12px 16px; text-align:left; border-bottom:1px solid #e2e8f0;">Product Name</th>
+                                    <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0;">Loaded</th>
+                                    <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0;">Delivered</th>
+                                    <th style="padding:12px 16px; text-align:center; border-bottom:1px solid #e2e8f0;">Expected Returned</th>
+                                    <th style="padding:12px 16px; text-align:right; width:180px; border-bottom:1px solid #e2e8f0;">Actual Counted Returns</th>
                                 </tr>
                             </thead>
                             <tbody id="settleStockTableBody">
                                 <!-- Dynamically populated -->
                             </tbody>
                         </table>
-                        <div style="text-align:right; margin-top:20px;">
-                            <button id="btnSaveReturnStockDraft"  style="padding:10px 20px; background:#2e7d32; color:#fff; border:none; border-radius:6px; font-weight:bold; font-size:13px; cursor:pointer;">💾 Save Return Stock Draft</button>
+                    </div>
+
+                    <!-- Bottom Floating Dock Pill Bar -->
+                    <div style="position: sticky; bottom: 20px; z-index: 100; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(12px); border-radius: 9999px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12);">
+                        <!-- Left: Search Box & Verification Checkbox -->
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div style="position: relative;">
+                                <i class="ph ph-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px;"></i>
+                                <input type="text" id="searchReturnStock" onkeyup="filterReturnStockTable()" placeholder="Search product name..." style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; padding: 7px 14px 7px 34px; font-size: 12px; color: #ffffff; width: 240px; outline: none;">
+                            </div>
+
+                            <label style="font-weight: 600; font-size: 12px; color: #e2e8f0; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="settleVerifyStock" style="width: 16px; height: 16px; accent-color: #22c55e;">
+                                Physical Stock Verified
+                            </label>
+                        </div>
+
+                        <!-- Right: Action Buttons -->
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button id="btnPrintReturnStock" style="padding: 8px 16px; background: rgba(255,255,255,0.1); color: #ffffff; border: 1px solid rgba(255,255,255,0.2); border-radius: 9999px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                <i class="ph ph-printer" style="font-size: 15px;"></i> Print Report
+                            </button>
+                            <button id="btnSaveReturnStockDraft" style="padding: 8px 18px; background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: #ffffff; border: none; border-radius: 9999px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(22,163,74,0.3); transition: all 0.2s;">
+                                <i class="ph ph-floppy-disk" style="font-size: 15px;"></i> Save Return Stock Draft
+                            </button>
                         </div>
                     </div>
                 </div>
