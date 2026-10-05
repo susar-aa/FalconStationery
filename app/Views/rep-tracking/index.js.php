@@ -3452,23 +3452,24 @@
                 chequesTbody.innerHTML = '';
                 const cheques = balancing.payments ? balancing.payments.filter(p => p.payment_method === 'Cheque') : [];
                 if (cheques.length === 0) {
-                    chequesTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#888; padding:10px;">No cheques collected.</td></tr>';
+                    chequesTbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:30px; font-weight:500;"><i class="ph ph-check-circle" style="font-size:24px; color:#cbd5e1; display:block; margin-bottom:6px;"></i>No cheques collected for this route.</td></tr>';
                 } else {
                     cheques.forEach((ch, idx) => {
                         let isChApproved = (chequeApprovals && (chequeApprovals[ch.id] === true || chequeApprovals[String(ch.id)] === true)) || parseInt(ch.is_verified) === 1;
                         ch.is_verified = isChApproved ? 1 : 0;
+                        const rowBg = (idx % 2 === 0) ? '#ffffff' : '#f8fafc';
                         let approveBox = `
                             <input type="checkbox" onchange="toggleReconChequeApproval(${ch.id}, this.checked)" 
                                    ${isChApproved ? 'checked' : ''} ${isReadOnly ? 'disabled' : ''} 
                                    data-payment-id="${ch.id}"
-                                   style="width:16px; height:16px; cursor:${isReadOnly ? 'not-allowed' : 'pointer'};" />
+                                   style="width:17px; height:17px; cursor:${isReadOnly ? 'not-allowed' : 'pointer'}; accent-color:#16a34a;" />
                         `;
                         chequesTbody.innerHTML += `
-                            <tr>
-                                <td><strong>${ch.customer_name}</strong></td>
-                                <td>${ch.cheque_number || 'N/A'}</td>
-                                <td style="text-align:right; font-family:monospace; font-weight:bold;">Rs ${parseFloat(ch.amount).toFixed(2)}</td>
-                                <td style="text-align:center;">${approveBox}</td>
+                            <tr style="background:${rowBg}; border-bottom:1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${rowBg}'">
+                                <td style="padding:10px; font-weight:600; color:#0f172a; border-bottom:1px solid #f1f5f9;">${ch.customer_name}</td>
+                                <td style="padding:10px; font-family:monospace; color:#475569; font-size:11px; border-bottom:1px solid #f1f5f9;">${ch.cheque_number || 'N/A'}</td>
+                                <td style="padding:10px; text-align:right; font-family:monospace; font-weight:700; color:#0f172a; font-size:13px; border-bottom:1px solid #f1f5f9;">Rs ${parseFloat(ch.amount).toFixed(2)}</td>
+                                <td style="padding:10px; text-align:center; border-bottom:1px solid #f1f5f9;">${approveBox}</td>
                             </tr>
                         `;
                     });
