@@ -870,10 +870,54 @@
                     <textarea id="reconAuditNotes" style="display:none;"></textarea>
 
                     <div id="tab7ContentContainer">
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                            <!-- Left Column: Cheques Verification Card -->
-                            <div>
-                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 100%; display: flex; flex-direction: column;">
+                        <div style="display:grid; grid-template-columns:1.05fr 0.95fr; gap:20px;">
+                            <!-- Left Column: Cash Collections Counter (Top) + Cheques Verification (Bottom) -->
+                            <div style="display:flex; flex-direction:column; gap:20px;">
+                                <!-- Cash Collections Counter Card -->
+                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                                        <span style="width: 28px; height: 28px; border-radius: 6px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #059669;">
+                                            <i class="ph ph-coins"></i>
+                                        </span>
+                                        <h4 style="margin: 0; color: #0f172a; font-size: 14px; font-weight: 700;">Cash Collections Counter</h4>
+                                    </div>
+
+                                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:9px 0; color:#64748b; font-weight:600;">Expected Cash Sales</td>
+                                            <td style="padding:9px 0; font-weight:700; font-family:monospace; text-align:right; color:#1e293b;" id="reconExpectedCash">Rs 0.00</td>
+                                        </tr>
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:9px 0; color:#64748b; font-weight:600;">Expected Cash Collections</td>
+                                            <td style="padding:9px 0; font-weight:700; font-family:monospace; text-align:right; color:#1e293b;" id="reconExpectedCollections">Rs 0.00</td>
+                                        </tr>
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:9px 0; color:#64748b; font-weight:600;">Total Collected Cash</td>
+                                            <td style="padding:9px 0; font-weight:700; font-family:monospace; text-align:right; color:#1e293b;" id="reconTotalExpectedCash">Rs 0.00</td>
+                                        </tr>
+                                        <tr style="border-bottom:1px solid #f1f5f9; background:#fef2f2;">
+                                            <td style="padding:9px 10px; font-weight:700; color:#dc2626; border-radius:6px 0 0 6px;">Less: Route Expenses Paid from Cash</td>
+                                            <td style="padding:9px 10px; font-weight:700; font-family:monospace; text-align:right; color:#dc2626; border-radius:0 6px 6px 0;" id="reconRouteExpenses">Rs 0.00</td>
+                                        </tr>
+                                        <tr style="border-bottom:1px solid #f1f5f9; background:#ecfdf5;">
+                                            <td style="padding:10px 10px; font-weight:700; color:#047857; border-radius:6px 0 0 6px;">Net Expected Cash Handover</td>
+                                            <td style="padding:10px 10px; font-weight:800; font-family:monospace; text-align:right; color:#047857; font-size:15px; border-radius:0 6px 6px 0;" id="reconNetExpectedCash">Rs 0.00</td>
+                                        </tr>
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:10px 0; color:#0f172a; font-weight:700;">Actual Counted Cash</td>
+                                            <td style="padding:10px 0; text-align:right;">
+                                                <input type="number" step="0.01" min="0" id="reconActualCash" readonly style="padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; width:150px; text-align:right; font-weight:800; font-family:monospace; background:#f8fafc; color:#0f172a; font-size:14px; outline:none;" value="0.00">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 0; color:#0f172a; font-weight:700;">Cash Variance</td>
+                                            <td style="padding:10px 0; font-weight:800; font-family:monospace; text-align:right; font-size:15px;" id="reconCashVariance">Rs 0.00</td>
+                                        </tr>
+                                    </table>
+                                </div>
+
+                                <!-- Cheques Verification Card -->
+                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); flex: 1; display: flex; flex-direction: column;">
                                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
                                         <div style="display: flex; align-items: center; gap: 10px;">
                                             <span style="width: 32px; height: 32px; border-radius: 8px; background: #eff6ff; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #2563eb;">
@@ -908,129 +952,93 @@
                                 </div>
                             </div>
 
-                            <!-- Right Column: Cash Collections Counter & Denominations -->
+                            <!-- Right Column: Denomination Breakdown Card -->
                             <div>
-                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 100%;">
                                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
-                                        <span style="width: 28px; height: 28px; border-radius: 6px; background: #ecfdf5; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #059669;">
-                                            <i class="ph ph-coins"></i>
+                                        <span style="width: 28px; height: 28px; border-radius: 6px; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #d97706;">
+                                            <i class="ph ph-calculator"></i>
                                         </span>
-                                        <h4 style="margin: 0; color: #0f172a; font-size: 14px; font-weight: 700;">Cash Collections Counter</h4>
+                                        <h4 style="margin: 0; color: #0f172a; font-size: 14px; font-weight: 700;">Denomination Breakdown</h4>
                                     </div>
 
-                                    <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px;">
-                                        <tr style="border-bottom:1px solid #f1f5f9;">
-                                            <td style="padding:9px 0; color:#64748b; font-weight:600;">Expected Cash Sales</td>
-                                            <td style="padding:9px 0; font-weight:700; font-family:monospace; text-align:right; color:#1e293b;" id="reconExpectedCash">Rs 0.00</td>
-                                        </tr>
-                                        <tr style="border-bottom:1px solid #f1f5f9;">
-                                            <td style="padding:9px 0; color:#64748b; font-weight:600;">Expected Cash Collections</td>
-                                            <td style="padding:9px 0; font-weight:700; font-family:monospace; text-align:right; color:#1e293b;" id="reconExpectedCollections">Rs 0.00</td>
-                                        </tr>
-                                        <tr style="border-bottom:1px solid #f1f5f9;">
-                                            <td style="padding:9px 0; color:#64748b; font-weight:600;">Total Collected Cash</td>
-                                            <td style="padding:9px 0; font-weight:700; font-family:monospace; text-align:right; color:#1e293b;" id="reconTotalExpectedCash">Rs 0.00</td>
-                                        </tr>
-                                        <tr style="border-bottom:1px solid #f1f5f9; background:#fef2f2;">
-                                            <td style="padding:9px 10px; font-weight:700; color:#dc2626; border-radius:6px 0 0 6px;">Less: Route Expenses Paid from Cash</td>
-                                            <td style="padding:9px 10px; font-weight:700; font-family:monospace; text-align:right; color:#dc2626; border-radius:0 6px 6px 0;" id="reconRouteExpenses">Rs 0.00</td>
-                                        </tr>
-                                        <tr style="border-bottom:1px solid #f1f5f9; background:#ecfdf5;">
-                                            <td style="padding:10px 10px; font-weight:700; color:#047857; border-radius:6px 0 0 6px;">Net Expected Cash Handover</td>
-                                            <td style="padding:10px 10px; font-weight:800; font-family:monospace; text-align:right; color:#047857; font-size:15px; border-radius:0 6px 6px 0;" id="reconNetExpectedCash">Rs 0.00</td>
-                                        </tr>
-                                        <tr style="border-bottom:1px solid #f1f5f9;">
-                                            <td style="padding:10px 0; color:#0f172a; font-weight:700;">Actual Counted Cash</td>
-                                            <td style="padding:10px 0; text-align:right;">
-                                                <input type="number" step="0.01" min="0" id="reconActualCash" readonly style="padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; width:150px; text-align:right; font-weight:800; font-family:monospace; background:#f8fafc; color:#0f172a; font-size:14px; outline:none;" value="0.00">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding:10px 0; color:#0f172a; font-weight:700;">Cash Variance</td>
-                                            <td style="padding:10px 0; font-weight:800; font-family:monospace; text-align:right; font-size:15px;" id="reconCashVariance">Rs 0.00</td>
-                                        </tr>
+                                    <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">
+                                        <thead>
+                                            <tr style="background:#f8fafc; color:#64748b; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:0.3px;">
+                                                <th style="padding:8px 8px; text-align:left; border-bottom:1px solid #e2e8f0; border-top-left-radius:6px;">Denom</th>
+                                                <th style="padding:8px 8px; text-align:center; border-bottom:1px solid #e2e8f0;">Collector Qty</th>
+                                                <th style="padding:8px 8px; text-align:right; border-bottom:1px solid #e2e8f0;">Collector Value</th>
+                                                <th style="padding:8px 8px; text-align:center; width: 90px; border-bottom:1px solid #e2e8f0;">Actual Qty</th>
+                                                <th style="padding:8px 8px; text-align:right; border-bottom:1px solid #e2e8f0; border-top-right-radius:6px;">Actual Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Denominations Row 5000 -->
+                                            <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
+                                                <td style="padding:8px; font-weight:600; color:#0f172a;">Rs 5,000</td>
+                                                <td style="padding:8px; text-align:center; color:#64748b; font-weight:600;" id="colQty5000">0</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal5000">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" min="0" id="actQty5000" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal5000">0.00</td>
+                                            </tr>
+                                            <!-- Denominations Row 2000 -->
+                                            <tr style="background:#f8fafc; border-bottom: 1px solid #f1f5f9;">
+                                                <td style="padding:8px; font-weight:600; color:#0f172a;">Rs 2,000</td>
+                                                <td style="padding:8px; text-align:center; color:#64748b; font-weight:600;" id="colQty2000">0</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal2000">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" min="0" id="actQty2000" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal2000">0.00</td>
+                                            </tr>
+                                            <!-- Denominations Row 1000 -->
+                                            <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
+                                                <td style="padding:8px; font-weight:600; color:#0f172a;">Rs 1,000</td>
+                                                <td style="padding:8px; text-align:center; color:#64748b; font-weight:600;" id="colQty1000">0</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal1000">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" min="0" id="actQty1000" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal1000">0.00</td>
+                                            </tr>
+                                            <!-- Denominations Row 500 -->
+                                            <tr style="background:#f8fafc; border-bottom: 1px solid #f1f5f9;">
+                                                <td style="padding:8px; font-weight:600; color:#0f172a;">Rs 500</td>
+                                                <td style="padding:8px; text-align:center; color:#64748b; font-weight:600;" id="colQty500">0</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal500">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" min="0" id="actQty500" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal500">0.00</td>
+                                            </tr>
+                                            <!-- Denominations Row 100 -->
+                                            <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
+                                                <td style="padding:8px; font-weight:600; color:#0f172a;">Rs 100</td>
+                                                <td style="padding:8px; text-align:center; color:#64748b; font-weight:600;" id="colQty100">0</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal100">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" min="0" id="actQty100" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal100">0.00</td>
+                                            </tr>
+                                            <!-- Denominations Row 50 -->
+                                            <tr style="background:#f8fafc; border-bottom: 1px solid #f1f5f9;">
+                                                <td style="padding:8px; font-weight:600; color:#0f172a;">Rs 50</td>
+                                                <td style="padding:8px; text-align:center; color:#64748b; font-weight:600;" id="colQty50">0</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal50">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" min="0" id="actQty50" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal50">0.00</td>
+                                            </tr>
+                                            <!-- Denominations Row 20 -->
+                                            <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
+                                                <td style="padding:8px; font-weight:600; color:#0f172a;">Rs 20</td>
+                                                <td style="padding:8px; text-align:center; color:#64748b; font-weight:600;" id="colQty20">0</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal20">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" min="0" id="actQty20" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal20">0.00</td>
+                                            </tr>
+                                            <!-- Coins Row -->
+                                            <tr style="background:#f8fafc;">
+                                                <td style="padding:8px; font-weight:700; color:#0f172a;">Coins Total</td>
+                                                <td style="padding:8px; text-align:center; color:#94a3b8;">-</td>
+                                                <td style="padding:8px; text-align:right; color:#64748b; font-family:monospace;" id="colValCoins">0.00</td>
+                                                <td style="padding:8px; text-align:center;"><input type="number" step="0.01" min="0" id="actValCoins" style="width:76px; padding:6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
+                                                <td style="padding:8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actValCoinsTotal">0.00</td>
+                                            </tr>
+                                        </tbody>
                                     </table>
-
-                                    <div style="margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 16px;">
-                                        <h5 style="margin: 0 0 12px 0; color:#475569; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Denomination Breakdown</h5>
-                                        <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">
-                                            <thead>
-                                                <tr style="background:#f8fafc; color:#64748b; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:0.3px;">
-                                                    <th style="padding:8px 8px; text-align:left; border-bottom:1px solid #e2e8f0; border-top-left-radius:6px;">Denom</th>
-                                                    <th style="padding:8px 8px; text-align:center; border-bottom:1px solid #e2e8f0;">Collector Qty</th>
-                                                    <th style="padding:8px 8px; text-align:right; border-bottom:1px solid #e2e8f0;">Collector Value</th>
-                                                    <th style="padding:8px 8px; text-align:center; width: 90px; border-bottom:1px solid #e2e8f0;">Actual Qty</th>
-                                                    <th style="padding:8px 8px; text-align:right; border-bottom:1px solid #e2e8f0; border-top-right-radius:6px;">Actual Value</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <!-- Denominations Row 5000 -->
-                                                <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
-                                                    <td style="padding:6px 8px; font-weight:600; color:#0f172a;">Rs 5,000</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#64748b; font-weight:600;" id="colQty5000">0</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal5000">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" min="0" id="actQty5000" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal5000">0.00</td>
-                                                </tr>
-                                                <!-- Denominations Row 2000 -->
-                                                <tr style="background:#f8fafc; border-bottom: 1px solid #f1f5f9;">
-                                                    <td style="padding:6px 8px; font-weight:600; color:#0f172a;">Rs 2,000</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#64748b; font-weight:600;" id="colQty2000">0</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal2000">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" min="0" id="actQty2000" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal2000">0.00</td>
-                                                </tr>
-                                                <!-- Denominations Row 1000 -->
-                                                <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
-                                                    <td style="padding:6px 8px; font-weight:600; color:#0f172a;">Rs 1,000</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#64748b; font-weight:600;" id="colQty1000">0</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal1000">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" min="0" id="actQty1000" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal1000">0.00</td>
-                                                </tr>
-                                                <!-- Denominations Row 500 -->
-                                                <tr style="background:#f8fafc; border-bottom: 1px solid #f1f5f9;">
-                                                    <td style="padding:6px 8px; font-weight:600; color:#0f172a;">Rs 500</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#64748b; font-weight:600;" id="colQty500">0</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal500">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" min="0" id="actQty500" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal500">0.00</td>
-                                                </tr>
-                                                <!-- Denominations Row 100 -->
-                                                <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
-                                                    <td style="padding:6px 8px; font-weight:600; color:#0f172a;">Rs 100</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#64748b; font-weight:600;" id="colQty100">0</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal100">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" min="0" id="actQty100" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal100">0.00</td>
-                                                </tr>
-                                                <!-- Denominations Row 50 -->
-                                                <tr style="background:#f8fafc; border-bottom: 1px solid #f1f5f9;">
-                                                    <td style="padding:6px 8px; font-weight:600; color:#0f172a;">Rs 50</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#64748b; font-weight:600;" id="colQty50">0</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal50">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" min="0" id="actQty50" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal50">0.00</td>
-                                                </tr>
-                                                <!-- Denominations Row 20 -->
-                                                <tr style="background:#ffffff; border-bottom: 1px solid #f1f5f9;">
-                                                    <td style="padding:6px 8px; font-weight:600; color:#0f172a;">Rs 20</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#64748b; font-weight:600;" id="colQty20">0</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colVal20">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" min="0" id="actQty20" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actVal20">0.00</td>
-                                                </tr>
-                                                <!-- Coins Row -->
-                                                <tr style="background:#f8fafc;">
-                                                    <td style="padding:6px 8px; font-weight:700; color:#0f172a;">Coins Total</td>
-                                                    <td style="padding:6px 8px; text-align:center; color:#94a3b8;">-</td>
-                                                    <td style="padding:6px 8px; text-align:right; color:#64748b; font-family:monospace;" id="colValCoins">0.00</td>
-                                                    <td style="padding:6px 8px; text-align:center;"><input type="number" step="0.01" min="0" id="actValCoins" style="width:76px; padding:5px 6px; text-align:center; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-family:monospace; color:#0f172a; outline:none;"></td>
-                                                    <td style="padding:6px 8px; text-align:right; font-weight:700; font-family:monospace; color:#0f172a;" id="actValCoinsTotal">0.00</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
                                 </div>
                             </div>
                         </div>
