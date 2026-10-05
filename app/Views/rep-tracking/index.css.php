@@ -1677,11 +1677,23 @@ select option {
         background-color: #f0f7ff !important;
         transition: background-color 0.15s ease;
     }
-    #tabpanel-5 .data-table td {
-        padding: 12px 18px !important;
-        font-size: 13px !important;
-        color: #0f172a !important;
-        border-bottom: 1px solid #f1f5f9 !important;
-        vertical-align: middle !important;
+    #sdpModalHeader {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+        color: #ffffff !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+        padding: 18px 24px !important;
+    }
+    #sdpModalHeader button {
+        background: rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 14px !important;
+        border-radius: 50% !important;
+    }
+    #sdpModalHeader button:hover {
+        background: rgba(239, 68, 68, 0.85) !important;
+        color: #ffffff !important;
     }
 </style>
