@@ -3096,30 +3096,31 @@
 
                     if (data.expenses.length === 0) {
                         listContainer.innerHTML = `
-                            <div style="text-align:center; padding: 40px 20px; color:var(--t-secondary);">
-                                <i class="ph ph-receipt" style="font-size:36px; color:#94a3b8; margin-bottom: 8px;"></i>
-                                <p style="margin:0; font-size: 13px;">No expenses recorded for this route.</p>
+                            <div style="text-align:center; padding: 48px 20px; color:#94a3b8;">
+                                <i class="ph ph-receipt" style="font-size:40px; color:#cbd5e1; margin-bottom: 8px;"></i>
+                                <p style="margin:0; font-size: 13px; font-weight: 500; color: #64748b;">No expenses recorded for this route.</p>
                             </div>
                         `;
                     } else {
                         let html = `
-                            <table style="width:100%; border-collapse:collapse;">
+                            <table style="width:100%; border-collapse:separate; border-spacing:0; font-size:12px;">
                                 <thead>
-                                    <tr style="border-bottom:1.5px solid var(--c-separator); color:var(--t-label); font-weight:700; text-transform:uppercase; font-size:10px;">
-                                        <th style="padding:8px 4px; text-align:left;">Category / Type</th>
-                                        <th style="padding:8px 4px; text-align:left;">Details / Source</th>
-                                        <th style="padding:8px 4px; text-align:right;">Amount</th>
-                                        <th style="padding:8px 4px; text-align:center;">Action</th>
+                                    <tr style="background:#f8fafc; color:#64748b; font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:0.4px;">
+                                        <th style="padding:10px 10px; text-align:left; border-bottom:1px solid #e2e8f0; border-top-left-radius:6px;">Category / Type</th>
+                                        <th style="padding:10px 10px; text-align:left; border-bottom:1px solid #e2e8f0;">Details / Source</th>
+                                        <th style="padding:10px 10px; text-align:right; border-bottom:1px solid #e2e8f0;">Amount</th>
+                                        <th style="padding:10px 10px; text-align:center; border-bottom:1px solid #e2e8f0; border-top-right-radius:6px;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                         `;
-                        data.expenses.forEach(exp => {
+                        data.expenses.forEach((exp, idx) => {
                             const dateStr = new Date(exp.expense_date).toLocaleDateString();
                             const amt = parseFloat(exp.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                             const category = exp.expense_category || 'Rep';
                             const badgeBg = (category === 'Delivery') ? '#fef3c7' : '#e0f2fe';
                             const badgeColor = (category === 'Delivery') ? '#b45309' : '#0369a1';
+                            const rowBg = (idx % 2 === 0) ? '#ffffff' : '#f8fafc';
                             
                             let detailsSub = exp.payment_source;
                             if (category === 'Delivery' && exp.driver_name) {
@@ -3129,26 +3130,26 @@
                             }
 
                             html += `
-                                <tr style="border-bottom:1px solid var(--c-separator); font-size:12px;">
-                                    <td style="padding:8px 4px;">
+                                <tr style="background:${rowBg}; border-bottom:1px solid #f1f5f9; transition: background 0.15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${rowBg}'">
+                                    <td style="padding:10px 10px; border-bottom:1px solid #f1f5f9;">
                                         <div style="display:flex; align-items:center; gap:6px;">
-                                            <span style="padding:2px 6px; border-radius:4px; font-size:9px; font-weight:bold; background:${badgeBg}; color:${badgeColor};">${category}</span>
-                                            <span style="font-weight:600; color:var(--t-primary);">${exp.expense_type}</span>
+                                            <span style="padding:2px 6px; border-radius:4px; font-size:9px; font-weight:800; background:${badgeBg}; color:${badgeColor}; text-transform:uppercase;">${category}</span>
+                                            <span style="font-weight:600; color:#0f172a;">${exp.expense_type}</span>
                                         </div>
-                                        <div style="font-size:9px; color:#64748b; font-family:monospace; margin-top:2px;">${exp.receipt_number ? 'Rec: ' + exp.receipt_number : exp.description.substring(0, 25) + '...'}</div>
+                                        <div style="font-size:10px; color:#64748b; font-family:monospace; margin-top:2px;">${exp.receipt_number ? 'Rec: ' + exp.receipt_number : exp.description.substring(0, 30)}</div>
                                     </td>
-                                    <td style="padding:8px 4px; color:#475569; font-size:11px;">
+                                    <td style="padding:10px 10px; color:#475569; font-size:11px; border-bottom:1px solid #f1f5f9;">
                                         ${detailsSub}
                                     </td>
-                                    <td style="padding:8px 4px; text-align:right; font-weight:bold; font-family:monospace; color:#ef4444;">
+                                    <td style="padding:10px 10px; text-align:right; font-weight:700; font-family:monospace; color:#dc2626; font-size:13px; border-bottom:1px solid #f1f5f9;">
                                         Rs ${amt}
                                     </td>
-                                    <td style="padding:8px 4px; text-align:center;">
+                                    <td style="padding:10px 10px; text-align:center; border-bottom:1px solid #f1f5f9;">
                                         ${isReadOnly ? `
-                                            <span style="font-size:10px; color:#94a3b8; font-style:italic;">Posted</span>
+                                            <span style="font-size:10px; color:#94a3b8; font-weight:600; font-style:italic;">Posted</span>
                                         ` : `
-                                            <button type="button" onclick="deleteRouteExpense(${exp.id})" style="background:none; border:none; color:#ef4444; cursor:pointer; padding:4px;" title="Delete Expense">
-                                                <i class="ph ph-trash" style="font-size:16px;"></i>
+                                            <button type="button" onclick="deleteRouteExpense(${exp.id})" style="background:rgba(239,68,68,0.08); border:none; color:#dc2626; border-radius:6px; cursor:pointer; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; transition:all 0.15s;" title="Delete Expense" onmouseover="this.style.background='#dc2626'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239,68,68,0.08)'; this.style.color='#dc2626';">
+                                                <i class="ph ph-trash" style="font-size:14px;"></i>
                                             </button>
                                         `}
                                     </td>
