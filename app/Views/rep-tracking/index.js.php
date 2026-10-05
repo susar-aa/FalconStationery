@@ -2244,7 +2244,7 @@
         
         const textSpan = document.createElement('span');
         textSpan.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
-        textSpan.textContent = (sel.options[sel.selectedIndex]?.text && sel.value) ? sel.options[sel.selectedIndex].text : '-- Select --';
+        textSpan.textContent = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '-- Select --';
         
         const arrow = document.createElement('i');
         arrow.className = 'ph ph-caret-down';
@@ -2336,7 +2336,7 @@
 
         sel.addEventListener('change', () => {
             const selectedOpt = sel.options[sel.selectedIndex];
-            textSpan.textContent = (selectedOpt && sel.value) ? selectedOpt.text : '-- Select --';
+            textSpan.textContent = selectedOpt ? selectedOpt.text : '-- Select --';
         });
     }
 

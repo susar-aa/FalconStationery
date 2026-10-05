@@ -533,7 +533,7 @@
 
                                         <div>
                                             <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Vehicle Number *</label>
-                                            <select id="adjDaVehicle" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
+                                            <select id="adjDaVehicle" required style="display:none; width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
                                                 <option value="">-- Select Vehicle --</option>
                                                 <?php foreach($data['vehicles'] as $v): ?>
                                                     <?php if($v->status === 'Active'): ?>
@@ -548,7 +548,7 @@
                                     <div style="display:flex; flex-direction:column; gap:18px;">
                                         <div>
                                             <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Driver Name *</label>
-                                            <select id="adjDaDriver" required style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
+                                            <select id="adjDaDriver" required style="display:none; width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
                                                 <option value="">-- Select Driver --</option>
                                                 <?php foreach($data['drivers'] as $d): ?>
                                                     <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
@@ -558,7 +558,7 @@
 
                                         <div>
                                             <label style="display:block; font-size:12px; font-weight:700; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Partner / Helper</label>
-                                            <select id="adjDaPartner" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
+                                            <select id="adjDaPartner" style="display:none; width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; font-size:13px; color:#0f172a; background:#ffffff; outline:none; transition:all 0.18s; font-family:inherit; box-sizing:border-box;">
                                                 <option value="">-- None --</option>
                                                 <?php foreach($data['drivers'] as $d): ?>
                                                     <option value="<?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?>"><?= htmlspecialchars($d->first_name . ' ' . $d->last_name) ?></option>
@@ -607,7 +607,7 @@
                                     <input type="text" id="creditBillsSearch" placeholder="Search by customer or invoice..." style="width:100%; padding:10px 12px 10px 36px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#0f172a; font-size:13px; outline:none; transition:all 0.18s;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'; this.style.boxShadow='none'">
                                 </div>
                                 <div style="flex: 1; min-width:180px;">
-                                    <select id="creditBillsRouteFilter" style="width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#0f172a; font-size:13px; outline:none; transition:all 0.18s;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'">
+                                    <select id="creditBillsRouteFilter" style="display:none; width:100%; padding:10px 14px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#0f172a; font-size:13px; outline:none; transition:all 0.18s;" onfocus="this.style.borderColor='#007aff'; this.style.background='#ffffff'" onblur="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'">
                                         <option value="all">All Routes</option>
                                         <option value="none">No Route / Unassigned</option>
                                     </select>
