@@ -170,43 +170,45 @@ class Customer {
     public function getCustomerSummaryStats() {
         $sql = "
             SELECT 
-                COUNT(c.id) as total_customers,
-                SUM(CASE WHEN (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) > 0 THEN (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) ELSE 0 END) as total_outstanding,
-                SUM(CASE WHEN (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) > 0 THEN 1 ELSE 0 END) as owed_customers_count
-            FROM customers c
-            LEFT JOIN (
-                SELECT customer_id, 
-                       SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_billed
-                FROM invoices 
-                WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
-                GROUP BY customer_id
-            ) inv ON c.id = inv.customer_id
-            LEFT JOIN (
-                SELECT customer_id, SUM(amount) as total_paid
-                FROM customer_payments 
-                WHERE status = 'Active'
-                GROUP BY customer_id
-            ) pmt ON c.id = pmt.customer_id
-            LEFT JOIN (
-                SELECT customer_id, SUM(total_amount) as total_credited
-                FROM credit_notes
-                GROUP BY customer_id
-            ) cn ON c.id = cn.customer_id
-            LEFT JOIN (
-                SELECT COALESCE(t.entity_id, je.entity_id) as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
-                FROM transactions t
-                JOIN journal_entries je ON t.journal_entry_id = je.id
-                JOIN chart_of_accounts coa ON t.account_id = coa.id
-                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
-                GROUP BY COALESCE(t.entity_id, je.entity_id)
-            ) je_b ON c.id = je_b.customer_id
+                (SELECT COUNT(*) FROM customers) AS total_customers,
+                (
+                    (SELECT COALESCE(SUM(opening_balance), 0) FROM customers)
+                    + (SELECT COALESCE(SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)), 0) FROM invoices WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled'))
+                    - (SELECT COALESCE(SUM(amount), 0) FROM customer_payments WHERE status = 'Active')
+                    - (SELECT COALESCE(SUM(total_amount), 0) FROM credit_notes)
+                ) AS total_outstanding
         ";
         $this->db->query($sql);
         $res = $this->db->single();
+
+        // Count owed accounts efficiently
+        $this->db->query("
+            SELECT COUNT(*) as owed_count 
+            FROM (
+                SELECT c.id, 
+                       (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0)) as bal
+                FROM customers c
+                LEFT JOIN (
+                    SELECT customer_id, SUM(total_amount) as total_billed 
+                    FROM invoices 
+                    WHERE status NOT IN ('Voided', 'Cancelled') 
+                    GROUP BY customer_id
+                ) inv ON c.id = inv.customer_id
+                LEFT JOIN (
+                    SELECT customer_id, SUM(amount) as total_paid 
+                    FROM customer_payments 
+                    WHERE status = 'Active' 
+                    GROUP BY customer_id
+                ) pmt ON c.id = pmt.customer_id
+                HAVING bal > 0
+            ) sub
+        ");
+        $owedRes = $this->db->single();
+
         return [
             'total_customers' => intval($res->total_customers ?? 0),
             'total_outstanding' => floatval($res->total_outstanding ?? 0),
-            'owed_customers_count' => intval($res->owed_customers_count ?? 0)
+            'owed_customers_count' => intval($owedRes->owed_count ?? 0)
         ];
     }
 

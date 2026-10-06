@@ -17,4 +17,7 @@ ALTER TABLE `supplier_payments` ADD INDEX `idx_sp_vendor_date` (`vendor_id`, `pa
 ALTER TABLE `supplier_payments` ADD INDEX `idx_sp_method` (`payment_method`);
 
 ALTER TABLE `invoices` ADD INDEX `idx_inv_cust_date` (`customer_id`, `invoice_date`);
+ALTER TABLE `invoices` ADD INDEX `idx_inv_status` (`status`, `delivery_status`, `customer_id`);
+ALTER TABLE `customer_payments` ADD INDEX `idx_pmt_status` (`status`, `customer_id`);
+ALTER TABLE `credit_notes` ADD INDEX `idx_cn_cust` (`customer_id`);
 ALTER TABLE `inventory_transactions` ADD INDEX `idx_it_item_date` (`item_id`, `created_at`);
