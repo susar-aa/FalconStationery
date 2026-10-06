@@ -284,56 +284,55 @@ class Deposit {
             return "Error: Deposit not found or is not in Draft status.";
         }
 
+        $destinationBankId = intval($deposit->destination_bank_account_id);
+        if (!$destinationBankId) {
+            return "Error: Destination bank account is not selected.";
+        }
+
         // Retrieve Chart of Account IDs
         $cashInHandId = $this->getAccountIdByCode('1000');
         $chequeInHandId = $this->getAccountIdByCode('1010');
-        $transitCashId = $this->getAccountIdByCode('1030');
-        $transitChequesId = $this->getAccountIdByCode('1040');
 
-        if (!$cashInHandId || !$chequeInHandId || !$transitCashId || !$transitChequesId) {
-            return "Error: Required transit accounts or cash/cheque sub-ledger accounts are missing in the Chart of Accounts.";
+        if (!$cashInHandId || !$chequeInHandId) {
+            return "Error: Required cash/cheque sub-ledger accounts (1000/1010) are missing in the Chart of Accounts.";
         }
 
-        // Post Journal Entry
+        $totalDeposit = floatval($deposit->total_deposit);
+        if ($totalDeposit <= 0) {
+            return "Error: Deposit total must be greater than zero.";
+        }
+
+        // Post Journal Entry directly to Destination Bank Account (Uncleared deposit)
         $lines = [];
+        $lines[] = [
+            'account_id' => $destinationBankId,
+            'debit' => $totalDeposit,
+            'credit' => 0.00,
+            'description' => 'Bank Deposit #' . $deposit->deposit_number . ' (Sent to Bank)'
+        ];
+
         if ($deposit->cash_total > 0) {
-            $lines[] = [
-                'account_id' => $transitCashId,
-                'debit' => $deposit->cash_total,
-                'credit' => 0.00,
-                'description' => 'Cash Deposit in Transit'
-            ];
             $lines[] = [
                 'account_id' => $cashInHandId,
                 'debit' => 0.00,
-                'credit' => $deposit->cash_total,
-                'description' => 'Cash Sent to Bank'
+                'credit' => floatval($deposit->cash_total),
+                'description' => 'Cash Deposited to Bank'
             ];
         }
 
         if ($deposit->cheque_total > 0) {
             $lines[] = [
-                'account_id' => $transitChequesId,
-                'debit' => $deposit->cheque_total,
-                'credit' => 0.00,
-                'description' => 'Cheque Deposit in Transit'
-            ];
-            $lines[] = [
                 'account_id' => $chequeInHandId,
                 'debit' => 0.00,
-                'credit' => $deposit->cheque_total,
-                'description' => 'Cheques Sent to Bank'
+                'credit' => floatval($deposit->cheque_total),
+                'description' => 'Cheques Deposited to Bank'
             ];
-        }
-
-        if (empty($lines)) {
-            return "Error: Deposit total must be greater than zero.";
         }
 
         require_once __DIR__ . '/JournalEntry.php';
         $jeModel = new JournalEntry();
         
-        $desc = "Deposit sent to bank: " . $deposit->deposit_number;
+        $desc = "Bank Deposit #" . $deposit->deposit_number . " sent to bank";
         $jeRef = 'DEP-' . $deposit->deposit_number;
         $result = $jeModel->postEntry(
             $deposit->deposit_date,
@@ -387,10 +386,6 @@ class Deposit {
             $transitChequesId = $this->getAccountIdByCode('1040');
             $arAccountId = $this->getAccountIdByCode('1200'); // Accounts Receivable Code 1200
             $destinationBankId = intval($deposit->destination_bank_account_id);
-
-            if (!$transitCashId || !$transitChequesId || !$arAccountId) {
-                return "Error: Required transit accounts are missing in the Chart of Accounts.";
-            }
 
             $this->db->beginTransaction();
 
@@ -446,7 +441,6 @@ class Deposit {
                         $this->db->execute();
 
                         // REVERSE CUSTOMER PAYMENT & Ledger
-                        // 1. Fetch corresponding customer payment record by customer, amount, and payment method
                         $this->db->query("SELECT p.* FROM customer_payments p
                                           JOIN cheques ch ON ch.customer_id = p.customer_id AND ch.amount = p.amount
                                           WHERE ch.id = :cid AND p.payment_method = 'Cheque' AND p.status = 'Active' 
@@ -483,155 +477,58 @@ class Deposit {
                                 $this->db->execute();
                             }
 
-                            // Post Reversal Journal Entry: Debit Accounts Receivable (1200), Credit Deposit in Transit - Cheques (1040)
-                            // This cancels the transit balance and puts the debt back on the customer.
-                            $revRef = 'REV-' . $payment->reference;
-                            $revDesc = "Reversal: Cheque Returned/Rejected. Cheque #" . $item->cheque_number;
-                            
-                            $revLines = [
-                                [
-                                    'account_id' => $arAccountId,
-                                    'debit' => floatval($item->cheque_amount),
-                                    'credit' => 0.00,
-                                    'description' => $revDesc
-                                ],
-                                [
-                                    'account_id' => $transitChequesId,
-                                    'debit' => 0.00,
-                                    'credit' => floatval($item->cheque_amount),
-                                    'description' => $revDesc
-                                ]
-                            ];
-
-                            // We call postEntry here but wait! We are in a transaction.
-                            // To prevent nested transaction issues, we post the entry AFTER this transaction commits, OR we do it manually.
-                            // Let's do it manually since we are already inside a database transaction here!
-                            // Doing it manually is extremely safe and keeps everything in a single atomic transaction block!
-                            
-                            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, status) 
-                                              VALUES (CURRENT_DATE(), :ref, :desc, :uid, 'Posted')");
-                            $this->db->bind(':ref', $revRef);
-                            $this->db->bind(':desc', $revDesc);
-                            $this->db->bind(':uid', intval($userId));
-                            $this->db->execute();
-                            $revJournalId = $this->db->lastInsertId();
-
-                            foreach ($revLines as $line) {
-                                $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit, description) 
-                                                  VALUES (:jid, :aid, :deb, :cred, :desc)");
-                                $this->db->bind(':jid', $revJournalId);
-                                $this->db->bind(':aid', $line['account_id']);
-                                $this->db->bind(':deb', $line['debit']);
-                                $this->db->bind(':cred', $line['credit']);
-                                $this->db->bind(':desc', $line['description']);
+                            // Post Reversal Journal Entry: Debit Accounts Receivable (1200), Credit Destination Bank Account
+                            if ($arAccountId) {
+                                $revRef = 'REV-' . $payment->reference;
+                                $revDesc = "Reversal: Cheque Returned/Rejected. Cheque #" . $item->cheque_number;
+                                
+                                $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, status) 
+                                                  VALUES (CURRENT_DATE(), :ref, :desc, :uid, 'Posted')");
+                                $this->db->bind(':ref', $revRef);
+                                $this->db->bind(':desc', $revDesc);
+                                $this->db->bind(':uid', intval($userId));
                                 $this->db->execute();
+                                $revJournalId = $this->db->lastInsertId();
 
-                                // Update balance
-                                $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id FOR UPDATE");
-                                $this->db->bind(':id', $line['account_id']);
-                                $account = $this->db->single();
+                                $revLines = [
+                                    ['account_id' => $arAccountId, 'debit' => floatval($item->cheque_amount), 'credit' => 0.00, 'description' => $revDesc],
+                                    ['account_id' => $destinationBankId, 'debit' => 0.00, 'credit' => floatval($item->cheque_amount), 'description' => $revDesc]
+                                ];
 
-                                $balanceUpdateSql = "UPDATE chart_of_accounts SET balance = balance ";
-                                if (in_array($account->account_type, ['Asset', 'Expense'])) {
-                                    $balanceUpdateSql .= "+ :debit - :credit ";
-                                } else {
-                                    $balanceUpdateSql .= "- :debit + :credit ";
+                                foreach ($revLines as $line) {
+                                    $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit, description) 
+                                                      VALUES (:jid, :aid, :deb, :cred, :desc)");
+                                    $this->db->bind(':jid', $revJournalId);
+                                    $this->db->bind(':aid', $line['account_id']);
+                                    $this->db->bind(':deb', $line['debit']);
+                                    $this->db->bind(':cred', $line['credit']);
+                                    $this->db->bind(':desc', $line['description']);
+                                    $this->db->execute();
+
+                                    $this->db->query("UPDATE chart_of_accounts SET balance = balance + :debit - :credit WHERE id = :id");
+                                    $this->db->bind(':debit', $line['debit']);
+                                    $this->db->bind(':credit', $line['credit']);
+                                    $this->db->bind(':id', $line['account_id']);
+                                    $this->db->execute();
                                 }
-                                $balanceUpdateSql .= "WHERE id = :id";
-
-                                $this->db->query($balanceUpdateSql);
-                                $this->db->bind(':debit', $line['debit']);
-                                $this->db->bind(':credit', $line['credit']);
-                                $this->db->bind(':id', $line['account_id']);
-                                $this->db->execute();
                             }
                         }
                     }
                 }
             }
 
-            // Post Realization Journal Entry for cleared cash & cheques
-            $clearedTotal = $acceptedCash + $clearedChequesTotal;
-            if ($clearedTotal > 0) {
-                $realRef = $deposit->deposit_number . '-REAL';
-                $realDesc = "Realization of Deposit: " . $deposit->deposit_number;
-
-                $realLines = [];
-                $realLines[] = [
-                    'account_id' => $destinationBankId,
-                    'debit' => $clearedTotal,
-                    'credit' => 0.00,
-                    'description' => 'Funds deposited to bank'
-                ];
-
-                if ($acceptedCash > 0) {
-                    $realLines[] = [
-                        'account_id' => $transitCashId,
-                        'debit' => 0.00,
-                        'credit' => $acceptedCash,
-                        'description' => 'Realization of Cash Transit'
-                    ];
-                }
-
-                if ($clearedChequesTotal > 0) {
-                    $realLines[] = [
-                        'account_id' => $transitChequesId,
-                        'debit' => 0.00,
-                        'credit' => $clearedChequesTotal,
-                        'description' => 'Realization of Cheques Transit'
-                    ];
-                }
-
-                // Insert journal entry manually under current transaction
-                $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, status) 
-                                  VALUES (:date, :ref, :desc, :uid, 'Posted')");
-                $this->db->bind(':date', $deposit->deposit_date);
-                $this->db->bind(':ref', $realRef);
-                $this->db->bind(':desc', $realDesc);
-                $this->db->bind(':uid', intval($userId));
-                $this->db->execute();
-                $realJournalId = $this->db->lastInsertId();
-
-                foreach ($realLines as $line) {
-                    $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit, description) 
-                                      VALUES (:jid, :aid, :deb, :cred, :desc)");
-                    $this->db->bind(':jid', $realJournalId);
-                    $this->db->bind(':aid', $line['account_id']);
-                    $this->db->bind(':deb', $line['debit']);
-                    $this->db->bind(':cred', $line['credit']);
-                    $this->db->bind(':desc', $line['description']);
-                    $this->db->execute();
-
-                    // Update balance
-                    $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id FOR UPDATE");
-                    $this->db->bind(':id', $line['account_id']);
-                    $account = $this->db->single();
-
-                    $balanceUpdateSql = "UPDATE chart_of_accounts SET balance = balance ";
-                    if (in_array($account->account_type, ['Asset', 'Expense'])) {
-                        $balanceUpdateSql .= "+ :debit - :credit ";
-                    } else {
-                        $balanceUpdateSql .= "- :debit + :credit ";
-                    }
-                    $balanceUpdateSql .= "WHERE id = :id";
-
-                    $this->db->query($balanceUpdateSql);
-                    $this->db->bind(':debit', $line['debit']);
-                    $this->db->bind(':credit', $line['credit']);
-                    $this->db->bind(':id', $line['account_id']);
-                    $this->db->execute();
-                }
-
-                // Store realization journal entry ID in deposit
-                $this->db->query("UPDATE deposits SET realization_journal_entry_id = :rje_id WHERE id = :id");
-                $this->db->bind(':rje_id', $realJournalId);
-                $this->db->bind(':id', intval($id));
+            // Mark the deposit's transaction in destination_bank_account_id as cleared
+            if (!empty($deposit->journal_entry_id)) {
+                $this->db->query("UPDATE transactions SET is_cleared = 1 WHERE journal_entry_id = :jeid AND account_id = :aid");
+                $this->db->bind(':jeid', intval($deposit->journal_entry_id));
+                $this->db->bind(':aid', $destinationBankId);
                 $this->db->execute();
             }
 
             // Update Deposit header status to Completed
             $this->db->query("UPDATE deposits SET 
                 status = 'Completed', 
+                reconciliation_status = 'Reconciled',
                 accepted_cash_amount = :accepted_cash, 
                 approval_remarks = :remarks 
                 WHERE id = :id");
