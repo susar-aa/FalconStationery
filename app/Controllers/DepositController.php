@@ -182,6 +182,55 @@ class DepositController extends Controller {
         exit;
     }
 
+    public function bulkSend() {
+        $this->checkPermission('accounting', 'create_edit');
+
+        $ids = [];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['deposit_ids'])) {
+            $ids = array_map('intval', (array)$_POST['deposit_ids']);
+        } else {
+            // Fetch all draft deposits
+            $drafts = $this->depositModel->getDraftDeposits();
+            $ids = array_map(function($d) { return intval($d->id); }, $drafts);
+        }
+
+        if (empty($ids)) {
+            header('Location: ' . APP_URL . '/deposit?error=No draft deposits found to send.');
+            exit;
+        }
+
+        $sentCount = 0;
+        $totalAmountSent = 0.00;
+        $errors = [];
+
+        foreach ($ids as $depositId) {
+            $deposit = $this->depositModel->getDepositById($depositId);
+            if (!$deposit || $deposit->status !== 'Draft') {
+                continue;
+            }
+
+            $res = $this->depositModel->sendToBank($depositId, $_SESSION['user_id']);
+            if ($res === true) {
+                $sentCount++;
+                $totalAmountSent += floatval($deposit->total_deposit);
+            } else {
+                $errors[] = "#" . $deposit->deposit_number . ": " . $res;
+            }
+        }
+
+        if ($sentCount > 0) {
+            $msg = "Successfully sent {$sentCount} draft deposit(s) totaling Rs " . number_format($totalAmountSent, 2) . " to the bank!";
+            if (!empty($errors)) {
+                $msg .= " (" . count($errors) . " failed)";
+            }
+            header('Location: ' . APP_URL . '/deposit?success=' . urlencode($msg));
+        } else {
+            $errStr = !empty($errors) ? implode(', ', array_slice($errors, 0, 3)) : 'Failed to send draft deposits.';
+            header('Location: ' . APP_URL . '/deposit?error=' . urlencode($errStr));
+        }
+        exit;
+    }
+
     public function process($id) {
         $this->checkPermission('accounting', 'view');
 

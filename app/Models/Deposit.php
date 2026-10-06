@@ -29,6 +29,15 @@ class Deposit {
         return $this->db->resultSet() ?: [];
     }
 
+    public function getDraftDeposits() {
+        $this->db->query("SELECT d.*, c.account_name as bank_name 
+                          FROM deposits d
+                          LEFT JOIN chart_of_accounts c ON d.destination_bank_account_id = c.id
+                          WHERE d.status = 'Draft'
+                          ORDER BY d.id ASC");
+        return $this->db->resultSet() ?: [];
+    }
+
     public function getDepositById($id) {
         $this->db->query("SELECT d.*, c.account_name as bank_name, c.account_code as bank_code, u.username as prepared_by_name 
                           FROM deposits d

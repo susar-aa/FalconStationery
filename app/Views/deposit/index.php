@@ -359,10 +359,19 @@ if (!empty($data['deposits'])) {
 
     <!-- KPI Cards (Drafts & In Transit only) -->
     <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-label" style="color: var(--t-secondary);">Draft Deposits</div>
-            <div class="kpi-val">Rs: <?= number_format($totalDraftAmount, 2) ?></div>
-            <div class="kpi-sub"><?= $totalDraftCount ?> Drafts pending submission</div>
+        <div class="kpi-card" style="justify-content: space-between;">
+            <div>
+                <div class="kpi-label" style="color: var(--t-secondary);">Draft Deposits</div>
+                <div class="kpi-val">Rs: <?= number_format($totalDraftAmount, 2) ?></div>
+                <div class="kpi-sub"><?= $totalDraftCount ?> Drafts pending submission</div>
+            </div>
+            <?php if ($totalDraftCount > 0): ?>
+                <div style="margin-top: 12px;">
+                    <button type="button" onclick="submitBulkSendAll()" class="btn-sf btn-sf-success" style="padding: 7px 14px; font-size: 12px; border-radius: var(--r-pill);">
+                        <i class="fa-solid fa-paper-plane"></i> Send All (<?= $totalDraftCount ?>) Drafts to Bank
+                    </button>
+                </div>
+            <?php endif; ?>
         </div>
         <div class="kpi-card">
             <div class="kpi-label" style="color: var(--c-blue);">In Transit (Sent to Bank)</div>
@@ -380,98 +389,123 @@ if (!empty($data['deposits'])) {
             <button class="sf-seg-btn" onclick="filterTable('Completed', this)">Completed (<?= $totalCompletedCount ?>)</button>
         </div>
 
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="depositSearch" placeholder="Search deposit #, bank, date..." onkeyup="searchDeposits()">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <?php if ($totalDraftCount > 0): ?>
+                <button type="button" id="btnSendSelectedDrafts" class="btn-sf btn-sf-primary" style="display: none; padding: 8px 16px; border-radius: var(--r-pill);" onclick="submitBulkSendSelected()">
+                    <i class="fa-solid fa-check-double"></i> Send Selected (<span id="selectedCount">0</span>)
+                </button>
+                <button type="button" id="btnSendAllDraftsHeader" onclick="submitBulkSendAll()" class="btn-sf btn-sf-success" style="padding: 8px 16px; border-radius: var(--r-pill);">
+                    <i class="fa-solid fa-paper-plane"></i> Send All Drafts (<?= $totalDraftCount ?>)
+                </button>
+            <?php endif; ?>
+
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="depositSearch" placeholder="Search deposit #, bank, date..." onkeyup="searchDeposits()">
+            </div>
         </div>
     </div>
 
-    <!-- Table Panel -->
-    <div class="table-panel">
-        <table class="sf-table" id="depositsTable">
-            <thead>
-                <tr>
-                    <th style="width: 140px;">Deposit #</th>
-                    <th style="width: 110px;">Date</th>
-                    <th>Destination Bank</th>
-                    <th style="text-align: right; width: 130px;">Cash</th>
-                    <th style="text-align: right; width: 130px;">Cheques</th>
-                    <th style="text-align: right; width: 140px;">Grand Total</th>
-                    <th style="text-align: center; width: 130px;">Status</th>
-                    <th style="text-align: center; width: 230px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if(empty($data['deposits'])): ?>
-                    <tr class="no-records-row">
-                        <td colspan="8" style="text-align: center; color: var(--t-secondary); padding: 50px;">
-                            <i class="fa-solid fa-building-columns" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block;"></i>
-                            No deposit records found. Click <strong>"New Bank Deposit"</strong> to start a cash/cheque batch.
-                        </td>
+    <!-- Table Form Wrap for Bulk Submit -->
+    <form id="bulkSendForm" action="<?= APP_URL ?>/deposit/bulkSend" method="POST">
+        <input type="hidden" name="send_all" id="sendAllFlag" value="0">
+        
+        <!-- Table Panel -->
+        <div class="table-panel">
+            <table class="sf-table" id="depositsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" id="selectAllDraftsCheckbox" onclick="toggleSelectAllDrafts(this)" title="Select all visible drafts">
+                        </th>
+                        <th style="width: 130px;">Deposit #</th>
+                        <th style="width: 110px;">Date</th>
+                        <th>Destination Bank</th>
+                        <th style="text-align: right; width: 130px;">Cash</th>
+                        <th style="text-align: right; width: 130px;">Cheques</th>
+                        <th style="text-align: right; width: 140px;">Grand Total</th>
+                        <th style="text-align: center; width: 130px;">Status</th>
+                        <th style="text-align: center; width: 220px;">Actions</th>
                     </tr>
-                <?php else: foreach($data['deposits'] as $dep): 
-                    $statusClass = str_replace(' ', '', $dep->status);
-                ?>
-                    <tr class="deposit-row" data-status="<?= htmlspecialchars($dep->status) ?>">
-                        <td>
-                            <span style="font-family: var(--f-mono); font-weight: 700; color: var(--c-blue); background: var(--c-blue-light); padding: 4px 8px; border-radius: 6px; font-size: 13px;">
-                                #<?= htmlspecialchars($dep->deposit_number) ?>
-                            </span>
-                        </td>
-                        <td style="font-size: 13px; font-weight: 500; color: var(--t-secondary);">
-                            <?= date('M d, Y', strtotime($dep->deposit_date)) ?>
-                        </td>
-                        <td>
-                            <strong style="font-weight: 600; color: var(--t-primary);"><?= htmlspecialchars($dep->bank_name) ?></strong>
-                            <div style="font-size: 11px; color: var(--t-label);">By <?= htmlspecialchars($dep->prepared_by_name ?: 'System User') ?></div>
-                        </td>
-                        <td style="text-align: right; font-family: var(--f-mono); font-size: 13px;">
-                            Rs <?= number_format($dep->cash_total, 2) ?>
-                        </td>
-                        <td style="text-align: right; font-family: var(--f-mono); font-size: 13px;">
-                            Rs <?= number_format($dep->cheque_total, 2) ?>
-                        </td>
-                        <td style="text-align: right; font-weight: 700; font-family: var(--f-mono); font-size: 14px; color: var(--c-green);">
-                            Rs <?= number_format($dep->total_deposit, 2) ?>
-                        </td>
-                        <td style="text-align: center;">
-                            <div class="sf-badge badge-<?= $statusClass ?>">
-                                <div class="dot"></div> <?= htmlspecialchars($dep->status === 'Sent to Bank' ? 'In Transit' : $dep->status) ?>
-                            </div>
-                        </td>
-                        <td style="text-align: center;">
-                            <div class="act-group">
+                </thead>
+                <tbody>
+                    <?php if(empty($data['deposits'])): ?>
+                        <tr class="no-records-row">
+                            <td colspan="9" style="text-align: center; color: var(--t-secondary); padding: 50px;">
+                                <i class="fa-solid fa-building-columns" style="font-size: 36px; opacity: 0.4; margin-bottom: 12px; display: block;"></i>
+                                No deposit records found. Click <strong>"New Bank Deposit"</strong> to start a cash/cheque batch.
+                            </td>
+                        </tr>
+                    <?php else: foreach($data['deposits'] as $dep): 
+                        $statusClass = str_replace(' ', '', $dep->status);
+                    ?>
+                        <tr class="deposit-row" data-status="<?= htmlspecialchars($dep->status) ?>">
+                            <td style="text-align: center;">
                                 <?php if ($dep->status === 'Draft'): ?>
-                                    <a href="<?= APP_URL ?>/deposit/edit/<?= $dep->id ?>" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Edit Draft">
-                                        <i class="fa-solid fa-pen"></i> Edit
-                                    </a>
-                                    <a href="<?= APP_URL ?>/deposit/send/<?= $dep->id ?>" class="btn-sf btn-sf-success" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure you want to send this deposit to the bank? This will debit Deposit in Transit and credit Cash/Cheque in Hand.')" title="Post to Transit">
-                                        <i class="fa-solid fa-paper-plane"></i> Send
-                                    </a>
-                                    <a href="<?= APP_URL ?>/deposit/delete/<?= $dep->id ?>" class="btn-sf btn-sf-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure you want to delete this draft?')" title="Delete Draft">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
-                                <?php elseif ($dep->status === 'Sent to Bank'): ?>
-                                    <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn-sf btn-sf-orange" style="padding: 5px 12px; font-size: 12px;" title="Realize & Process Deposit">
-                                        <i class="fa-solid fa-gears"></i> Process
-                                    </a>
-                                    <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Print Deposit Slip">
-                                        <i class="fa-solid fa-print"></i>
-                                    </a>
-                                <?php else: ?>
-                                    <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="View Details">
-                                        <i class="fa-solid fa-eye"></i> View
-                                    </a>
-                                    <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Print Deposit Slip">
-                                        <i class="fa-solid fa-print"></i>
-                                    </a>
+                                    <input type="checkbox" name="deposit_ids[]" value="<?= $dep->id ?>" class="draft-cb" onchange="updateBulkSelectionState()">
                                 <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; endif; ?>
-            </tbody>
-        </table>
+                            </td>
+                            <td>
+                                <span style="font-family: var(--f-mono); font-weight: 700; color: var(--c-blue); background: var(--c-blue-light); padding: 4px 8px; border-radius: 6px; font-size: 13px;">
+                                    #<?= htmlspecialchars($dep->deposit_number) ?>
+                                </span>
+                            </td>
+                            <td style="font-size: 13px; font-weight: 500; color: var(--t-secondary);">
+                                <?= date('M d, Y', strtotime($dep->deposit_date)) ?>
+                            </td>
+                            <td>
+                                <strong style="font-weight: 600; color: var(--t-primary);"><?= htmlspecialchars($dep->bank_name) ?></strong>
+                                <div style="font-size: 11px; color: var(--t-label);">By <?= htmlspecialchars($dep->prepared_by_name ?: 'System User') ?></div>
+                            </td>
+                            <td style="text-align: right; font-family: var(--f-mono); font-size: 13px;">
+                                Rs <?= number_format($dep->cash_total, 2) ?>
+                            </td>
+                            <td style="text-align: right; font-family: var(--f-mono); font-size: 13px;">
+                                Rs <?= number_format($dep->cheque_total, 2) ?>
+                            </td>
+                            <td style="text-align: right; font-weight: 700; font-family: var(--f-mono); font-size: 14px; color: var(--c-green);">
+                                Rs <?= number_format($dep->total_deposit, 2) ?>
+                            </td>
+                            <td style="text-align: center;">
+                                <div class="sf-badge badge-<?= $statusClass ?>">
+                                    <div class="dot"></div> <?= htmlspecialchars($dep->status === 'Sent to Bank' ? 'In Transit' : $dep->status) ?>
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                <div class="act-group">
+                                    <?php if ($dep->status === 'Draft'): ?>
+                                        <a href="<?= APP_URL ?>/deposit/edit/<?= $dep->id ?>" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Edit Draft">
+                                            <i class="fa-solid fa-pen"></i> Edit
+                                        </a>
+                                        <a href="<?= APP_URL ?>/deposit/send/<?= $dep->id ?>" class="btn-sf btn-sf-success" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure you want to send this deposit to the bank? This will debit Deposit in Transit and credit Cash/Cheque in Hand.')" title="Post to Transit">
+                                            <i class="fa-solid fa-paper-plane"></i> Send
+                                        </a>
+                                        <a href="<?= APP_URL ?>/deposit/delete/<?= $dep->id ?>" class="btn-sf btn-sf-danger" style="padding: 5px 10px; font-size: 12px;" onclick="return confirm('Are you sure you want to delete this draft?')" title="Delete Draft">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </a>
+                                    <?php elseif ($dep->status === 'Sent to Bank'): ?>
+                                        <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn-sf btn-sf-orange" style="padding: 5px 12px; font-size: 12px;" title="Realize & Process Deposit">
+                                            <i class="fa-solid fa-gears"></i> Process
+                                        </a>
+                                        <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Print Deposit Slip">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <a href="<?= APP_URL ?>/deposit/process/<?= $dep->id ?>" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="View Details">
+                                            <i class="fa-solid fa-eye"></i> View
+                                        </a>
+                                        <a href="<?= APP_URL ?>/deposit/printSlip/<?= $dep->id ?>" target="_blank" class="btn-sf btn-sf-secondary" style="padding: 5px 10px; font-size: 12px;" title="Print Deposit Slip">
+                                            <i class="fa-solid fa-print"></i>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </form>
 
         <!-- Pagination Bar -->
         <div class="sf-pagination">
@@ -576,6 +610,46 @@ if (!empty($data['deposits'])) {
         pageSize = parseInt(size) || 10;
         currentPage = 1;
         renderPagination();
+    }
+
+    function toggleSelectAllDrafts(master) {
+        const cbs = document.querySelectorAll('.draft-cb');
+        cbs.forEach(cb => {
+            const tr = cb.closest('tr');
+            if (tr && tr.style.display !== 'none') {
+                cb.checked = master.checked;
+            }
+        });
+        updateBulkSelectionState();
+    }
+
+    function updateBulkSelectionState() {
+        const checked = document.querySelectorAll('.draft-cb:checked');
+        const count = checked.length;
+        const btnSelected = document.getElementById('btnSendSelectedDrafts');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        
+        if (selectedCountSpan) selectedCountSpan.innerText = count;
+        if (btnSelected) {
+            btnSelected.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+    }
+
+    function submitBulkSendAll() {
+        if (confirm('Are you sure you want to send ALL <?= $totalDraftCount ?> draft deposit(s) (totaling Rs <?= number_format($totalDraftAmount, 2) ?>) to the bank at once?\n\nThis will post transit entries to General Ledger and Bank Register.')) {
+            document.querySelectorAll('.draft-cb').forEach(cb => cb.checked = false);
+            document.getElementById('sendAllFlag').value = '1';
+            document.getElementById('bulkSendForm').submit();
+        }
+    }
+
+    function submitBulkSendSelected() {
+        const count = document.querySelectorAll('.draft-cb:checked').length;
+        if (count === 0) return;
+        if (confirm(`Are you sure you want to send the ${count} selected draft deposit(s) to the bank?`)) {
+            document.getElementById('sendAllFlag').value = '0';
+            document.getElementById('bulkSendForm').submit();
+        }
     }
 
     // Initialize pagination on DOM ready
