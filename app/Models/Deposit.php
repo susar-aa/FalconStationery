@@ -302,30 +302,60 @@ class Deposit {
             return "Error: Deposit total must be greater than zero.";
         }
 
-        // Post Journal Entry directly to Destination Bank Account (Uncleared deposit)
+        $items = $this->getDepositItems($id);
         $lines = [];
-        $lines[] = [
-            'account_id' => $destinationBankId,
-            'debit' => $totalDeposit,
-            'credit' => 0.00,
-            'description' => 'Bank Deposit #' . $deposit->deposit_number . ' (Sent to Bank)'
-        ];
 
-        if ($deposit->cash_total > 0) {
+        // 1. Cash total recorded as 1 summary line on Bank Register
+        if (floatval($deposit->cash_total) > 0) {
+            $cashAmt = floatval($deposit->cash_total);
+            $lines[] = [
+                'account_id' => $destinationBankId,
+                'debit' => $cashAmt,
+                'credit' => 0.00,
+                'description' => 'Bank Deposit #' . $deposit->deposit_number . ' - Cash Total'
+            ];
             $lines[] = [
                 'account_id' => $cashInHandId,
                 'debit' => 0.00,
-                'credit' => floatval($deposit->cash_total),
-                'description' => 'Cash Deposited to Bank'
+                'credit' => $cashAmt,
+                'description' => 'Cash Deposited to Bank (Deposit #' . $deposit->deposit_number . ')'
             ];
         }
 
-        if ($deposit->cheque_total > 0) {
+        // 2. Cheques recorded as separate individual lines on Bank Register for reconciliation
+        $chequeItems = array_filter($items, function($item) { return $item->cheque_id !== null; });
+        if (!empty($chequeItems)) {
+            foreach ($chequeItems as $item) {
+                $chqAmt = floatval($item->cheque_amount);
+                $chqNum = $item->cheque_number ?: 'N/A';
+                $custName = $item->customer_name ?: 'Customer';
+
+                $lines[] = [
+                    'account_id' => $destinationBankId,
+                    'debit' => $chqAmt,
+                    'credit' => 0.00,
+                    'description' => 'Bank Deposit #' . $deposit->deposit_number . ' - Cheque #' . $chqNum . ' (' . $custName . ')'
+                ];
+                $lines[] = [
+                    'account_id' => $chequeInHandId,
+                    'debit' => 0.00,
+                    'credit' => $chqAmt,
+                    'description' => 'Cheque #' . $chqNum . ' Deposited to Bank (' . $custName . ')'
+                ];
+            }
+        } elseif (floatval($deposit->cheque_total) > 0) {
+            $chqAmt = floatval($deposit->cheque_total);
+            $lines[] = [
+                'account_id' => $destinationBankId,
+                'debit' => $chqAmt,
+                'credit' => 0.00,
+                'description' => 'Bank Deposit #' . $deposit->deposit_number . ' - Cheques Total'
+            ];
             $lines[] = [
                 'account_id' => $chequeInHandId,
                 'debit' => 0.00,
-                'credit' => floatval($deposit->cheque_total),
-                'description' => 'Cheques Deposited to Bank'
+                'credit' => $chqAmt,
+                'description' => 'Cheques Deposited to Bank (Deposit #' . $deposit->deposit_number . ')'
             ];
         }
 
