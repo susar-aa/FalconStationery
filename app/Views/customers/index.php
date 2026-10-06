@@ -1394,17 +1394,26 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 </div>
 
 <script>
-    // --- Pagination State ---
+    // --- Pagination & AJAX State ---
     let currentPage = 1;
-    let pageSize = 15;
-    let matchingRows = [];
+    let pageSize = 25;
+    let searchDebounceTimer = null;
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function escapeJs(str) {
+        if (!str) return '';
+        return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
 
     // --- Custom Dropdown Handlers ---
     function selectRoute(val, label) {
         document.getElementById('filterRoute').value = val;
         document.getElementById('route-dropdown-val').textContent = label;
         
-        // Update active classes
         const dropdown = document.getElementById('route-dropdown-val').closest('.sf-dropdown');
         dropdown.querySelectorAll('.sf-dropdown-item').forEach(item => {
             if (item.getAttribute('data-val') === val) {
@@ -1415,15 +1424,13 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         });
         
         document.activeElement.blur();
-        currentPage = 1;
-        filterList();
+        fetchCustomersAJAX(1);
     }
 
     function selectStatus(val, label) {
         document.getElementById('filterStatus').value = val;
         document.getElementById('status-dropdown-val').textContent = label;
         
-        // Update active classes
         const dropdown = document.getElementById('status-dropdown-val').closest('.sf-dropdown');
         dropdown.querySelectorAll('.sf-dropdown-item').forEach(item => {
             if (item.getAttribute('data-val') === val) {
@@ -1434,102 +1441,147 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         });
         
         document.activeElement.blur();
-        currentPage = 1;
-        filterList();
+        fetchCustomersAJAX(1);
     }
 
-    // --- Search & Filter Logic ---
-    function filterList() {
-        const query = document.getElementById('searchInput').value.toLowerCase().trim();
-        const routeFilter = document.getElementById('filterRoute').value.toLowerCase().trim();
-        const statusFilter = document.getElementById('filterStatus').value;
+    function onSearchInput() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            fetchCustomersAJAX(1);
+        }, 300);
+    }
+
+    function fetchCustomersAJAX(page = 1) {
+        currentPage = page;
+        const query = document.getElementById('searchInput').value.trim();
+        const routeFilter = document.getElementById('filterRoute').value.trim();
+        const statusFilter = document.getElementById('filterStatus').value.trim();
         
-        const rows = document.querySelectorAll('.customer-row');
-        matchingRows = [];
-        
-        rows.forEach(row => {
-            const name = row.getAttribute('data-name');
-            const phone = row.getAttribute('data-phone');
-            const email = row.getAttribute('data-email');
-            const route = row.getAttribute('data-route');
-            const address = row.getAttribute('data-address');
-            const outstanding = parseFloat(row.getAttribute('data-outstanding'));
-            
-            const matchesSearch = query === '' || 
-                                  name.includes(query) || 
-                                  phone.includes(query) || 
-                                  email.includes(query) || 
-                                  route.includes(query) || 
-                                  address.includes(query);
-                                  
-            const matchesRoute = routeFilter === '' || route === routeFilter;
-            
-            let matchesStatus = true;
-            if (statusFilter === 'owed') {
-                matchesStatus = outstanding > 0;
-            } else if (statusFilter === 'cleared') {
-                matchesStatus = outstanding <= 0;
-            }
-            
-            if (matchesSearch && matchesRoute && matchesStatus) {
-                matchingRows.push(row);
-            } else {
-                row.style.display = 'none';
-            }
+        const start = (currentPage - 1) * pageSize;
+
+        const tbody = document.getElementById('custList');
+        if (!tbody) return;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:35px; color:var(--t-secondary);"><i class="fa-solid fa-circle-notch spin" style="font-size:22px; color:var(--c-blue); margin-bottom:8px;"></i><br>Loading customers...</td></tr>`;
+
+        const params = new URLSearchParams({
+            action: 'api_list',
+            start: start,
+            length: pageSize,
+            search: query,
+            route: routeFilter,
+            status: statusFilter
         });
-        
-        document.getElementById('matching-count').textContent = matchingRows.length;
 
-        // Reset current page if it is out of bounds
-        const totalPages = Math.ceil(matchingRows.length / pageSize) || 1;
-        if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
+        fetch('<?= APP_URL ?>/customer/index?' + params.toString())
+            .then(response => response.json())
+            .then(data => {
+                const rows = data.data || [];
+                const recordsTotal = data.recordsTotal || 0;
+                const recordsFiltered = data.recordsFiltered || 0;
 
-        updatePaginationUI();
+                const countEl = document.getElementById('matching-count');
+                if (countEl) countEl.textContent = recordsFiltered;
+
+                if (rows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--t-secondary);"><i class="fa-solid fa-building" style="font-size:28px; margin-bottom:8px; color:var(--t-tertiary);"></i><br>No matching customers found.</td></tr>`;
+                } else {
+                    let html = '';
+                    rows.forEach(c => {
+                        const bal = parseFloat(c.outstanding_balance || 0);
+                        const badgeCls = bal > 0 ? 'badge-owed' : 'badge-active';
+                        const badgeTxt = bal > 0 ? 'Owed' : 'Cleared';
+                        const accountStatus = c.status || 'Active';
+                        const name = escapeHtml(c.name || '');
+                        const initials = name.substring(0, 2).toUpperCase();
+                        const phone = c.phone ? escapeHtml(c.phone) : '<span style="color:var(--c-red); font-weight:600;">Missing Phone</span>';
+                        const email = c.email ? `<span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;">${escapeHtml(c.email)}</span>` : '';
+                        const address = c.address ? escapeHtml(c.address) : '<span style="color:var(--c-red); font-weight:600;">Missing Address</span>';
+                        const balFormatted = bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        const balColor = bal > 0 ? 'var(--c-red)' : 'var(--c-green)';
+
+                        html += `
+                            <tr class="customer-row" onclick="showCustomerProfile(${c.id})">
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div class="avatar-circle">${initials}</div>
+                                        <div>
+                                            <strong style="font-size:14.5px; font-weight:600; color:var(--t-primary);">${name}</strong>
+                                            <span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;">
+                                                🏠 ${address}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="font-size:13px; font-weight:500; display:block;">📞 ${phone}</span>
+                                    ${email}
+                                </td>
+                                <td class="txt-right" style="font-weight:700; font-family:var(--f-mono); font-size:14px; color: ${balColor};">
+                                    Rs: ${balFormatted}
+                                </td>
+                                <td>
+                                    <span class="sf-badge ${badgeCls}"><span class="dot"></span>${badgeTxt}</span>
+                                </td>
+                                <td>
+                                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                                        <span class="sf-badge ${accountStatus === 'Active' ? 'badge-active' : 'badge-owed'}"><span class="dot"></span>${accountStatus}</span>
+                                        ${c.review_status === 'New' ? '<span class="sf-badge badge-new"><span class="dot"></span>New</span>' : ''}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="display:flex; justify-content:center; gap:6px;" onclick="event.stopPropagation()">
+                                        <button type="button" class="act-btn view" onclick="showCustomerProfile(${c.id})" title="View ledger & profile"><i class="fa-solid fa-eye"></i></button>
+                                        <button type="button" class="act-btn edit" onclick="sharePortal(${c.id}, '${escapeJs(c.phone || '')}', '${escapeJs(c.name || '')}')" title="Share B2B Portal Link"><i class="fa-solid fa-share-nodes"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                }
+
+                // Update Pagination Controls
+                const totalPages = Math.ceil(recordsFiltered / pageSize) || 1;
+                const startIndex = recordsFiltered > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+                const endIndex = Math.min(currentPage * pageSize, recordsFiltered);
+
+                const pgInfo = document.getElementById('pg-info-text');
+                if (pgInfo) {
+                    pgInfo.innerHTML = recordsFiltered > 0 
+                        ? `Showing <strong>${startIndex}</strong> – <strong>${endIndex}</strong> of <strong>${recordsFiltered}</strong>` 
+                        : 'No results';
+                }
+
+                const pgNav = document.getElementById('pg-nav-container');
+                if (pgNav) {
+                    if (totalPages > 1) {
+                        pgNav.classList.remove('hidden');
+                        document.getElementById('pg-current-text').textContent = `${currentPage} / ${totalPages}`;
+                        document.getElementById('pg-prev-btn').disabled = currentPage <= 1;
+                        document.getElementById('pg-next-btn').disabled = currentPage >= totalPages;
+                    } else {
+                        pgNav.classList.add('hidden');
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--c-red);"><i class="fa-solid fa-circle-exclamation" style="font-size:24px; margin-bottom:8px;"></i><br>Error loading customer data.</td></tr>`;
+            });
     }
 
-    // --- Pagination rendering ---
-    function updatePaginationUI() {
-        const totalItems = matchingRows.length;
-        const totalPages = Math.ceil(totalItems / pageSize) || 1;
-        
-        const startIndex = totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0;
-        const endIndex = Math.min(currentPage * pageSize, totalItems);
-        
-        // Update pagination info text
-        document.getElementById('pg-info-text').innerHTML = totalItems > 0 
-            ? `Showing <strong>${startIndex}</strong> – <strong>${endIndex}</strong> of <strong>${totalItems}</strong>` 
-            : 'No results';
-            
-        // Show/hide pagination nav container
-        const pgNav = document.getElementById('pg-nav-container');
-        if (totalPages > 1) {
-            pgNav.classList.remove('hidden');
-            document.getElementById('pg-current-text').textContent = `${currentPage} / ${totalPages}`;
-            document.getElementById('pg-prev-btn').disabled = currentPage <= 1;
-            document.getElementById('pg-next-btn').disabled = currentPage >= totalPages;
-        } else {
-            pgNav.classList.add('hidden');
-        }
-        
-        // Hide all rows first, then show only page slice
-        const rows = document.querySelectorAll('.customer-row');
-        rows.forEach(r => r.style.display = 'none');
-        
-        const pageRows = matchingRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-        pageRows.forEach(r => r.style.display = '');
+    function filterList() {
+        fetchCustomersAJAX(1);
     }
 
     function navigatePage(pageNum) {
-        currentPage = pageNum;
-        updatePaginationUI();
+        if (pageNum < 1) return;
+        fetchCustomersAJAX(pageNum);
     }
 
     function updatePageSize(size) {
         pageSize = parseInt(size);
-        currentPage = 1;
-        filterList();
+        fetchCustomersAJAX(1);
     }
 
     function clearAllFilters() {
