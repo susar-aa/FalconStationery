@@ -8,6 +8,9 @@ class Customer {
     }
 
     private function selfHealSchema() {
+        static $healed = false;
+        if ($healed) return;
+        $healed = true;
         try {
             $this->db->query("SHOW COLUMNS FROM customers LIKE 'status'");
             if (!$this->db->single()) {
@@ -71,6 +74,140 @@ class Customer {
 
         $this->db->query($sql);
         return $this->db->resultSet();
+    }
+
+    public function getPaginatedCustomers($start = 0, $length = 25, $search = '', $route = '', $statusFilter = '') {
+        $where = [];
+        $params = [];
+
+        if (!empty($search)) {
+            $where[] = "(c.name LIKE :search OR c.phone LIKE :search OR c.email LIKE :search OR c.address LIKE :search OR m.name LIKE :search OR c.territory LIKE :search OR c.id = :search_id)";
+            $params[':search'] = '%' . $search . '%';
+            $params[':search_id'] = is_numeric($search) ? intval($search) : 0;
+        }
+
+        if (!empty($route)) {
+            $where[] = "(LOWER(m.name) = :route OR LOWER(c.territory) = :route)";
+            $params[':route'] = strtolower($route);
+        }
+
+        $whereSql = !empty($where) ? ' WHERE ' . implode(' AND ', $where) : '';
+
+        // Total records count
+        $this->db->query("SELECT COUNT(*) as cnt FROM customers");
+        $totalCount = intval($this->db->single()->cnt);
+
+        // Filtered records count
+        $countSql = "SELECT COUNT(*) as cnt FROM customers c LEFT JOIN mca_areas m ON c.mca_id = m.id " . $whereSql;
+        $this->db->query($countSql);
+        foreach ($params as $k => $v) {
+            $this->db->bind($k, $v);
+        }
+        $filteredCount = intval($this->db->single()->cnt);
+
+        // Main data query with pagination
+        $sql = "
+            SELECT c.*, m.name as mca_name,
+                   u.username as created_by_username,
+                   ru.username as reviewed_by_username,
+                   (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) AS outstanding_balance
+            FROM customers c
+            LEFT JOIN mca_areas m ON c.mca_id = m.id
+            LEFT JOIN users u ON c.created_by_user_id = u.id
+            LEFT JOIN users ru ON c.reviewed_by_user_id = ru.id
+            LEFT JOIN (
+                SELECT customer_id, 
+                       SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_billed
+                FROM invoices 
+                WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
+                GROUP BY customer_id
+            ) inv ON c.id = inv.customer_id
+            LEFT JOIN (
+                SELECT customer_id, SUM(amount) as total_paid
+                FROM customer_payments 
+                WHERE status = 'Active'
+                GROUP BY customer_id
+            ) pmt ON c.id = pmt.customer_id
+            LEFT JOIN (
+                SELECT customer_id, SUM(total_amount) as total_credited
+                FROM credit_notes
+                GROUP BY customer_id
+            ) cn ON c.id = cn.customer_id
+            LEFT JOIN (
+                SELECT COALESCE(t.entity_id, je.entity_id) as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
+                FROM transactions t
+                JOIN journal_entries je ON t.journal_entry_id = je.id
+                JOIN chart_of_accounts coa ON t.account_id = coa.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
+                GROUP BY COALESCE(t.entity_id, je.entity_id)
+            ) je_b ON c.id = je_b.customer_id
+            " . $whereSql;
+
+        if ($statusFilter === 'owed') {
+            $sql .= (!empty($whereSql) ? " AND " : " WHERE ") . " (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) > 0 ";
+        } elseif ($statusFilter === 'cleared') {
+            $sql .= (!empty($whereSql) ? " AND " : " WHERE ") . " (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) <= 0 ";
+        }
+
+        $sql .= " ORDER BY c.id DESC LIMIT :limit OFFSET :offset";
+
+        $this->db->query($sql);
+        foreach ($params as $k => $v) {
+            $this->db->bind($k, $v);
+        }
+        $this->db->bind(':limit', intval($length), PDO::PARAM_INT);
+        $this->db->bind(':offset', intval($start), PDO::PARAM_INT);
+
+        $rows = $this->db->resultSet();
+
+        return [
+            'total' => $totalCount,
+            'filtered' => $filteredCount,
+            'rows' => $rows
+        ];
+    }
+
+    public function getCustomerSummaryStats() {
+        $sql = "
+            SELECT 
+                COUNT(c.id) as total_customers,
+                SUM(CASE WHEN (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) > 0 THEN (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) ELSE 0 END) as total_outstanding,
+                SUM(CASE WHEN (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) > 0 THEN 1 ELSE 0 END) as owed_customers_count
+            FROM customers c
+            LEFT JOIN (
+                SELECT customer_id, 
+                       SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_billed
+                FROM invoices 
+                WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
+                GROUP BY customer_id
+            ) inv ON c.id = inv.customer_id
+            LEFT JOIN (
+                SELECT customer_id, SUM(amount) as total_paid
+                FROM customer_payments 
+                WHERE status = 'Active'
+                GROUP BY customer_id
+            ) pmt ON c.id = pmt.customer_id
+            LEFT JOIN (
+                SELECT customer_id, SUM(total_amount) as total_credited
+                FROM credit_notes
+                GROUP BY customer_id
+            ) cn ON c.id = cn.customer_id
+            LEFT JOIN (
+                SELECT COALESCE(t.entity_id, je.entity_id) as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
+                FROM transactions t
+                JOIN journal_entries je ON t.journal_entry_id = je.id
+                JOIN chart_of_accounts coa ON t.account_id = coa.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
+                GROUP BY COALESCE(t.entity_id, je.entity_id)
+            ) je_b ON c.id = je_b.customer_id
+        ";
+        $this->db->query($sql);
+        $res = $this->db->single();
+        return [
+            'total_customers' => intval($res->total_customers ?? 0),
+            'total_outstanding' => floatval($res->total_outstanding ?? 0),
+            'owed_customers_count' => intval($res->owed_customers_count ?? 0)
+        ];
     }
 
     public function getActiveCustomers() {

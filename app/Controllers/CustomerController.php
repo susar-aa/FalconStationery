@@ -11,8 +11,35 @@ class CustomerController extends Controller {
         $this->db = new Database();
     }
 
+    public function apiList() {
+        header('Content-Type: application/json');
+        $draw = isset($_GET['draw']) ? intval($_GET['draw']) : 1;
+        $start = isset($_GET['start']) ? intval($_GET['start']) : 0;
+        $length = isset($_GET['length']) ? intval($_GET['length']) : 25;
+        $search = isset($_GET['search']['value']) ? trim($_GET['search']['value']) : (isset($_GET['search']) && is_string($_GET['search']) ? trim($_GET['search']) : '');
+        $route = isset($_GET['route']) ? trim($_GET['route']) : '';
+        $statusFilter = isset($_GET['status']) ? trim($_GET['status']) : '';
+
+        $res = $this->customerModel->getPaginatedCustomers($start, $length, $search, $route, $statusFilter);
+
+        echo json_encode([
+            'draw' => $draw,
+            'recordsTotal' => $res['total'],
+            'recordsFiltered' => $res['filtered'],
+            'data' => $res['rows']
+        ]);
+        exit;
+    }
+
     public function index($id = null) {
-        $customers = $this->customerModel->getAllCustomers();
+        if (isset($_GET['action']) && $_GET['action'] === 'api_list') {
+            $this->apiList();
+        }
+
+        // Fast paginated initial slice & aggregated summary stats
+        $summaryStats = $this->customerModel->getCustomerSummaryStats();
+        $initialSlice = $this->customerModel->getPaginatedCustomers(0, 25);
+        $customers = $initialSlice['rows'];
         
         $selectedCustomer = null;
         $stats = null;
@@ -60,6 +87,9 @@ class CustomerController extends Controller {
             'title' => 'Customer Profile',
             'content_view' => 'customers/index',
             'customers' => $customers,
+            'summary_stats' => $summaryStats,
+            'records_total' => $initialSlice['total'],
+            'records_filtered' => $initialSlice['filtered'],
             'selected_customer' => $selectedCustomer,
             'stats' => $stats,
             'ledger' => $ledger,

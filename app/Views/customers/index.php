@@ -4,17 +4,10 @@ if ($importResults) {
     unset($_SESSION['customer_import_results']);
 }
 
-// Dynamic Stats calculation from $data['customers']
-$totalCustomers = count($data['customers'] ?? []);
-$totalOutstanding = 0;
-$owedCustomersCount = 0;
-foreach ($data['customers'] ?? [] as $cust) {
-    $bal = floatval($cust->outstanding_balance ?? 0);
-    $totalOutstanding += $bal;
-    if ($bal > 0) {
-        $owedCustomersCount++;
-    }
-}
+// Dynamic Stats calculation
+$totalCustomers = $data['summary_stats']['total_customers'] ?? count($data['customers'] ?? []);
+$totalOutstanding = $data['summary_stats']['total_outstanding'] ?? 0;
+$owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 ?>
 
 <!-- Inter Font & FontAwesome Icons -->
@@ -727,8 +720,10 @@ foreach ($data['customers'] ?? [] as $cust) {
                         <div class="sf-dropdown-item active" data-val="" onclick="selectRoute('', 'All Routes')">All Routes</div>
                         <?php 
                         $routes = [];
-                        foreach($data['customers'] as $c) {
-                            if(!empty($c->mca_name) && !in_array($c->mca_name, $routes)) { $routes[] = $c->mca_name; }
+                        if (!empty($data['mca_areas'])) {
+                            foreach($data['mca_areas'] as $area) {
+                                if(!empty($area->name) && !in_array($area->name, $routes)) { $routes[] = $area->name; }
+                            }
                         }
                         sort($routes);
                         foreach($routes as $r): ?>
@@ -758,7 +753,7 @@ foreach ($data['customers'] ?? [] as $cust) {
 
             <!-- Counter -->
             <div class="filter-count">
-                <strong id="matching-count"><?= count($data['customers']) ?></strong> customers
+                <strong id="matching-count"><?= $data['records_filtered'] ?? count($data['customers']) ?></strong> customers
             </div>
         </div>
 
@@ -863,16 +858,15 @@ foreach ($data['customers'] ?? [] as $cust) {
             <!-- Pagination Block -->
             <div class="sf-pagination">
                 <div class="pg-info" id="pg-info-text">
-                    Showing <strong>1</strong> – <strong>15</strong> of <strong><?= count($data['customers']) ?></strong>
+                    Showing <strong>1</strong> – <strong>25</strong> of <strong><?= $data['records_total'] ?? count($data['customers']) ?></strong>
                 </div>
                 <div class="pg-right">
                     <div class="pg-size-wrap">
                         <span class="pg-size-lbl">Per page</span>
                         <select class="pg-size-sel native-select" onchange="updatePageSize(this.value)">
-                            <option value="15" selected>15</option>
+                            <option value="25" selected>25</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
-                            <option value="1000">All</option>
                         </select>
                     </div>
                     <div class="pg-nav" id="pg-nav-container">
@@ -897,7 +891,7 @@ foreach ($data['customers'] ?? [] as $cust) {
 <div class="cmd-bar">
     <div class="cmd-search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" placeholder="Search customers..." onkeyup="filterList()">
+        <input type="text" id="searchInput" placeholder="Search customers..." onkeyup="onSearchInput()">
     </div>
     <div class="cmd-divider"></div>
     <a href="<?= APP_URL ?>/customer/exportCSV" class="cmd-icon" title="Export CSV"><i class="fa-solid fa-download"></i></a>
