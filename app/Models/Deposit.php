@@ -55,6 +55,10 @@ class Deposit {
                           FROM cheques ch 
                           LEFT JOIN customers c ON ch.customer_id = c.id 
                           WHERE ch.status IN ('Pending', 'Received', 'In Hand', 'Pending Deposit')
+                            AND ch.vendor_id IS NULL 
+                            AND ch.service_provider_id IS NULL 
+                            AND ch.supplier_payment_id IS NULL 
+                            AND (ch.type = 'Received' OR ch.type IS NULL)
                           ORDER BY ch.banking_date ASC, ch.id ASC");
         return $this->db->resultSet() ?: [];
     }
