@@ -480,7 +480,8 @@
                         <select name="payment_method" id="supp-method-select" class="form-control" onchange="toggleChequeFields('supp')" required>
                             <option value="Cash">Cash</option>
                             <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Cheque">Cheque</option>
+                            <option value="Cheque">Cheque (New Issued Cheque)</option>
+                            <option value="3rd Party Cheque">3rd Party Cheque (Endorsed Cheque)</option>
                         </select>
                     </div>
                 </div>
@@ -525,6 +526,39 @@
                             <div class="form-group">
                                 <label>Banking Date *</label>
                                 <input type="date" name="cheque_date" id="supp-chk-date-input" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3rd Party Cheque Details Container -->
+                    <div id="supp-3rd-party-cheque-box" class="cheque-details-box hidden" style="margin-bottom: 15px; background: #f0fdf4; border: 1px solid #86efac; border-radius: var(--radius-md); padding: 16px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #15803d; font-weight: 700;">
+                            Select 3rd Party Cheque (Received Cheque in Hand)
+                        </h4>
+                        <div class="form-group">
+                            <label style="color: #166534;">Select Received Cheque from Cheque Management *</label>
+                            <select name="third_party_cheque_id" id="supp-3rd-party-cheque-select" class="form-control" style="background: #fff;" onchange="on3rdPartyChequeSelect(this)">
+                                <option value="">-- Select Received Cheque from Cheque Management --</option>
+                                <?php if(!empty($data['pending_received_cheques'])): foreach($data['pending_received_cheques'] as $chk): ?>
+                                    <option value="<?= $chk->id ?>" 
+                                            data-amount="<?= $chk->amount ?>" 
+                                            data-bank="<?= htmlspecialchars($chk->bank_name) ?>" 
+                                            data-num="<?= htmlspecialchars($chk->cheque_number) ?>" 
+                                            data-date="<?= $chk->banking_date ?>" 
+                                            data-cust="<?= htmlspecialchars($chk->customer_name) ?>">
+                                        No: <?= htmlspecialchars($chk->cheque_number) ?> | Customer: <?= htmlspecialchars($chk->customer_name) ?> | <?= htmlspecialchars($chk->bank_name) ?> | Rs <?= number_format($chk->amount, 2) ?> (Date: <?= $chk->banking_date ?>)
+                                    </option>
+                                <?php endforeach; endif; ?>
+                            </select>
+                        </div>
+                        <div id="supp-3rd-party-summary" style="display: none; margin-top: 10px; padding: 12px; background: #fff; border-radius: 6px; border: 1px solid #bbf7d0; font-size: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span><strong>Customer:</strong> <span id="tp-cust-name">-</span></span>
+                                <span><strong>Cheque #:</strong> <span id="tp-chq-num" style="font-family: monospace; font-weight: 700;">-</span></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span><strong>Bank:</strong> <span id="tp-bank-name">-</span></span>
+                                <span><strong>Cheque Amount:</strong> <span id="tp-chq-amt" style="font-weight: 700; color: #16a34a;">Rs 0.00</span></span>
                             </div>
                         </div>
                     </div>
@@ -1271,22 +1305,65 @@
         }
     }
 
+    function on3rdPartyChequeSelect(sel) {
+        const opt = sel.options[sel.selectedIndex];
+        const summaryBox = document.getElementById('supp-3rd-party-summary');
+        if (!opt || !opt.value) {
+            if (summaryBox) summaryBox.style.display = 'none';
+            document.getElementById('supp-amount-input').value = '';
+            updateAllocationTotals();
+            return;
+        }
+        
+        const amount = parseFloat(opt.getAttribute('data-amount')) || 0;
+        const cust = opt.getAttribute('data-cust') || '-';
+        const num = opt.getAttribute('data-num') || '-';
+        const bank = opt.getAttribute('data-bank') || '-';
+
+        document.getElementById('tp-cust-name').innerText = cust;
+        document.getElementById('tp-chq-num').innerText = num;
+        document.getElementById('tp-bank-name').innerText = bank;
+        document.getElementById('tp-chq-amt').innerText = 'Rs ' + amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        if (summaryBox) summaryBox.style.display = 'block';
+
+        // Auto-fill payment amount field
+        const amtInput = document.getElementById('supp-amount-input');
+        if (amtInput) {
+            amtInput.value = amount.toFixed(2);
+        }
+        updateAllocationTotals();
+    }
+
     // Toggle cheque details
     function toggleChequeFields(prefix) {
         const methodSelect = document.getElementById(prefix + '-method-select');
         const method = methodSelect ? methodSelect.value : 'Cash';
         const cqBox = document.getElementById(prefix + '-cheque-details');
+        const tpBox = document.getElementById(prefix + '-3rd-party-cheque-box');
+        const tpSelect = document.getElementById(prefix + '-3rd-party-cheque-select');
         const bankInput = document.getElementById(prefix + '-chk-bank-input');
         const numInput = document.getElementById(prefix + '-chk-num-input');
         const dateInput = document.getElementById(prefix + '-chk-date-input');
 
-        if (method === 'Cheque') {
+        if (method === '3rd Party Cheque') {
+            if (cqBox) cqBox.classList.add('hidden');
+            if (tpBox) tpBox.classList.remove('hidden');
+            if (tpSelect) tpSelect.required = true;
+            if (bankInput) bankInput.required = false;
+            if (numInput) numInput.required = false;
+            if (dateInput) dateInput.required = false;
+        } else if (method === 'Cheque') {
             if (cqBox) cqBox.classList.remove('hidden');
+            if (tpBox) tpBox.classList.add('hidden');
+            if (tpSelect) tpSelect.required = false;
             if (bankInput) bankInput.required = true;
             if (numInput) numInput.required = true;
             if (dateInput) dateInput.required = true;
         } else {
             if (cqBox) cqBox.classList.add('hidden');
+            if (tpBox) tpBox.classList.add('hidden');
+            if (tpSelect) tpSelect.required = false;
             if (bankInput) bankInput.required = false;
             if (numInput) numInput.required = false;
             if (dateInput) dateInput.required = false;
@@ -1307,6 +1384,11 @@
             let filtered = [];
             if (method === 'Cash') {
                 filtered = allAssetAccounts.filter(acc => acc.code === '1000');
+            } else if (method === '3rd Party Cheque') {
+                filtered = allAssetAccounts.filter(acc => acc.code === '1010');
+                if (filtered.length === 0) {
+                    filtered = allAssetAccounts.filter(acc => acc.text.toLowerCase().includes('cheque in hand'));
+                }
             } else if (method === 'Cheque' || method === 'Bank Transfer') {
                 // Both Cheque and Bank Transfer display the registered Bank Accounts!
                 filtered = allAssetAccounts.filter(acc => {
@@ -1341,7 +1423,7 @@
             });
 
             // Auto-select first available option or leave empty prompt for bank selection
-            if (method === 'Cash') {
+            if (method === 'Cash' || method === '3rd Party Cheque') {
                 if (filtered.length > 0) assetSelect.value = filtered[0].value;
             } else if (method === 'Cheque' || method === 'Bank Transfer') {
                 if (currentVal && filtered.some(f => String(f.value) === String(currentVal))) {
@@ -1423,6 +1505,14 @@
                     if (!/^\d{6}$/.test(chkNum)) {
                         e.preventDefault();
                         alert('Cheque number must be exactly 6 numeric digits.');
+                        return false;
+                    }
+                } else if (method === '3rd Party Cheque') {
+                    const tpSelect = document.getElementById('supp-3rd-party-cheque-select');
+                    if (!tpSelect || !tpSelect.value) {
+                        e.preventDefault();
+                        alert('Please select a 3rd party received cheque from Cheque Management.');
+                        if (tpSelect) tpSelect.focus();
                         return false;
                     }
                 }

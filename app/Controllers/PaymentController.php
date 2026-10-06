@@ -4,6 +4,7 @@ class PaymentController extends Controller {
     private $supplierModel;
     private $coaModel;
     private $serviceProviderModel;
+    private $depositModel;
 
     public function __construct() {
         if (!isset($_SESSION['user_id'])) {
@@ -14,6 +15,7 @@ class PaymentController extends Controller {
         $this->supplierModel = $this->model('Supplier');
         $this->coaModel = $this->model('ChartOfAccount');
         $this->serviceProviderModel = $this->model('ServiceProvider');
+        $this->depositModel = $this->model('Deposit');
     }
 
     public function index() {
@@ -22,6 +24,7 @@ class PaymentController extends Controller {
         $suppliers = $this->paymentModel->getSupplierOutstandingList();
         $serviceProviders = $this->paymentModel->getServiceProviderOutstandingList();
         $accounts = $this->coaModel->getAccounts() ?: [];
+        $pendingReceivedCheques = $this->depositModel->getPendingCheques();
 
         // Filter Asset accounts (e.g. Cash/Bank)
         $assets = array_filter($accounts, function($a) {
@@ -54,6 +57,7 @@ class PaymentController extends Controller {
             'service_providers' => $serviceProviders,
             'assets' => $assets,
             'ap_account' => $apAccount,
+            'pending_received_cheques' => $pendingReceivedCheques,
             'payments_history' => $paymentsHistory,
             'filters' => $filters,
             'error' => '',
@@ -170,7 +174,8 @@ class PaymentController extends Controller {
             // Cheque details
             'cheque_bank' => trim($_POST['cheque_bank'] ?? ''),
             'cheque_number' => trim($_POST['cheque_number'] ?? ''),
-            'cheque_date' => $_POST['cheque_date'] ?? ''
+            'cheque_date' => $_POST['cheque_date'] ?? '',
+            'third_party_cheque_id' => intval($_POST['third_party_cheque_id'] ?? 0)
         ];
 
         if ($paymentData['amount'] <= 0) {
@@ -183,7 +188,7 @@ class PaymentController extends Controller {
             exit;
         }
 
-        if (empty($paymentData['asset_account_id']) || empty($paymentData['ap_account_id'])) {
+        if ($paymentData['method'] !== '3rd Party Cheque' && (empty($paymentData['asset_account_id']) || empty($paymentData['ap_account_id']))) {
             header('Location: ' . APP_URL . '/payment?error=Ledger accounts must be specified.');
             exit;
         }
@@ -195,6 +200,11 @@ class PaymentController extends Controller {
             }
             if (!preg_match('/^\d{6}$/', $paymentData['cheque_number'])) {
                 header('Location: ' . APP_URL . '/payment?error=Cheque number must be exactly 6 numeric digits.');
+                exit;
+            }
+        } elseif ($paymentData['method'] === '3rd Party Cheque') {
+            if (empty($paymentData['third_party_cheque_id'])) {
+                header('Location: ' . APP_URL . '/payment?error=Please select a 3rd party received cheque from Cheque Management.');
                 exit;
             }
         }

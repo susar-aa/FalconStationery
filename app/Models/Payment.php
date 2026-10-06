@@ -384,6 +384,16 @@ class Payment {
         return $row ? intval($row->id) : null;
     }
 
+    public function getChequeInHandAccountId() {
+        $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1010' OR (account_type = 'Asset' AND (account_name LIKE '%Cheque%In%Hand%' OR account_name LIKE '%Cheques%In%Hand%')) ORDER BY CASE WHEN account_code = '1010' THEN 1 ELSE 2 END LIMIT 1");
+        $row = $this->db->single();
+        if ($row) return intval($row->id);
+
+        $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, balance) VALUES ('1010', 'Cheque in Hand', 'Asset', 0.00)");
+        $this->db->execute();
+        return intval($this->db->lastInsertId());
+    }
+
     /**
      * Record a Supplier Payment (AP Payout)
      */
@@ -403,11 +413,16 @@ class Payment {
             $journalId = $this->db->lastInsertId();
 
             // 2. Post Transactions
-            // If Cheque: Credit Outstanding Cheques (2050) so Bank Balance is NOT deducted until Cheque Clears!
+            // If Cheque (New Issued Cheque): Credit Outstanding Cheques (2050)
+            // If 3rd Party Cheque (Endorsed Cheque): Credit Cheque in Hand (1010)
             // If Cash / Bank Transfer: Credit Asset Account directly
-            $creditAccountId = ($data['method'] === 'Cheque') 
-                ? $this->getOutstandingChequesAccountId() 
-                : $data['asset_account_id'];
+            if ($data['method'] === '3rd Party Cheque') {
+                $creditAccountId = $this->getChequeInHandAccountId();
+            } elseif ($data['method'] === 'Cheque') {
+                $creditAccountId = $this->getOutstandingChequesAccountId();
+            } else {
+                $creditAccountId = $data['asset_account_id'];
+            }
 
             $lines = [
                 ['account_id' => $data['ap_account_id'], 'debit' => $data['amount'], 'credit' => 0],
@@ -467,6 +482,27 @@ class Payment {
                 $this->db->bind(':bank_account_id', $bankAccountId);
                 $this->db->bind(':supplier_payment_id', $paymentId);
                 $this->db->bind(':uid', $userId);
+                $this->db->execute();
+            } elseif ($data['method'] === '3rd Party Cheque' && !empty($data['third_party_cheque_id'])) {
+                $payeeName = 'Supplier';
+                if (!empty($data['supplier_id'])) {
+                    $this->db->query("SELECT name FROM vendors WHERE id = :vid");
+                    $this->db->bind(':vid', $data['supplier_id']);
+                    $vRow = $this->db->single();
+                    if ($vRow) $payeeName = $vRow->name;
+                } elseif (!empty($data['service_provider_id'])) {
+                    $this->db->query("SELECT name FROM service_providers WHERE id = :spid");
+                    $this->db->bind(':spid', $data['service_provider_id']);
+                    $spRow = $this->db->single();
+                    if ($spRow) $payeeName = $spRow->name;
+                }
+
+                $this->db->query("UPDATE cheques SET status = 'Endorsed', vendor_id = :vid, service_provider_id = :spid, supplier_payment_id = :pid, payee_name = :payee WHERE id = :cid");
+                $this->db->bind(':vid', !empty($data['supplier_id']) ? $data['supplier_id'] : null);
+                $this->db->bind(':spid', !empty($data['service_provider_id']) ? $data['service_provider_id'] : null);
+                $this->db->bind(':pid', $paymentId);
+                $this->db->bind(':payee', $payeeName);
+                $this->db->bind(':cid', intval($data['third_party_cheque_id']));
                 $this->db->execute();
             }
 
@@ -811,8 +847,12 @@ class Payment {
             $this->db->bind(':id', $id);
             $this->db->execute();
 
-            // 5. If it was a cheque payment, find and mark cheque as Cancelled / Bounced
-            if ($payment->payment_method === 'Cheque') {
+            // 5. If it was a cheque payment, find and mark cheque as Cancelled / Bounced / Reverted
+            if ($payment->payment_method === '3rd Party Cheque') {
+                $this->db->query("UPDATE cheques SET status = 'Pending', vendor_id = NULL, service_provider_id = NULL, supplier_payment_id = NULL WHERE supplier_payment_id = :pid");
+                $this->db->bind(':pid', $id);
+                $this->db->execute();
+            } elseif ($payment->payment_method === 'Cheque') {
                 $this->db->query("SELECT id, status, banking_date, bank_account_id FROM cheques WHERE supplier_payment_id = :pid LIMIT 1");
                 $this->db->bind(':pid', $id);
                 $chk = $this->db->single();
