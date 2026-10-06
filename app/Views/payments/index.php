@@ -532,33 +532,43 @@
 
                     <!-- 3rd Party Cheque Details Container -->
                     <div id="supp-3rd-party-cheque-box" class="cheque-details-box hidden" style="margin-bottom: 15px; background: #f0fdf4; border: 1px solid #86efac; border-radius: var(--radius-md); padding: 16px;">
-                        <h4 style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #15803d; font-weight: 700;">
-                            Select 3rd Party Cheque (Received Cheque in Hand)
+                        <h4 style="margin: 0 0 10px 0; font-size: 11px; text-transform: uppercase; color: #15803d; font-weight: 700; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-money-check"></i> Select 3rd Party Cheque to Endorse</span>
+                            <span style="font-weight: 600; text-transform: none; font-size: 11px; color: #166534;" id="tp-available-count">
+                                (<?= count($data['pending_received_cheques'] ?? []) ?> Received Cheques In Hand)
+                            </span>
                         </h4>
-                        <div class="form-group">
-                            <label style="color: #166534;">Select Received Cheque from Cheque Management *</label>
-                            <select name="third_party_cheque_id" id="supp-3rd-party-cheque-select" class="form-control" style="background: #fff;" onchange="on3rdPartyChequeSelect(this)">
-                                <option value="">-- Select Received Cheque from Cheque Management --</option>
-                                <?php if(!empty($data['pending_received_cheques'])): foreach($data['pending_received_cheques'] as $chk): ?>
-                                    <option value="<?= $chk->id ?>" 
-                                            data-amount="<?= $chk->amount ?>" 
-                                            data-bank="<?= htmlspecialchars($chk->bank_name) ?>" 
-                                            data-num="<?= htmlspecialchars($chk->cheque_number) ?>" 
-                                            data-date="<?= $chk->banking_date ?>" 
-                                            data-cust="<?= htmlspecialchars($chk->customer_name) ?>">
-                                        No: <?= htmlspecialchars($chk->cheque_number) ?> | Customer: <?= htmlspecialchars($chk->customer_name) ?> | <?= htmlspecialchars($chk->bank_name) ?> | Rs <?= number_format($chk->amount, 2) ?> (Date: <?= $chk->banking_date ?>)
-                                    </option>
-                                <?php endforeach; endif; ?>
-                            </select>
-                        </div>
-                        <div id="supp-3rd-party-summary" style="display: none; margin-top: 10px; padding: 12px; background: #fff; border-radius: 6px; border: 1px solid #bbf7d0; font-size: 12px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                <span><strong>Customer:</strong> <span id="tp-cust-name">-</span></span>
-                                <span><strong>Cheque #:</strong> <span id="tp-chq-num" style="font-family: monospace; font-weight: 700;">-</span></span>
+                        
+                        <input type="hidden" name="third_party_cheque_id" id="supp-3rd-party-cheque-id">
+                        
+                        <!-- Searchable Cheque Selector Input -->
+                        <div class="form-group" style="position: relative;" id="tp-search-wrap">
+                            <label style="color: #166534;">Search & Select Received Cheque *</label>
+                            <div style="position: relative;">
+                                <input type="text" id="thirdPartyChequeSearch" class="form-control" 
+                                       placeholder="Type to search by Cheque #, Customer Name, Bank, or Amount..." 
+                                       autocomplete="off" oninput="render3rdPartyChequeSearch(this.value)" onfocus="render3rdPartyChequeSearch(this.value)"
+                                       style="background: #fff; padding-right: 30px;">
+                                <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #16a34a; pointer-events: none;"></i>
                             </div>
-                            <div style="display: flex; justify-content: space-between;">
+                            <ul id="thirdPartyChequeResults" class="search-results" style="background: #fff; border-color: #86efac;"></ul>
+                        </div>
+
+                        <!-- Selected Cheque Summary Display -->
+                        <div id="supp-3rd-party-summary" style="display: none; margin-top: 10px; padding: 14px; background: #fff; border-radius: 8px; border: 1.5px solid #22c55e; font-size: 13px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-family: monospace; font-size: 13px;" id="tp-chq-num">#000000</span>
+                                    <strong style="color: #1e293b;" id="tp-cust-name">Customer Name</strong>
+                                </div>
+                                <button type="button" onclick="clear3rdPartyChequeSelection()" class="btn" style="padding: 4px 10px; font-size: 11px; background: #fee2e2; color: #dc2626; border-color: #fca5a5; cursor: pointer;">
+                                    <i class="fa-solid fa-xmark"></i> Change Cheque
+                                </button>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; color: #475569; font-size: 12px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
                                 <span><strong>Bank:</strong> <span id="tp-bank-name">-</span></span>
-                                <span><strong>Cheque Amount:</strong> <span id="tp-chq-amt" style="font-weight: 700; color: #16a34a;">Rs 0.00</span></span>
+                                <span><strong>Banking Date:</strong> <span id="tp-chq-date">-</span></span>
+                                <span><strong>Cheque Amount:</strong> <span id="tp-chq-amt" style="font-weight: 800; color: #16a34a; font-size: 14px;">Rs 0.00</span></span>
                             </div>
                         </div>
                     </div>
@@ -1305,32 +1315,87 @@
         }
     }
 
-    function on3rdPartyChequeSelect(sel) {
-        const opt = sel.options[sel.selectedIndex];
-        const summaryBox = document.getElementById('supp-3rd-party-summary');
-        if (!opt || !opt.value) {
-            if (summaryBox) summaryBox.style.display = 'none';
-            document.getElementById('supp-amount-input').value = '';
-            updateAllocationTotals();
+    let pendingChequesList = <?= json_encode($data['pending_received_cheques'] ?? []) ?>;
+
+    function render3rdPartyChequeSearch(query) {
+        const resultsUl = document.getElementById('thirdPartyChequeResults');
+        if (!resultsUl) return;
+
+        const q = (query || '').toLowerCase().trim();
+        const filtered = pendingChequesList.filter(c => {
+            const chqNum = (c.cheque_number || '').toLowerCase();
+            const custName = (c.customer_name || '').toLowerCase();
+            const bankName = (c.bank_name || '').toLowerCase();
+            const amtStr = (c.amount || '').toString();
+
+            return chqNum.includes(q) || custName.includes(q) || bankName.includes(q) || amtStr.includes(q);
+        });
+
+        if (filtered.length === 0) {
+            resultsUl.innerHTML = '<li class="no-results" style="padding: 10px; color: var(--slate-400); text-align: center;">No matching received cheques in hand.</li>';
+            resultsUl.style.display = 'block';
             return;
         }
-        
-        const amount = parseFloat(opt.getAttribute('data-amount')) || 0;
-        const cust = opt.getAttribute('data-cust') || '-';
-        const num = opt.getAttribute('data-num') || '-';
-        const bank = opt.getAttribute('data-bank') || '-';
 
-        document.getElementById('tp-cust-name').innerText = cust;
-        document.getElementById('tp-chq-num').innerText = num;
-        document.getElementById('tp-bank-name').innerText = bank;
-        document.getElementById('tp-chq-amt').innerText = 'Rs ' + amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        
-        if (summaryBox) summaryBox.style.display = 'block';
+        let html = '';
+        filtered.forEach(c => {
+            const amtFormatted = parseFloat(c.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            html += `
+                <li onclick="select3rdPartyCheque(${c.id})" style="padding: 10px 14px; border-bottom: 1px solid var(--slate-100); cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-family: monospace; font-weight: 700; color: #2563eb; background: #eff6ff; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-right: 6px;">#${escapeHtml(c.cheque_number)}</span>
+                            <strong style="color: var(--slate-800);">${escapeHtml(c.customer_name || 'Manual Collection')}</strong>
+                        </div>
+                        <span style="font-family: monospace; font-weight: 700; color: #16a34a;">Rs ${amtFormatted}</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--slate-500); margin-top: 4px; display: flex; justify-content: space-between;">
+                        <span><i class="fa-solid fa-building-columns"></i> ${escapeHtml(c.bank_name)}</span>
+                        <span><i class="fa-regular fa-calendar"></i> Date: ${c.banking_date}</span>
+                    </div>
+                </li>
+            `;
+        });
 
-        // Auto-fill payment amount field
+        resultsUl.innerHTML = html;
+        resultsUl.style.display = 'block';
+    }
+
+    function select3rdPartyCheque(chequeId) {
+        const c = pendingChequesList.find(item => item.id == chequeId);
+        if (!c) return;
+
+        document.getElementById('supp-3rd-party-cheque-id').value = c.id;
+        document.getElementById('thirdPartyChequeResults').style.display = 'none';
+        document.getElementById('tp-search-wrap').style.display = 'none';
+
+        document.getElementById('tp-chq-num').innerText = '#' + c.cheque_number;
+        document.getElementById('tp-cust-name').innerText = c.customer_name || 'Manual Collection';
+        document.getElementById('tp-bank-name').innerText = c.bank_name;
+        document.getElementById('tp-chq-date').innerText = c.banking_date;
+        const amt = parseFloat(c.amount) || 0;
+        document.getElementById('tp-chq-amt').innerText = 'Rs ' + amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        document.getElementById('supp-3rd-party-summary').style.display = 'block';
+
+        // Set payment amount field
         const amtInput = document.getElementById('supp-amount-input');
         if (amtInput) {
-            amtInput.value = amount.toFixed(2);
+            amtInput.value = amt.toFixed(2);
+        }
+        updateAllocationTotals();
+    }
+
+    function clear3rdPartyChequeSelection() {
+        document.getElementById('supp-3rd-party-cheque-id').value = '';
+        document.getElementById('thirdPartyChequeSearch').value = '';
+        document.getElementById('supp-3rd-party-summary').style.display = 'none';
+        document.getElementById('tp-search-wrap').style.display = 'block';
+        document.getElementById('thirdPartyChequeSearch').focus();
+
+        const amtInput = document.getElementById('supp-amount-input');
+        if (amtInput) {
+            amtInput.value = '';
         }
         updateAllocationTotals();
     }
@@ -1341,7 +1406,6 @@
         const method = methodSelect ? methodSelect.value : 'Cash';
         const cqBox = document.getElementById(prefix + '-cheque-details');
         const tpBox = document.getElementById(prefix + '-3rd-party-cheque-box');
-        const tpSelect = document.getElementById(prefix + '-3rd-party-cheque-select');
         const bankInput = document.getElementById(prefix + '-chk-bank-input');
         const numInput = document.getElementById(prefix + '-chk-num-input');
         const dateInput = document.getElementById(prefix + '-chk-date-input');
@@ -1349,7 +1413,6 @@
         if (method === '3rd Party Cheque') {
             if (cqBox) cqBox.classList.add('hidden');
             if (tpBox) tpBox.classList.remove('hidden');
-            if (tpSelect) tpSelect.required = true;
             if (bankInput) bankInput.required = false;
             if (numInput) numInput.required = false;
             if (dateInput) dateInput.required = false;

@@ -169,6 +169,8 @@
 .badge-Bounced .dot, .badge-Returned .dot, .badge-Rejected .dot, .badge-Voided .dot, .badge-Reversed .dot { background: var(--c-red); }
 .badge-Deposited { background: var(--c-blue-light); color: var(--c-blue); }
 .badge-Deposited .dot { background: var(--c-blue); }
+.badge-Endorsed { background: #e0f2fe; color: #0369a1; }
+.badge-Endorsed .dot { background: #0284c7; }
 
 /* Row Actions */
 .row-acts { display: flex; gap: 6px; justify-content: flex-end; }
@@ -386,7 +388,12 @@
                                 <tr>
                                     <td>
                                         <strong style="font-weight:600;"><?= htmlspecialchars($displayName) ?></strong>
-                                        <?php if (!empty($chk->customer_name)): ?>
+                                        <?php if ($chk->status === 'Endorsed'): ?>
+                                            <div style="font-size:11px; color:#0284c7; font-weight:600; margin-top:2px;"><i class="fa-solid fa-right-left"></i> Endorsed 3rd Party (Paid to: <?= htmlspecialchars($chk->vendor_name ?: $chk->payee_name) ?>)</div>
+                                            <?php if (!empty($chk->customer_name)): ?>
+                                                <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Customer: <?= htmlspecialchars($chk->customer_name) ?></div>
+                                            <?php endif; ?>
+                                        <?php elseif (!empty($chk->customer_name)): ?>
                                             <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Customer: <?= htmlspecialchars($chk->customer_name) ?></div>
                                         <?php elseif (!empty($chk->vendor_name)): ?>
                                             <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-truck-field"></i> Supplier: <?= htmlspecialchars($chk->vendor_name) ?></div>
@@ -413,7 +420,7 @@
                                     </td>
                                     <td>
                                         <div class="sf-badge badge-<?= $chk->status ?>">
-                                            <div class="dot"></div> <?= $chk->status ?>
+                                            <div class="dot"></div> <?= $chk->status === 'Endorsed' ? 'Endorsed (3rd Party)' : $chk->status ?>
                                         </div>
                                     </td>
                                     <td style="text-align: right; font-weight: 600;">
@@ -478,7 +485,9 @@
                                     <tr>
                                         <td>
                                             <strong style="font-weight:600;"><?= htmlspecialchars($displayName) ?></strong>
-                                            <?php if (!empty($chk->customer_name)): ?>
+                                            <?php if ($chk->status === 'Endorsed'): ?>
+                                                <div style="font-size:11px; color:#0284c7; font-weight:600; margin-top:2px;"><i class="fa-solid fa-right-left"></i> Endorsed 3rd Party (Paid to: <?= htmlspecialchars($chk->vendor_name ?: $chk->payee_name) ?>)</div>
+                                            <?php elseif (!empty($chk->customer_name)): ?>
                                                 <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Customer Profile</div>
                                             <?php else: ?>
                                                 <div style="font-size:11px; color:var(--t-secondary); font-weight:600; margin-top:2px;">Custom Payee</div>
@@ -499,7 +508,7 @@
                                         </td>
                                         <td>
                                             <div class="sf-badge badge-<?= $chk->status ?>">
-                                                <div class="dot"></div> <?= $chk->status ?>
+                                                <div class="dot"></div> <?= $chk->status === 'Endorsed' ? 'Endorsed (3rd Party)' : $chk->status ?>
                                             </div>
                                         </td>
                                         <td style="text-align: right; font-weight: 600;">
@@ -565,7 +574,12 @@
                                     <tr>
                                         <td>
                                             <strong style="font-weight:600;"><?= htmlspecialchars($displayName) ?></strong>
-                                            <?php if (!empty($chk->vendor_name)): ?>
+                                            <?php if ($chk->status === 'Endorsed'): ?>
+                                                <div style="font-size:11px; color:#0284c7; font-weight:600; margin-top:2px;"><i class="fa-solid fa-right-left"></i> Endorsed 3rd Party Cheque</div>
+                                                <?php if(!empty($chk->customer_name)): ?>
+                                                    <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Rec'd Customer: <?= htmlspecialchars($chk->customer_name) ?></div>
+                                                <?php endif; ?>
+                                            <?php elseif (!empty($chk->vendor_name)): ?>
                                                 <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-truck-field"></i> Supplier</div>
                                             <?php elseif (!empty($chk->service_provider_name)): ?>
                                                 <div style="font-size:11px; color:var(--c-purple); font-weight:600; margin-top:2px;"><i class="fa-solid fa-handshake"></i> Service Provider</div>
@@ -588,7 +602,7 @@
                                         </td>
                                         <td>
                                             <div class="sf-badge badge-<?= $chk->status ?>">
-                                                <div class="dot"></div> <?= $chk->status ?>
+                                                <div class="dot"></div> <?= $chk->status === 'Endorsed' ? 'Endorsed (3rd Party)' : $chk->status ?>
                                             </div>
                                         </td>
                                         <td style="text-align: right; font-weight: 600;">

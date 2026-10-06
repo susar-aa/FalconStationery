@@ -3717,3 +3717,19 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 10/06/2026 11:01:36.65 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Payment.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/payments/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app_errors.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'schema_update.sql', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 2f9374b] Update: app/Controllers/PaymentController.php, app/Models/Payment.php, app/Views/payments/index.php, app_errors.log, deploy_log.txt, schema_update.sql
+ 6 files changed, 1296 insertions(+), 11 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   49502bc..2f9374b  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Tue 10/06/2026 11:17:04.19 
+=================================================== 
+Adding changes... 
