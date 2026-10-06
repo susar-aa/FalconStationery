@@ -144,10 +144,14 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-require_once '../vendor/autoload.php';
-require_once '../config/database.php';
-require_once '../core/Cache.php';
-require_once '../core/Database.php';
+$vendorAutoload = dirname(__DIR__) . '/vendor/autoload.php';
+if (file_exists($vendorAutoload)) {
+    require_once $vendorAutoload;
+}
+require_once dirname(__DIR__) . '/config/database.php';
+require_once dirname(__DIR__) . '/core/Cache.php';
+require_once dirname(__DIR__) . '/core/Database.php';
+
 // Auto-run schema_update.sql if pending, then clear file
 $schemaFile = dirname(__DIR__) . '/schema_update.sql';
 if (file_exists($schemaFile)) {
@@ -176,8 +180,8 @@ if (file_exists($schemaFile)) {
     }
 }
 
-require_once '../core/Controller.php';
-require_once '../core/App.php';
+require_once dirname(__DIR__) . '/core/Controller.php';
+require_once dirname(__DIR__) . '/core/App.php';
 
 $app = new App();
 
