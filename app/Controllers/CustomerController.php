@@ -31,15 +31,29 @@ class CustomerController extends Controller {
         exit;
     }
 
+    public function apiSummaryStats() {
+        header('Content-Type: application/json');
+        $summaryStats = $this->customerModel->getCustomerSummaryStats();
+        echo json_encode($summaryStats);
+        exit;
+    }
+
     public function index($id = null) {
         if (isset($_GET['action']) && $_GET['action'] === 'api_list') {
             $this->apiList();
         }
+        if (isset($_GET['action']) && $_GET['action'] === 'api_summary_stats') {
+            $this->apiSummaryStats();
+        }
 
-        // Fast paginated initial slice & aggregated summary stats
-        $summaryStats = $this->customerModel->getCustomerSummaryStats();
+        // Fast initial slice without blocking heavy summary stats query
         $initialSlice = $this->customerModel->getPaginatedCustomers(0, 25);
         $customers = $initialSlice['rows'];
+        $summaryStats = [
+            'total_customers' => $initialSlice['total'],
+            'total_outstanding' => 0.00,
+            'owed_customers_count' => 0
+        ];
         
         $selectedCustomer = null;
         $stats = null;

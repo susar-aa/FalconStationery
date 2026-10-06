@@ -563,21 +563,21 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
             <div class="stat-card blue">
                 <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
                 <div class="stat-info">
-                    <div class="stat-num"><?= number_format($totalCustomers) ?></div>
+                    <div class="stat-num" id="stat-total-customers"><?= number_format($totalCustomers) ?></div>
                     <div class="stat-lbl">Total Customers</div>
                 </div>
             </div>
             <div class="stat-card orange">
                 <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
                 <div class="stat-info">
-                    <div class="stat-num">Rs. <?= number_format($totalOutstanding, 2) ?></div>
+                    <div class="stat-num" id="stat-total-outstanding">Rs. <?= number_format($totalOutstanding, 2) ?></div>
                     <div class="stat-lbl">Total Outstanding</div>
                 </div>
             </div>
             <div class="stat-card red">
                 <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <div class="stat-info">
-                    <div class="stat-num"><?= number_format($owedCustomersCount) ?></div>
+                    <div class="stat-num" id="stat-owed-count"><?= number_format($owedCustomersCount) ?></div>
                     <div class="stat-lbl">Owed Accounts</div>
                 </div>
             </div>
@@ -1738,15 +1738,29 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         }
     }
 
+    function loadAsyncSummaryStats() {
+        fetch('<?= APP_URL ?>/customer/index?action=api_summary_stats')
+            .then(response => response.json())
+            .then(stats => {
+                if (document.getElementById('stat-total-customers')) {
+                    document.getElementById('stat-total-customers').textContent = (stats.total_customers || 0).toLocaleString();
+                }
+                if (document.getElementById('stat-total-outstanding')) {
+                    const bal = parseFloat(stats.total_outstanding || 0);
+                    document.getElementById('stat-total-outstanding').textContent = 'Rs. ' + bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                if (document.getElementById('stat-owed-count')) {
+                    document.getElementById('stat-owed-count').textContent = (stats.owed_customers_count || 0).toLocaleString();
+                }
+            })
+            .catch(err => console.error("Error loading summary stats:", err));
+    }
+
     // Handle initial state if selected customer exists on page load
-    <?php if ($data['selected_customer']): ?>
     document.addEventListener('DOMContentLoaded', () => {
-        openPrepopulatedCustomerProfile(<?= $data['selected_customer']->id ?>);
-        filterList();
+        <?php if ($data['selected_customer']): ?>
+            openPrepopulatedCustomerProfile(<?= $data['selected_customer']->id ?>);
+        <?php endif; ?>
+        loadAsyncSummaryStats();
     });
-    <?php else: ?>
-    document.addEventListener('DOMContentLoaded', () => {
-        filterList();
-    });
-    <?php endif; ?>
 </script>
