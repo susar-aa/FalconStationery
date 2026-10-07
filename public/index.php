@@ -40,32 +40,85 @@ function global_exception_handler(Throwable $exception) {
         if (!headers_sent()) {
             http_response_code(500);
         }
-        $showDetails = true; // FORCE ENABLED FOR DEBUGGING
+        $showDetails = true; // Enabled for debugging and diagnostic reporting
+        $errTextToCopy = "Correlation ID: " . $correlationId . "\n" .
+                         "URL: " . ($_SERVER['REQUEST_URI'] ?? 'N/A') . "\n" .
+                         "Error Message: " . $exception->getMessage() . "\n" .
+                         "File: " . $exception->getFile() . ":" . $exception->getLine() . "\n\n" .
+                         "Stack Trace:\n" . $exception->getTraceAsString();
         ?>
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
-            <title>Internal Server Error</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Application Error (HTTP 500)</title>
             <style>
-                body { font-family: -apple-system, sans-serif; background: #f0f2f5; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-                .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 800px; width: 100%; }
-                h3 { color: #ff3b30; margin-top: 0; }
-                p { font-size: 14px; color: #666; line-height: 1.5; }
-                pre { background: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px; border: 1px solid #e1e4e8; max-height: 300px; }
-                .btn { display: inline-block; background: #0066cc; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; margin-top: 15px; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f6f8; color: #1f2937; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+                .card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 850px; width: 100%; border: 1px solid #e5e7eb; }
+                h3 { color: #ef4444; margin-top: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+                p { font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 12px; }
+                .correlation-badge { display: inline-block; background: #fef2f2; color: #991b1b; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; border: 1px solid #fecaca; margin-bottom: 12px; }
+                pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 10px; overflow-x: auto; font-size: 12px; line-height: 1.5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; max-height: 320px; }
+                .btn-group { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+                .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #2563eb; color: white !important; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+                .btn:hover { background: #1d4ed8; }
+                .btn-secondary { background: #6b7280; }
+                .btn-secondary:hover { background: #4b5563; }
+                .btn-outline { background: transparent; border: 1px solid #d1d5db; color: #374151 !important; }
+                .btn-outline:hover { background: #f3f4f6; }
             </style>
         </head>
         <body>
-            <div class='card'>
+            <div class="card">
                 <h3>Application Error (HTTP 500)</h3>
                 <p>An unexpected error occurred while processing your request. This issue has been logged to <strong>app_errors.log</strong>.</p>
+                <div class="correlation-badge">Correlation ID: <?= htmlspecialchars($correlationId) ?></div>
+                
                 <?php if ($showDetails): ?>
-                    <p><strong>Error Message:</strong> <?php echo htmlspecialchars($exception->getMessage()); ?></p>
-                    <p><strong>File:</strong> <?php echo htmlspecialchars($exception->getFile()); ?>:<?php echo $exception->getLine(); ?></p>
-                    <pre><?php echo htmlspecialchars($exception->getTraceAsString()); ?></pre>
+                    <p><strong>Error Message:</strong> <span style="color:#dc2626; word-break: break-all;"><?= htmlspecialchars($exception->getMessage()) ?></span></p>
+                    <p><strong>File:</strong> <code><?= htmlspecialchars($exception->getFile()) ?>:<?= $exception->getLine() ?></code></p>
+                    <pre><?= htmlspecialchars($exception->getTraceAsString()) ?></pre>
                 <?php endif; ?>
-                <a href='javascript:history.back()' class='btn'>Go Back</a>
+
+                <textarea id="hiddenErrorText" style="position: absolute; left: -9999px;"><?= htmlspecialchars($errTextToCopy) ?></textarea>
+
+                <div class="btn-group">
+                    <a href="javascript:history.back()" class="btn">Go Back</a>
+                    <button type="button" onclick="copyErrorDetails()" id="copyErrorBtn" class="btn btn-secondary">
+                        Copy Error Details
+                    </button>
+                </div>
             </div>
+
+            <script>
+            function copyErrorDetails() {
+                const text = document.getElementById('hiddenErrorText').value;
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(showCopied).catch(fallbackCopy);
+                } else {
+                    fallbackCopy();
+                }
+                function fallbackCopy() {
+                    const el = document.getElementById('hiddenErrorText');
+                    el.style.position = 'fixed';
+                    el.style.left = '0';
+                    el.style.top = '0';
+                    el.select();
+                    document.execCommand('copy');
+                    showCopied();
+                }
+                function showCopied() {
+                    const btn = document.getElementById('copyErrorBtn');
+                    btn.innerText = 'Copied to Clipboard!';
+                    btn.style.background = '#10b981';
+                    setTimeout(() => {
+                        btn.innerText = 'Copy Error Details';
+                        btn.style.background = '#6b7280';
+                    }, 2500);
+                }
+            }
+            </script>
         </body>
         </html>
         <?php

@@ -6,6 +6,100 @@ class Payroll {
 
     public function __construct() {
         $this->db = new Database();
+        $this->ensureEpfEtfSchema();
+    }
+
+    private function ensureEpfEtfSchema(): void {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+
+        try {
+            // Self-heal payroll_runs columns
+            $this->db->query("SHOW COLUMNS FROM payroll_runs LIKE 'epf_payment_status'");
+            if (!$this->db->single()) {
+                $cols = [
+                    "total_epf_employee DECIMAL(12,2) NOT NULL DEFAULT 0.00",
+                    "total_epf_employer DECIMAL(12,2) NOT NULL DEFAULT 0.00",
+                    "total_etf_employer DECIMAL(12,2) NOT NULL DEFAULT 0.00",
+                    "epf_payment_status VARCHAR(20) NOT NULL DEFAULT 'Unpaid'",
+                    "etf_payment_status VARCHAR(20) NOT NULL DEFAULT 'Unpaid'",
+                    "epf_paid_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00",
+                    "etf_paid_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00"
+                ];
+                foreach ($cols as $c) {
+                    try {
+                        $this->db->query("ALTER TABLE payroll_runs ADD COLUMN " . $c);
+                        $this->db->execute();
+                    } catch (Throwable $t) {}
+                }
+            }
+
+            // Self-heal payroll_slips columns
+            $this->db->query("SHOW COLUMNS FROM payroll_slips LIKE 'epf_employee'");
+            if (!$this->db->single()) {
+                $cols = [
+                    "epf_applicable_earnings DECIMAL(12,2) NOT NULL DEFAULT 0.00",
+                    "epf_employee DECIMAL(12,2) NOT NULL DEFAULT 0.00",
+                    "epf_employer DECIMAL(12,2) NOT NULL DEFAULT 0.00",
+                    "etf_employer DECIMAL(12,2) NOT NULL DEFAULT 0.00"
+                ];
+                foreach ($cols as $c) {
+                    try {
+                        $this->db->query("ALTER TABLE payroll_slips ADD COLUMN " . $c);
+                        $this->db->execute();
+                    } catch (Throwable $t) {}
+                }
+            }
+
+            // Self-heal employees columns
+            $this->db->query("SHOW COLUMNS FROM employees LIKE 'epf_member_no'");
+            if (!$this->db->single()) {
+                $cols = [
+                    "epf_member_no VARCHAR(50) NULL",
+                    "is_epf_eligible TINYINT(1) NOT NULL DEFAULT 1",
+                    "is_etf_eligible TINYINT(1) NOT NULL DEFAULT 1",
+                    "epf_employee_rate DECIMAL(5,2) NOT NULL DEFAULT 8.00",
+                    "epf_employer_rate DECIMAL(5,2) NOT NULL DEFAULT 12.00",
+                    "etf_employer_rate DECIMAL(5,2) NOT NULL DEFAULT 3.00",
+                    "epf_etf_effective_date DATE NULL"
+                ];
+                foreach ($cols as $c) {
+                    try {
+                        $this->db->query("ALTER TABLE employees ADD COLUMN " . $c);
+                        $this->db->execute();
+                    } catch (Throwable $t) {}
+                }
+            }
+
+            // Self-heal epf_etf_payments table
+            $this->db->query("SHOW TABLES LIKE 'epf_etf_payments'");
+            if (!$this->db->single()) {
+                $this->db->query("CREATE TABLE IF NOT EXISTS epf_etf_payments (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    payment_ref VARCHAR(50) NOT NULL,
+                    payment_type ENUM('EPF', 'ETF', 'COMBINED') NOT NULL DEFAULT 'COMBINED',
+                    period_year INT NOT NULL,
+                    period_month INT NOT NULL,
+                    payment_date DATE NOT NULL,
+                    epf_employee_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    epf_employer_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    etf_employer_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    total_paid DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    bank_account_id INT NOT NULL,
+                    epf_payable_account_id INT NULL,
+                    etf_payable_account_id INT NULL,
+                    journal_entry_id INT NULL,
+                    cheque_no VARCHAR(50) NULL,
+                    notes TEXT NULL,
+                    created_by INT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {
+            // Ignore errors if columns/tables exist
+        }
     }
 
     public function getAllPayrollRuns(): array {
