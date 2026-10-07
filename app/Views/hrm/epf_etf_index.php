@@ -3,13 +3,18 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
+/* ============================================================
+   SF PRO + APPLE DESIGN LANGUAGE — EPF & ETF SYSTEM
+   ============================================================ */
+
 :root {
     --c-bg:           #f2f2f7;
     --c-surface:      #ffffff;
     --c-surface2:     #f9f9fb;
-    --c-fill:         rgba(120,120,128,0.12);
-    --c-fill2:        rgba(120,120,128,0.16);
+    --c-fill:         rgba(120,120,128,0.08);
+    --c-fill2:        rgba(120,120,128,0.14);
     --c-separator:    rgba(60,60,67,0.12);
+    --c-separator2:   rgba(60,60,67,0.06);
 
     --c-blue:         #007aff;
     --c-blue-light:   #e5f2ff;
@@ -22,31 +27,63 @@
     --c-red:          #ff3b30;
     --c-red-light:    #fff0ef;
 
-    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', sans-serif;
+    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
     --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
 
     --t-primary:   #1c1c1e;
     --t-secondary: #636366;
+    --t-tertiary:  #aeaeb2;
     --t-label:     #8e8e93;
 
     --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
-    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06);
-    --shadow-md:  0 8px 24px rgba(0,0,0,0.08);
+    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
 
+    --r-xs: 6px;
     --r-sm: 10px;
     --r-md: 14px;
     --r-lg: 20px;
+    --r-xl: 24px;
     --r-pill: 999px;
+
+    --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --dur-fast: 0.18s;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --c-bg:           #121212;
+        --c-surface:      #1e1e2e;
+        --c-surface2:     #161622;
+        --c-fill:         rgba(255,255,255,0.08);
+        --c-fill2:        rgba(255,255,255,0.12);
+        --c-separator:    rgba(255,255,255,0.15);
+        --c-separator2:   rgba(255,255,255,0.08);
+        --t-primary:   #f5f5f7;
+        --t-secondary: #a1a1aa;
+        --t-tertiary:  #71717a;
+        --t-label:     #52525b;
+
+        --c-blue-light:   rgba(0,122,255,0.15);
+        --c-green-light:  rgba(52,199,89,0.15);
+        --c-orange-light: rgba(255,149,0,0.15);
+        --c-purple-light: rgba(175,82,222,0.15);
+        --c-red-light:    rgba(255,59,48,0.15);
+    }
 }
 
 .ee-root {
     font-family: var(--f-system);
-    font-size: 15px;
+    font-size: 14.5px;
     color: var(--t-primary);
+    background: var(--c-bg);
+    min-height: 100vh;
+    padding: 20px 24px 80px;
     -webkit-font-smoothing: antialiased;
 }
 
-/* Page Header */
+/* Header Section */
 .sf-page-header {
     display: flex;
     justify-content: space-between;
@@ -56,15 +93,20 @@
     gap: 16px;
 }
 .sf-page-title h1 {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
     margin: 0 0 4px 0;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    color: var(--t-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 .sf-page-title p {
     margin: 0;
     color: var(--t-secondary);
-    font-size: 14px;
+    font-size: 13.5px;
+    font-weight: 500;
 }
 
 /* Flash Banners */
@@ -72,8 +114,8 @@
     padding: 12px 18px;
     border-radius: var(--r-md);
     margin-bottom: 20px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13.5px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -81,101 +123,168 @@
 .flash-msg-success { background: var(--c-green-light); color: #15803d; border: 0.5px solid rgba(52,199,89,0.3); }
 .flash-msg-error { background: var(--c-red-light); color: #b91c1c; border: 0.5px solid rgba(255,59,48,0.3); }
 
-/* KPI Stats Row */
-.kpi-row {
+/* ---- Apple Stat Cards ---- */
+.stat-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 24px;
 }
-.kpi-card {
+@media (max-width: 1100px) {
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .stat-row { grid-template-columns: 1fr; }
+}
+
+.stat-card {
     background: var(--c-surface);
-    border-radius: var(--r-md);
-    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-xl);
     padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+    border: 0.5px solid var(--c-separator);
+    transition: transform var(--dur-fast) var(--ease-ios), box-shadow var(--dur-fast) var(--ease-ios);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+.stat-card.blue::before   { background: var(--c-blue); }
+.stat-card.purple::before { background: var(--c-purple); }
+.stat-card.orange::before { background: var(--c-orange); }
+.stat-card.red::before    { background: var(--c-red); }
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.stat-icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.stat-card.blue   .stat-icon { background: var(--c-blue-light);   color: var(--c-blue); }
+.stat-card.purple .stat-icon { background: var(--c-purple-light); color: var(--c-purple); }
+.stat-card.orange .stat-icon { background: var(--c-orange-light); color: var(--c-orange); }
+.stat-card.red    .stat-icon { background: var(--c-red-light);    color: var(--c-red); }
+
+.stat-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.stat-lbl {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--t-label);
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+.stat-num {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--t-primary);
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+/* ---- Filter Shelf ---- */
+.filter-shelf {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-lg);
+    padding: 14px 20px;
     box-shadow: var(--shadow-xs);
 }
-.kpi-card .kpi-label {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--t-secondary);
-    letter-spacing: 0.05em;
-    margin-bottom: 6px;
-}
-.kpi-card .kpi-val {
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--t-primary);
-    letter-spacing: -0.02em;
-}
-
-/* Filter Bar */
-.filter-card {
-    background: var(--c-surface);
-    border-radius: var(--r-md);
-    border: 0.5px solid var(--c-separator);
-    padding: 16px 20px;
-    margin-bottom: 24px;
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-.filter-group { display: flex; align-items: center; gap: 8px; }
-.filter-group label { font-size: 13px; font-weight: 600; color: var(--t-secondary); }
-.filter-select {
-    padding: 8px 14px;
-    border-radius: var(--r-sm);
-    border: 1px solid var(--c-separator);
+.filter-chip {
+    display: inline-flex; align-items: center; gap: 8px;
     background: var(--c-surface2);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-pill);
+    padding: 6px 14px;
     font-size: 13px;
     font-weight: 600;
+    color: var(--t-secondary);
+}
+.filter-chip select {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 700;
     color: var(--t-primary);
+    outline: none;
+    cursor: pointer;
 }
 
-/* Table Panels */
+/* ---- Table Panels ---- */
 .table-panel {
     background: var(--c-surface);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-xl);
     border: 0.5px solid var(--c-separator);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-    margin-bottom: 30px;
+    margin-bottom: 28px;
 }
 .panel-header {
-    padding: 16px 24px;
+    padding: 18px 24px;
     background: var(--c-surface2);
     border-bottom: 0.5px solid var(--c-separator);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 .panel-header h3 {
     margin: 0;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 800;
+    color: var(--t-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+.panel-subtitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--t-label);
+}
+
 .sf-table {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
-    font-size: 14px;
+    font-size: 13.5px;
 }
 .sf-table th {
     background: var(--c-surface2);
     padding: 12px 18px;
     font-size: 11px;
     font-weight: 700;
-    color: var(--t-secondary);
+    color: var(--t-label);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border-bottom: 0.5px solid var(--c-separator);
 }
 .sf-table td {
     padding: 14px 18px;
-    border-bottom: 0.5px solid var(--c-separator);
+    border-bottom: 0.5px solid var(--c-separator2);
     vertical-align: middle;
+    color: var(--t-primary);
 }
 .sf-table tr:last-child td { border-bottom: none; }
 .sf-table tr:hover td { background: var(--c-fill); }
@@ -192,34 +301,52 @@
     text-transform: uppercase;
 }
 .sf-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
-.badge-Unpaid { background: var(--c-red-light); color: #b91c1c; }
+.badge-Unpaid { background: var(--c-red-light); color: #dc2626; }
 .badge-Unpaid .dot { background: var(--c-red); }
-.badge-Partially { background: var(--c-orange-light); color: #c2410c; }
+.badge-Partially { background: var(--c-orange-light); color: #d97706; }
 .badge-Partially .dot { background: var(--c-orange); }
-.badge-Paid { background: var(--c-green-light); color: #15803d; }
+.badge-Paid { background: var(--c-green-light); color: #16a34a; }
 .badge-Paid .dot { background: var(--c-green); }
 
 /* Buttons */
-.btn-sf {
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: var(--r-sm);
-    border: none;
-    cursor: pointer;
+.btn-apple {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    transition: all 0.18s ease;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: var(--r-pill);
+    border: none;
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: transform var(--dur-fast) var(--ease-ios), opacity var(--dur-fast);
 }
-.btn-sf-primary { background: var(--c-blue); color: #fff; }
-.btn-sf-primary:hover { opacity: 0.9; transform: translateY(-1px); color: #fff; }
-.btn-sf-success { background: #16a34a; color: #fff; }
-.btn-sf-success:hover { background: #15803d; color: #fff; }
-.btn-sf-secondary { background: var(--c-fill); color: var(--t-primary); }
-.btn-sf-secondary:hover { background: var(--c-fill2); }
+.btn-apple:hover { opacity: 0.92; transform: translateY(-1px); }
+.btn-apple-primary { background: var(--c-blue); color: #ffffff !important; }
+.btn-apple-success { background: #16a34a; color: #ffffff !important; }
+.btn-apple-secondary { background: var(--c-fill2); color: var(--t-primary) !important; }
+
 .act-group { display: flex; gap: 6px; justify-content: center; }
+
+/* Modal Improvements */
+.modal-content {
+    border-radius: var(--r-xl) !important;
+    border: 0.5px solid var(--c-separator) !important;
+    box-shadow: var(--shadow-xl) !important;
+    overflow: hidden;
+}
+.modal-header {
+    background: var(--c-surface2) !important;
+    border-bottom: 0.5px solid var(--c-separator) !important;
+    padding: 18px 24px !important;
+}
+.modal-footer {
+    background: var(--c-surface2) !important;
+    border-top: 0.5px solid var(--c-separator) !important;
+    padding: 16px 24px !important;
+}
 </style>
 
 <div class="ee-root">
@@ -243,7 +370,7 @@
             <p>Manage Employees Provident Fund (20%) & Employees Trust Fund (3%) Contributions, Liabilities & Payments</p>
         </div>
         <div>
-            <a href="<?= APP_URL ?>/epfetf/reports" class="btn-sf btn-sf-primary" style="padding: 10px 20px; border-radius: var(--r-pill);">
+            <a href="<?= APP_URL ?>/epfetf/reports" class="btn-apple btn-apple-primary" style="padding: 10px 22px;">
                 <i class="fa-solid fa-chart-pie"></i> EPF/ETF Compliance Reports
             </a>
         </div>
@@ -263,48 +390,68 @@
     }
     ?>
 
-    <!-- KPI Summary Row -->
-    <div class="kpi-row">
-        <div class="kpi-card">
-            <div class="kpi-label">Total EPF Liability (20%)</div>
-            <div class="kpi-val">LKR <?= number_format($totEpf, 2) ?></div>
+    <!-- Apple-Style KPI Stat Cards Row -->
+    <div class="stat-row">
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="stat-info">
+                <div class="stat-lbl">Total EPF Liability (20%)</div>
+                <div class="stat-num">LKR <?= number_format($totEpf, 2) ?></div>
+            </div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Total ETF Liability (3%)</div>
-            <div class="kpi-val">LKR <?= number_format($totEtf, 2) ?></div>
+
+        <div class="stat-card purple">
+            <div class="stat-icon"><i class="fa-solid fa-building-columns"></i></div>
+            <div class="stat-info">
+                <div class="stat-lbl">Total ETF Liability (3%)</div>
+                <div class="stat-num">LKR <?= number_format($totEtf, 2) ?></div>
+            </div>
         </div>
-        <div class="kpi-card" style="border-left: 4px solid var(--c-orange);">
-            <div class="kpi-label">Pending EPF Payable</div>
-            <div class="kpi-val" style="color: var(--c-orange);">LKR <?= number_format($pendingEpf, 2) ?></div>
+
+        <div class="stat-card orange">
+            <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div class="stat-info">
+                <div class="stat-lbl">Pending EPF Payable</div>
+                <div class="stat-num" style="color: var(--c-orange);">LKR <?= number_format($pendingEpf, 2) ?></div>
+            </div>
         </div>
-        <div class="kpi-card" style="border-left: 4px solid var(--c-red);">
-            <div class="kpi-label">Pending ETF Payable</div>
-            <div class="kpi-val" style="color: var(--c-red);">LKR <?= number_format($pendingEtf, 2) ?></div>
+
+        <div class="stat-card red">
+            <div class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div class="stat-info">
+                <div class="stat-lbl">Pending ETF Payable</div>
+                <div class="stat-num" style="color: var(--c-red);">LKR <?= number_format($pendingEtf, 2) ?></div>
+            </div>
         </div>
     </div>
 
-    <!-- Filter Bar -->
-    <form method="GET" action="<?= APP_URL ?>/epfetf" class="filter-card">
-        <div class="filter-group">
-            <label><i class="fa-solid fa-calendar"></i> Year:</label>
-            <select name="year" class="filter-select" onchange="this.form.submit()">
+    <!-- Filter Shelf Bar -->
+    <form method="GET" action="<?= APP_URL ?>/epfetf" class="filter-shelf">
+        <div class="filter-chip">
+            <i class="fa-solid fa-calendar-days" style="color: var(--c-blue);"></i>
+            <span>Year:</span>
+            <select name="year" onchange="this.form.submit()">
                 <?php for($y = date('Y'); $y >= 2024; $y--): ?>
                     <option value="<?= $y ?>" <?= ($data['selected_year'] == $y) ? 'selected' : '' ?>><?= $y ?></option>
                 <?php endfor; ?>
             </select>
         </div>
-        <div class="filter-group">
-            <label>Month:</label>
-            <select name="month" class="filter-select" onchange="this.form.submit()">
+
+        <div class="filter-chip">
+            <i class="fa-solid fa-calendar-minus" style="color: var(--c-purple);"></i>
+            <span>Month:</span>
+            <select name="month" onchange="this.form.submit()">
                 <option value="">All Months</option>
                 <?php for($m = 1; $m <= 12; $m++): ?>
                     <option value="<?= $m ?>" <?= ($data['selected_month'] == $m) ? 'selected' : '' ?>><?= date('F', mktime(0, 0, 0, $m, 1)) ?></option>
                 <?php endfor; ?>
             </select>
         </div>
-        <div class="filter-group">
-            <label>Status:</label>
-            <select name="status" class="filter-select" onchange="this.form.submit()">
+
+        <div class="filter-chip">
+            <i class="fa-solid fa-filter" style="color: var(--c-orange);"></i>
+            <span>Status:</span>
+            <select name="status" onchange="this.form.submit()">
                 <option value="All">All Statuses</option>
                 <option value="Unpaid" <?= ($data['selected_status'] === 'Unpaid') ? 'selected' : '' ?>>Unpaid</option>
                 <option value="Partially Paid" <?= ($data['selected_status'] === 'Partially Paid') ? 'selected' : '' ?>>Partially Paid</option>
@@ -316,154 +463,160 @@
     <!-- Monthly EPF/ETF Liabilities Panel -->
     <div class="table-panel">
         <div class="panel-header">
-            <h3><i class="fa-solid fa-list-check"></i> Monthly EPF & ETF Liabilities</h3>
-            <span style="font-size: 12px; color: var(--t-secondary);">Liability Accounts: GL-2001 (EPF) & GL-2002 (ETF)</span>
+            <h3><i class="fa-solid fa-list-check" style="color: var(--c-blue);"></i> Monthly EPF & ETF Liabilities</h3>
+            <span class="panel-subtitle">Liability Accounts: GL-2001 (EPF) & GL-2002 (ETF)</span>
         </div>
-        <table class="sf-table">
-            <thead>
-                <tr>
-                    <th style="padding-left: 24px;">Period</th>
-                    <th>Employees</th>
-                    <th style="text-align: right;">Employee EPF (8%)</th>
-                    <th style="text-align: right;">Employer EPF (12%)</th>
-                    <th style="text-align: right; font-weight:800;">Total EPF (20%)</th>
-                    <th style="text-align: right; font-weight:800;">Employer ETF (3%)</th>
-                    <th style="text-align: center;">EPF Status</th>
-                    <th style="text-align: center;">ETF Status</th>
-                    <th style="text-align: center; padding-right: 24px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($data['liabilities'])): ?>
-                    <?php foreach ($data['liabilities'] as $l): ?>
-                        <?php 
-                        $epfTot = floatval($l->total_epf_employee) + floatval($l->total_epf_employer);
-                        $etfTot = floatval($l->total_etf_employer);
-                        $epfBal = max(0, $epfTot - floatval($l->epf_paid_amount));
-                        $etfBal = max(0, $etfTot - floatval($l->etf_paid_amount));
-                        ?>
+        <div style="overflow-x: auto;">
+            <table class="sf-table">
+                <thead>
+                    <tr>
+                        <th style="padding-left: 24px;">Period</th>
+                        <th>Employees</th>
+                        <th style="text-align: right;">Employee EPF (8%)</th>
+                        <th style="text-align: right;">Employer EPF (12%)</th>
+                        <th style="text-align: right; font-weight:800;">Total EPF (20%)</th>
+                        <th style="text-align: right; font-weight:800;">Employer ETF (3%)</th>
+                        <th style="text-align: center;">EPF Status</th>
+                        <th style="text-align: center;">ETF Status</th>
+                        <th style="text-align: center; padding-right: 24px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($data['liabilities'])): ?>
+                        <?php foreach ($data['liabilities'] as $l): ?>
+                            <?php 
+                            $epfTot = floatval($l->total_epf_employee) + floatval($l->total_epf_employer);
+                            $etfTot = floatval($l->total_etf_employer);
+                            $epfBal = max(0, $epfTot - floatval($l->epf_paid_amount));
+                            $etfBal = max(0, $etfTot - floatval($l->etf_paid_amount));
+                            ?>
+                            <tr>
+                                <td style="padding-left: 24px; font-weight: 700;">
+                                    <?= date('M Y', strtotime($l->period_end)) ?>
+                                    <div style="font-size: 11.5px; color: var(--t-secondary); font-weight: 500; margin-top: 2px;">
+                                        PR-<?= $l->payroll_run_id ?> (<?= date('M d', strtotime($l->period_start)) ?> - <?= date('M d', strtotime($l->period_end)) ?>)
+                                    </div>
+                                </td>
+                                <td><span class="sf-badge" style="background: var(--c-fill2); color: var(--t-primary);"><?= $l->employee_count ?> Staff</span></td>
+                                <td style="text-align: right;">LKR <?= number_format(floatval($l->total_epf_employee), 2) ?></td>
+                                <td style="text-align: right;">LKR <?= number_format(floatval($l->total_epf_employer), 2) ?></td>
+                                <td style="text-align: right; font-weight: 800; color: var(--c-blue);">
+                                    LKR <?= number_format($epfTot, 2) ?>
+                                    <?php if ($epfBal > 0 && $l->epf_paid_amount > 0): ?>
+                                        <div style="font-size: 11px; color: var(--c-orange); font-weight: 700;">Bal: LKR <?= number_format($epfBal, 2) ?></div>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: right; font-weight: 800; color: var(--c-purple);">
+                                    LKR <?= number_format($etfTot, 2) ?>
+                                    <?php if ($etfBal > 0 && $l->etf_paid_amount > 0): ?>
+                                        <div style="font-size: 11px; color: var(--c-orange); font-weight: 700;">Bal: LKR <?= number_format($etfBal, 2) ?></div>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="sf-badge badge-<?= str_replace(' ', '', $l->epf_payment_status) ?>">
+                                        <span class="dot"></span> <?= htmlspecialchars($l->epf_payment_status) ?>
+                                    </span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <span class="sf-badge badge-<?= str_replace(' ', '', $l->etf_payment_status) ?>">
+                                        <span class="dot"></span> <?= htmlspecialchars($l->etf_payment_status) ?>
+                                    </span>
+                                </td>
+                                <td style="text-align: center; padding-right: 24px;">
+                                    <div class="act-group">
+                                        <?php if ($epfBal > 0): ?>
+                                            <button class="btn-apple btn-apple-primary" style="font-size: 11.5px; padding: 5px 12px;"
+                                                    onclick="openPayModal(<?= $l->payroll_run_id ?>, 'EPF', <?= $epfBal ?>, '<?= date('M Y', strtotime($l->period_end)) ?>')">
+                                                <i class="fa-solid fa-credit-card"></i> Pay EPF
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <?php if ($etfBal > 0): ?>
+                                            <button class="btn-apple btn-apple-success" style="font-size: 11.5px; padding: 5px 12px;"
+                                                    onclick="openPayModal(<?= $l->payroll_run_id ?>, 'ETF', <?= $etfBal ?>, '<?= date('M Y', strtotime($l->period_end)) ?>')">
+                                                <i class="fa-solid fa-credit-card"></i> Pay ETF
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <?php if ($epfBal <= 0 && $etfBal <= 0): ?>
+                                            <span style="font-size: 12px; color: var(--c-green); font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Settled</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
                         <tr>
-                            <td style="padding-left: 24px; font-weight: 700;">
-                                <?= date('M Y', strtotime($l->period_end)) ?>
-                                <div style="font-size: 11px; color: var(--t-secondary); font-weight: 500;">
-                                    PR-<?= $l->payroll_run_id ?> (<?= date('M d', strtotime($l->period_start)) ?> - <?= date('M d', strtotime($l->period_end)) ?>)
-                                </div>
-                            </td>
-                            <td><span class="sf-badge" style="background: var(--c-fill2);"><?= $l->employee_count ?> Staff</span></td>
-                            <td style="text-align: right;">LKR <?= number_format(floatval($l->total_epf_employee), 2) ?></td>
-                            <td style="text-align: right;">LKR <?= number_format(floatval($l->total_epf_employer), 2) ?></td>
-                            <td style="text-align: right; font-weight: 800; color: var(--c-blue);">
-                                LKR <?= number_format($epfTot, 2) ?>
-                                <?php if ($epfBal > 0 && $l->epf_paid_amount > 0): ?>
-                                    <div style="font-size: 11px; color: var(--c-orange);">Bal: <?= number_format($epfBal, 2) ?></div>
-                                <?php endif; ?>
-                            </td>
-                            <td style="text-align: right; font-weight: 800; color: var(--c-purple);">
-                                LKR <?= number_format($etfTot, 2) ?>
-                                <?php if ($etfBal > 0 && $l->etf_paid_amount > 0): ?>
-                                    <div style="font-size: 11px; color: var(--c-orange);">Bal: <?= number_format($etfBal, 2) ?></div>
-                                <?php endif; ?>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="sf-badge badge-<?= str_replace(' ', '', $l->epf_payment_status) ?>">
-                                    <span class="dot"></span> <?= htmlspecialchars($l->epf_payment_status) ?>
-                                </span>
-                            </td>
-                            <td style="text-align: center;">
-                                <span class="sf-badge badge-<?= str_replace(' ', '', $l->etf_payment_status) ?>">
-                                    <span class="dot"></span> <?= htmlspecialchars($l->etf_payment_status) ?>
-                                </span>
-                            </td>
-                            <td style="text-align: center; padding-right: 24px;">
-                                <div class="act-group">
-                                    <?php if ($epfBal > 0): ?>
-                                        <button class="btn-sf btn-sf-primary" style="border-radius: var(--r-pill); font-size: 11px; padding: 4px 10px;"
-                                                onclick="openPayModal(<?= $l->payroll_run_id ?>, 'EPF', <?= $epfBal ?>, '<?= date('M Y', strtotime($l->period_end)) ?>')">
-                                            <i class="fa-solid fa-credit-card"></i> Pay EPF
-                                        </button>
-                                    <?php endif; ?>
-
-                                    <?php if ($etfBal > 0): ?>
-                                        <button class="btn-sf btn-sf-success" style="border-radius: var(--r-pill); font-size: 11px; padding: 4px 10px;"
-                                                onclick="openPayModal(<?= $l->payroll_run_id ?>, 'ETF', <?= $etfBal ?>, '<?= date('M Y', strtotime($l->period_end)) ?>')">
-                                            <i class="fa-solid fa-credit-card"></i> Pay ETF
-                                        </button>
-                                    <?php endif; ?>
-
-                                    <?php if ($epfBal <= 0 && $etfBal <= 0): ?>
-                                        <span style="font-size: 12px; color: var(--c-green); font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Settled</span>
-                                    <?php endif; ?>
-                                </div>
+                            <td colspan="9" style="text-align: center; padding: 60px 20px; color: var(--t-secondary);">
+                                <i class="fa-solid fa-folder-open" style="font-size: 36px; opacity: 0.3; margin-bottom: 12px; display: block;"></i>
+                                No approved payroll runs found for the selected period.
                             </td>
                         </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="9" style="text-align: center; padding: 50px; color: var(--t-secondary);">
-                            <i class="fa-solid fa-folder-open" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
-                            No approved payroll runs found for the selected period.
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- EPF & ETF Payment History Log -->
     <div class="table-panel">
         <div class="panel-header">
-            <h3><i class="fa-solid fa-clock-rotate-left"></i> EPF & ETF Payment Settlement Log</h3>
-            <span style="font-size: 12px; color: var(--t-secondary);">Bank Settlements & Journal References</span>
+            <h3><i class="fa-solid fa-clock-rotate-left" style="color: var(--c-purple);"></i> EPF & ETF Payment Settlement Log</h3>
+            <span class="panel-subtitle">Bank Settlements & Journal References</span>
         </div>
-        <table class="sf-table">
-            <thead>
-                <tr>
-                    <th style="padding-left: 24px;">Date</th>
-                    <th>Type</th>
-                    <th>Period</th>
-                    <th style="text-align: right;">Amount Paid</th>
-                    <th>Bank Account</th>
-                    <th>Ref Number</th>
-                    <th>Recorded By</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($data['payment_history'])): ?>
-                    <?php foreach ($data['payment_history'] as $p): ?>
-                        <tr>
-                            <td style="padding-left: 24px; font-weight: 600;"><?= date('M d, Y', strtotime($p->payment_date)) ?></td>
-                            <td>
-                                <span class="sf-badge" style="background: <?= ($p->payment_type === 'EPF') ? 'var(--c-blue-light)' : 'var(--c-purple-light)' ?>; color: <?= ($p->payment_type === 'EPF') ? 'var(--c-blue)' : 'var(--c-purple)' ?>;">
-                                    <?= $p->payment_type ?>
-                                </span>
-                            </td>
-                            <td><?= date('M Y', strtotime($p->period_end)) ?></td>
-                            <td style="text-align: right; font-weight: 700; color: var(--c-green);">
-                                LKR <?= number_format(floatval($p->amount_paid), 2) ?>
-                            </td>
-                            <td><?= htmlspecialchars($p->bank_code . ' - ' . $p->bank_name) ?></td>
-                            <td><code><?= htmlspecialchars($p->payment_reference ?? '') ?></code></td>
-                            <td><?= htmlspecialchars($p->paid_by_user) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
+        <div style="overflow-x: auto;">
+            <table class="sf-table">
+                <thead>
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--t-secondary);">
-                            No EPF/ETF payment transactions recorded yet.
-                        </td>
+                        <th style="padding-left: 24px;">Date</th>
+                        <th>Type</th>
+                        <th>Period</th>
+                        <th style="text-align: right;">Amount Paid</th>
+                        <th>Bank Account</th>
+                        <th>Ref Number</th>
+                        <th>Recorded By</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php if (!empty($data['payment_history'])): ?>
+                        <?php foreach ($data['payment_history'] as $p): ?>
+                            <tr>
+                                <td style="padding-left: 24px; font-weight: 600;"><?= date('M d, Y', strtotime($p->payment_date)) ?></td>
+                                <td>
+                                    <span class="sf-badge" style="background: <?= ($p->payment_type === 'EPF') ? 'var(--c-blue-light)' : 'var(--c-purple-light)' ?>; color: <?= ($p->payment_type === 'EPF') ? 'var(--c-blue)' : 'var(--c-purple)' ?>;">
+                                        <?= $p->payment_type ?>
+                                    </span>
+                                </td>
+                                <td><?= date('M Y', strtotime($p->period_end)) ?></td>
+                                <td style="text-align: right; font-weight: 800; color: var(--c-green);">
+                                    LKR <?= number_format(floatval($p->amount_paid), 2) ?>
+                                </td>
+                                <td><?= htmlspecialchars($p->bank_code . ' - ' . $p->bank_name) ?></td>
+                                <td><code><?= htmlspecialchars($p->payment_reference ?? '') ?></code></td>
+                                <td><?= htmlspecialchars($p->paid_by_user) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px 20px; color: var(--t-secondary);">
+                                No EPF/ETF payment transactions recorded yet.
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Modal for EPF/ETF Payment -->
 <div class="modal fade" id="payEpfEtfModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form class="modal-content" action="<?= APP_URL ?>/epfetf/pay" method="POST" style="border-radius: var(--r-lg); border: none; box-shadow: var(--shadow-md);">
-            <div class="modal-header" style="background: var(--c-surface2); border-bottom: 0.5px solid var(--c-separator);">
-                <h5 class="modal-title" id="payModalTitle" style="font-weight: 800;"><i class="fa-solid fa-credit-card"></i> Record EPF / ETF Payment</h5>
+        <form class="modal-content" action="<?= APP_URL ?>/epfetf/pay" method="POST">
+            <div class="modal-header">
+                <h5 class="modal-title" id="payModalTitle" style="font-weight: 800; font-size: 17px; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-credit-card" style="color: var(--c-blue);"></i> Record EPF / ETF Payment
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 24px;">
@@ -471,18 +624,18 @@
                 <input type="hidden" name="payment_type" id="modal_payment_type">
 
                 <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px;">Payment Type & Period</label>
-                    <input type="text" class="form-control" id="modal_period_display" readonly style="background: var(--c-fill2); font-weight: 700;">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Payment Type & Period</label>
+                    <input type="text" class="form-control" id="modal_period_display" readonly style="background: var(--c-fill2); font-weight: 700; border-radius: var(--r-sm);">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px;">Payment Date *</label>
-                    <input type="date" name="payment_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Payment Date *</label>
+                    <input type="date" name="payment_date" class="form-control" value="<?= date('Y-m-d') ?>" style="border-radius: var(--r-sm);" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px;">Select Bank Account *</label>
-                    <select name="bank_account_id" class="form-select" required>
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Select Bank Account *</label>
+                    <select name="bank_account_id" class="form-select" style="border-radius: var(--r-sm);" required>
                         <option value="">-- Choose Bank Account --</option>
                         <?php if (!empty($data['bank_accounts'])): foreach ($data['bank_accounts'] as $b): ?>
                             <option value="<?= $b->id ?>"><?= htmlspecialchars($b->account_code . ' - ' . $b->account_name) ?></option>
@@ -491,24 +644,24 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px;">Amount to Pay (LKR) *</label>
-                    <input type="number" step="0.01" name="amount_paid" id="modal_amount_paid" class="form-control" style="font-weight: 800; font-size: 18px;" required>
-                    <small class="text-muted" id="modal_max_balance"></small>
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Amount to Pay (LKR) *</label>
+                    <input type="number" step="0.01" name="amount_paid" id="modal_amount_paid" class="form-control" style="font-weight: 800; font-size: 18px; border-radius: var(--r-sm);" required>
+                    <small style="color: var(--c-orange); font-weight: 600; font-size: 11.5px;" id="modal_max_balance"></small>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px;">Bank Cheque / Payment Reference</label>
-                    <input type="text" name="payment_reference" class="form-control" placeholder="e.g. CHQ-948271 / CBO-EPF-1029">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Bank Cheque / Payment Reference</label>
+                    <input type="text" name="payment_reference" class="form-control" style="border-radius: var(--r-sm);" placeholder="e.g. CHQ-948271 / CBO-EPF-1029">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px;">Notes</label>
-                    <textarea name="notes" class="form-control" rows="2" placeholder="Optional payment remarks..."></textarea>
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Notes</label>
+                    <textarea name="notes" class="form-control" rows="2" style="border-radius: var(--r-sm);" placeholder="Optional payment remarks..."></textarea>
                 </div>
             </div>
-            <div class="modal-footer" style="background: var(--c-surface2); border-top: 0.5px solid var(--c-separator);">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: var(--r-pill);">Cancel</button>
-                <button type="submit" class="btn btn-primary" style="border-radius: var(--r-pill); font-weight: 700;">Confirm & Post Payment Entry</button>
+            <div class="modal-footer">
+                <button type="button" class="btn-apple btn-apple-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn-apple btn-apple-primary">Confirm & Post Payment Entry</button>
             </div>
         </form>
     </div>
