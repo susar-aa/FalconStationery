@@ -53,6 +53,14 @@ class Payroll {
             }
 
             // Self-heal employees columns
+            $this->db->query("SHOW COLUMNS FROM employees LIKE 'employee_code'");
+            if (!$this->db->single()) {
+                try {
+                    $this->db->query("ALTER TABLE employees ADD COLUMN employee_code VARCHAR(50) NULL AFTER id");
+                    $this->db->execute();
+                } catch (Throwable $t) {}
+            }
+
             $this->db->query("SHOW COLUMNS FROM employees LIKE 'epf_member_no'");
             if (!$this->db->single()) {
                 $cols = [
@@ -767,7 +775,8 @@ class Payroll {
     }
 
     public function getEmployeeContributionHistory(int $employeeId, ?int $year = null): array {
-        $sql = "SELECT ps.*, pr.period_start, pr.period_end, pr.run_date, e.first_name, e.last_name, e.employee_code, e.epf_member_no
+        $sql = "SELECT ps.*, pr.period_start, pr.period_end, pr.run_date, e.first_name, e.last_name, 
+                       CONCAT('EMP-', e.id) as employee_code, e.epf_member_no
                 FROM payroll_slips ps
                 JOIN payroll_runs pr ON ps.payroll_run_id = pr.id
                 JOIN employees e ON ps.employee_id = e.id

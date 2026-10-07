@@ -330,22 +330,126 @@
 
 .act-group { display: flex; gap: 6px; justify-content: center; }
 
-/* Modal Improvements */
-.modal-content {
-    border-radius: var(--r-xl) !important;
-    border: 0.5px solid var(--c-separator) !important;
-    box-shadow: var(--shadow-xl) !important;
+/* ---- Custom SF Glass Overlay Modal ---- */
+.sf-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 20px;
+    box-sizing: border-box;
+}
+.sf-modal-overlay.active {
+    display: flex;
+    animation: sfModalFadeIn 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+@keyframes sfModalFadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+.sf-modal-card {
+    background: var(--c-surface);
+    width: 100%;
+    max-width: 650px;
+    border-radius: 24px;
+    border: 0.5px solid var(--c-separator);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
-.modal-header {
-    background: var(--c-surface2) !important;
-    border-bottom: 0.5px solid var(--c-separator) !important;
-    padding: 18px 24px !important;
+.sf-modal-header {
+    padding: 20px 24px;
+    background: var(--c-surface2);
+    border-bottom: 0.5px solid var(--c-separator);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.modal-footer {
+.sf-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--t-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sf-modal-close {
+    background: var(--c-fill2);
+    border: none;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    color: var(--t-secondary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+}
+.sf-modal-close:hover { background: var(--c-red-light); color: var(--c-red); }
+
+.sf-modal-body {
+    padding: 24px;
+    max-height: calc(85vh - 130px);
+    overflow-y: auto;
+}
+.sf-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+@media (max-width: 600px) {
+    .sf-form-row { grid-template-columns: 1fr; }
+}
+.sf-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.sf-form-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t-secondary);
+    display: block;
+}
+.sf-form-control {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 11px 16px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--c-separator) !important;
     background: var(--c-surface2) !important;
-    border-top: 0.5px solid var(--c-separator) !important;
-    padding: 16px 24px !important;
+    font-family: var(--f-system) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--t-primary) !important;
+    outline: none !important;
+    transition: all 0.18s ease !important;
+}
+.sf-form-control:focus {
+    border-color: var(--c-blue) !important;
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15) !important;
+    background: var(--c-surface) !important;
+}
+textarea.sf-form-control {
+    height: auto !important;
+    min-height: 80px !important;
+}
+
+.sf-modal-footer {
+    padding: 16px 24px;
+    background: var(--c-surface2);
+    border-top: 0.5px solid var(--c-separator);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
 }
 </style>
 
@@ -369,7 +473,10 @@
             <h1><i class="fa-solid fa-shield-halved" style="color: var(--c-blue);"></i> EPF & ETF Management</h1>
             <p>Manage Employees Provident Fund (20%) & Employees Trust Fund (3%) Contributions, Liabilities & Payments</p>
         </div>
-        <div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" onclick="openDirectPayModal()" class="btn-apple btn-apple-success" style="padding: 10px 22px;">
+                <i class="fa-solid fa-plus"></i> Record EPF/ETF Payment
+            </button>
             <a href="<?= APP_URL ?>/epfetf/reports" class="btn-apple btn-apple-primary" style="padding: 10px 22px;">
                 <i class="fa-solid fa-chart-pie"></i> EPF/ETF Compliance Reports
             </a>
@@ -609,58 +716,88 @@
     </div>
 </div>
 
-<!-- Modal for EPF/ETF Payment -->
-<div class="modal fade" id="payEpfEtfModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form class="modal-content" action="<?= APP_URL ?>/epfetf/pay" method="POST">
-            <div class="modal-header">
-                <h5 class="modal-title" id="payModalTitle" style="font-weight: 800; font-size: 17px; display:flex; align-items:center; gap:8px;">
-                    <i class="fa-solid fa-credit-card" style="color: var(--c-blue);"></i> Record EPF / ETF Payment
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Custom SF Glass Overlay Modal for EPF/ETF Payment -->
+<div class="sf-modal-overlay" id="payEpfEtfModalOverlay" onclick="if(event.target===this) closePayModal()">
+    <div class="sf-modal-card">
+        <div class="sf-modal-header">
+            <h5 class="sf-modal-title" id="payModalTitle">
+                <i class="fa-solid fa-credit-card" style="color: var(--c-blue);"></i> Record EPF / ETF Payment
+            </h5>
+            <button type="button" class="sf-modal-close" onclick="closePayModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form action="<?= APP_URL ?>/epfetf/pay" method="POST">
+            <div class="sf-modal-body">
+                <div class="sf-form-row">
+                    <div class="sf-form-group">
+                        <label class="sf-form-label">Select Payroll Period *</label>
+                        <select name="payroll_run_id" id="modal_run_id" class="sf-form-control" onchange="onRunOrTypeChange()" required>
+                            <?php if (!empty($data['liabilities'])): ?>
+                                <?php foreach ($data['liabilities'] as $l): ?>
+                                    <?php 
+                                        $epfB = max(0, (floatval($l->total_epf_employee) + floatval($l->total_epf_employer)) - floatval($l->epf_paid_amount));
+                                        $etfB = max(0, floatval($l->total_etf_employer) - floatval($l->etf_paid_amount));
+                                    ?>
+                                    <option value="<?= $l->payroll_run_id ?>" 
+                                            data-epf-bal="<?= $epfB ?>" 
+                                            data-etf-bal="<?= $etfB ?>" 
+                                            data-period="<?= date('M Y', strtotime($l->period_end)) ?>">
+                                        PR-<?= $l->payroll_run_id ?> — <?= date('M Y', strtotime($l->period_end)) ?> (EPF Bal: LKR <?= number_format($epfB, 2) ?> | ETF Bal: LKR <?= number_format($etfB, 2) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="">No Unpaid Payroll Runs Available</option>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+
+                    <div class="sf-form-group">
+                        <label class="sf-form-label">Payment Type *</label>
+                        <select name="payment_type" id="modal_payment_type" class="sf-form-control" onchange="onRunOrTypeChange()" required>
+                            <option value="EPF">EPF (Employees Provident Fund - 20%)</option>
+                            <option value="ETF">ETF (Employees Trust Fund - 3%)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sf-form-row">
+                    <div class="sf-form-group">
+                        <label class="sf-form-label">Payment Date *</label>
+                        <input type="date" name="payment_date" class="sf-form-control" value="<?= date('Y-m-d') ?>" required>
+                    </div>
+
+                    <div class="sf-form-group">
+                        <label class="sf-form-label">Select Bank Account *</label>
+                        <select name="bank_account_id" class="sf-form-control" required>
+                            <option value="">-- Choose Bank Account --</option>
+                            <?php if (!empty($data['bank_accounts'])): foreach ($data['bank_accounts'] as $b): ?>
+                                <option value="<?= $b->id ?>"><?= htmlspecialchars($b->account_code . ' - ' . $b->account_name) ?></option>
+                            <?php endforeach; endif; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sf-form-row">
+                    <div class="sf-form-group">
+                        <label class="sf-form-label">Amount to Pay (LKR) *</label>
+                        <input type="number" step="0.01" name="amount_paid" id="modal_amount_paid" class="sf-form-control" style="font-weight: 800; font-size: 16px; color: var(--c-blue);" required>
+                        <small style="color: var(--c-orange); font-weight: 700; font-size: 11.5px;" id="modal_max_balance"></small>
+                    </div>
+
+                    <div class="sf-form-group">
+                        <label class="sf-form-label">Bank Cheque / Payment Reference</label>
+                        <input type="text" name="payment_reference" class="sf-form-control" placeholder="e.g. CHQ-948271 / CBO-EPF-1029">
+                    </div>
+                </div>
+
+                <div class="sf-form-group">
+                    <label class="sf-form-label">Notes</label>
+                    <textarea name="notes" class="sf-form-control" rows="2" placeholder="Optional payment remarks or transaction reference notes..."></textarea>
+                </div>
             </div>
-            <div class="modal-body" style="padding: 24px;">
-                <input type="hidden" name="payroll_run_id" id="modal_run_id">
-                <input type="hidden" name="payment_type" id="modal_payment_type">
 
-                <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Payment Type & Period</label>
-                    <input type="text" class="form-control" id="modal_period_display" readonly style="background: var(--c-fill2); font-weight: 700; border-radius: var(--r-sm);">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Payment Date *</label>
-                    <input type="date" name="payment_date" class="form-control" value="<?= date('Y-m-d') ?>" style="border-radius: var(--r-sm);" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Select Bank Account *</label>
-                    <select name="bank_account_id" class="form-select" style="border-radius: var(--r-sm);" required>
-                        <option value="">-- Choose Bank Account --</option>
-                        <?php if (!empty($data['bank_accounts'])): foreach ($data['bank_accounts'] as $b): ?>
-                            <option value="<?= $b->id ?>"><?= htmlspecialchars($b->account_code . ' - ' . $b->account_name) ?></option>
-                        <?php endforeach; endif; ?>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Amount to Pay (LKR) *</label>
-                    <input type="number" step="0.01" name="amount_paid" id="modal_amount_paid" class="form-control" style="font-weight: 800; font-size: 18px; border-radius: var(--r-sm);" required>
-                    <small style="color: var(--c-orange); font-weight: 600; font-size: 11.5px;" id="modal_max_balance"></small>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Bank Cheque / Payment Reference</label>
-                    <input type="text" name="payment_reference" class="form-control" style="border-radius: var(--r-sm);" placeholder="e.g. CHQ-948271 / CBO-EPF-1029">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label" style="font-weight: 600; font-size: 13px; color: var(--t-secondary);">Notes</label>
-                    <textarea name="notes" class="form-control" rows="2" style="border-radius: var(--r-sm);" placeholder="Optional payment remarks..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-apple btn-apple-secondary" data-bs-dismiss="modal">Cancel</button>
+            <div class="sf-modal-footer">
+                <button type="button" class="btn-apple btn-apple-secondary" onclick="closePayModal()">Cancel</button>
                 <button type="submit" class="btn-apple btn-apple-primary">Confirm & Post Payment Entry</button>
             </div>
         </form>
@@ -668,14 +805,43 @@
 </div>
 
 <script>
+function openDirectPayModal() {
+    const overlay = document.getElementById('payEpfEtfModalOverlay');
+    overlay.classList.add('active');
+    onRunOrTypeChange();
+}
+
 function openPayModal(runId, type, balance, periodName) {
-    document.getElementById('modal_run_id').value = runId;
-    document.getElementById('modal_payment_type').value = type;
-    document.getElementById('modal_period_display').value = type + ' Settlement - ' + periodName;
-    document.getElementById('modal_amount_paid').value = balance.toFixed(2);
-    document.getElementById('modal_max_balance').innerText = 'Remaining Liability Balance: LKR ' + balance.toFixed(2);
+    const selectRun = document.getElementById('modal_run_id');
+    const selectType = document.getElementById('modal_payment_type');
     
-    var modal = new bootstrap.Modal(document.getElementById('payEpfEtfModal'));
-    modal.show();
+    if (selectRun) selectRun.value = runId;
+    if (selectType) selectType.value = type;
+    
+    document.getElementById('modal_amount_paid').value = balance.toFixed(2);
+    document.getElementById('modal_max_balance').innerText = 'Remaining ' + type + ' Liability Balance: LKR ' + balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    const overlay = document.getElementById('payEpfEtfModalOverlay');
+    overlay.classList.add('active');
+}
+
+function closePayModal() {
+    const overlay = document.getElementById('payEpfEtfModalOverlay');
+    overlay.classList.remove('active');
+}
+
+function onRunOrTypeChange() {
+    const selectRun = document.getElementById('modal_run_id');
+    const selectType = document.getElementById('modal_payment_type');
+    if (!selectRun || !selectRun.options.length || selectRun.selectedIndex < 0) return;
+
+    const opt = selectRun.options[selectRun.selectedIndex];
+    const type = selectType.value;
+    const epfBal = parseFloat(opt.getAttribute('data-epf-bal') || '0');
+    const etfBal = parseFloat(opt.getAttribute('data-etf-bal') || '0');
+
+    const targetBal = (type === 'EPF') ? epfBal : etfBal;
+    document.getElementById('modal_amount_paid').value = targetBal.toFixed(2);
+    document.getElementById('modal_max_balance').innerText = 'Remaining ' + type + ' Liability Balance: LKR ' + targetBal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 </script>
