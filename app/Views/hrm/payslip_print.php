@@ -2,145 +2,255 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($data['title']) ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Inter Font & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #fff; color: #000; padding: 20px; }
-        .payslip-container { max-width: 800px; margin: 0 auto; border: 1px solid #ccc; padding: 30px; }
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-        .company-name { font-size: 24px; font-weight: bold; }
-        .slip-title { font-size: 18px; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
-        .emp-details { margin-bottom: 30px; }
-        .table-totals { font-weight: bold; background-color: #f8f9fa; }
-        .net-pay { font-size: 20px; font-weight: bold; color: #198754; text-align: right; }
+        :root {
+            --f-system: 'Inter', -apple-system, sans-serif;
+            --f-mono: ui-monospace, 'SF Mono', monospace;
+        }
+        body {
+            font-family: var(--f-system);
+            background-color: #f4f5f7;
+            color: #1c1c1e;
+            padding: 30px 20px;
+            margin: 0;
+            -webkit-print-color-adjust: exact;
+        }
+        .payslip-card {
+            max-width: 820px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e5e5ea;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            padding: 36px 40px;
+        }
+        .print-bar {
+            max-width: 820px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-print {
+            padding: 9px 18px;
+            background: #007aff;
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,122,255,0.25);
+        }
+        .btn-print:hover { background: #0066d6; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #007aff;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+        .company-title { font-size: 24px; font-weight: 800; color: #007aff; letter-spacing: -0.02em; }
+        .company-sub { font-size: 12.5px; color: #636366; margin-top: 2px; }
+        .slip-badge {
+            background: #e5f2ff;
+            color: #007aff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .emp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: #f9f9fb;
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid #efeff4;
+            margin-bottom: 24px;
+        }
+        .emp-item { font-size: 13px; line-height: 1.6; }
+        .emp-item strong { color: #1c1c1e; display: inline-block; width: 130px; }
+
+        .tables-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .section-box {
+            border: 1px solid #e5e5ea;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .section-header {
+            background: #f2f2f7;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #636366;
+            border-bottom: 1px solid #e5e5ea;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .detail-table td {
+            padding: 10px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid #f2f2f7;
+        }
+        .detail-table tr:last-child td { border-bottom: none; }
+        .num-col { text-align: right; font-family: var(--f-mono); font-weight: 600; }
+
+        .net-pay-banner {
+            background: #e6f9ec;
+            border: 1.5px solid #34c759;
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 24px 0;
+        }
+        .net-pay-title { font-size: 15px; font-weight: 700; color: #1c1c1e; }
+        .net-pay-amount { font-size: 22px; font-weight: 800; color: #34c759; font-family: var(--f-mono); }
+
+        .sign-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 50px;
+            padding-top: 20px;
+            text-align: center;
+        }
+        .sign-line {
+            border-top: 1px dashed #aeaeb2;
+            padding-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #636366;
+        }
+
         @media print {
-            body { padding: 0; }
-            .payslip-container { border: none; padding: 0; }
-            .btn-print { display: none; }
+            body { background-color: #fff; padding: 0; }
+            .print-bar { display: none; }
+            .payslip-card { border: none; box-shadow: none; padding: 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="mb-3 text-center btn-print">
-    <button onclick="window.print()" class="btn btn-primary">Print Payslip</button>
+<div class="print-bar">
+    <div style="font-size: 13.5px; font-weight: 600; color: #636366;">Official Payslip Voucher</div>
+    <button onclick="window.print()" class="btn-print"><i class="fa-solid fa-print"></i> Print Payslip</button>
 </div>
 
 <?php $slip = $data['slip']; ?>
 
-<div class="payslip-container">
+<div class="payslip-card">
+    
     <div class="header">
-        <div class="company-name">Curtiss ERP</div>
-        <div class="slip-title">Payslip</div>
-        <div>Period: <?= date('M d', strtotime($slip->period_start)) ?> - <?= date('M d, Y', strtotime($slip->period_end)) ?></div>
+        <div>
+            <div class="company-title">Falcon ERP Personnel Payroll</div>
+            <div class="company-sub">Pay Period: <?= date('d M', strtotime($slip->period_start)) ?> &ndash; <?= date('d M Y', strtotime($slip->period_end)) ?></div>
+        </div>
+        <div class="slip-badge">Payslip PS-<?= $slip->id ?></div>
     </div>
 
-    <div class="row emp-details">
-        <div class="col-6">
-            <strong>Employee Name:</strong> <?= htmlspecialchars($slip->first_name . ' ' . $slip->last_name) ?><br>
-            <strong>Job Title:</strong> <?= htmlspecialchars($slip->job_title) ?><br>
-            <strong>Department:</strong> <?= htmlspecialchars($slip->department) ?><br>
-            <strong>EPF Member No:</strong> <?= htmlspecialchars($slip->epf_member_no ?? 'N/A') ?>
+    <div class="emp-grid">
+        <div class="emp-item">
+            <div><strong>Employee Name:</strong> <?= htmlspecialchars($slip->first_name . ' ' . $slip->last_name) ?></div>
+            <div><strong>Job Title:</strong> <?= htmlspecialchars($slip->job_title ?: 'Staff') ?></div>
+            <div><strong>Department:</strong> <?= htmlspecialchars($slip->department ?: 'General') ?></div>
         </div>
-        <div class="col-6 text-end">
-            <strong>Payslip ID:</strong> PS-<?= $slip->id ?><br>
-            <strong>Status:</strong> <?= $slip->status ?><br>
-            <?php if($slip->payment_date): ?>
-                <strong>Payment Date:</strong> <?= date('M d, Y', strtotime($slip->payment_date)) ?>
+        <div class="emp-item">
+            <div><strong>EPF Member No:</strong> <?= htmlspecialchars($slip->epf_member_no ?? 'N/A') ?></div>
+            <div><strong>Run Status:</strong> <?= htmlspecialchars($slip->status) ?></div>
+            <?php if(!empty($slip->payment_date)): ?>
+                <div><strong>Payment Date:</strong> <?= date('d M Y', strtotime($slip->payment_date)) ?></div>
             <?php endif; ?>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-6">
-            <table class="table table-bordered">
-                <thead>
-                    <tr class="table-light"><th colspan="2">Earnings</th></tr>
-                </thead>
+    <div class="tables-split">
+        <!-- Earnings -->
+        <div class="section-box">
+            <div class="section-header"><i class="fa-solid fa-plus-circle" style="color: #34c759; margin-right: 4px;"></i> Earnings</div>
+            <table class="detail-table">
                 <tbody>
-                    <tr>
-                        <td>Basic Salary</td>
-                        <td class="text-end"><?= number_format($slip->basic_salary, 2) ?></td>
-                    </tr>
-                    <tr>
-                        <td>Allowances</td>
-                        <td class="text-end"><?= number_format($slip->allowances, 2) ?></td>
-                    </tr>
-                    <tr>
-                        <td>Commissions</td>
-                        <td class="text-end"><?= number_format($slip->commissions, 2) ?></td>
-                    </tr>
-                    <tr>
-                        <td>Overtime</td>
-                        <td class="text-end"><?= number_format($slip->overtime, 2) ?></td>
-                    </tr>
-                    <tr class="table-totals">
-                        <td>Total Earnings (Gross)</td>
-                        <td class="text-end"><?= number_format($slip->gross_salary, 2) ?></td>
+                    <tr><td>Basic Salary</td><td class="num-col">Rs. <?= number_format($slip->basic_salary, 2) ?></td></tr>
+                    <tr><td>Allowances</td><td class="num-col">Rs. <?= number_format($slip->allowances, 2) ?></td></tr>
+                    <tr><td>Commissions</td><td class="num-col">Rs. <?= number_format($slip->commissions, 2) ?></td></tr>
+                    <tr><td>Overtime Pay</td><td class="num-col">Rs. <?= number_format($slip->overtime, 2) ?></td></tr>
+                    <tr style="background: #f9f9fb; font-weight: 700;">
+                        <td>Gross Earnings</td>
+                        <td class="num-col" style="color: #007aff;">Rs. <?= number_format($slip->gross_salary, 2) ?></td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <div class="col-6">
-            <table class="table table-bordered">
-                <thead>
-                    <tr class="table-light"><th colspan="2">Deductions</th></tr>
-                </thead>
+
+        <!-- Deductions -->
+        <div class="section-box">
+            <div class="section-header"><i class="fa-solid fa-minus-circle" style="color: #ff3b30; margin-right: 4px;"></i> Deductions</div>
+            <table class="detail-table">
                 <tbody>
-                    <tr>
-                        <td>EPF Deduction (Employee 8%)</td>
-                        <td class="text-end"><?= number_format($slip->epf_employee ?? 0, 2) ?></td>
-                    </tr>
-                    <tr>
-                        <td>Loan Repayment</td>
-                        <td class="text-end"><?= number_format($slip->loan_deduction, 2) ?></td>
-                    </tr>
-                    <tr>
-                        <td>Other Deductions</td>
-                        <td class="text-end"><?= number_format($slip->other_deductions, 2) ?></td>
-                    </tr>
-                    <tr class="table-totals">
+                    <tr><td>EPF Employee (8%)</td><td class="num-col" style="color: #ff3b30;">Rs. <?= number_format($slip->epf_employee ?? 0, 2) ?></td></tr>
+                    <tr><td>Loan Repayments</td><td class="num-col" style="color: #ff3b30;">Rs. <?= number_format($slip->loan_deduction, 2) ?></td></tr>
+                    <tr><td>Other Deductions</td><td class="num-col" style="color: #ff3b30;">Rs. <?= number_format($slip->other_deductions, 2) ?></td></tr>
+                    <tr style="background: #f9f9fb; font-weight: 700;">
                         <td>Total Deductions</td>
-                        <td class="text-end"><?= number_format(($slip->epf_employee ?? 0) + $slip->loan_deduction + $slip->other_deductions, 2) ?></td>
+                        <td class="num-col" style="color: #ff3b30;">Rs. <?= number_format(($slip->epf_employee ?? 0) + $slip->loan_deduction + $slip->other_deductions, 2) ?></td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div class="mt-2 mb-3">
-        <table class="table table-bordered mb-0" style="font-size: 13px;">
-            <thead>
-                <tr class="table-light"><th colspan="2">Employer Statutory Contributions (Not Deducted From Salary)</th></tr>
-            </thead>
+    <!-- Statutory Employer Contributions (Informational) -->
+    <div class="section-box" style="margin-bottom: 20px;">
+        <div class="section-header"><i class="fa-solid fa-building-columns" style="color: #af52de; margin-right: 4px;"></i> Employer Statutory Contributions (Not Deducted From Net Pay)</div>
+        <table class="detail-table">
             <tbody>
-                <tr>
-                    <td>EPF Employer Contribution (12%)</td>
-                    <td class="text-end fw-bold" style="color: #6f42c1;">Rs. <?= number_format($slip->epf_employer ?? 0, 2) ?></td>
-                </tr>
-                <tr>
-                    <td>ETF Employer Contribution (3%)</td>
-                    <td class="text-end fw-bold" style="color: #d63384;">Rs. <?= number_format($slip->etf_employer ?? 0, 2) ?></td>
-                </tr>
+                <tr><td>EPF Employer Contribution (12%)</td><td class="num-col" style="color: #ff9500;">Rs. <?= number_format($slip->epf_employer ?? 0, 2) ?></td></tr>
+                <tr><td>ETF Employer Contribution (3%)</td><td class="num-col" style="color: #af52de;">Rs. <?= number_format($slip->etf_employer ?? 0, 2) ?></td></tr>
             </tbody>
         </table>
     </div>
 
-    <div class="mt-3 p-3 border">
-        <div class="row align-items-center">
-            <div class="col-6 text-end fs-5 fw-bold">Net Payable Salary:</div>
-            <div class="col-6 net-pay">Rs. <?= number_format($slip->net_salary, 2) ?></div>
-        </div>
+    <!-- Net Pay Banner -->
+    <div class="net-pay-banner">
+        <div class="net-pay-title"><i class="fa-solid fa-wallet" style="margin-right: 6px;"></i> Net Payable Salary</div>
+        <div class="net-pay-amount">Rs. <?= number_format($slip->net_salary, 2) ?></div>
     </div>
     
-    <div class="mt-5 pt-5 row text-center">
-        <div class="col-6">
-            <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">Employer Signature</div>
+    <!-- Signature Footer -->
+    <div class="sign-row">
+        <div>
+            <div class="sign-line">Employer / Authorized Signature</div>
         </div>
-        <div class="col-6">
-            <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto; padding-top: 5px;">Employee Signature</div>
+        <div>
+            <div class="sign-line">Employee Signature &amp; Date</div>
         </div>
     </div>
+
 </div>
 
 </body>
