@@ -440,7 +440,7 @@ class JournalEntry {
             $this->db->execute();
 
             // 10. Cascade void to cheques
-            $this->db->query("UPDATE cheques SET status = 'Voided' WHERE supplier_payment_id IN (SELECT id FROM supplier_payments WHERE journal_entry_id = :id)");
+            $this->db->query("UPDATE cheques c JOIN supplier_payments sp ON c.supplier_payment_id = sp.id SET c.status = 'Voided' WHERE sp.journal_entry_id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();
 

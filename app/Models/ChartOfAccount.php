@@ -9,13 +9,13 @@ class ChartOfAccount {
 
     public function syncVoidedStatuses() {
         try {
-            $this->db->query("UPDATE journal_entries SET status = 'Voided' WHERE (status IS NULL OR status != 'Voided') AND id IN (SELECT journal_entry_id FROM customer_payments WHERE status = 'Reversed' AND journal_entry_id IS NOT NULL)");
+            $this->db->query("UPDATE journal_entries je JOIN customer_payments cp ON je.id = cp.journal_entry_id SET je.status = 'Voided' WHERE cp.status = 'Reversed' AND (je.status IS NULL OR je.status != 'Voided')");
             $this->db->execute();
 
-            $this->db->query("UPDATE journal_entries SET status = 'Voided' WHERE (status IS NULL OR status != 'Voided') AND id IN (SELECT journal_entry_id FROM supplier_payments WHERE status = 'Reversed' AND journal_entry_id IS NOT NULL)");
+            $this->db->query("UPDATE journal_entries je JOIN supplier_payments sp ON je.id = sp.journal_entry_id SET je.status = 'Voided' WHERE sp.status = 'Reversed' AND (je.status IS NULL OR je.status != 'Voided')");
             $this->db->execute();
 
-            $this->db->query("UPDATE journal_entries SET status = 'Voided' WHERE (status IS NULL OR status != 'Voided') AND id IN (SELECT journal_entry_id FROM petty_cash_transactions WHERE status = 'Voided' AND journal_entry_id IS NOT NULL)");
+            $this->db->query("UPDATE journal_entries je JOIN petty_cash_transactions pct ON je.id = pct.journal_entry_id SET je.status = 'Voided' WHERE pct.status = 'Voided' AND (je.status IS NULL OR je.status != 'Voided')");
             $this->db->execute();
         } catch (Throwable $e) {
             error_log("syncVoidedStatuses error: " . $e->getMessage());
