@@ -62,8 +62,18 @@ class BankReconciliation {
             // Add is_reconciled & reconciliation_id columns to transactions table if missing
             $this->db->query("SHOW COLUMNS FROM transactions LIKE 'is_reconciled'");
             if (!$this->db->single()) {
-                $this->db->query("ALTER TABLE transactions ADD COLUMN is_reconciled TINYINT(1) DEFAULT 0, ADD COLUMN reconciliation_id INT NULL");
-                $this->db->execute();
+                try {
+                    $this->db->query("ALTER TABLE transactions ADD COLUMN is_reconciled TINYINT(1) DEFAULT 0");
+                    $this->db->execute();
+                } catch (Throwable $ex) {}
+            }
+
+            $this->db->query("SHOW COLUMNS FROM transactions LIKE 'reconciliation_id'");
+            if (!$this->db->single()) {
+                try {
+                    $this->db->query("ALTER TABLE transactions ADD COLUMN reconciliation_id INT NULL");
+                    $this->db->execute();
+                } catch (Throwable $ex) {}
             }
 
         } catch (Throwable $e) {
@@ -144,43 +154,41 @@ class BankReconciliation {
     }
 
     public function populateReconciliationItems($recId, $accountId, $endDate) {
-        $sql = "SELECT t.id as transaction_id, t.journal_entry_id, je.entry_date, je.reference, 
-                       COALESCE(t.description, je.description) as description, t.debit, t.credit
+        $sql = "INSERT INTO bank_reconciliation_items 
+                    (reconciliation_id, transaction_type, source_table, source_id, journal_entry_id, transaction_date, reference, description, debit, credit, is_matched)
+                SELECT 
+                    :rec_id,
+                    'ERP_TRANSACTION',
+                    'transactions',
+                    t.id,
+                    t.journal_entry_id,
+                    je.entry_date,
+                    COALESCE(je.reference, ''),
+                    COALESCE(t.description, je.description, ''),
+                    t.debit,
+                    t.credit,
+                    0
                 FROM transactions t
                 JOIN journal_entries je ON t.journal_entry_id = je.id
+                LEFT JOIN bank_reconciliation_items bri 
+                    ON bri.reconciliation_id = :rec_id_dup 
+                   AND bri.source_table = 'transactions' 
+                   AND bri.source_id = t.id
                 WHERE t.account_id = :account_id
                   AND je.entry_date <= :end_date
                   AND (je.status IS NULL OR je.status != 'Voided')
-                  AND (t.is_reconciled = 0 OR t.reconciliation_id = :rec_id)";
+                  AND (t.is_reconciled = 0 OR t.reconciliation_id = :rec_id_dup2)
+                  AND bri.id IS NULL";
 
         $this->db->query($sql);
+        $this->db->bind(':rec_id', $recId);
+        $this->db->bind(':rec_id_dup', $recId);
         $this->db->bind(':account_id', $accountId);
         $this->db->bind(':end_date', $endDate);
-        $this->db->bind(':rec_id', $recId);
-        $txs = $this->db->resultSet();
-
-        foreach ($txs as $tx) {
-            $this->db->query("SELECT id FROM bank_reconciliation_items WHERE reconciliation_id = :rec_id AND source_table = 'transactions' AND source_id = :src_id");
-            $this->db->bind(':rec_id', $recId);
-            $this->db->bind(':src_id', $tx->transaction_id);
-            $exists = $this->db->single();
-
-            if (!$exists) {
-                $this->db->query("INSERT INTO bank_reconciliation_items 
-                    (reconciliation_id, transaction_type, source_table, source_id, journal_entry_id, transaction_date, reference, description, debit, credit, is_matched) 
-                    VALUES (:rec_id, 'ERP_TRANSACTION', 'transactions', :src_id, :je_id, :tx_date, :ref, :desc, :debit, :credit, 0)");
-                $this->db->bind(':rec_id', $recId);
-                $this->db->bind(':src_id', $tx->transaction_id);
-                $this->db->bind(':je_id', $tx->journal_entry_id);
-                $this->db->bind(':tx_date', $tx->entry_date);
-                $this->db->bind(':ref', $tx->reference ?? '');
-                $this->db->bind(':desc', $tx->description ?? '');
-                $this->db->bind(':debit', $tx->debit);
-                $this->db->bind(':credit', $tx->credit);
-                $this->db->execute();
-            }
-        }
+        $this->db->bind(':rec_id_dup2', $recId);
+        $this->db->execute();
     }
+
 
     public function getItems($recId) {
         $this->db->query("SELECT * FROM bank_reconciliation_items WHERE reconciliation_id = :rec_id ORDER BY transaction_date ASC, id ASC");
@@ -366,4 +374,57 @@ class BankReconciliation {
             return ['status' => false, 'message' => 'Database error during finalization: ' . $e->getMessage()];
         }
     }
+
+    public function deleteReconciliation($id) {
+        $rec = $this->getReconciliationById($id);
+        if (!$rec) {
+            return ['status' => false, 'message' => 'Reconciliation record not found.'];
+        }
+
+        if ($rec->status === 'Finalized') {
+            return ['status' => false, 'message' => 'Completed reconciliations cannot be deleted.'];
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            // 1. Delete transactions created by BANK_ONLY adjustment entries (explicit JOIN)
+            $this->db->query("DELETE t FROM transactions t 
+                              INNER JOIN bank_reconciliation_items bri ON t.journal_entry_id = bri.journal_entry_id 
+                              WHERE bri.reconciliation_id = :rec_id AND bri.transaction_type = 'BANK_ONLY'");
+            $this->db->bind(':rec_id', $id);
+            $this->db->execute();
+
+            // 2. Delete journal entries created for BANK_ONLY items (explicit JOIN)
+            $this->db->query("DELETE je FROM journal_entries je 
+                              INNER JOIN bank_reconciliation_items bri ON je.id = bri.journal_entry_id 
+                              WHERE bri.reconciliation_id = :rec_id AND bri.transaction_type = 'BANK_ONLY'");
+            $this->db->bind(':rec_id', $id);
+            $this->db->execute();
+
+            // 3. Unlink any transactions linked to this reconciliation
+            $this->db->query("UPDATE transactions SET is_reconciled = 0, reconciliation_id = NULL WHERE reconciliation_id = :rec_id");
+            $this->db->bind(':rec_id', $id);
+            $this->db->execute();
+
+            // 4. Delete reconciliation items
+            $this->db->query("DELETE FROM bank_reconciliation_items WHERE reconciliation_id = :rec_id");
+            $this->db->bind(':rec_id', $id);
+            $this->db->execute();
+
+            // 5. Delete reconciliation header
+            $this->db->query("DELETE FROM bank_reconciliations WHERE id = :rec_id AND status = 'Draft'");
+            $this->db->bind(':rec_id', $id);
+            $this->db->execute();
+
+            $this->db->commit();
+            return ['status' => true, 'message' => 'Bank reconciliation draft deleted successfully.'];
+
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            error_log("deleteReconciliation error: " . $e->getMessage());
+            return ['status' => false, 'message' => 'Database error while deleting reconciliation: ' . $e->getMessage()];
+        }
+    }
 }
+

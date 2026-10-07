@@ -32,20 +32,37 @@ class BankReconciliationController extends Controller {
 
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $data = [
-                'account_id' => intval($_POST['account_id']),
-                'statement_date_start' => trim($_POST['statement_date_start']),
-                'statement_date_end' => trim($_POST['statement_date_end']),
-                'statement_opening_balance' => floatval($_POST['statement_opening_balance']),
-                'statement_closing_balance' => floatval($_POST['statement_closing_balance'])
-            ];
+            try {
+                $accountId = intval($_POST['account_id'] ?? 0);
+                $startDate = trim($_POST['statement_date_start'] ?? '');
+                $endDate = trim($_POST['statement_date_end'] ?? '');
 
-            $recId = $this->recModel->createDraft($data);
-            if ($recId) {
-                header('Location: ' . URLROOT . '/bankreconciliation/reconcile/' . $recId);
-                exit;
-            } else {
-                flash('rec_message', 'Failed to create reconciliation draft', 'alert alert-danger');
+                if ($accountId <= 0 || empty($startDate) || empty($endDate)) {
+                    $_SESSION['flash_error'] = 'Please fill in all required statement fields.';
+                    header('Location: ' . URLROOT . '/bankreconciliation/create');
+                    exit;
+                }
+
+                $data = [
+                    'account_id' => $accountId,
+                    'statement_date_start' => $startDate,
+                    'statement_date_end' => $endDate,
+                    'statement_opening_balance' => floatval($_POST['statement_opening_balance'] ?? 0),
+                    'statement_closing_balance' => floatval($_POST['statement_closing_balance'] ?? 0)
+                ];
+
+                $recId = $this->recModel->createDraft($data);
+                if ($recId) {
+                    header('Location: ' . URLROOT . '/bankreconciliation/reconcile/' . $recId);
+                    exit;
+                } else {
+                    $_SESSION['flash_error'] = 'Failed to create reconciliation draft.';
+                    header('Location: ' . URLROOT . '/bankreconciliation/create');
+                    exit;
+                }
+            } catch (Throwable $e) {
+                error_log("store reconciliation error: " . $e->getMessage());
+                $_SESSION['flash_error'] = 'Failed to create reconciliation: ' . $e->getMessage();
                 header('Location: ' . URLROOT . '/bankreconciliation/create');
                 exit;
             }
@@ -53,29 +70,38 @@ class BankReconciliationController extends Controller {
     }
 
     public function reconcile($id) {
-        $reconciliation = $this->recModel->getReconciliationById($id);
-        if (!$reconciliation) {
-            flash('rec_message', 'Reconciliation record not found', 'alert alert-danger');
+        try {
+            $id = intval($id);
+            $reconciliation = $this->recModel->getReconciliationById($id);
+            if (!$reconciliation) {
+                $_SESSION['flash_error'] = 'Reconciliation record not found.';
+                header('Location: ' . URLROOT . '/bankreconciliation');
+                exit;
+            }
+
+            $this->recModel->populateReconciliationItems($id, $reconciliation->account_id, $reconciliation->statement_date_end);
+            $this->recModel->calculateBalances($id);
+            $reconciliation = $this->recModel->getReconciliationById($id);
+
+            $items = $this->recModel->getItems($id);
+            $accounts = $this->coaModel->getAccounts();
+
+            $data = [
+                'content_view' => 'bank_reconciliation/reconcile',
+                'reconciliation' => $reconciliation,
+                'items' => $items,
+                'accounts' => $accounts
+            ];
+
+            $this->view('layouts/main', $data);
+        } catch (Throwable $e) {
+            error_log("reconcile workspace error: " . $e->getMessage());
+            $_SESSION['flash_error'] = 'Error loading reconciliation workspace: ' . $e->getMessage();
             header('Location: ' . URLROOT . '/bankreconciliation');
             exit;
         }
-
-        $this->recModel->populateReconciliationItems($id, $reconciliation->account_id, $reconciliation->statement_date_end);
-        $this->recModel->calculateBalances($id);
-        $reconciliation = $this->recModel->getReconciliationById($id);
-
-        $items = $this->recModel->getItems($id);
-        $accounts = $this->coaModel->getAccounts();
-
-        $data = [
-            'content_view' => 'bank_reconciliation/reconcile',
-            'reconciliation' => $reconciliation,
-            'items' => $items,
-            'accounts' => $accounts
-        ];
-
-        $this->view('layouts/main', $data);
     }
+
 
     public function match_ajax() {
         header('Content-Type: application/json');
@@ -149,4 +175,22 @@ class BankReconciliationController extends Controller {
 
         $this->view('bank_reconciliation/report', $data);
     }
+
+    public function delete($id) {
+        $result = $this->recModel->deleteReconciliation($id);
+        if ($result['status']) {
+            $_SESSION['flash_success'] = $result['message'];
+            if (function_exists('flash')) {
+                flash('rec_message', $result['message'], 'alert alert-success');
+            }
+        } else {
+            $_SESSION['flash_error'] = $result['message'];
+            if (function_exists('flash')) {
+                flash('rec_message', $result['message'], 'alert alert-danger');
+            }
+        }
+        header('Location: ' . URLROOT . '/bankreconciliation');
+        exit;
+    }
 }
+

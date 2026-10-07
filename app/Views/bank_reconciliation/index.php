@@ -146,12 +146,40 @@
 }
 .btn-sf-primary { background: var(--c-blue); color: #fff; }
 .btn-sf-primary:hover { opacity: 0.9; transform: translateY(-1px); color: #fff; }
-.btn-sf-secondary { background: var(--c-fill); color: var(--t-primary); }
-.btn-sf-secondary:hover { background: var(--c-fill2); }
+.btn-sf-danger { background: var(--c-red-light); color: var(--c-red); }
+.btn-sf-danger:hover { background: var(--c-red); color: #fff; }
+.flash-msg {
+    padding: 12px 18px;
+    border-radius: var(--r-md);
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.flash-msg-success { background: var(--c-green-light); color: #15803d; border: 0.5px solid rgba(52,199,89,0.3); }
+.flash-msg-error { background: var(--c-red-light); color: #b91c1c; border: 0.5px solid rgba(255,59,48,0.3); }
 .act-group { display: flex; gap: 6px; justify-content: center; }
 </style>
 
 <div class="rec-root">
+    <?php if (!empty($_SESSION['flash_success'])): ?>
+        <div class="flash-msg flash-msg-success">
+            <i class="fa-solid fa-circle-check"></i>
+            <span><?= htmlspecialchars($_SESSION['flash_success']); ?></span>
+            <?php unset($_SESSION['flash_success']); ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($_SESSION['flash_error'])): ?>
+        <div class="flash-msg flash-msg-error">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span><?= htmlspecialchars($_SESSION['flash_error']); ?></span>
+            <?php unset($_SESSION['flash_error']); ?>
+        </div>
+    <?php endif; ?>
+
     <div class="sf-page-header">
         <div class="sf-page-title">
             <h1>Bank Reconciliation</h1>
@@ -220,10 +248,20 @@
                                     <a href="<?= APP_URL ?>/bankreconciliation/report/<?= $rec->id ?>" class="btn-sf btn-sf-secondary" style="border-radius: var(--r-pill); font-size: 12px; padding: 5px 14px;" target="_blank">
                                         <i class="fa-solid fa-print"></i> Statement
                                     </a>
+                                    <?php if ($rec->status !== 'Finalized'): ?>
+                                        <a href="<?= APP_URL ?>/bankreconciliation/delete/<?= $rec->id ?>" class="btn-sf btn-sf-danger" style="border-radius: var(--r-pill); font-size: 12px; padding: 5px 14px;" onclick="return confirm('Are you sure you want to delete this reconciliation draft (<?= htmlspecialchars($rec->reconciliation_number) ?>)?');">
+                                            <i class="fa-solid fa-trash-can"></i> Delete
+                                        </a>
+                                    <?php else: ?>
+                                        <button type="button" class="btn-sf btn-sf-secondary" disabled title="Completed reconciliations cannot be deleted" style="opacity: 0.45; cursor: not-allowed; border-radius: var(--r-pill); font-size: 12px; padding: 5px 14px;">
+                                            <i class="fa-solid fa-lock"></i> Delete
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
+
                 <?php else: ?>
                     <tr>
                         <td colspan="8" style="text-align: center; padding: 60px 20px; color: var(--t-secondary);">
