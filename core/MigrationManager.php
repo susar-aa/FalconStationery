@@ -1339,8 +1339,108 @@ class MigrationManager {
                     $dbh->exec("UPDATE journal_entries je JOIN invoices i ON i.journal_entry_id = je.id SET je.status = 'Voided' WHERE i.delivery_status = 'Cancelled' OR i.status = 'Cancelled'");
                 } catch (Exception $e) {}
                 return true;
+            },
+            'epf_etf_system_setup' => function(PDO $dbh) {
+                try {
+                    $accounts = [
+                        ['code' => '2001', 'name' => 'EPF Payable', 'type' => 'Liability', 'cat' => 'Current Liabilities'],
+                        ['code' => '2002', 'name' => 'ETF Payable', 'type' => 'Liability', 'cat' => 'Current Liabilities'],
+                        ['code' => '2003', 'name' => 'Salary Payable', 'type' => 'Liability', 'cat' => 'Current Liabilities'],
+                        ['code' => '6000', 'name' => 'Salaries & Wages Expense', 'type' => 'Expense', 'cat' => 'Operating Expenses'],
+                        ['code' => '6010', 'name' => 'EPF Employer Expense', 'type' => 'Expense', 'cat' => 'Operating Expenses'],
+                        ['code' => '6020', 'name' => 'ETF Employer Expense', 'type' => 'Expense', 'cat' => 'Operating Expenses']
+                    ];
+                    $stmtCheck = $dbh->prepare("SELECT id FROM chart_of_accounts WHERE account_code = :code LIMIT 1");
+                    $stmtInsert = $dbh->prepare("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) VALUES (:code, :name, :type, :cat, 0.00, 1)");
+                    foreach ($accounts as $acc) {
+                        $stmtCheck->execute([':code' => $acc['code']]);
+                        if (!$stmtCheck->fetch()) {
+                            $stmtInsert->execute([':code' => $acc['code'], ':name' => $acc['name'], ':type' => $acc['type'], ':cat' => $acc['cat']]);
+                        }
+                        $stmtCheck->closeCursor();
+                    }
+
+                    $empCols = [
+                        'epf_member_no' => "ALTER TABLE employees ADD COLUMN epf_member_no VARCHAR(50) NULL",
+                        'is_epf_eligible' => "ALTER TABLE employees ADD COLUMN is_epf_eligible TINYINT(1) DEFAULT 1",
+                        'is_etf_eligible' => "ALTER TABLE employees ADD COLUMN is_etf_eligible TINYINT(1) DEFAULT 1",
+                        'epf_employee_rate' => "ALTER TABLE employees ADD COLUMN epf_employee_rate DECIMAL(5,2) DEFAULT 8.00",
+                        'epf_employer_rate' => "ALTER TABLE employees ADD COLUMN epf_employer_rate DECIMAL(5,2) DEFAULT 12.00",
+                        'etf_employer_rate' => "ALTER TABLE employees ADD COLUMN etf_employer_rate DECIMAL(5,2) DEFAULT 3.00",
+                        'epf_etf_effective_date' => "ALTER TABLE employees ADD COLUMN epf_etf_effective_date DATE NULL"
+                    ];
+                    foreach ($empCols as $col => $sql) {
+                        $q = $dbh->query("SHOW COLUMNS FROM employees LIKE '{$col}'");
+                        if (!$q || !$q->fetch()) {
+                            try { $dbh->exec($sql); } catch (Exception $e) {}
+                        }
+                    }
+
+                    $slipCols = [
+                        'epf_applicable_earnings' => "ALTER TABLE payroll_slips ADD COLUMN epf_applicable_earnings DECIMAL(15,2) DEFAULT 0.00",
+                        'epf_employee_amount' => "ALTER TABLE payroll_slips ADD COLUMN epf_employee_amount DECIMAL(15,2) DEFAULT 0.00",
+                        'epf_employer_amount' => "ALTER TABLE payroll_slips ADD COLUMN epf_employer_amount DECIMAL(15,2) DEFAULT 0.00",
+                        'etf_employer_amount' => "ALTER TABLE payroll_slips ADD COLUMN etf_employer_amount DECIMAL(15,2) DEFAULT 0.00"
+                    ];
+                    foreach ($slipCols as $col => $sql) {
+                        $q = $dbh->query("SHOW COLUMNS FROM payroll_slips LIKE '{$col}'");
+                        if (!$q || !$q->fetch()) {
+                            try { $dbh->exec($sql); } catch (Exception $e) {}
+                        }
+                    }
+
+                    $runCols = [
+                        'total_epf_employee' => "ALTER TABLE payroll_runs ADD COLUMN total_epf_employee DECIMAL(15,2) DEFAULT 0.00",
+                        'total_epf_employer' => "ALTER TABLE payroll_runs ADD COLUMN total_epf_employer DECIMAL(15,2) DEFAULT 0.00",
+                        'total_etf_employer' => "ALTER TABLE payroll_runs ADD COLUMN total_etf_employer DECIMAL(15,2) DEFAULT 0.00",
+                        'epf_payment_status' => "ALTER TABLE payroll_runs ADD COLUMN epf_payment_status VARCHAR(20) DEFAULT 'Unpaid'",
+                        'etf_payment_status' => "ALTER TABLE payroll_runs ADD COLUMN etf_payment_status VARCHAR(20) DEFAULT 'Unpaid'",
+                        'epf_paid_amount' => "ALTER TABLE payroll_runs ADD COLUMN epf_paid_amount DECIMAL(15,2) DEFAULT 0.00",
+                        'etf_paid_amount' => "ALTER TABLE payroll_runs ADD COLUMN etf_paid_amount DECIMAL(15,2) DEFAULT 0.00"
+                    ];
+                    foreach ($runCols as $col => $sql) {
+                        $q = $dbh->query("SHOW COLUMNS FROM payroll_runs LIKE '{$col}'");
+                        if (!$q || !$q->fetch()) {
+                            try { $dbh->exec($sql); } catch (Exception $e) {}
+                        }
+                    }
+
+                    $csCols = [
+                        'default_epf_employee_rate' => "ALTER TABLE company_settings ADD COLUMN default_epf_employee_rate DECIMAL(5,2) DEFAULT 8.00",
+                        'default_epf_employer_rate' => "ALTER TABLE company_settings ADD COLUMN default_epf_employer_rate DECIMAL(5,2) DEFAULT 12.00",
+                        'default_etf_employer_rate' => "ALTER TABLE company_settings ADD COLUMN default_etf_employer_rate DECIMAL(5,2) DEFAULT 3.00"
+                    ];
+                    foreach ($csCols as $col => $sql) {
+                        $q = $dbh->query("SHOW COLUMNS FROM company_settings LIKE '{$col}'");
+                        if (!$q || !$q->fetch()) {
+                            try { $dbh->exec($sql); } catch (Exception $e) {}
+                        }
+                    }
+
+                    $dbh->exec("CREATE TABLE IF NOT EXISTS epf_etf_payments (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        payroll_run_id INT NOT NULL,
+                        payment_type ENUM('EPF', 'ETF') NOT NULL,
+                        payment_date DATE NOT NULL,
+                        period_start DATE NOT NULL,
+                        period_end DATE NOT NULL,
+                        total_liability DECIMAL(15,2) NOT NULL,
+                        amount_paid DECIMAL(15,2) NOT NULL,
+                        bank_account_id INT NOT NULL,
+                        payment_reference VARCHAR(100) NULL,
+                        journal_entry_id INT NULL,
+                        notes TEXT NULL,
+                        created_by INT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        INDEX idx_run_type (payroll_run_id, payment_type),
+                        INDEX idx_date (payment_date)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+                } catch (Exception $e) {}
+                return true;
             }
         ];
+
 
     }
 

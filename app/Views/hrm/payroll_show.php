@@ -5,7 +5,10 @@ $slips = $data['slips'];
 
 $totalGross = array_sum(array_column($slips, 'gross_salary'));
 $totalNet = array_sum(array_column($slips, 'net_salary'));
-$totalDed = array_sum(array_column($slips, 'loan_deduction')) + array_sum(array_column($slips, 'other_deductions'));
+$totalEpfEmp = array_sum(array_column($slips, 'epf_employee'));
+$totalEpfEmpr = array_sum(array_column($slips, 'epf_employer'));
+$totalEtfEmpr = array_sum(array_column($slips, 'etf_employer'));
+$totalDed = array_sum(array_column($slips, 'loan_deduction')) + array_sum(array_column($slips, 'other_deductions')) + $totalEpfEmp;
 ?>
 
 <style>
@@ -108,28 +111,40 @@ $totalDed = array_sum(array_column($slips, 'loan_deduction')) + array_sum(array_
 <?php endif; ?>
 
 <div class="row mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
             <h6>Period</h6>
-            <h5><?= date('M d', strtotime($run->period_start)) ?> - <?= date('M d, Y', strtotime($run->period_end)) ?></h5>
+            <h5 style="font-size: 15px; margin-top: 4px;"><?= date('M d', strtotime($run->period_start)) ?> - <?= date('M d, Y', strtotime($run->period_end)) ?></h5>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
             <h6>Total Gross</h6>
-            <h5 style="color: #3b82f6;">$<?= number_format($totalGross, 2) ?></h5>
+            <h5 style="color: #3b82f6;">LKR <?= number_format($totalGross, 2) ?></h5>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
-            <h6>Total Deductions</h6>
-            <h5 style="color: #ef4444;">$<?= number_format($totalDed, 2) ?></h5>
+            <h6>EPF Emp (8%)</h6>
+            <h5 style="color: #ef4444;">LKR <?= number_format($totalEpfEmp, 2) ?></h5>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
-            <h6>Total Net (Payable)</h6>
-            <h5 style="color: #10b981;">$<?= number_format($totalNet, 2) ?></h5>
+            <h6>EPF Empr (12%)</h6>
+            <h5 style="color: #8b5cf6;">LKR <?= number_format($totalEpfEmpr, 2) ?></h5>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="summary-card">
+            <h6>ETF Empr (3%)</h6>
+            <h5 style="color: #ec4899;">LKR <?= number_format($totalEtfEmpr, 2) ?></h5>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="summary-card">
+            <h6>Total Net Pay</h6>
+            <h5 style="color: #10b981;">LKR <?= number_format($totalNet, 2) ?></h5>
         </div>
     </div>
 </div>
@@ -144,8 +159,11 @@ $totalDed = array_sum(array_column($slips, 'loan_deduction')) + array_sum(array_
                         <tr>
                             <th>Employee</th>
                             <th class="text-end">Gross</th>
+                            <th class="text-end" style="color:#ef4444;">- EPF 8%</th>
                             <th class="text-end" style="color:#ef4444;">- Ded.</th>
                             <th class="text-end" style="color:#10b981;">Net Pay</th>
+                            <th class="text-end" style="color:#8b5cf6;">EPF 12%</th>
+                            <th class="text-end" style="color:#ec4899;">ETF 3%</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -156,9 +174,12 @@ $totalDed = array_sum(array_column($slips, 'loan_deduction')) + array_sum(array_
                                 <td style="font-weight:600;">
                                     <a href="<?= APP_URL ?>/user/show/<?= $slip->employee_id ?>" style="text-decoration: none; color: var(--text-accent);"><?= htmlspecialchars($slip->first_name . ' ' . $slip->last_name) ?></a>
                                 </td>
-                                <td class="text-end">$<?= number_format($slip->gross_salary, 2) ?></td>
-                                <td class="text-end" style="color:#ef4444;">$<?= number_format($slip->loan_deduction + $slip->other_deductions, 2) ?></td>
-                                <td class="text-end fw-bold" style="color:#10b981;">$<?= number_format($slip->net_salary, 2) ?></td>
+                                <td class="text-end">LKR <?= number_format($slip->gross_salary, 2) ?></td>
+                                <td class="text-end" style="color:#ef4444;">LKR <?= number_format($slip->epf_employee ?? 0, 2) ?></td>
+                                <td class="text-end" style="color:#ef4444;">LKR <?= number_format($slip->loan_deduction + $slip->other_deductions, 2) ?></td>
+                                <td class="text-end fw-bold" style="color:#10b981;">LKR <?= number_format($slip->net_salary, 2) ?></td>
+                                <td class="text-end" style="color:#8b5cf6;">LKR <?= number_format($slip->epf_employer ?? 0, 2) ?></td>
+                                <td class="text-end" style="color:#ec4899;">LKR <?= number_format($slip->etf_employer ?? 0, 2) ?></td>
                                 <td>
                                     <?php 
                                         $statusClass = 'status-draft';

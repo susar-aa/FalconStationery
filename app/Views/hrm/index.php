@@ -296,6 +296,13 @@
                                     data-username="<?= htmlspecialchars($emp->username ?? '') ?>"
                                     data-user-role="<?= htmlspecialchars($emp->user_role ?? '') ?>"
                                     data-apps="<?= htmlspecialchars($emp->accessible_apps ?? '') ?>"
+                                    data-epf-member="<?= htmlspecialchars($emp->epf_member_no ?? '') ?>"
+                                    data-epf-eligible="<?= $emp->is_epf_eligible ?? 1 ?>"
+                                    data-etf-eligible="<?= $emp->is_etf_eligible ?? 1 ?>"
+                                    data-epf-emp-rate="<?= $emp->epf_employee_rate ?? 8.00 ?>"
+                                    data-epf-empr-rate="<?= $emp->epf_employer_rate ?? 12.00 ?>"
+                                    data-etf-empr-rate="<?= $emp->etf_employer_rate ?? 3.00 ?>"
+                                    data-epf-eff-date="<?= $emp->epf_etf_effective_date ?? '' ?>"
                                     onclick="openEditModal(this)">
                                 <i class="ph ph-note-pencil"></i> Edit
                             </button>
@@ -347,6 +354,50 @@
             <div class="grid-2">
                 <div class="form-group"><label>Hire Date</label><input type="date" name="hire_date" class="form-control" value="<?= date('Y-m-d') ?>" required></div>
                 <div class="form-group"><label>Base Salary (Rs:) *</label><input type="number" name="base_salary" step="0.01" min="0" class="form-control" required></div>
+            </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--glass-border);">
+                <label style="font-weight:600; font-size:13.5px; color:var(--text-main); margin-bottom: 8px; display:block;">
+                    <i class="ph ph-receipt" style="color:var(--text-accent);"></i> EPF & ETF Configuration
+                </label>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>EPF Member No</label>
+                        <input type="text" name="epf_member_no" class="form-control" placeholder="e.g. EPF-1024">
+                    </div>
+                    <div class="form-group">
+                        <label>Effective Date</label>
+                        <input type="date" name="epf_etf_effective_date" class="form-control" value="<?= date('Y-m-d') ?>">
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-top:8px;">
+                    <div class="form-group">
+                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="checkbox" name="is_epf_eligible" value="1" checked>
+                            <span>EPF Eligible</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="checkbox" name="is_etf_eligible" value="1" checked>
+                            <span>ETF Eligible</span>
+                        </label>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>EPF Employee Rate (%)</label>
+                        <input type="number" step="0.01" name="epf_employee_rate" class="form-control" value="8.00">
+                    </div>
+                    <div class="form-group">
+                        <label>EPF Employer Rate (%)</label>
+                        <input type="number" step="0.01" name="epf_employer_rate" class="form-control" value="12.00">
+                    </div>
+                    <div class="form-group">
+                        <label>ETF Employer Rate (%)</label>
+                        <input type="number" step="0.01" name="etf_employer_rate" class="form-control" value="3.00">
+                    </div>
+                </div>
             </div>
 
             <!-- Optional user login credentials -->
@@ -453,6 +504,50 @@
                 </div>
             </div>
 
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--glass-border);">
+                <label style="font-weight:600; font-size:13.5px; color:var(--text-main); margin-bottom: 8px; display:block;">
+                    <i class="ph ph-receipt" style="color:var(--text-accent);"></i> EPF & ETF Configuration
+                </label>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>EPF Member No</label>
+                        <input type="text" name="epf_member_no" id="edit_epf_member_no" class="form-control" placeholder="e.g. EPF-1024">
+                    </div>
+                    <div class="form-group">
+                        <label>Effective Date</label>
+                        <input type="date" name="epf_etf_effective_date" id="edit_epf_etf_effective_date" class="form-control">
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-top:8px;">
+                    <div class="form-group">
+                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="checkbox" name="is_epf_eligible" id="edit_is_epf_eligible" value="1">
+                            <span>EPF Eligible</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="checkbox" name="is_etf_eligible" id="edit_is_etf_eligible" value="1">
+                            <span>ETF Eligible</span>
+                        </label>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+                    <div class="form-group">
+                        <label>EPF Employee Rate (%)</label>
+                        <input type="number" step="0.01" name="epf_employee_rate" id="edit_epf_employee_rate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>EPF Employer Rate (%)</label>
+                        <input type="number" step="0.01" name="epf_employer_rate" id="edit_epf_employer_rate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>ETF Employer Rate (%)</label>
+                        <input type="number" step="0.01" name="etf_employer_rate" id="edit_etf_employer_rate" class="form-control">
+                    </div>
+                </div>
+            </div>
+
             <!-- Optional user login credentials -->
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--glass-border);">
                 <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13.5px; cursor: pointer; color: var(--text-main);">
@@ -536,6 +631,14 @@ function openEditModal(btn) {
     const userRole = btn.getAttribute('data-user-role');
     const apps = btn.getAttribute('data-apps') || '';
 
+    const epfMember = btn.getAttribute('data-epf-member') || '';
+    const isEpf = btn.getAttribute('data-epf-eligible') !== '0';
+    const isEtf = btn.getAttribute('data-etf-eligible') !== '0';
+    const epfEmpRate = btn.getAttribute('data-epf-emp-rate') || '8.00';
+    const epfEmprRate = btn.getAttribute('data-epf-empr-rate') || '12.00';
+    const etfEmprRate = btn.getAttribute('data-etf-empr-rate') || '3.00';
+    const epfEffDate = btn.getAttribute('data-epf-eff-date') || '';
+
     document.getElementById('edit_emp_id').value = id;
     document.getElementById('edit_first_name').value = fname;
     document.getElementById('edit_last_name').value = lname;
@@ -546,6 +649,14 @@ function openEditModal(btn) {
     document.getElementById('edit_base_salary').value = salary;
     document.getElementById('edit_hire_date').value = hdate;
     document.getElementById('edit_status').value = status;
+
+    document.getElementById('edit_epf_member_no').value = epfMember;
+    document.getElementById('edit_is_epf_eligible').checked = isEpf;
+    document.getElementById('edit_is_etf_eligible').checked = isEtf;
+    document.getElementById('edit_epf_employee_rate').value = epfEmpRate;
+    document.getElementById('edit_epf_employer_rate').value = epfEmprRate;
+    document.getElementById('edit_etf_employer_rate').value = etfEmprRate;
+    document.getElementById('edit_epf_etf_effective_date').value = epfEffDate;
 
     // Reset login fields
     const hasLogin = !!username;

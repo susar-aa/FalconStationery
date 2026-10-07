@@ -69,28 +69,40 @@
     </div>
 
 <div class="row mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
             <h6>Period</h6>
-            <h5><?= date('M d', strtotime($preview['period_start'])) ?> - <?= date('M d, Y', strtotime($preview['period_end'])) ?></h5>
+            <h5 style="font-size: 15px; margin-top: 4px;"><?= date('M d', strtotime($preview['period_start'])) ?> - <?= date('M d, Y', strtotime($preview['period_end'])) ?></h5>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
             <h6>Total Gross</h6>
-            <h5 style="color: #3b82f6;">$<?= number_format($preview['total_gross'], 2) ?></h5>
+            <h5 style="color: #3b82f6;">LKR <?= number_format($preview['total_gross'], 2) ?></h5>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
-            <h6>Total Deductions</h6>
-            <h5 style="color: #ef4444;">$<?= number_format($preview['total_deductions'], 2) ?></h5>
+            <h6>EPF Emp (8%)</h6>
+            <h5 style="color: #ef4444;">LKR <?= number_format($preview['total_epf_employee'] ?? 0, 2) ?></h5>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="summary-card">
-            <h6>Total Net (Payable)</h6>
-            <h5 style="color: #10b981;">$<?= number_format($preview['total_net'], 2) ?></h5>
+            <h6>EPF Empr (12%)</h6>
+            <h5 style="color: #8b5cf6;">LKR <?= number_format($preview['total_epf_employer'] ?? 0, 2) ?></h5>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="summary-card">
+            <h6>ETF Empr (3%)</h6>
+            <h5 style="color: #ec4899;">LKR <?= number_format($preview['total_etf_employer'] ?? 0, 2) ?></h5>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="summary-card">
+            <h6>Total Net Pay</h6>
+            <h5 style="color: #10b981;">LKR <?= number_format($preview['total_net'], 2) ?></h5>
         </div>
     </div>
 </div>
@@ -106,9 +118,12 @@
                     <th class="text-end" style="color:#10b981;">+ Allowances</th>
                     <th class="text-end" style="color:#10b981;">+ Comms/OT</th>
                     <th class="text-end fw-bold">Gross</th>
+                    <th class="text-end" style="color:#ef4444;">- EPF 8%</th>
                     <th class="text-end" style="color:#ef4444;">- Loan Ded.</th>
                     <th class="text-end" style="color:#ef4444;">- Other Ded.</th>
                     <th class="text-end fw-bold" style="color:#10b981;">Net Pay</th>
+                    <th class="text-end" style="color:#8b5cf6;">EPF 12% (Co.)</th>
+                    <th class="text-end" style="color:#ec4899;">ETF 3% (Co.)</th>
                 </tr>
             </thead>
             <tbody>
@@ -120,13 +135,16 @@
                                 <br><small style="color:var(--text-muted); font-weight:normal; font-size:11px;"><i class="ph ph-info"></i> Has active loan deductions</small>
                             <?php endif; ?>
                         </td>
-                        <td class="text-end">$<?= number_format($slip['base_salary'], 2) ?></td>
-                        <td class="text-end" style="color:#10b981;">$<?= number_format($slip['allowances'], 2) ?></td>
-                        <td class="text-end" style="color:#10b981;">$<?= number_format($slip['commissions'] + $slip['overtime'], 2) ?></td>
-                        <td class="text-end fw-bold">$<?= number_format($slip['gross_salary'], 2) ?></td>
-                        <td class="text-end" style="color:#ef4444;">$<?= number_format($slip['loan_deduction'], 2) ?></td>
-                        <td class="text-end" style="color:#ef4444;">$<?= number_format($slip['other_deductions'], 2) ?></td>
-                        <td class="text-end fw-bold" style="color:#10b981;">$<?= number_format($slip['net_salary'], 2) ?></td>
+                        <td class="text-end">LKR <?= number_format($slip['base_salary'], 2) ?></td>
+                        <td class="text-end" style="color:#10b981;">LKR <?= number_format($slip['allowances'], 2) ?></td>
+                        <td class="text-end" style="color:#10b981;">LKR <?= number_format($slip['commissions'] + $slip['overtime'], 2) ?></td>
+                        <td class="text-end fw-bold">LKR <?= number_format($slip['gross_salary'], 2) ?></td>
+                        <td class="text-end" style="color:#ef4444;">LKR <?= number_format($slip['epf_employee'] ?? 0, 2) ?></td>
+                        <td class="text-end" style="color:#ef4444;">LKR <?= number_format($slip['loan_deduction'], 2) ?></td>
+                        <td class="text-end" style="color:#ef4444;">LKR <?= number_format($slip['other_deductions'], 2) ?></td>
+                        <td class="text-end fw-bold" style="color:#10b981;">LKR <?= number_format($slip['net_salary'], 2) ?></td>
+                        <td class="text-end" style="color:#8b5cf6;">LKR <?= number_format($slip['epf_employer'] ?? 0, 2) ?></td>
+                        <td class="text-end" style="color:#ec4899;">LKR <?= number_format($slip['etf_employer'] ?? 0, 2) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

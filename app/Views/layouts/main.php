@@ -1604,6 +1604,13 @@ if (!function_exists('hasPermission')) {
                                 <div class="desc">Process salaries & post ledger</div>
                             </div>
                         </a>
+                        <a href="<?= APP_URL ?>/epfetf" class="mega-list-item">
+                            <div class="icon-wrapper"><i class="ph ph-receipt"></i></div>
+                            <div class="mega-list-item-content">
+                                <div class="title">EPF & ETF System</div>
+                                <div class="desc">Track & settle statutory liabilities</div>
+                            </div>
+                        </a>
                         <a href="<?= APP_URL ?>/employeeloan" class="mega-list-item">
                             <div class="icon-wrapper"><i class="ph ph-hand-coins"></i></div>
                             <div class="mega-list-item-content">
@@ -2046,6 +2053,7 @@ if (!function_exists('hasPermission')) {
                         <?php if (hasPermission('hrm')): ?>
                             <a href="<?= APP_URL ?>/user" class="fs-link"><i class="ph ph-user-circle-gear"></i> HRM &amp; Employees</a>
                             <a href="<?= APP_URL ?>/payroll" class="fs-link"><i class="ph ph-bank"></i> Run Payroll</a>
+                            <a href="<?= APP_URL ?>/epfetf" class="fs-link"><i class="ph ph-receipt"></i> EPF &amp; ETF</a>
                         <?php endif; ?>
                         <?php if (hasPermission('project')): ?><a href="<?= APP_URL ?>/project" class="fs-link"><i class="ph ph-clipboard-text"></i> Projects</a><?php endif; ?>
                         <?php if (hasPermission('vehicle')): ?><a href="<?= APP_URL ?>/vehicle" class="fs-link"><i class="ph ph-car-profile"></i> Vehicles</a><?php endif; ?>

@@ -24,8 +24,13 @@ class Employee {
         try {
             $this->db->beginTransaction();
 
-            $this->db->query("INSERT INTO employees (first_name, last_name, email, phone, department, job_title, base_salary, hire_date, status) 
-                              VALUES (:fname, :lname, :email, :phone, :dept, :title, :salary, :hdate, 'Active')");
+            $this->db->query("INSERT INTO employees (
+                                first_name, last_name, email, phone, department, job_title, base_salary, hire_date, status,
+                                epf_member_no, is_epf_eligible, is_etf_eligible, epf_employee_rate, epf_employer_rate, etf_employer_rate, epf_etf_effective_date
+                              ) VALUES (
+                                :fname, :lname, :email, :phone, :dept, :title, :salary, :hdate, 'Active',
+                                :epf_member, :is_epf, :is_etf, :epf_emp_rate, :epf_empr_rate, :etf_empr_rate, :eff_date
+                              )");
             
             $email = !empty($empData['email']) ? trim($empData['email']) : null;
             $phone = !empty($empData['phone']) ? trim($empData['phone']) : null;
@@ -39,6 +44,14 @@ class Employee {
             $this->db->bind(':title', $empData['job_title']);
             $this->db->bind(':salary', $empData['base_salary']);
             $this->db->bind(':hdate', $empData['hire_date']);
+
+            $this->db->bind(':epf_member', !empty($empData['epf_member_no']) ? trim($empData['epf_member_no']) : null);
+            $this->db->bind(':is_epf', isset($empData['is_epf_eligible']) ? intval($empData['is_epf_eligible']) : 1);
+            $this->db->bind(':is_etf', isset($empData['is_etf_eligible']) ? intval($empData['is_etf_eligible']) : 1);
+            $this->db->bind(':epf_emp_rate', floatval($empData['epf_employee_rate'] ?? 8.00));
+            $this->db->bind(':epf_empr_rate', floatval($empData['epf_employer_rate'] ?? 12.00));
+            $this->db->bind(':etf_empr_rate', floatval($empData['etf_employer_rate'] ?? 3.00));
+            $this->db->bind(':eff_date', !empty($empData['epf_etf_effective_date']) ? $empData['epf_etf_effective_date'] : null);
             
             $this->db->execute();
             $employeeId = $this->db->lastInsertId();
@@ -81,7 +94,10 @@ class Employee {
             $this->db->query("UPDATE employees 
                               SET first_name = :fname, last_name = :lname, email = :email, 
                                   phone = :phone, department = :dept, job_title = :title, 
-                                  base_salary = :salary, hire_date = :hdate, status = :status 
+                                  base_salary = :salary, hire_date = :hdate, status = :status,
+                                  epf_member_no = :epf_member, is_epf_eligible = :is_epf, is_etf_eligible = :is_etf,
+                                  epf_employee_rate = :epf_emp_rate, epf_employer_rate = :epf_empr_rate,
+                                  etf_employer_rate = :etf_empr_rate, epf_etf_effective_date = :eff_date
                               WHERE id = :id");
             
             $email = !empty($empData['email']) ? trim($empData['email']) : null;
@@ -97,6 +113,14 @@ class Employee {
             $this->db->bind(':salary', $empData['base_salary']);
             $this->db->bind(':hdate', $empData['hire_date']);
             $this->db->bind(':status', $empData['status'] ?? 'Active');
+
+            $this->db->bind(':epf_member', !empty($empData['epf_member_no']) ? trim($empData['epf_member_no']) : null);
+            $this->db->bind(':is_epf', isset($empData['is_epf_eligible']) ? intval($empData['is_epf_eligible']) : 1);
+            $this->db->bind(':is_etf', isset($empData['is_etf_eligible']) ? intval($empData['is_etf_eligible']) : 1);
+            $this->db->bind(':epf_emp_rate', floatval($empData['epf_employee_rate'] ?? 8.00));
+            $this->db->bind(':epf_empr_rate', floatval($empData['epf_employer_rate'] ?? 12.00));
+            $this->db->bind(':etf_empr_rate', floatval($empData['etf_employer_rate'] ?? 3.00));
+            $this->db->bind(':eff_date', !empty($empData['epf_etf_effective_date']) ? $empData['epf_etf_effective_date'] : null);
             $this->db->bind(':id', $empData['id']);
             $this->db->execute();
 

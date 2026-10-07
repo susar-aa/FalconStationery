@@ -39,7 +39,8 @@
         <div class="col-6">
             <strong>Employee Name:</strong> <?= htmlspecialchars($slip->first_name . ' ' . $slip->last_name) ?><br>
             <strong>Job Title:</strong> <?= htmlspecialchars($slip->job_title) ?><br>
-            <strong>Department:</strong> <?= htmlspecialchars($slip->department) ?>
+            <strong>Department:</strong> <?= htmlspecialchars($slip->department) ?><br>
+            <strong>EPF Member No:</strong> <?= htmlspecialchars($slip->epf_member_no ?? 'N/A') ?>
         </div>
         <div class="col-6 text-end">
             <strong>Payslip ID:</strong> PS-<?= $slip->id ?><br>
@@ -87,6 +88,10 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td>EPF Deduction (Employee 8%)</td>
+                        <td class="text-end"><?= number_format($slip->epf_employee ?? 0, 2) ?></td>
+                    </tr>
+                    <tr>
                         <td>Loan Repayment</td>
                         <td class="text-end"><?= number_format($slip->loan_deduction, 2) ?></td>
                     </tr>
@@ -96,16 +101,34 @@
                     </tr>
                     <tr class="table-totals">
                         <td>Total Deductions</td>
-                        <td class="text-end"><?= number_format($slip->loan_deduction + $slip->other_deductions, 2) ?></td>
+                        <td class="text-end"><?= number_format(($slip->epf_employee ?? 0) + $slip->loan_deduction + $slip->other_deductions, 2) ?></td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div class="mt-4 p-3 border">
+    <div class="mt-2 mb-3">
+        <table class="table table-bordered mb-0" style="font-size: 13px;">
+            <thead>
+                <tr class="table-light"><th colspan="2">Employer Statutory Contributions (Not Deducted From Salary)</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>EPF Employer Contribution (12%)</td>
+                    <td class="text-end fw-bold" style="color: #6f42c1;">Rs. <?= number_format($slip->epf_employer ?? 0, 2) ?></td>
+                </tr>
+                <tr>
+                    <td>ETF Employer Contribution (3%)</td>
+                    <td class="text-end fw-bold" style="color: #d63384;">Rs. <?= number_format($slip->etf_employer ?? 0, 2) ?></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3 p-3 border">
         <div class="row align-items-center">
-            <div class="col-6 text-end fs-5 fw-bold">Net Pay:</div>
+            <div class="col-6 text-end fs-5 fw-bold">Net Payable Salary:</div>
             <div class="col-6 net-pay">Rs. <?= number_format($slip->net_salary, 2) ?></div>
         </div>
     </div>
