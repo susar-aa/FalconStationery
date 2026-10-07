@@ -161,9 +161,15 @@ class Payroll {
     }
 
     public function previewPayroll($periodStart, $periodEnd) {
-        // Fetch all active employees
-        $this->db->query("SELECT * FROM employees WHERE status = 'Active'");
+        // Fetch all active employees combined with system user mapping
+        $this->db->query("SELECT e.*, u.id as user_id 
+                          FROM employees e 
+                          LEFT JOIN users u ON u.employee_id = e.id 
+                          WHERE e.status = 'Active'");
         $employees = $this->db->resultSet() ?: [];
+
+        require_once __DIR__ . '/RepPerformance.php';
+        $repPerfModel = new RepPerformance();
 
         $slips = [];
         $totalGross = 0;
@@ -179,6 +185,40 @@ class Payroll {
             $commissions = 0;
             $overtime = 0;
             $other_deductions = 0;
+
+            $commissionBreakdown = [
+                'sales_commission' => 0.00,
+                'sales_incentive' => 0.00,
+                'productive_visits_bonus' => 0.00,
+                'working_days_bonus' => 0.00,
+                'collection_bonus' => 0.00
+            ];
+
+            // If employee is linked to a sales representative user account, compute commissions & bonuses
+            if (!empty($emp->user_id)) {
+                try {
+                    $perf = $repPerfModel->calculatePerformance(intval($emp->user_id), $periodStart, $periodEnd);
+                    if (!empty($perf['payroll'])) {
+                        $p = $perf['payroll'];
+                        $salesComm = floatval($p['sales_commission'] ?? 0);
+                        $salesInc = floatval($p['sales_incentive'] ?? 0);
+                        $prodBonus = floatval($p['productive_visits_bonus'] ?? 0);
+                        $workBonus = floatval($p['working_days_bonus'] ?? 0);
+                        $collBonus = floatval($p['collection_bonus'] ?? 0);
+
+                        $commissions = round($salesComm + $salesInc + $prodBonus + $workBonus + $collBonus, 2);
+                        $commissionBreakdown = [
+                            'sales_commission' => $salesComm,
+                            'sales_incentive' => $salesInc,
+                            'productive_visits_bonus' => $prodBonus,
+                            'working_days_bonus' => $workBonus,
+                            'collection_bonus' => $collBonus
+                        ];
+                    }
+                } catch (Throwable $e) {
+                    error_log("Rep Performance calculation error for user {$emp->user_id}: " . $e->getMessage());
+                }
+            }
 
             // EPF & ETF Eligibility and Rates
             $isEpf = isset($emp->is_epf_eligible) ? intval($emp->is_epf_eligible) : 1;
@@ -242,7 +282,8 @@ class Payroll {
                 'etf_employer_amount' => $etfEmployerAmount,
                 'gross_salary' => $gross,
                 'net_salary' => $net,
-                'loan_details' => $loanDeductionDetails
+                'loan_details' => $loanDeductionDetails,
+                'commission_breakdown' => $commissionBreakdown
             ];
         }
 

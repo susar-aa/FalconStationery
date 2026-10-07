@@ -975,6 +975,14 @@ if ($hasPerfData) {
             <div class="pr-banner-amount">
                 <div class="lbl">Total Estimated</div>
                 <div class="val">Rs <?= number_format($pr['total_earnings'], 0) ?></div>
+                <form action="<?= APP_URL ?>/payroll/preview" method="POST" style="margin-top:12px;">
+                    <input type="hidden" name="period_start" value="<?= htmlspecialchars($data['start_date'] ?? date('Y-m-01')) ?>">
+                    <input type="hidden" name="period_end" value="<?= htmlspecialchars($data['end_date'] ?? date('Y-m-t')) ?>">
+                    <input type="hidden" name="run_date" value="<?= date('Y-m-d') ?>">
+                    <button type="submit" class="rp-btn" style="background:#ffffff; color:var(--g1); font-weight:800; font-size:12px; padding:7px 16px; border-radius:999px; box-shadow:0 4px 12px rgba(0,0,0,0.15); border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="ph ph-lightning"></i> Process Payroll Run
+                    </button>
+                </form>
             </div>
         </div>
 

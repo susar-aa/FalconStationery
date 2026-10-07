@@ -12295,3 +12295,13 @@ SQL: Callable
 #2 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\scratch\test_customer_api.php(6): Customer->__construct()
 #3 {main}
 
+[2026-10-07 20:15:20] Database initialization failed: SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it
+#0 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\core\Database.php(27): PDO->__construct('mysql:host=127....', 'curtiss_erp', 'Susara@20061100...', Array)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\apply_stock_reservation_migration.php(6): Database->__construct()
+#2 {main}
+
+[2026-10-07 20:15:30] Database initialization failed: SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it
+#0 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\core\Database.php(27): PDO->__construct('mysql:host=loca...', 'root', '', Array)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\check_pc_journal_col.php(9): Database->__construct()
+#2 {main}
+

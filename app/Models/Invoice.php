@@ -250,42 +250,58 @@ class Invoice {
                 $this->db->execute();
                 $invoiceItemId = $this->db->lastInsertId();
 
-                // Direct creation deducts from Physical stock immediately (with unsigned underflow safety)
-                if ($itemId) {
-                    require_once __DIR__ . '/Item.php';
-                    $itemModel = new Item();
-                    $itemModel->updateStockDelta($itemId, -$item['quantity']);
+                if ($stockStatus === 'reserved') {
+                    // Two-Phase Sales Order Flow: Soft reserve stock without immediate physical deduction
+                    try {
+                        $this->db->query("INSERT INTO stock_reservations (sales_order_id, item_id, variation_option_id, reserved_qty, status) VALUES (:so_id, :item_id, :var_id, :qty, 'active')");
+                        $this->db->bind(':so_id', $invoiceId);
+                        $this->db->bind(':item_id', $itemId);
+                        $this->db->bind(':var_id', $varId);
+                        $this->db->bind(':qty', $item['quantity']);
+                        $this->db->execute();
+                    } catch (Exception $e) {
+                        error_log("Stock Reservation Insert Warning: " . $e->getMessage());
+                    }
+                } else {
+                    // Direct creation deducts from Physical stock immediately (with unsigned underflow safety)
+                    if ($itemId) {
+                        require_once __DIR__ . '/Item.php';
+                        $itemModel = new Item();
+                        $itemModel->updateStockDelta($itemId, -$item['quantity']);
+                    }
+                    if ($varId) {
+                        $this->db->query("UPDATE item_variation_options SET quantity_on_hand = CAST(quantity_on_hand AS SIGNED) - :qty WHERE id = :id");
+                        $this->db->bind(':qty', $item['quantity']);
+                        $this->db->bind(':id', $varId);
+                        $this->db->execute();
+                        if (isset($itemModel)) {
+                            $itemModel->syncVariationsJsonColumn($itemId);
+                        }
+                    }
+
+                    // Deplete via FIFO batches & capture unit cost
+                    $avgCost = $fifo->depleteStock($itemId, $varId, $item['quantity'], $invoiceItemId, null);
+
+                    // Log stock movement in ledger
+                    require_once __DIR__ . '/StockLedger.php';
+                    $ledger = new StockLedger();
+                    $this->db->query("SELECT warehouse_id, cost_price FROM items WHERE id = :id");
+                    $this->db->bind(':id', $itemId);
+                    $itemRow = $this->db->single();
+                    $whId = $itemRow ? $itemRow->warehouse_id : null;
+                    $itemCost = ($avgCost > 0) ? $avgCost : floatval($itemRow->cost_price ?? 0.00);
+
+                    $isFreeIssue = (floatval($item['unit_price'] ?? 0) <= 0 
+                                    || floatval($item['total'] ?? 0) <= 0 
+                                    || (isset($item['discount_type']) && in_array($item['discount_type'], ['Free Issue', 'Free']))
+                                    || strpos($item['description'] ?? '', '(Free') !== false);
+
+                    $movType = $isFreeIssue ? 'Promotional Free Issue' : 'Sales Invoice';
+                    $remarks = $isFreeIssue ? 'Free Issue Promotional Stock Deduction' : 'Sales Invoice Direct Deduction';
+
+                    $ledger->logMovement($itemId, $varId, 0, $item['quantity'], $movType, $invoiceData['invoice_number'], $whId, $userId, $remarks, $itemCost);
+                    $totalCogs += ($itemCost * floatval($item['quantity']));
                 }
-                if ($varId) {
-                    $this->db->query("UPDATE item_variation_options SET quantity_on_hand = CAST(quantity_on_hand AS SIGNED) - :qty WHERE id = :id");
-                    $this->db->bind(':qty', $item['quantity']);
-                    $this->db->bind(':id', $varId);
-                    $this->db->execute();
-                    $itemModel->syncVariationsJsonColumn($itemId);
-                }
-
-                // Deplete via FIFO batches & capture unit cost
-                $avgCost = $fifo->depleteStock($itemId, $varId, $item['quantity'], $invoiceItemId, null);
-
-                // Log stock movement in ledger
-                require_once __DIR__ . '/StockLedger.php';
-                $ledger = new StockLedger();
-                $this->db->query("SELECT warehouse_id, cost_price FROM items WHERE id = :id");
-                $this->db->bind(':id', $itemId);
-                $itemRow = $this->db->single();
-                $whId = $itemRow ? $itemRow->warehouse_id : null;
-                $itemCost = ($avgCost > 0) ? $avgCost : floatval($itemRow->cost_price ?? 0.00);
-
-                $isFreeIssue = (floatval($item['unit_price'] ?? 0) <= 0 
-                                || floatval($item['total'] ?? 0) <= 0 
-                                || (isset($item['discount_type']) && in_array($item['discount_type'], ['Free Issue', 'Free']))
-                                || strpos($item['description'] ?? '', '(Free') !== false);
-
-                $movType = $isFreeIssue ? 'Promotional Free Issue' : 'Sales Invoice';
-                $remarks = $isFreeIssue ? 'Free Issue Promotional Stock Deduction' : 'Sales Invoice Direct Deduction';
-
-                $ledger->logMovement($itemId, $varId, 0, $item['quantity'], $movType, $invoiceData['invoice_number'], $whId, $userId, $remarks, $itemCost);
-                $totalCogs += ($itemCost * floatval($item['quantity']));
             }
 
             // 4. DEBIT: COGS (Expense) & CREDIT: Inventory (Asset)

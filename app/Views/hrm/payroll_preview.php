@@ -305,7 +305,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach(($preview['slips'] ?? []) as $slip): ?>
+                        <?php foreach(($preview['slips'] ?? []) as $slip): 
+                            $epfEmp = $slip['epf_employee_amount'] ?? ($slip['epf_employee'] ?? 0);
+                            $epfEmpr = $slip['epf_employer_amount'] ?? ($slip['epf_employer'] ?? 0);
+                            $etfEmpr = $slip['etf_employer_amount'] ?? ($slip['etf_employer'] ?? 0);
+                            $commVal = floatval($slip['commissions'] ?? 0);
+                            $otVal = floatval($slip['overtime'] ?? 0);
+                        ?>
                             <tr>
                                 <td>
                                     <a href="<?= APP_URL ?>/user/show/<?= $slip['employee_id'] ?>" style="font-weight: 700; text-decoration: none; color: var(--c-blue);">
@@ -316,17 +322,29 @@
                                             <i class="fa-solid fa-circle-info"></i> Active Loan Deduction
                                         </div>
                                     <?php endif; ?>
+                                    <?php if($commVal > 0): ?>
+                                        <div style="font-size: 11px; color: var(--c-green); font-weight: 600; margin-top: 2px;">
+                                            <i class="fa-solid fa-chart-line"></i> Performance Commission Linked
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                 <td style="text-align: right; font-family: var(--f-mono);">Rs. <?= number_format($slip['base_salary'], 2) ?></td>
                                 <td style="text-align: right; color: var(--c-green); font-family: var(--f-mono);">Rs. <?= number_format($slip['allowances'], 2) ?></td>
-                                <td style="text-align: right; color: var(--c-green); font-family: var(--f-mono);">Rs. <?= number_format($slip['commissions'] + $slip['overtime'], 2) ?></td>
+                                <td style="text-align: right; color: var(--c-green); font-family: var(--f-mono);">
+                                    Rs. <?= number_format($commVal + $otVal, 2) ?>
+                                    <?php if($commVal > 0): ?>
+                                        <div style="font-size: 10px; color: var(--t-secondary); font-family: var(--f-system);">
+                                            Comms: Rs <?= number_format($commVal, 2) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
                                 <td style="text-align: right; font-weight: 800; font-family: var(--f-mono);">Rs. <?= number_format($slip['gross_salary'], 2) ?></td>
-                                <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip['epf_employee'] ?? 0, 2) ?></td>
+                                <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($epfEmp, 2) ?></td>
                                 <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip['loan_deduction'], 2) ?></td>
                                 <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip['other_deductions'], 2) ?></td>
                                 <td style="text-align: right; font-weight: 800; color: var(--c-green); font-family: var(--f-mono);">Rs. <?= number_format($slip['net_salary'], 2) ?></td>
-                                <td style="text-align: right; color: var(--c-orange); font-family: var(--f-mono);">Rs. <?= number_format($slip['epf_employer'] ?? 0, 2) ?></td>
-                                <td style="text-align: right; color: var(--c-purple); font-family: var(--f-mono);">Rs. <?= number_format($slip['etf_employer'] ?? 0, 2) ?></td>
+                                <td style="text-align: right; color: var(--c-orange); font-family: var(--f-mono);">Rs. <?= number_format($epfEmpr, 2) ?></td>
+                                <td style="text-align: right; color: var(--c-purple); font-family: var(--f-mono);">Rs. <?= number_format($etfEmpr, 2) ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

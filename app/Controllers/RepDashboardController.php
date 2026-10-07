@@ -259,6 +259,20 @@ class RepDashboardController extends Controller {
             // Bulk-load variation details to avoid N+1 query overhead
             $itemIds = array_map(function($item) { return intval($item->id); }, $items);
             $variationsMap = [];
+            
+            // Bulk-load active soft reservations for calculation of Available to Sell (ATS)
+            $resMap = [];
+            try {
+                $this->db->query("SELECT item_id, variation_option_id, SUM(reserved_qty) AS total_res FROM stock_reservations WHERE status = 'active' GROUP BY item_id, variation_option_id");
+                $resRows = $this->db->resultSet() ?: [];
+                foreach ($resRows as $rr) {
+                    $key = intval($rr->item_id) . '_' . intval($rr->variation_option_id ?? 0);
+                    $resMap[$key] = floatval($rr->total_res ?? 0);
+                }
+            } catch (Exception $e) {
+                $resMap = [];
+            }
+
             if (!empty($itemIds)) {
                 $idsPlaceholder = implode(',', $itemIds);
                 $this->db->query("
@@ -270,17 +284,24 @@ class RepDashboardController extends Controller {
                 $dbVars = $this->db->resultSet() ?: [];
                 foreach ($dbVars as $v) {
                     $itemId = intval($v->item_id);
+                    $varId = intval($v->id);
                     if (!isset($variationsMap[$itemId])) {
                         $variationsMap[$itemId] = [];
                     }
+                    $resKey = $itemId . '_' . $varId;
+                    $reservedQty = $resMap[$resKey] ?? 0;
+                    $physicalQty = intval($v->quantity_on_hand);
+                    $atsQty = max(0, $physicalQty - intval($reservedQty));
+
                     $variationsMap[$itemId][] = [
-                        'id' => intval($v->id),
+                        'id' => $varId,
                         'sku' => $v->sku,
                         'price' => floatval($v->price),
                         'wholesale_price' => floatval($v->wholesale_price ?? 0),
                         'cost' => floatval($v->cost),
-                        'qty' => intval($v->quantity_on_hand),
-                        'quantity_on_hand' => intval($v->quantity_on_hand),
+                        'qty' => $atsQty,
+                        'quantity_on_hand' => $atsQty,
+                        'physical_stock' => $physicalQty,
                         'attribute' => $v->attribute ?? '',
                         'image_path' => $v->image_path ?? ''
                     ];
@@ -297,6 +318,11 @@ class RepDashboardController extends Controller {
                 $varsArray = $variationsMap[$itemId] ?? [];
                 $variationsJsonStr = !empty($varsArray) ? json_encode($varsArray) : '[]';
 
+                $itemResKey = $itemId . '_0';
+                $itemReserved = $resMap[$itemResKey] ?? 0;
+                $itemPhysical = intval($item->qty ?? $item->quantity_on_hand ?? 0);
+                $itemAtsQty = max(0, $itemPhysical - intval($itemReserved));
+
                 $productsJson[] = [
                     'id' => $itemId,
                     'name' => $item->name,
@@ -304,8 +330,9 @@ class RepDashboardController extends Controller {
                     'selling_price' => floatval($item->selling_price ?? 0),
                     'wholesale_price' => $wholesalePrice,
                     'cost_price' => floatval($item->cost_price ?? 0),
-                    'qty' => intval($item->qty ?? $item->quantity_on_hand ?? 0),
-                    'quantity_reserved' => intval($item->quantity_reserved),
+                    'qty' => $itemAtsQty,
+                    'physical_stock' => $itemPhysical,
+                    'quantity_reserved' => intval($itemReserved),
                     'image_path' => $this->sanitizeImagePath($item->image_path ?? ''),
                     'sku' => $item->item_code ?? $item->sku ?? '',
                     'sample_code' => $item->sample_code ?? '',
@@ -1535,6 +1562,11 @@ class RepDashboardController extends Controller {
                         $globalDiscountType = 'Rs';
                     }
 
+                    $pushStockStatus = isset($inv['stock_status']) && strtolower($inv['stock_status']) === 'deducted' ? 'deducted' : 'reserved';
+                    if (isset($inv['doc_type']) && strtolower($inv['doc_type']) === 'tax_invoice') {
+                        $pushStockStatus = 'deducted';
+                    }
+
                     $invoiceData = [
                         'customer_id' => $custServerId,
                         'invoice_number' => $invNo,
@@ -1548,7 +1580,7 @@ class RepDashboardController extends Controller {
                         'notes' => 'Created via Mobile App Sync',
                         'rep_route_id' => $routeServerId ?: null,
                         'grand_total' => floatval($inv['grand_total']),
-                        'stock_status' => 'deducted' // Deduct physical stock immediately
+                        'stock_status' => $pushStockStatus
                     ];
 
                     $invoiceId = $this->invoiceModel->createInvoiceWithAccounting(
