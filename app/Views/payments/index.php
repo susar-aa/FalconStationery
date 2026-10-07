@@ -576,7 +576,7 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div class="form-group">
                             <label>Payment Amount (Rs:) *</label>
-                            <input type="number" step="0.01" name="amount" id="supp-amount-input" class="form-control" style="font-size: 16px; font-weight: 700; color: var(--warning);" required min="0.01" oninput="updateAllocationTotals()">
+                            <input type="number" step="0.01" name="amount" id="supp-amount-input" class="form-control" style="font-size: 16px; font-weight: 700; color: var(--warning);" min="0.01" oninput="updateAllocationTotals()">
                         </div>
                         <div class="form-group">
                             <label>GRN Allocation Strategy *</label>
@@ -805,6 +805,7 @@
         activeSupplierGRNs = [];
         document.getElementById('supp-grns-tbody').innerHTML = '';
         document.getElementById('supp-amount-input').value = '';
+        document.getElementById('supp-amount-input').required = false;
 
         // Disable buttons
         const btnProfile = document.getElementById('btn-view-profile');
@@ -832,6 +833,8 @@
     }
 
     function selectSupplier(supp) {
+        const amtInput = document.getElementById('supp-amount-input');
+        if (amtInput) amtInput.required = true;
         document.getElementById('supplierSearchResults').style.display = 'none';
         document.getElementById('supplierSearch').value = supp.name;
         document.getElementById('form-supp-id').value = supp.id;
@@ -1406,6 +1409,7 @@
         const method = methodSelect ? methodSelect.value : 'Cash';
         const cqBox = document.getElementById(prefix + '-cheque-details');
         const tpBox = document.getElementById(prefix + '-3rd-party-cheque-box');
+        const tpSelect = document.getElementById(prefix + '-3rd-party-cheque-id');
         const bankInput = document.getElementById(prefix + '-chk-bank-input');
         const numInput = document.getElementById(prefix + '-chk-num-input');
         const dateInput = document.getElementById(prefix + '-chk-date-input');
@@ -1416,6 +1420,7 @@
             if (bankInput) bankInput.required = false;
             if (numInput) numInput.required = false;
             if (dateInput) dateInput.required = false;
+            if (tpSelect) tpSelect.required = true;
         } else if (method === 'Cheque') {
             if (cqBox) cqBox.classList.remove('hidden');
             if (tpBox) tpBox.classList.add('hidden');
@@ -1571,11 +1576,10 @@
                         return false;
                     }
                 } else if (method === '3rd Party Cheque') {
-                    const tpSelect = document.getElementById('supp-3rd-party-cheque-select');
+                    const tpSelect = document.getElementById('supp-3rd-party-cheque-id');
                     if (!tpSelect || !tpSelect.value) {
                         e.preventDefault();
-                        alert('Please select a 3rd party received cheque from Cheque Management.');
-                        if (tpSelect) tpSelect.focus();
+                        alert('Please search and select a 3rd party received cheque from the list.');
                         return false;
                     }
                 }
