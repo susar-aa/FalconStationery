@@ -77,25 +77,49 @@ class Payroll {
             if (!$this->db->single()) {
                 $this->db->query("CREATE TABLE IF NOT EXISTS epf_etf_payments (
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    payment_ref VARCHAR(50) NOT NULL,
-                    payment_type ENUM('EPF', 'ETF', 'COMBINED') NOT NULL DEFAULT 'COMBINED',
-                    period_year INT NOT NULL,
-                    period_month INT NOT NULL,
+                    payroll_run_id INT NOT NULL,
+                    payment_type ENUM('EPF', 'ETF') NOT NULL DEFAULT 'EPF',
                     payment_date DATE NOT NULL,
-                    epf_employee_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-                    epf_employer_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-                    etf_employer_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-                    total_paid DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    period_start DATE NOT NULL,
+                    period_end DATE NOT NULL,
+                    total_liability DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+                    amount_paid DECIMAL(15,2) NOT NULL DEFAULT 0.00,
                     bank_account_id INT NOT NULL,
-                    epf_payable_account_id INT NULL,
-                    etf_payable_account_id INT NULL,
+                    payment_reference VARCHAR(100) NULL,
                     journal_entry_id INT NULL,
-                    cheque_no VARCHAR(50) NULL,
                     notes TEXT NULL,
-                    created_by INT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_by INT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    KEY idx_run_type (payroll_run_id, payment_type),
+                    KEY idx_date (payment_date)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
                 $this->db->execute();
+            } else {
+                // Ensure all expected columns exist on epf_etf_payments
+                $payCols = [
+                    "payroll_run_id INT NOT NULL DEFAULT 0",
+                    "payment_type ENUM('EPF', 'ETF') NOT NULL DEFAULT 'EPF'",
+                    "payment_date DATE NOT NULL",
+                    "period_start DATE NULL",
+                    "period_end DATE NULL",
+                    "total_liability DECIMAL(15,2) NOT NULL DEFAULT 0.00",
+                    "amount_paid DECIMAL(15,2) NOT NULL DEFAULT 0.00",
+                    "bank_account_id INT NOT NULL DEFAULT 0",
+                    "payment_reference VARCHAR(100) NULL",
+                    "journal_entry_id INT NULL",
+                    "notes TEXT NULL",
+                    "created_by INT NULL"
+                ];
+                foreach ($payCols as $pc) {
+                    $colName = explode(' ', trim($pc))[0];
+                    try {
+                        $this->db->query("SHOW COLUMNS FROM epf_etf_payments LIKE '$colName'");
+                        if (!$this->db->single()) {
+                            $this->db->query("ALTER TABLE epf_etf_payments ADD COLUMN " . $pc);
+                            $this->db->execute();
+                        }
+                    } catch (Throwable $t) {}
+                }
             }
         } catch (Throwable $e) {
             // Ignore errors if columns/tables exist
