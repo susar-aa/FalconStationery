@@ -3972,3 +3972,17 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Wed 10/07/2026 13:30:53.45 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Payroll.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/hrm/epf_etf_index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 5115e4a] Update: app/Models/Payroll.php, app/Views/hrm/epf_etf_index.php, deploy_log.txt
+ 3 files changed, 253 insertions(+), 64 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   097d92c..5115e4a  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Wed 10/07/2026 15:32:57.92 
+=================================================== 
+Adding changes... 
