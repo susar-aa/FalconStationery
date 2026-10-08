@@ -131,6 +131,23 @@
         </div>
 
         <?php if ($data['type'] === 'loading'): ?>
+            <?php 
+            $printableItems = [];
+            $printableTotalValue = 0.0;
+            foreach (($data['items'] ?? []) as $item) {
+                $qty = floatval($item->final_loaded_qty ?? 0);
+                if ($qty <= 0 && floatval($item->required_qty ?? 0) > 0) {
+                    $qty = floatval($item->required_qty);
+                }
+                if ($qty > 0) {
+                    $item->printable_qty = $qty;
+                    $itemTotal = $qty * floatval($item->unit_price);
+                    $printableTotalValue += $itemTotal;
+                    $printableItems[] = $item;
+                }
+            }
+            $totalRouteDisplayValue = $printableTotalValue > 0 ? $printableTotalValue : floatval($data['route']->total_sales ?? 0);
+            ?>
             <div class="header-section">
                 <h1>Route Loading Sheet</h1>
                 <div class="meta-grid">
@@ -147,7 +164,7 @@
                         <div style="width: 1px; height: 20px; background: #ccc;"></div>
                         <div class="stat-item">
                             <span>Total Route Value</span>
-                            <strong>Rs. <?= number_format($data['route']->total_sales, 2) ?></strong>
+                            <strong>Rs. <?= number_format($totalRouteDisplayValue, 2) ?></strong>
                         </div>
                     </div>
                 </div>
@@ -166,21 +183,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php 
-                    $printableItems = [];
-                    foreach ($data['items'] as $item) {
-                        $qty = floatval($item->final_loaded_qty ?? 0);
-                        if ($qty <= 0 && floatval($item->required_qty ?? 0) > 0) {
-                            $qty = floatval($item->required_qty);
-                        }
-                        if ($qty > 0) {
-                            $item->printable_qty = $qty;
-                            $printableItems[] = $item;
-                        }
-                    }
-                    
-                    if (empty($printableItems)): 
-                    ?>
+                    <?php if (empty($printableItems)): ?>
                         <tr>
                             <td colspan="6" style="text-align:center; padding: 15px; color: #555;">No items found for loading on this route.</td>
                         </tr>

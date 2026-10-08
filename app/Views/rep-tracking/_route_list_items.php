@@ -43,7 +43,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 8px 0; margin-bottom: 8px;">
             <div>
                 <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">Route Total</div>
-                <div style="font-size: 12px; font-weight: bold; color: #2e7d32; font-family: monospace;">Rs <?= number_format($route->total_sales, 2) ?></div>
+                <div style="font-size: 12px; font-weight: bold; color: #2e7d32; font-family: monospace;">Rs <?= number_format($route->actual_total_sales ?? $route->total_sales, 2) ?></div>
             </div>
             <div>
                 <div style="font-size: 9px; color: #94a3b8; text-transform: uppercase; font-weight: bold;">Customers</div>
@@ -80,8 +80,8 @@
          data-end="<?= $route->end_meter ?: 'Active' ?>"
           data-start-time="<?= date('Y-m-d H:i:s', strtotime($route->start_time)) ?>"
           data-end-time="<?= $route->end_time ? date('Y-m-d H:i:s', strtotime($route->end_time)) : 'Active' ?>"
-         data-sales="<?= number_format($route->rep_total_sales ?? $route->total_sales, 2) ?>"
-         data-rep-sales="<?= number_format($route->rep_total_sales ?? $route->total_sales, 2) ?>"
+         data-sales="<?= number_format($route->actual_total_sales ?? $route->total_sales, 2) ?>"
+         data-rep-sales="<?= number_format($route->actual_total_sales ?? $route->total_sales, 2) ?>"
          data-actual-sales="<?= number_format($route->actual_total_sales ?? $route->total_sales, 2) ?>"
          data-bills="<?= $route->bill_count ?>"
          data-status="<?= $route->status ?>"

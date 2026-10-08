@@ -4052,3 +4052,15 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Thu 10/08/2026  9:26:08.23 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main a9588f7] Update: app/Controllers/RepTrackingController.php, app/Services/RepRouteService.php, deploy_log.txt
+ 3 files changed, 59 insertions(+), 17 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   970b8fa..a9588f7  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Thu 10/08/2026  9:34:11.63 
+=================================================== 
+Adding changes... 

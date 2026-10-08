@@ -2245,19 +2245,30 @@ class RepTrackingController extends Controller {
     public function api_get_bound_routes_summary($routeId) {
         $db = new Database();
         
+        $routeIds = $this->trackingModel->resolveAllBoundRouteIds($routeId);
+        $placeholders = [];
+        foreach ($routeIds as $index => $id) {
+            $placeholders[] = ":rid_" . $index;
+        }
+        $placeholdersStr = implode(',', $placeholders);
+
         // Find all constituent routes bound into this route
-        $db->query("SELECT id, route_name, status, start_time FROM rep_daily_routes WHERE bound_to_route_id = :rid");
-        $db->bind(':rid', $routeId);
+        $db->query("SELECT id, route_name, status, start_time FROM rep_daily_routes WHERE bound_to_route_id IN ($placeholdersStr) OR id IN ($placeholdersStr)");
+        foreach ($routeIds as $index => $id) {
+            $db->bind(":rid_" . $index, intval($id));
+        }
         $constituents = $db->resultSet() ?: [];
         
-        // Fetch invoices for this route to calculate customer count, invoice count, and values
+        // Fetch invoices for these bound routes to calculate customer count, invoice count, and values
         $db->query("
             SELECT i.id, i.customer_id, 
                    (total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as true_grand_total
             FROM invoices i
-            WHERE i.rep_route_id = :rid AND i.status != 'Voided'
+            WHERE i.rep_route_id IN ($placeholdersStr) AND i.status != 'Voided'
         ");
-        $db->bind(':rid', $routeId);
+        foreach ($routeIds as $index => $id) {
+            $db->bind(":rid_" . $index, intval($id));
+        }
         $invoices = $db->resultSet() ?: [];
         
         $customerIds = [];
@@ -2274,10 +2285,12 @@ class RepTrackingController extends Controller {
             SELECT ii.description as item_name, SUM(ii.quantity) as qty
             FROM invoice_items ii
             JOIN invoices i ON ii.invoice_id = i.id
-            WHERE i.rep_route_id = :rid AND i.status != 'Voided'
+            WHERE i.rep_route_id IN ($placeholdersStr) AND i.status != 'Voided'
             GROUP BY ii.description
         ");
-        $db->bind(':rid', $routeId);
+        foreach ($routeIds as $index => $id) {
+            $db->bind(":rid_" . $index, intval($id));
+        }
         $items = $db->resultSet() ?: [];
         
         $uniqueProductsCount = count($items);
