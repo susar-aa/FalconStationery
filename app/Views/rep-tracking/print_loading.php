@@ -169,8 +169,8 @@
                     <?php 
                     $printableItems = [];
                     foreach ($data['items'] as $item) {
-                        $qty = floatval($item->final_loaded_qty);
-                        if ($qty <= 0 && floatval($item->required_qty) > 0 && intval($item->is_verified ?? 0) === 0) {
+                        $qty = floatval($item->final_loaded_qty ?? 0);
+                        if ($qty <= 0 && floatval($item->required_qty ?? 0) > 0) {
                             $qty = floatval($item->required_qty);
                         }
                         if ($qty > 0) {

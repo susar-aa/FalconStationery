@@ -4015,3 +4015,23 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Wed 10/07/2026 23:48:56.22 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/RepDashboardController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/Payroll.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/hrm/payroll_preview.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep_performance/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app_errors.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'schema_update.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'apply_stock_reservation_migration.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main db31007] Update: app/Controllers/RepDashboardController.php, app/Models/Invoice.php, app/Models/Payroll.php, app/Views/hrm/payroll_preview.php, app/Views/rep_performance/index.php, app_errors.log, deploy_log.txt, schema_update.sql, apply_stock_reservation_migration.php
+ 9 files changed, 258 insertions(+), 99 deletions(-)
+ create mode 100644 apply_stock_reservation_migration.php
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   b460f9d..db31007  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Thu 10/08/2026  9:18:15.64 
+=================================================== 
+Adding changes... 

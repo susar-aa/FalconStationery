@@ -1204,25 +1204,58 @@ class Delivery {
 
     public function resolveAllBoundRouteIds($rids) {
         if (empty($rids)) return [];
-        $rids = array_map('intval', $rids);
-        $ridsStr = implode(',', array_map('intval', $rids));
+        $rids = array_map('intval', (array)$rids);
+        $currentIds = array_values(array_unique(array_filter($rids)));
         
-        $this->db->query("SELECT DISTINCT route_binding_id FROM rep_daily_routes WHERE id IN ($ridsStr) AND route_binding_id IS NOT NULL");
-        $bindings = $this->db->resultSet();
-        
-        if (!empty($bindings)) {
-            $bindingIds = [];
-            foreach ($bindings as $b) {
-                $bindingIds[] = intval($b->route_binding_id);
-            }
-            $bindingIdsStr = implode(',', array_map('intval', $bindingIds));
+        while (true) {
+            $countBefore = count($currentIds);
+            $placeholders = implode(',', array_fill(0, count($currentIds), '?'));
             
-            $this->db->query("SELECT id FROM rep_daily_routes WHERE route_binding_id IN ($bindingIdsStr)");
-            $allRoutes = $this->db->resultSet();
-            foreach ($allRoutes as $r) {
-                $rids[] = intval($r->id);
+            $this->db->query("
+                SELECT id, route_binding_id, bound_to_route_id 
+                FROM rep_daily_routes 
+                WHERE id IN ($placeholders) 
+                   OR bound_to_route_id IN ($placeholders)
+            ");
+            $paramIndex = 1;
+            foreach ($currentIds as $id) {
+                $this->db->bind($paramIndex++, $id);
+            }
+            foreach ($currentIds as $id) {
+                $this->db->bind($paramIndex++, $id);
+            }
+            $rows = $this->db->resultSet() ?: [];
+
+            $bindingIds = [];
+            foreach ($rows as $r) {
+                $currentIds[] = intval($r->id);
+                if (!empty($r->bound_to_route_id)) {
+                    $currentIds[] = intval($r->bound_to_route_id);
+                }
+                if (!empty($r->route_binding_id)) {
+                    $bindingIds[] = intval($r->route_binding_id);
+                }
+            }
+
+            if (!empty($bindingIds)) {
+                $bindingIds = array_unique(array_filter(array_map('intval', $bindingIds)));
+                $bPlaceholders = implode(',', array_fill(0, count($bindingIds), '?'));
+                $this->db->query("SELECT id FROM rep_daily_routes WHERE route_binding_id IN ($bPlaceholders)");
+                $bIndex = 1;
+                foreach ($bindingIds as $bid) {
+                    $this->db->bind($bIndex++, $bid);
+                }
+                $bRows = $this->db->resultSet() ?: [];
+                foreach ($bRows as $br) {
+                    $currentIds[] = intval($br->id);
+                }
+            }
+
+            $currentIds = array_values(array_unique(array_filter($currentIds)));
+            if (count($currentIds) === $countBefore) {
+                break;
             }
         }
-        return array_unique($rids);
+        return $currentIds;
     }
 }

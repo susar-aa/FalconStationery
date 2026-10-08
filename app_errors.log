@@ -12305,3 +12305,8 @@ SQL: Callable
 #1 C:\xampp\htdocs\CURTISS\FalconStationery\check_pc_journal_col.php(9): Database->__construct()
 #2 {main}
 
+[2026-10-08 05:43:54] Database initialization failed: SQLSTATE[HY000] [2002] No connection could be made because the target machine actively refused it
+#0 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\core\Database.php(27): PDO->__construct('mysql:host=loca...', 'root', '', Array)
+#1 C:\xampp\htdocs\CURTISS\FalconStationery\ERP\scratch\diag.php(9): Database->__construct()
+#2 {main}
+

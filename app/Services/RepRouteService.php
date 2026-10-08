@@ -269,25 +269,66 @@ class RepRouteService {
         }
     }
 
-    public static function ensureDeliveryAndPickingPopulated($db, $routeId) {
-        $routeIds = [intval($routeId)];
-        $db->query("SELECT route_binding_id, bound_to_route_id FROM rep_daily_routes WHERE id = :rid LIMIT 1");
-        $db->bind(':rid', $routeId);
-        $routeRow = $db->single();
-        if ($routeRow) {
-            if ($routeRow->route_binding_id) {
-                $db->query("SELECT id FROM rep_daily_routes WHERE route_binding_id = :bid");
-                $db->bind(':bid', $routeRow->route_binding_id);
-                $boundRoutes = $db->resultSet() ?: [];
-                foreach ($boundRoutes as $br) {
-                    $routeIds[] = intval($br->id);
+    public static function resolveAllBoundRouteIds($db, $routeId) {
+        if (empty($routeId)) return [];
+        
+        $currentIds = is_array($routeId) ? array_map('intval', $routeId) : [intval($routeId)];
+        $currentIds = array_values(array_unique(array_filter($currentIds)));
+        
+        while (true) {
+            $countBefore = count($currentIds);
+            $placeholders = implode(',', array_fill(0, count($currentIds), '?'));
+            
+            $db->query("
+                SELECT id, route_binding_id, bound_to_route_id 
+                FROM rep_daily_routes 
+                WHERE id IN ($placeholders) 
+                   OR bound_to_route_id IN ($placeholders)
+            ");
+            $paramIndex = 1;
+            foreach ($currentIds as $id) {
+                $db->bind($paramIndex++, $id);
+            }
+            foreach ($currentIds as $id) {
+                $db->bind($paramIndex++, $id);
+            }
+            $rows = $db->resultSet() ?: [];
+
+            $bindingIds = [];
+            foreach ($rows as $r) {
+                $currentIds[] = intval($r->id);
+                if (!empty($r->bound_to_route_id)) {
+                    $currentIds[] = intval($r->bound_to_route_id);
+                }
+                if (!empty($r->route_binding_id)) {
+                    $bindingIds[] = intval($r->route_binding_id);
                 }
             }
-            if ($routeRow->bound_to_route_id) {
-                $routeIds[] = intval($routeRow->bound_to_route_id);
+
+            if (!empty($bindingIds)) {
+                $bindingIds = array_unique(array_filter(array_map('intval', $bindingIds)));
+                $bPlaceholders = implode(',', array_fill(0, count($bindingIds), '?'));
+                $db->query("SELECT id FROM rep_daily_routes WHERE route_binding_id IN ($bPlaceholders)");
+                $bIndex = 1;
+                foreach ($bindingIds as $bid) {
+                    $db->bind($bIndex++, $bid);
+                }
+                $bRows = $db->resultSet() ?: [];
+                foreach ($bRows as $br) {
+                    $currentIds[] = intval($br->id);
+                }
+            }
+
+            $currentIds = array_values(array_unique(array_filter($currentIds)));
+            if (count($currentIds) === $countBefore) {
+                break;
             }
         }
-        $routeIds = array_unique(array_filter(array_map('intval', $routeIds)));
+        return $currentIds;
+    }
+
+    public static function ensureDeliveryAndPickingPopulated($db, $routeId) {
+        $routeIds = self::resolveAllBoundRouteIds($db, $routeId);
         $placeholders = [];
         foreach ($routeIds as $index => $id) {
             $placeholders[] = ":rid_" . $index;
@@ -346,24 +387,7 @@ class RepRouteService {
             return;
         }
 
-        $ridsStr1 = implode(',', array_map('intval', $rids));
-        $db->query("SELECT DISTINCT route_binding_id, bound_to_route_id FROM rep_daily_routes WHERE id IN ($ridsStr1)");
-        $bindings = $db->resultSet() ?: [];
-        
-        $bindingIds = [];
-        foreach ($bindings as $b) {
-            if (!empty($b->route_binding_id)) $bindingIds[] = intval($b->route_binding_id);
-            if (!empty($b->bound_to_route_id)) $rids[] = intval($b->bound_to_route_id);
-        }
-        if (!empty($bindingIds)) {
-            $bindingIdsStr = implode(',', array_unique($bindingIds));
-            $db->query("SELECT id FROM rep_daily_routes WHERE route_binding_id IN ($bindingIdsStr)");
-            $allRoutes = $db->resultSet() ?: [];
-            foreach ($allRoutes as $r) {
-                $rids[] = intval($r->id);
-            }
-        }
-        $rids = array_unique(array_filter(array_map('intval', $rids)));
+        $rids = self::resolveAllBoundRouteIds($db, $rids);
 
         $placeholders3 = [];
         foreach ($rids as $index => $id) {

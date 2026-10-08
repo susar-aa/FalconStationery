@@ -95,24 +95,61 @@ class RepTracking {
     }
 
     public function resolveAllBoundRouteIds($routeId) {
-        $routeIds = [intval($routeId)];
-        $this->db->query("SELECT route_binding_id, bound_to_route_id FROM rep_daily_routes WHERE id = :rid LIMIT 1");
-        $this->db->bind(':rid', $routeId);
-        $routeRow = $this->db->single();
-        if ($routeRow) {
-            if ($routeRow->route_binding_id) {
-                $this->db->query("SELECT id FROM rep_daily_routes WHERE route_binding_id = :bid");
-                $this->db->bind(':bid', $routeRow->route_binding_id);
-                $boundRoutes = $this->db->resultSet() ?: [];
-                foreach ($boundRoutes as $br) {
-                    $routeIds[] = intval($br->id);
+        if (empty($routeId)) return [];
+        
+        $currentIds = is_array($routeId) ? array_map('intval', $routeId) : [intval($routeId)];
+        $currentIds = array_values(array_unique(array_filter($currentIds)));
+        
+        while (true) {
+            $countBefore = count($currentIds);
+            $placeholders = implode(',', array_fill(0, count($currentIds), '?'));
+            
+            $this->db->query("
+                SELECT id, route_binding_id, bound_to_route_id 
+                FROM rep_daily_routes 
+                WHERE id IN ($placeholders) 
+                   OR bound_to_route_id IN ($placeholders)
+            ");
+            $paramIndex = 1;
+            foreach ($currentIds as $id) {
+                $this->db->bind($paramIndex++, $id);
+            }
+            foreach ($currentIds as $id) {
+                $this->db->bind($paramIndex++, $id);
+            }
+            $rows = $this->db->resultSet() ?: [];
+
+            $bindingIds = [];
+            foreach ($rows as $r) {
+                $currentIds[] = intval($r->id);
+                if (!empty($r->bound_to_route_id)) {
+                    $currentIds[] = intval($r->bound_to_route_id);
+                }
+                if (!empty($r->route_binding_id)) {
+                    $bindingIds[] = intval($r->route_binding_id);
                 }
             }
-            if ($routeRow->bound_to_route_id) {
-                $routeIds[] = intval($routeRow->bound_to_route_id);
+
+            if (!empty($bindingIds)) {
+                $bindingIds = array_unique(array_filter(array_map('intval', $bindingIds)));
+                $bPlaceholders = implode(',', array_fill(0, count($bindingIds), '?'));
+                $this->db->query("SELECT id FROM rep_daily_routes WHERE route_binding_id IN ($bPlaceholders)");
+                $bIndex = 1;
+                foreach ($bindingIds as $bid) {
+                    $this->db->bind($bIndex++, $bid);
+                }
+                $bRows = $this->db->resultSet() ?: [];
+                foreach ($bRows as $br) {
+                    $currentIds[] = intval($br->id);
+                }
+            }
+
+            $currentIds = array_values(array_unique(array_filter($currentIds)));
+            if (count($currentIds) === $countBefore) {
+                break;
             }
         }
-        return array_unique(array_filter(array_map('intval', $routeIds)));
+        return $currentIds;
     }
 
     public function getRouteBills($routeId) {
@@ -273,7 +310,7 @@ class RepTracking {
                    ii.variation_option_id,
                    MAX(ii.description) as item_name,
                    SUM(ii.quantity) as total_qty,
-                   AVG(ii.unit_price) as unit_price,
+                   COALESCE(SUM(ii.total) / NULLIF(SUM(ii.quantity), 0), AVG(ii.unit_price)) as unit_price,
                    COALESCE(ic.name, 'Uncategorized') as category_name
             FROM invoice_items ii
             JOIN invoices i ON ii.invoice_id = i.id
@@ -297,7 +334,7 @@ class RepTracking {
         }
         $placeholdersStr = implode(',', $placeholders);
 
-        $this->db->query("SELECT id FROM deliveries WHERE rep_route_id IN ($placeholdersStr) OR secondary_rep_route_id IN ($placeholdersStr) ORDER BY id DESC LIMIT 1");
+        $this->db->query("SELECT id FROM deliveries WHERE rep_route_id IN ($placeholdersStr) OR secondary_rep_route_id IN ($placeholdersStr) ORDER BY id DESC");
         foreach ($routeIds as $index => $id) {
             $this->db->bind(":rid_" . $index, intval($id));
         }
@@ -325,7 +362,7 @@ class RepTracking {
                    MAX(dpi.is_verified) as is_verified,
                    COALESCE(ic.name, 'Uncategorized') as category_name,
                    COALESCE(
-                       (SELECT AVG(ii.unit_price) 
+                       (SELECT SUM(ii.total) / NULLIF(SUM(ii.quantity), 0)
                         FROM invoice_items ii 
                         JOIN invoices i ON ii.invoice_id = i.id 
                         WHERE i.rep_route_id IN ($placeholdersStr) AND ii.item_id = dpi.item_id AND i.status != 'Voided'),
