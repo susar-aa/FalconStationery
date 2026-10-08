@@ -1392,19 +1392,15 @@ class RepTrackingController extends Controller {
         $placeholdersStr = implode(',', $placeholders);
 
         $db = new Database();
+        require_once dirname(__DIR__) . '/Services/RepRouteService.php';
+        RepRouteService::syncDeliveryPickingItemsForRoute($db, $routeId);
+
         $db->query("SELECT * FROM deliveries WHERE rep_route_id IN ($placeholdersStr) OR secondary_rep_route_id IN ($placeholdersStr) ORDER BY id DESC");
         foreach ($routeIds as $index => $id) {
             $db->bind(":rid_" . $index, intval($id));
         }
         $deliveries = $db->resultSet() ?: [];
         $delivery = !empty($deliveries) ? $deliveries[0] : null;
-        
-        if (!empty($deliveries)) {
-            require_once dirname(__DIR__) . '/Services/RepRouteService.php';
-            foreach ($deliveries as $del) {
-                RepRouteService::populatePickingItems($db, $del->id);
-            }
-        }
 
         // Always try to fetch final loading items first (from delivery verification)
         $items = $this->trackingModel->getRouteFinalLoadingItems($routeId);
