@@ -5,7 +5,7 @@
  */
 ?>
 <div class="pane-left">
-    <div style="flex: 1; overflow-y: auto;" id="routeListItemsContainer">
+    <div id="routeListItemsContainer">
         <?php 
         $routes = $data['routes'];
         include __DIR__ . '/_route_list_items.php'; 

@@ -1696,4 +1696,195 @@ select option {
         background: rgba(239, 68, 68, 0.85) !important;
         color: #ffffff !important;
     }
+
+    /* ══════════════════════════════════════════════════════════════
+       SINGLE SCROLLBAR & REDESIGNED FILTERS BAR OVERRIDES
+       ══════════════════════════════════════════════════════════════ */
+    .app-workspace:not(.workspace-active) {
+        height: auto !important;
+        min-height: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+    }
+    .app-workspace:not(.workspace-active) .pane-left {
+        width: 100% !important;
+        background: transparent !important;
+        border-right: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        flex: 1;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    .app-workspace:not(.workspace-active) #routeListItemsContainer {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+        gap: 20px !important;
+        padding: 4px 0 20px 0 !important;
+        align-content: start !important;
+        height: auto !important;
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    /* Redesigned Glassmorphic Status Filter Bar */
+    .global-status-filter-bar {
+        display: flex;
+        gap: 16px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px;
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        transition: all 0.25s ease;
+    }
+
+    .filter-controls-group {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        flex-wrap: wrap;
+        flex: 1;
+    }
+
+    .filter-control-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .filter-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .filter-label i {
+        font-size: 13px;
+        color: #0066cc;
+    }
+
+    .filter-select-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .filter-input-select, .filter-input-date {
+        padding: 8px 32px 8px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        background: #ffffff;
+        color: #1e293b;
+        min-width: 175px;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .filter-input-date {
+        padding-right: 14px;
+        min-width: 150px;
+    }
+
+    .filter-input-select:hover, .filter-input-date:hover {
+        border-color: #94a3b8;
+        background: #f8fafc;
+    }
+
+    .filter-input-select:focus, .filter-input-date:focus {
+        border-color: #0066cc;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.12);
+        background: #ffffff;
+    }
+
+    .filter-caret {
+        position: absolute;
+        right: 12px;
+        pointer-events: none;
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .filter-action-group {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .btn-clear-filters {
+        padding: 8px 16px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .btn-clear-filters:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+    }
+    .btn-clear-filters:active {
+        transform: translateY(0);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .global-status-filter-bar {
+            background: rgba(30, 30, 46, 0.85);
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+        }
+        .filter-label {
+            color: #94a3b8;
+        }
+        .filter-input-select, .filter-input-date {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #f8fafc;
+        }
+        .filter-input-select option {
+            background: #1e1e2e !important;
+            color: #f8fafc !important;
+        }
+        .filter-input-select:hover, .filter-input-date:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: #27273a;
+        }
+        .filter-caret {
+            color: #94a3b8;
+        }
+        .btn-clear-filters {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #cbd5e1;
+        }
+        .btn-clear-filters:hover {
+            background: #27273a;
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+    }
 </style>
