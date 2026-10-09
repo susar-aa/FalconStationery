@@ -389,7 +389,7 @@ class RepRouteService {
     }
 
     public static function ensurePickingItemsPopulated($db, $deliveryId) {
-        self::populatePickingItems($db, $deliveryId, true);
+        self::populatePickingItems($db, $deliveryId, false);
     }
 
     public static function populatePickingItems($db, $deliveryId, bool $forceRefresh = false) {
@@ -430,7 +430,7 @@ class RepRouteService {
         $invoiceItems = $db->resultSet() ?: [];
 
         // Existing delivery_picking_items map
-        $db->query("SELECT id, item_id, variation_option_id, item_name, is_verified, required_qty, loaded_qty, final_loaded_qty FROM delivery_picking_items WHERE delivery_id = :did");
+        $db->query("SELECT id, item_id, variation_option_id, item_name, is_verified, required_qty, loaded_qty, final_loaded_qty, variance FROM delivery_picking_items WHERE delivery_id = :did");
         $db->bind(':did', $deliveryId);
         $existingRows = $db->resultSet() ?: [];
         $existingItemsMap = [];
@@ -447,30 +447,39 @@ class RepRouteService {
             if (isset($existingItemsMap[$key])) {
                 $ex = $existingItemsMap[$key];
                 $reqQty = floatval($item->required_qty);
-                
-                // Refresh quantities if forced, unverified, or if total required invoice qty increased due to binding
-                if ($forceRefresh || intval($ex->is_verified) === 0 || floatval($ex->required_qty) < $reqQty) {
-                    $db->query("
-                        UPDATE delivery_picking_items 
-                        SET required_qty = :req_qty, 
-                            loaded_qty = CASE WHEN (is_verified = 0 OR :force1 = 1 OR loaded_qty < :req_qty) THEN :req_qty ELSE loaded_qty END,
-                            final_loaded_qty = CASE WHEN (is_verified = 0 OR :force2 = 1 OR COALESCE(final_loaded_qty, 0) < :req_qty) THEN :req_qty ELSE final_loaded_qty END,
-                            item_name = :item_name
-                        WHERE id = :id
-                    ");
-                    $forceVal = $forceRefresh ? 1 : 0;
-                    $db->bind(':req_qty', $reqQty);
-                    $db->bind(':force1', $forceVal);
-                    $db->bind(':force2', $forceVal);
-                    $db->bind(':item_name', $item->item_name);
-                    $db->bind(':id', $ex->id);
-                    $db->execute();
+                $isVerified = intval($ex->is_verified) === 1;
+
+                // Determine final_loaded_qty preserving user verified / adjusted value
+                if ($isVerified || ($ex->final_loaded_qty !== null && !$forceRefresh)) {
+                    $finalLoadedQty = floatval($ex->final_loaded_qty !== null ? $ex->final_loaded_qty : $reqQty);
+                } else if ($forceRefresh && !$isVerified) {
+                    $finalLoadedQty = $reqQty;
+                } else {
+                    $finalLoadedQty = floatval($ex->final_loaded_qty !== null ? $ex->final_loaded_qty : $reqQty);
                 }
+
+                $variance = $finalLoadedQty - $reqQty;
+
+                $db->query("
+                    UPDATE delivery_picking_items 
+                    SET required_qty = :req_qty, 
+                        loaded_qty = COALESCE(loaded_qty, :req_qty),
+                        final_loaded_qty = :final_loaded_qty,
+                        variance = :variance,
+                        item_name = :item_name
+                    WHERE id = :id
+                ");
+                $db->bind(':req_qty', $reqQty);
+                $db->bind(':final_loaded_qty', $finalLoadedQty);
+                $db->bind(':variance', $variance);
+                $db->bind(':item_name', $item->item_name);
+                $db->bind(':id', $ex->id);
+                $db->execute();
             } else {
                 $reqQty = floatval($item->required_qty);
                 $db->query("
-                    INSERT INTO delivery_picking_items (delivery_id, item_name, item_id, variation_option_id, required_qty, loaded_qty, final_loaded_qty, is_picked)
-                    VALUES (:delivery_id, :item_name, :item_id, :variation_option_id, :required_qty, :loaded_qty, :final_loaded_qty, 0)
+                    INSERT INTO delivery_picking_items (delivery_id, item_name, item_id, variation_option_id, required_qty, loaded_qty, final_loaded_qty, variance, is_picked, is_verified)
+                    VALUES (:delivery_id, :item_name, :item_id, :variation_option_id, :required_qty, :loaded_qty, :final_loaded_qty, 0, 0, 0)
                 ");
                 $db->bind(':delivery_id', $deliveryId);
                 $db->bind(':item_name', $item->item_name);

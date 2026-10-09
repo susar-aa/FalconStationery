@@ -1701,6 +1701,8 @@ select option {
        SINGLE SCROLLBAR & REDESIGNED FILTERS BAR OVERRIDES
        ══════════════════════════════════════════════════════════════ */
     .app-workspace:not(.workspace-active) {
+        position: relative !important;
+        z-index: 1 !important;
         height: auto !important;
         min-height: 0 !important;
         background: transparent !important;
@@ -1731,6 +1733,8 @@ select option {
 
     /* Redesigned Glassmorphic Status Filter Bar */
     .global-status-filter-bar {
+        position: relative !important;
+        z-index: 99999 !important;
         display: flex;
         gap: 16px;
         background: rgba(255, 255, 255, 0.85);
@@ -1748,6 +1752,8 @@ select option {
     }
 
     .filter-controls-group {
+        position: relative !important;
+        z-index: 99999 !important;
         display: flex;
         gap: 18px;
         align-items: center;
@@ -1756,9 +1762,21 @@ select option {
     }
 
     .filter-control-item {
+        position: relative !important;
+        z-index: 99999 !important;
         display: flex;
         flex-direction: column;
         gap: 6px;
+    }
+
+    .filter-select-wrapper,
+    .custom-searchable-select {
+        position: relative !important;
+        z-index: 99999 !important;
+    }
+
+    .custom-select-dropdown {
+        z-index: 100000 !important;
     }
 
     .filter-label {
