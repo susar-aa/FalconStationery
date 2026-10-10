@@ -5247,15 +5247,17 @@
         });
         
         const slotHtml = `
-            <div class="rb-slot-column" id="rb_slot_col_${index}" style="position: relative;">
-                ${index > 2 ? `<button type="button" onclick="removeBindingSlot(${index})" style="position: absolute; top: 10px; right: 10px; border: none; background: #dc2626; color: #fff; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; padding:0;">✕</button>` : ''}
-                <h5 style="margin: 0 0 5px 0; color: #3f51b5; font-size: 12px; font-weight: bold; text-transform: uppercase;">Slot ${index}</h5>
-                <div class="rb-slot-box">
-                    <div style="font-size: 20px; color: #cbd5e1; margin-bottom: 6px;" id="rb_slot_icon_${index}">+</div>
-                    <select class="rb-slot-select" id="rb_select_${index}" onchange="onBindingSlotRouteSelect(${index}, this)">
-                        ${optionsHtml}
-                    </select>
+            <div class="rb-slot-column" id="rb_slot_col_${index}">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="background: #eff6ff; color: #007aff; border: 1px solid #bfdbfe; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-transform: uppercase;">Slot ${index}</span>
+                        <span id="rb_slot_icon_${index}" style="font-size: 14px; color: #94a3b8; display: flex; align-items: center;"><i class="ph ph-circle-dashed"></i></span>
+                    </div>
+                    ${index > 2 ? `<button type="button" onclick="removeBindingSlot(${index})" style="border: none; background: #fee2e2; color: #ef4444; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.15s;" onmouseover="this.style.background='#fca5a5'; this.style.color='#dc2626';" onmouseout="this.style.background='#fee2e2'; this.style.color='#ef4444';" title="Remove Slot">✕</button>` : ''}
                 </div>
+                <select class="rb-slot-select" id="rb_select_${index}" onchange="onBindingSlotRouteSelect(${index}, this)">
+                    ${optionsHtml}
+                </select>
                 <div class="rb-bill-list" id="rb_bills_${index}"></div>
             </div>
         `;
@@ -5277,7 +5279,7 @@
         if (!routeId) {
             billsContainer.style.display = 'none';
             billsContainer.innerHTML = '';
-            icon.innerText = '+';
+            if (icon) icon.innerHTML = '<i class="ph ph-circle-dashed"></i>';
             updateBindingSlotDropdowns();
             return;
         }
@@ -5288,7 +5290,7 @@
         const selectedRouteName = selectedRoute ? selectedRoute.name : '';
         const selectedRepName = selectedRoute ? selectedRoute.rep : '';
 
-        icon.innerText = '<i class="ph ph-link"></i>';
+        if (icon) icon.innerHTML = '<i class="ph ph-check-circle" style="color:#16a34a; font-size:15px;"></i>';
         billsContainer.style.display = 'block';
         billsContainer.innerHTML = '<p style="text-align: center; color: #888;">Loading details... </p>';
         

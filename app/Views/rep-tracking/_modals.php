@@ -195,24 +195,57 @@
 </div>
 
 <!-- Route Multi-Binding Modal -->
-<div class="modal-backdrop" id="routeBindingModal">
-    <div class="modal-panel" style="max-width: 900px; width: 95%; max-height: 90vh;">
-        <div class="modal-header" style="background: #3f51b5;">
-            <span><i class="ph ph-link"></i> Rep Route Multi-Binding Panel</span>
-            <button onclick="closeRouteBindingModal()" style="background:transparent; border:none; color:#fff; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
-        </div>
-        <div class="modal-body" style="overflow-y:auto; flex:1;">
-            <div style="margin-bottom: 20px;">
-                <label>Custom Name for Bound Group</label>
-                <input type="text" id="rbBoundName" placeholder="e.g. Western Route Combined - June 15">
+<div class="modal-backdrop" id="routeBindingModal" style="display:none; align-items:center; justify-content:center; z-index:10000; background:rgba(15,23,42,0.45); backdrop-filter:blur(8px);">
+    <div class="modal-panel" style="max-width: 860px; width: 92%; border-radius: 20px; background: #ffffff; overflow: hidden; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22); border: 1px solid rgba(226, 232, 240, 0.9); font-family: var(--f-system); display: flex; flex-direction: column; max-height: 88vh;">
+        
+        <!-- Modal Header -->
+        <div style="padding: 20px 24px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                    <i class="ph ph-link-simple-horizontal" style="color: #007aff; font-size: 22px;"></i> Rep Route Multi-Binding Panel
+                </div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 3px;">Combine multiple representative routes into a single consolidated binding group</div>
             </div>
-            <label>Route Slots</label>
-            <div id="rbSlotsContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap:15px; margin-bottom:15px;"></div>
-            <button type="button" onclick="addBindingSlot()" style="background: #eef2ff; color: #3f51b5; border: 1px dashed #3f51b5; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; display: block; width: 100%;"><i class="ph ph-plus-circle"></i> Add Route Slot</button>
+            <button type="button" onclick="closeRouteBindingModal()" style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 1px solid #cbd5e1; color: #64748b; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'" onmouseout="this.style.background='#ffffff'; this.style.color='#64748b'">✕</button>
         </div>
-        <div class="modal-footer">
-            <button class="qb-btn" onclick="closeRouteBindingModal()" style="border:1px solid #ccc; padding:8px 18px; border-radius:4px; font-size:12px; cursor:pointer;">Cancel</button>
-            <button class="qb-btn" onclick="submitRouteBinding()" style="background:#2e7d32; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-size:12px; cursor:pointer; font-weight: bold;"><i class="ph ph-lightning"></i> Confirm & Create Route Binding</button>
+
+        <!-- Modal Body -->
+        <div class="modal-body" style="padding: 24px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px;">
+            <!-- Bound Group Name Input -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                <label for="rbBoundName" style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                    <i class="ph ph-tag" style="color: #007aff; font-size: 14px;"></i> Custom Name for Bound Group *
+                </label>
+                <div style="position: relative;">
+                    <input type="text" id="rbBoundName" placeholder="e.g. Western Route Combined - June 15" style="width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 13.5px; background: #ffffff; color: #0f172a; font-weight: 500; outline: none; transition: all 0.15s;" onfocus="this.style.borderColor='#007aff'; this.style.boxShadow='0 0 0 3px rgba(0,122,255,0.12)'" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none'">
+                </div>
+            </div>
+
+            <!-- Route Slots Section -->
+            <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <span style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px;">
+                        <i class="ph ph-path" style="color: #007aff; font-size: 14px;"></i> Route Slots
+                    </span>
+                    <span style="font-size: 11px; color: #64748b; font-weight: 500;">Select 2 or more routes to bind</span>
+                </div>
+                
+                <div id="rbSlotsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 16px;"></div>
+
+                <button type="button" onclick="addBindingSlot()" style="width: 100%; background: #f0f7ff; color: #007aff; border: 1.5px dashed #bfe0ff; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s;" onmouseover="this.style.background='#e3f2fd'; this.style.borderColor='#007aff';" onmouseout="this.style.background='#f0f7ff'; this.style.borderColor='#bfe0ff';">
+                    <i class="ph ph-plus-circle" style="font-size: 17px;"></i> Add Route Slot
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
+            <button type="button" onclick="closeRouteBindingModal()" style="padding: 10px 20px; background: #ffffff; border: 1px solid #cbd5e1; color: #475569; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a'" onmouseout="this.style.background='#ffffff'; this.style.color='#475569'">
+                Cancel
+            </button>
+            <button type="button" onclick="submitRouteBinding()" style="padding: 10px 22px; background: linear-gradient(135deg, #16a34a, #15803d); border: none; color: #ffffff; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25); transition: all 0.15s;" onmouseover="this.style.opacity='0.92';" onmouseout="this.style.opacity='1.0';">
+                <i class="ph ph-lightning" style="font-size: 16px;"></i> Confirm & Create Route Binding
+            </button>
         </div>
     </div>
 </div>

@@ -77,14 +77,27 @@ class Invoice {
                 $itemDiscountTotal += $lineDisc;
             }
 
-            $subtotal = floatval($invoiceData['subtotal'] ?? 0);
+            $subtotal = (!empty($items) && $itemGrossTotal > 0) ? ($itemGrossTotal - $itemDiscountTotal) : floatval($invoiceData['subtotal'] ?? 0);
             $globalDiscVal = floatval($invoiceData['global_discount_val'] ?? 0);
             $globalDiscType = $invoiceData['global_discount_type'] ?? 'Rs';
             $globalDiscAmount = ($globalDiscType === '%') ? ($subtotal * $globalDiscVal / 100) : $globalDiscVal;
 
             $totalDiscountAmount = $itemDiscountTotal + $globalDiscAmount;
             $grossRevenue = ($itemGrossTotal > 0) ? $itemGrossTotal : ($subtotal + $itemDiscountTotal);
-            $netGrandTotal = floatval($invoiceData['grand_total'] ?? ($subtotal - $globalDiscAmount));
+
+            $taxAmount = 0.00;
+            if (isset($invoiceData['tax_amount']) && floatval($invoiceData['tax_amount']) > 0) {
+                $taxAmount = floatval($invoiceData['tax_amount']);
+            } elseif (!empty($invoiceData['tax_rate_id'])) {
+                $this->db->query("SELECT rate FROM tax_rates WHERE id = :id LIMIT 1");
+                $this->db->bind(':id', $invoiceData['tax_rate_id']);
+                $tRow = $this->db->single();
+                if ($tRow) {
+                    $taxAmount = max(0, $subtotal - $globalDiscAmount) * (floatval($tRow->rate) / 100);
+                }
+            }
+
+            $netGrandTotal = max(0, ($subtotal - $globalDiscAmount) + $taxAmount);
 
             // Resolve Discounts Allowed Account (Code 4050) strictly without dynamic insertion
             $discountAccountId = null;
@@ -185,8 +198,6 @@ class Invoice {
                 $this->db->updateAccountBalance($revenueAccountId, 0, $grossRevenue);
             }
 
-            $taxAmount = isset($invoiceData['tax_amount']) ? floatval($invoiceData['tax_amount']) : ($netGrandTotal - ($grossRevenue - $totalDiscountAmount));
-
             // 4. CREDIT: Tax Payable (Liability) = Tax Amount (if > 0)
             if ($taxAmount > 0.001 && $taxAccountId) {
                 $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit) VALUES (:journal_id, :account_id, 0, :credit)");
@@ -211,7 +222,7 @@ class Invoice {
             $this->db->bind(':invoice_date', $invoiceData['invoice_date']);
             $this->db->bind(':due_date', $invoiceData['due_date']);
             $this->db->bind(':payment_term_id', $invoiceData['payment_term_id'] ?? null);
-            $this->db->bind(':total_amount', $invoiceData['subtotal']);
+            $this->db->bind(':total_amount', round($subtotal, 2));
             $this->db->bind(':grand_total', round($netGrandTotal, 2));
             $this->db->bind(':original_grand_total', round($netGrandTotal, 2));
             $this->db->bind(':tax_amount', $taxAmount > 0 ? $taxAmount : 0.0);
@@ -491,15 +502,27 @@ class Invoice {
                 $itemDiscountTotal += $lineDisc;
             }
 
-            $subtotal = floatval($invoiceData['subtotal'] ?? 0);
+            $subtotal = (!empty($items) && $itemGrossTotal > 0) ? ($itemGrossTotal - $itemDiscountTotal) : floatval($invoiceData['subtotal'] ?? 0);
             $globalDiscVal = floatval($invoiceData['global_discount_val'] ?? 0);
             $globalDiscType = $invoiceData['global_discount_type'] ?? 'Rs';
             $globalDiscAmount = ($globalDiscType === '%') ? ($subtotal * $globalDiscVal / 100) : $globalDiscVal;
 
             $totalDiscountAmount = $itemDiscountTotal + $globalDiscAmount;
             $grossRevenue = ($itemGrossTotal > 0) ? $itemGrossTotal : ($subtotal + $itemDiscountTotal);
-            $netGrandTotal = floatval($invoiceData['grand_total'] ?? ($subtotal - $globalDiscAmount));
-            $taxAmount = isset($invoiceData['tax_amount']) ? floatval($invoiceData['tax_amount']) : ($netGrandTotal - ($grossRevenue - $totalDiscountAmount));
+
+            $taxAmount = 0.00;
+            if (isset($invoiceData['tax_amount']) && floatval($invoiceData['tax_amount']) > 0) {
+                $taxAmount = floatval($invoiceData['tax_amount']);
+            } elseif (!empty($invoiceData['tax_rate_id'])) {
+                $this->db->query("SELECT rate FROM tax_rates WHERE id = :id LIMIT 1");
+                $this->db->bind(':id', $invoiceData['tax_rate_id']);
+                $tRow = $this->db->single();
+                if ($tRow) {
+                    $taxAmount = max(0, $subtotal - $globalDiscAmount) * (floatval($tRow->rate) / 100);
+                }
+            }
+
+            $netGrandTotal = max(0, ($subtotal - $globalDiscAmount) + $taxAmount);
 
             if ($jid) {
                 $this->db->query("DELETE FROM transactions WHERE journal_entry_id = :jid");
@@ -617,6 +640,7 @@ class Invoice {
                                 due_date = :due_date, 
                                 payment_term_id = :payment_term_id,
                                 total_amount = :total_amount, 
+                                grand_total = :grand_total,
                                 tax_amount = :tax_amount,
                                 tax_rate_id = :tax_rate_id,
                                 global_discount_val = :global_discount_val, 
@@ -629,7 +653,8 @@ class Invoice {
             $this->db->bind(':invoice_date', $invoiceData['invoice_date']);
             $this->db->bind(':due_date', $invoiceData['due_date']);
             $this->db->bind(':payment_term_id', $invoiceData['payment_term_id'] ?? null);
-            $this->db->bind(':total_amount', $invoiceData['subtotal']);
+            $this->db->bind(':total_amount', round($subtotal, 2));
+            $this->db->bind(':grand_total', round($netGrandTotal, 2));
             $this->db->bind(':tax_amount', $taxAmount > 0 ? $taxAmount : 0.0);
             $this->db->bind(':tax_rate_id', $invoiceData['tax_rate_id'] ?? null);
             $this->db->bind(':global_discount_val', $invoiceData['global_discount_val']);

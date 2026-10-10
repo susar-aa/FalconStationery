@@ -589,14 +589,14 @@ select option {
 
     /* Binding panel */
     .rb-slot-column {
-        background: var(--c-surface2);
-        border: 0.5px solid var(--c-separator);
-        border-radius: var(--r-md);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
         padding: 16px;
         display: flex;
         flex-direction: column;
         gap: 12px;
-        box-shadow: var(--shadow-xs);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
     }
     .rb-slot-box {
         border: 1.5px dashed var(--c-separator);
@@ -618,9 +618,9 @@ select option {
     }
     .rb-slot-select {
         width: 100%;
-        padding: 8px 12px;
-        border: 0.5px solid var(--c-separator);
-        border-radius: var(--r-xs);
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
         font-size: 13px;
         background: var(--c-surface);
         color: var(--t-primary);
@@ -1734,7 +1734,7 @@ select option {
     /* Redesigned Glassmorphic Status Filter Bar */
     .global-status-filter-bar {
         position: relative !important;
-        z-index: 99999 !important;
+        z-index: 50 !important;
         display: flex;
         gap: 16px;
         background: rgba(255, 255, 255, 0.85);
@@ -1753,7 +1753,7 @@ select option {
 
     .filter-controls-group {
         position: relative !important;
-        z-index: 99999 !important;
+        z-index: 50 !important;
         display: flex;
         gap: 18px;
         align-items: center;
@@ -1763,7 +1763,7 @@ select option {
 
     .filter-control-item {
         position: relative !important;
-        z-index: 99999 !important;
+        z-index: 50 !important;
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -1772,11 +1772,11 @@ select option {
     .filter-select-wrapper,
     .custom-searchable-select {
         position: relative !important;
-        z-index: 99999 !important;
+        z-index: 50 !important;
     }
 
     .custom-select-dropdown {
-        z-index: 100000 !important;
+        z-index: 100 !important;
     }
 
     .filter-label {

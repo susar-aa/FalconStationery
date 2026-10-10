@@ -4094,3 +4094,49 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Fri 10/09/2026 10:12:08.04 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Views/rep-tracking/index.css.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 0be9265] Update: app/Services/RepRouteService.php, app/Views/rep-tracking/index.css.php, deploy_log.txt, schema_update.sql
+ 4 files changed, 64 insertions(+), 72 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   21a2523..0be9265  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Fri 10/09/2026 11:07:55.08 
+=================================================== 
+Adding changes... 
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'curtiss_erp_2026-10-09_05-13-34_mysql_data_rxf1q.sql', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 113bd94] Update: app/Models/Invoice.php, deploy_log.txt, curtiss_erp_2026-10-09_05-13-34_mysql_data_rxf1q.sql
+ 3 files changed, 572231 insertions(+), 9 deletions(-)
+ create mode 100644 curtiss_erp_2026-10-09_05-13-34_mysql_data_rxf1q.sql
+Pushing to GitHub... 
+remote: error: Trace: d57f04f2df9ad03a95fd66fb3fcabcafd406013dd06b36b4ad7d4dd7a9c5dcea        
+remote: error: See https://gh.io/lfs for more information.        
+remote: error: File curtiss_erp_2026-10-09_05-13-34_mysql_data_rxf1q.sql is 104.35 MB; this exceeds GitHub's file size limit of 100.00 MB        
+remote: error: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+To https://github.com/susar-aa/FalconStationery.git
+ ! [remote rejected] main -> main (pre-receive hook declined)
+error: failed to push some refs to 'https://github.com/susar-aa/FalconStationery.git'
+=================================================== 
+=================================================== 
+Deployment Log - Sat 10/10/2026 10:18:17.36 
+=================================================== 
+Adding changes... 
+warning: in the working copy of 'app/Views/rep-tracking/index.css.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main a4ea1dd] Update: app/Views/rep-tracking/_modals.php, app/Views/rep-tracking/index.css.php, deploy_log.txt
+ 3 files changed, 80 insertions(+), 28 deletions(-)
+Pushing to GitHub... 
+remote: error: Trace: 17cb9b2afc102bda33143134585bb806d5b1b26981747644532f80ccc297b2cf        
+remote: error: See https://gh.io/lfs for more information.        
+remote: error: File curtiss_erp_2026-10-09_05-13-34_mysql_data_rxf1q.sql is 104.35 MB; this exceeds GitHub's file size limit of 100.00 MB        
+remote: error: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.        
+To https://github.com/susar-aa/FalconStationery.git
+ ! [remote rejected] main -> main (pre-receive hook declined)
+error: failed to push some refs to 'https://github.com/susar-aa/FalconStationery.git'
+=================================================== 
