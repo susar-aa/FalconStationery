@@ -1996,7 +1996,7 @@ if ($inv && isset($inv->id)) {
 
     function selectSearchItem(item) {
         if (item.type !== 'Service' && item.stock <= 0) {
-            alert("Cannot add item! It is currently out of stock.");
+            alert(`Cannot add "${item.name || 'this item'}"! It is currently out of stock.`);
             return;
         }
         addItemRow(item);
@@ -2072,11 +2072,34 @@ if ($inv && isset($inv->id)) {
         if(e.target.id !== 'customerSearch') { document.getElementById('customerSearchResults').style.display = 'none'; }
     });
 
-    function validateQty(input, maxStock) {
-        if (maxStock !== null) {
+    function validateQty(input, maxStock, customItemName = null) {
+        if (maxStock !== null && maxStock !== undefined) {
             let val = parseFloat(input.value);
             if (val > maxStock) {
-                alert("Insufficient inventory! Available stock for this item is: " + maxStock);
+                let name = customItemName;
+                let code = '';
+                if (input) {
+                    const row = input.closest('tr');
+                    if (row) {
+                        if (!name) {
+                            const descInput = row.querySelector('input[name="desc[]"]');
+                            if (descInput && descInput.value && descInput.value.trim() !== '') {
+                                name = descInput.value.trim();
+                            }
+                        }
+                        const codeInput = row.querySelector('input[readonly]');
+                        if (codeInput && codeInput.value && codeInput.value.trim() !== '' && codeInput.value.trim() !== 'ITEM') {
+                            code = codeInput.value.trim();
+                        }
+                    }
+                }
+
+                let productLabel = name ? `"${name}"` : 'this item';
+                if (code) {
+                    productLabel += ` (Code: ${code})`;
+                }
+
+                alert(`Insufficient inventory for ${productLabel}!\n\nThe available stock is only ${maxStock} unit(s), but ${val} was entered. The quantity has been automatically adjusted to ${maxStock}.`);
                 input.value = maxStock;
             }
         }
@@ -2157,7 +2180,7 @@ if ($inv && isset($inv->id)) {
         renumberInvoiceRows();
 
         const qtyInput = tr.querySelector('input[name="qty[]"]');
-        validateQty(qtyInput, item.type === 'Service' ? null : item.stock);
+        validateQty(qtyInput, item.type === 'Service' ? null : item.stock, desc || item.name);
         calcTotals();
         document.querySelector('.table-scroll-container').scrollTop = 0;
 
