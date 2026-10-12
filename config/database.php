@@ -44,11 +44,29 @@ function get_env_var($key, $default = '') {
 // Load env file from project root
 loadEnv(__DIR__ . '/../.env');
 
-// Database Constants
-define('DB_HOST', get_env_var('DB_HOST', 'localhost'));
-define('DB_USER', get_env_var('DB_USER', 'root')); 
-define('DB_PASS', get_env_var('DB_PASS', ''));    
-define('DB_NAME', get_env_var('DB_NAME', 'curtiss_erp')); 
+// Detect if running locally (Windows / localhost / 127.0.0.1) vs Production (Linux / Plesk)
+$isLocalDev = (PHP_OS_FAMILY === 'Windows') && (!isset($_SERVER['HTTP_HOST']) || in_array($_SERVER['HTTP_HOST'], ['localhost', '127.0.0.1']));
+
+if ($isLocalDev) {
+    define('DB_HOST', get_env_var('DB_HOST', '127.0.0.1'));
+    define('DB_USER', get_env_var('DB_USER', 'root')); 
+    define('DB_PASS', get_env_var('DB_PASS', ''));    
+    define('DB_NAME', get_env_var('DB_NAME', 'curtiss_erp')); 
+} else {
+    // Production Live Server (Plesk / Linux / falcon.trycurtiss.com)
+    $prodUser = get_env_var('DB_USER');
+    if (empty($prodUser) || $prodUser === 'root') {
+        $prodUser = 'curtiss_erp';
+    }
+    $prodPass = get_env_var('DB_PASS');
+    if (empty($prodPass)) {
+        $prodPass = 'Susara@200611003614';
+    }
+    define('DB_HOST', get_env_var('DB_HOST', 'localhost'));
+    define('DB_USER', $prodUser); 
+    define('DB_PASS', $prodPass);    
+    define('DB_NAME', get_env_var('DB_NAME', 'curtiss_erp')); 
+} 
 
 // App Root URL - Dynamically determined for local dev (XAMPP) & Plesk production
 if (isset($_SERVER['HTTP_HOST'])) {
