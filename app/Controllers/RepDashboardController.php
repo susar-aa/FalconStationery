@@ -698,7 +698,7 @@ class RepDashboardController extends Controller {
                     'credit_limit' => floatval($c['credit_limit'] ?? 0.00),
                     'customer_type' => $c['customer_type'] ?? 'Standard',
                     'notes' => $c['notes'] ?? '',
-                    'status' => $c['status'] ?? 'active',
+                    'status' => strtolower($c['status'] ?? 'active'),
                     'updated_at' => $c['updated_at'] ?? ''
                 ];
                 echo json_encode($custData);
