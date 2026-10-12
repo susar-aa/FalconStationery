@@ -1562,10 +1562,7 @@ class RepDashboardController extends Controller {
                         $globalDiscountType = 'Rs';
                     }
 
-                    $pushStockStatus = isset($inv['stock_status']) && strtolower($inv['stock_status']) === 'deducted' ? 'deducted' : 'reserved';
-                    if (isset($inv['doc_type']) && strtolower($inv['doc_type']) === 'tax_invoice') {
-                        $pushStockStatus = 'deducted';
-                    }
+                    $pushStockStatus = 'deducted'; // Direct real-time inventory stock deduction at bill sync
 
                     $invoiceData = [
                         'customer_id' => $custServerId,
@@ -1582,6 +1579,38 @@ class RepDashboardController extends Controller {
                         'grand_total' => floatval($inv['grand_total']),
                         'stock_status' => $pushStockStatus
                     ];
+
+                    // Check for warehouse stock shortages before deduction
+                    $stockShortages = [];
+                    foreach ($itemsPayload as $it) {
+                        $parts = explode('|', $it['item_selection']);
+                        $pId = intval($parts[0] ?? 0);
+                        $vId = intval($parts[1] ?? 0);
+                        $reqQty = floatval($it['quantity'] ?? 0);
+                        
+                        $avail = 0;
+                        if ($vId > 0) {
+                            $this->db->query("SELECT quantity_on_hand FROM item_variation_options WHERE id = :id");
+                            $this->db->bind(':id', $vId);
+                            $vRow = $this->db->single();
+                            $avail = $vRow ? floatval($vRow->quantity_on_hand) : 0;
+                        } elseif ($pId > 0) {
+                            $this->db->query("SELECT quantity_on_hand FROM items WHERE id = :id");
+                            $this->db->bind(':id', $pId);
+                            $pRow = $this->db->single();
+                            $avail = $pRow ? floatval($pRow->quantity_on_hand) : 0;
+                        }
+                        
+                        if ($avail < $reqQty) {
+                            $stockShortages[] = [
+                                'item_name' => $it['description'] ?? 'Item',
+                                'product_id' => $pId,
+                                'variation_option_id' => $vId,
+                                'requested_qty' => $reqQty,
+                                'available_qty' => max(0, $avail)
+                            ];
+                        }
+                    }
 
                     $invoiceId = $this->invoiceModel->createInvoiceWithAccounting(
                         $invoiceData,
@@ -1614,8 +1643,6 @@ class RepDashboardController extends Controller {
                             if ($it['discount_value'] > 0) {
                                 $this->logActivity('Apply Discount', 'Billing', "Applied item-wise discount Rs: " . number_format($it['discount_value'], 2) . " on product in Invoice {$invNo}", $invoiceId);
                             }
-                            
-                            // Note: Firebase stock update is now handled by MySQL trigger and background daemon
                         }
 
                         $this->db->query("SELECT invoice_date FROM invoices WHERE id = :id");
@@ -1624,13 +1651,16 @@ class RepDashboardController extends Controller {
                         $serverTime = $invRow ? $invRow->invoice_date : date('Y-m-d H:i:s');
 
                         $isRemapped = ($invNo !== $inv['invoice_number']);
+                        $hasConflict = !empty($stockShortages);
                         $mappings['invoices'][] = [
                             'local_id' => $localId,
                             'server_id' => intval($invoiceId),
                             'invoice_number' => $invNo,
                             'server_timestamp' => $serverTime,
                             'remapped' => $isRemapped,
-                            'new_invoice_number' => $isRemapped ? $invNo : null
+                            'new_invoice_number' => $isRemapped ? $invNo : null,
+                            'stock_conflict' => $hasConflict,
+                            'conflict_details' => $stockShortages
                         ];
                     } else {
                         $err = isset($_SESSION['invoice_error']) ? $_SESSION['invoice_error'] : 'Unknown error during creation';
@@ -2640,6 +2670,225 @@ class RepDashboardController extends Controller {
             exit;
         } catch (Exception $e) {
             error_log("Error in api_get_customer_profile: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+
+    /**
+     * STAGE 1: Lightweight Stock Delta API for Mobile App
+     * Returns only item_id, variation_id, and live quantity_on_hand.
+     * Can filter by `since` timestamp or return all active stock.
+     */
+    public function live_stock_delta() {
+        header('Content-Type: application/json');
+        
+        try {
+            $since = '';
+            if (isset($_GET['since'])) {
+                $since = trim($_GET['since']);
+            } elseif (isset($_GET['last_sync'])) {
+                $since = trim($_GET['last_sync']);
+            }
+
+            $hasSince = !empty($since) && strtotime($since) !== false;
+            
+            // 1. Fetch Items stock delta
+            if ($hasSince) {
+                $this->db->query("
+                    SELECT id, quantity_on_hand, status 
+                    FROM items 
+                    WHERE updated_at > :since
+                ");
+                $this->db->bind(':since', $since);
+            } else {
+                $this->db->query("
+                    SELECT id, quantity_on_hand, status 
+                    FROM items 
+                    WHERE status != 'inactive' OR status IS NULL
+                ");
+            }
+            $itemRows = $this->db->resultSet() ?: [];
+            
+            $items = [];
+            $itemIds = [];
+            foreach ($itemRows as $row) {
+                $id = intval($row->id);
+                $items[] = [
+                    'id' => $id,
+                    'qty' => intval($row->quantity_on_hand ?? 0),
+                    'status' => $row->status ?? 'active'
+                ];
+                $itemIds[] = $id;
+            }
+
+            // 2. Fetch Variation Options stock delta in a single batched query
+            $variations = [];
+            if ($hasSince) {
+                if (!empty($itemIds)) {
+                    $idsPlaceholder = implode(',', $itemIds);
+                    $this->db->query("
+                        SELECT ivo.id, ivo.item_id, ivo.quantity_on_hand 
+                        FROM item_variation_options ivo 
+                        WHERE ivo.item_id IN ($idsPlaceholder)
+                    ");
+                    $varRows = $this->db->resultSet() ?: [];
+                    foreach ($varRows as $v) {
+                        $variations[] = [
+                            'id' => intval($v->id),
+                            'item_id' => intval($v->item_id),
+                            'qty' => intval($v->quantity_on_hand ?? 0)
+                        ];
+                    }
+                }
+            } else {
+                $this->db->query("
+                    SELECT ivo.id, ivo.item_id, ivo.quantity_on_hand 
+                    FROM item_variation_options ivo
+                ");
+                $varRows = $this->db->resultSet() ?: [];
+                foreach ($varRows as $v) {
+                    $variations[] = [
+                        'id' => intval($v->id),
+                        'item_id' => intval($v->item_id),
+                        'qty' => intval($v->quantity_on_hand ?? 0)
+                    ];
+                }
+            }
+
+            echo json_encode([
+                'success' => true,
+                'server_time' => date('Y-m-d H:i:s'),
+                'count_items' => count($items),
+                'count_variations' => count($variations),
+                'items' => $items,
+                'variations' => $variations
+            ]);
+            exit;
+        } catch (Exception $e) {
+            error_log("Error in live_stock_delta: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+
+    /**
+     * STAGE 1: Quick Stock Check API (Pre-Checkout & Product Tile verification)
+     * Validates live stock availability for specific requested cart items.
+     */
+    public function quick_stock_check() {
+        header('Content-Type: application/json');
+
+        try {
+            $rawInput = file_get_contents('php://input');
+            $payload = json_decode($rawInput, true);
+
+            if (!$payload && isset($_POST['items'])) {
+                $payload = ['items' => is_array($_POST['items']) ? $_POST['items'] : json_decode($_POST['items'], true)];
+            }
+
+            $requestedItems = $payload['items'] ?? [];
+            if (empty($requestedItems) && isset($_GET['item_id'])) {
+                $requestedItems = [[
+                    'item_id' => intval($_GET['item_id']),
+                    'var_id' => isset($_GET['var_id']) ? intval($_GET['var_id']) : null,
+                    'qty' => isset($_GET['qty']) ? intval($_GET['qty']) : 1
+                ]];
+            }
+
+            if (empty($requestedItems) || !is_array($requestedItems)) {
+                echo json_encode(['success' => false, 'message' => 'No items provided for stock verification.']);
+                exit;
+            }
+
+            // Extract item IDs and variation IDs for batched lookup (avoids N+1 queries)
+            $itemIds = [];
+            $varIds = [];
+            foreach ($requestedItems as $req) {
+                $iId = intval($req['item_id'] ?? $req['id'] ?? 0);
+                $vId = (!empty($req['var_id']) && intval($req['var_id']) > 0) ? intval($req['var_id']) : null;
+                if ($iId > 0) $itemIds[$iId] = true;
+                if ($vId !== null && $vId > 0) $varIds[$vId] = true;
+            }
+
+            $itemStockMap = [];
+            if (!empty($itemIds)) {
+                $idsList = implode(',', array_keys($itemIds));
+                $this->db->query("SELECT id, name, quantity_on_hand, status FROM items WHERE id IN ($idsList)");
+                $rows = $this->db->resultSet() ?: [];
+                foreach ($rows as $r) {
+                    $itemStockMap[intval($r->id)] = [
+                        'name' => $r->name,
+                        'qty' => intval($r->quantity_on_hand ?? 0),
+                        'status' => $r->status ?? 'active'
+                    ];
+                }
+            }
+
+            $varStockMap = [];
+            if (!empty($varIds)) {
+                $varList = implode(',', array_keys($varIds));
+                $this->db->query("
+                    SELECT ivo.id, ivo.item_id, ivo.quantity_on_hand, vv.value_name AS attribute
+                    FROM item_variation_options ivo
+                    LEFT JOIN variation_values vv ON ivo.variation_value_id = vv.id
+                    WHERE ivo.id IN ($varList)
+                ");
+                $vRows = $this->db->resultSet() ?: [];
+                foreach ($vRows as $vr) {
+                    $varStockMap[intval($vr->id)] = [
+                        'qty' => intval($vr->quantity_on_hand ?? 0),
+                        'attribute' => $vr->attribute ?? ''
+                    ];
+                }
+            }
+
+            // Check availability for each requested item
+            $allAvailable = true;
+            $checkedItems = [];
+
+            foreach ($requestedItems as $req) {
+                $iId = intval($req['item_id'] ?? $req['id'] ?? 0);
+                $vId = (!empty($req['var_id']) && intval($req['var_id']) > 0) ? intval($req['var_id']) : null;
+                $reqQty = intval($req['qty'] ?? $req['quantity'] ?? 1);
+
+                $itemName = $itemStockMap[$iId]['name'] ?? 'Item #' . $iId;
+                $availableQty = 0;
+
+                if ($vId !== null && isset($varStockMap[$vId])) {
+                    $availableQty = $varStockMap[$vId]['qty'];
+                    if (!empty($varStockMap[$vId]['attribute'])) {
+                        $itemName .= ' (' . $varStockMap[$vId]['attribute'] . ')';
+                    }
+                } elseif (isset($itemStockMap[$iId])) {
+                    $availableQty = $itemStockMap[$iId]['qty'];
+                }
+
+                $isSufficient = ($availableQty >= $reqQty);
+                if (!$isSufficient) {
+                    $allAvailable = false;
+                }
+
+                $checkedItems[] = [
+                    'item_id' => $iId,
+                    'var_id' => $vId,
+                    'name' => $itemName,
+                    'requested_qty' => $reqQty,
+                    'available_qty' => $availableQty,
+                    'shortage' => max(0, $reqQty - $availableQty),
+                    'is_sufficient' => $isSufficient
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'all_available' => $allAvailable,
+                'server_time' => date('Y-m-d H:i:s'),
+                'items' => $checkedItems
+            ]);
+            exit;
+        } catch (Exception $e) {
+            error_log("Error in quick_stock_check: " . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
             exit;
         }
