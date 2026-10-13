@@ -3324,133 +3324,62 @@ class RepTrackingController extends Controller {
                 throw new Exception("Selected asset/bank account could not be found.");
             }
 
-            // 3. Post Journal Entry (Double Entry: Debit Asset, Credit Accounts Receivable)
-            $refNum = !empty($reference) ? $reference : "RCPT-RT" . $routeId . "-" . time();
-            $desc = "Credit Bill Payment ({$paymentMethod}) for Invoice " . $inv->invoice_number . " via Route #" . $routeId;
+            $cleanNotes = !empty($notes) ? $notes : ("Payment for credit bill " . $inv->invoice_number . ($reference !== '' ? " (" . $reference . ")" : ""));
 
-            $db->query("INSERT INTO journal_entries (entry_date, reference, description, entity_type, entity_id, created_by, status) 
-                        VALUES (:date, :ref, :desc, 'Customer', :cid, :uid, 'Posted')");
-            $db->bind(':date', $paymentDate);
-            $db->bind(':ref', $refNum);
-            $db->bind(':desc', $desc);
-            $db->bind(':cid', $customerId);
-            $db->bind(':uid', $userId);
-            $db->execute();
-            $journalId = $db->lastInsertId();
-
-            // Insert Ledger Transactions with Customer entity binding
-            $lines = [
-                ['account_id' => $debitAccountId, 'debit' => $amount, 'credit' => 0],
-                ['account_id' => $arAccountId, 'debit' => 0, 'credit' => $amount]
-            ];
-
-            foreach ($lines as $line) {
-                $db->query("INSERT INTO transactions (journal_entry_id, account_id, entity_type, entity_id, debit, credit) 
-                            VALUES (:jid, :aid, 'Customer', :cid, :deb, :cred)");
-                $db->bind(':jid', $journalId);
-                $db->bind(':aid', $line['account_id']);
-                $db->bind(':cid', $customerId);
-                $db->bind(':deb', $line['debit']);
-                $db->bind(':cred', $line['credit']);
-                $db->execute();
-
-                // Update Chart of Account Balance
-                $db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
-                $db->bind(':id', $line['account_id']);
-                $acc = $db->single();
-                $sql = "UPDATE chart_of_accounts SET balance = balance ";
-                $sql .= (in_array($acc->account_type, ['Asset', 'Expense'])) ? "+ :debit - :credit " : "- :debit + :credit ";
-                $sql .= "WHERE id = :id";
-                $db->query($sql);
-                $db->bind(':debit', $line['debit']);
-                $db->bind(':credit', $line['credit']);
-                $db->bind(':id', $line['account_id']);
-                $db->execute();
-            }
-
-            // 4. Record Customer Payment & Allocation
-            $db->query("INSERT INTO customer_payments (customer_id, amount, unallocated_amount, payment_date, payment_method, reference, notes, journal_entry_id, created_by, status, rep_route_id) 
-                        VALUES (:cid, :amt, 0.00, :date, :method, :ref, :notes, :jid, :uid, 'Active', :rid)");
-            $db->bind(':cid', $customerId);
-            $db->bind(':amt', $amount);
-            $db->bind(':date', $paymentDate);
-            $db->bind(':method', $paymentMethod);
-            $db->bind(':ref', $refNum);
-            $db->bind(':notes', !empty($notes) ? $notes : "Applied to attached credit bill " . $inv->invoice_number);
-            $db->bind(':jid', $journalId);
-            $db->bind(':uid', $userId);
+            // 3. Save as DRAFT in pending_collections only (do NOT post to GL, do NOT post to customer_payments yet)
+            // Check if draft payment already exists for this invoice on this route
+            $db->query("SELECT id FROM pending_collections WHERE route_id = :rid AND invoice_id = :iid AND status = 'Pending' LIMIT 1");
             $db->bind(':rid', $routeId);
-            $db->execute();
-            $paymentId = $db->lastInsertId();
+            $db->bind(':iid', $invoiceId);
+            $existingDraft = $db->single();
 
-            // Also record route collection in pending_collections for financial & route variance tracking
-            $db->query("INSERT INTO pending_collections (
-                customer_id, route_id, payment_method, amount, bank_name, cheque_number, cheque_date, status, notes, created_by, created_at, is_verified, finalized_by, finalized_at, debit_account_id, credit_account_id
-            ) VALUES (
-                :cid, :rid, :method, :amt, :bn, :cn, :cdate, 'Finalized', :notes, :uid, NOW(), 1, :uid, NOW(), :da, :ca
-            )");
-            $db->bind(':cid', $customerId);
-            $db->bind(':rid', $routeId);
-            $db->bind(':method', $paymentMethod);
-            $db->bind(':amt', $amount);
-            $db->bind(':bn', $chequeBank);
-            $db->bind(':cn', $chequeNumber);
-            $db->bind(':cdate', !empty($chequeDate) ? $chequeDate : date('Y-m-d'));
-            $db->bind(':notes', !empty($notes) ? $notes : "Credit bill payment for invoice " . $inv->invoice_number);
-            $db->bind(':uid', $userId);
-            $db->bind(':da', $debitAccountId);
-            $db->bind(':ca', $arAccountId);
-            $db->execute();
-
-            // Save Payment Allocation to the target Credit Invoice
-            $db->query("INSERT INTO customer_payment_allocations (customer_payment_id, invoice_id, amount) 
-                        VALUES (:pid, :inv_id, :amt)");
-            $db->bind(':pid', $paymentId);
-            $db->bind(':inv_id', $invoiceId);
-            $db->bind(':amt', $allocAmount);
-            $db->execute();
-
-            // If payment exceeds invoice balance, remaining is saved as unallocated
-            $unallocated = max(0, $amount - $allocAmount);
-            if ($unallocated > 0) {
-                $db->query("UPDATE customer_payments SET unallocated_amount = :uamt WHERE id = :pid");
-                $db->bind(':uamt', $unallocated);
-                $db->bind(':pid', $paymentId);
-                $db->execute();
-            }
-
-            // 5. Update Invoice Payment Status
-            $newPaidSum = floatval($inv->amount_paid) + $allocAmount;
-            if ($newPaidSum >= floatval($inv->total_amount) - 0.01) {
-                $db->query("UPDATE invoices SET status = 'Paid' WHERE id = :id");
-                $db->bind(':id', $invoiceId);
-                $db->execute();
-            } else {
-                $db->query("UPDATE invoices SET status = 'Partially Paid' WHERE id = :id");
-                $db->bind(':id', $invoiceId);
-                $db->execute();
-            }
-
-            // 6. Save Cheque details if applicable
-            if ($paymentMethod === 'Cheque') {
-                $db->query("INSERT INTO cheques (customer_id, bank_name, cheque_number, amount, banking_date, status, created_by) 
-                            VALUES (:cid, :bn, :cn, :amt, :bdate, 'Pending', :uid)");
+            if ($existingDraft) {
+                $collId = intval($existingDraft->id);
+                $db->query("UPDATE pending_collections 
+                            SET customer_id = :cid, payment_method = :method, amount = :amt, 
+                                bank_name = :bn, cheque_number = :cn, cheque_date = :cdate, 
+                                notes = :notes, is_verified = 1, debit_account_id = :da, credit_account_id = :ca
+                            WHERE id = :id");
                 $db->bind(':cid', $customerId);
+                $db->bind(':method', $paymentMethod);
+                $db->bind(':amt', $amount);
                 $db->bind(':bn', $chequeBank);
                 $db->bind(':cn', $chequeNumber);
-                $db->bind(':amt', $amount);
-                $db->bind(':bdate', $chequeDate);
-                $db->bind(':uid', $userId);
+                $db->bind(':cdate', !empty($chequeDate) ? $chequeDate : null);
+                $db->bind(':notes', $cleanNotes);
+                $db->bind(':da', $debitAccountId);
+                $db->bind(':ca', $arAccountId);
+                $db->bind(':id', $collId);
                 $db->execute();
+            } else {
+                $db->query("INSERT INTO pending_collections (
+                    customer_id, route_id, invoice_id, payment_method, amount, bank_name, cheque_number, cheque_date, status, notes, created_by, created_at, is_verified, debit_account_id, credit_account_id
+                ) VALUES (
+                    :cid, :rid, :iid, :method, :amt, :bn, :cn, :cdate, 'Pending', :notes, :uid, NOW(), 1, :da, :ca
+                )");
+                $db->bind(':cid', $customerId);
+                $db->bind(':rid', $routeId);
+                $db->bind(':iid', $invoiceId);
+                $db->bind(':method', $paymentMethod);
+                $db->bind(':amt', $amount);
+                $db->bind(':bn', $chequeBank);
+                $db->bind(':cn', $chequeNumber);
+                $db->bind(':cdate', !empty($chequeDate) ? $chequeDate : null);
+                $db->bind(':notes', $cleanNotes);
+                $db->bind(':uid', $userId);
+                $db->bind(':da', $debitAccountId);
+                $db->bind(':ca', $arAccountId);
+                $db->execute();
+                $collId = intval($db->lastInsertId());
             }
 
-            // 7. Write Audit Trail Log
+            // 4. Write Audit Trail Log
             $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
             $db->query("INSERT INTO audit_logs (user_id, action, module, description, record_id, ip_address) 
-                        VALUES (:uid, 'CREDIT_BILL_PAYMENT', 'RepTracking', :desc, :ref, :ip)");
+                        VALUES (:uid, 'CREDIT_BILL_PAYMENT_DRAFT', 'RepTracking', :desc, :ref, :ip)");
             $db->bind(':uid', $userId);
-            $db->bind(':desc', "Applied {$paymentMethod} payment of Rs " . number_format($amount, 2) . " to attached credit bill " . $inv->invoice_number . " (Route #{$routeId})");
-            $db->bind(':ref', $paymentId);
+            $db->bind(':desc', "Drafted {$paymentMethod} payment of Rs " . number_format($amount, 2) . " for attached credit bill " . $inv->invoice_number . " (Route #{$routeId})");
+            $db->bind(':ref', $collId);
             $db->bind(':ip', $ip);
             $db->execute();
 
@@ -3459,8 +3388,8 @@ class RepTrackingController extends Controller {
             header('Content-Type: application/json');
             echo json_encode([
                 'status' => 'success',
-                'message' => 'Payment of Rs ' . number_format($amount, 2) . ' successfully applied to credit bill ' . $inv->invoice_number . '!',
-                'payment_id' => $paymentId
+                'message' => 'Payment draft of Rs ' . number_format($amount, 2) . ' saved for credit bill ' . $inv->invoice_number . '. You can review account mappings below before finalizing.',
+                'pending_collection_id' => $collId
             ]);
             exit;
         } catch (Throwable $e) {
@@ -3475,6 +3404,54 @@ class RepTrackingController extends Controller {
                 'status' => 'error',
                 'message' => 'Payment Processing Error: ' . $e->getMessage()
             ]);
+            exit;
+        }
+    }
+
+    /**
+     * API to cancel and remove a drafted credit bill payment
+     */
+    public function api_cancel_credit_bill_draft() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid Request Method.']);
+            exit;
+        }
+
+        $this->validateCsrf();
+        $payload = json_decode(file_get_contents('php://input'), true);
+
+        $routeId = intval($payload['route_id'] ?? 0);
+        $invoiceId = intval($payload['invoice_id'] ?? 0);
+        $collectionId = intval($payload['collection_id'] ?? 0);
+
+        if ($routeId <= 0 || ($invoiceId <= 0 && $collectionId <= 0)) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid Route ID or Bill/Collection ID.']);
+            exit;
+        }
+
+        $db = new Database();
+        try {
+            if ($collectionId > 0) {
+                $db->query("DELETE FROM pending_collections WHERE id = :id AND route_id = :rid AND status = 'Pending'");
+                $db->bind(':id', $collectionId);
+                $db->bind(':rid', $routeId);
+                $db->execute();
+            } else {
+                $db->query("DELETE FROM pending_collections WHERE invoice_id = :iid AND route_id = :rid AND status = 'Pending'");
+                $db->bind(':iid', $invoiceId);
+                $db->bind(':rid', $routeId);
+                $db->execute();
+            }
+
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success', 'message' => 'Draft payment cancelled successfully.']);
+            exit;
+        } catch (Throwable $e) {
+            header('Content-Type: application/json');
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             exit;
         }
     }

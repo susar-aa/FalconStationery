@@ -242,17 +242,45 @@ class Delivery {
         }
         
         if (!empty($selectedIds) && is_array($selectedIds)) {
-            $idList = implode(',', array_map('intval', $selectedIds));
+            $rids = [intval($routeId)];
+            if (!empty($secondaryRouteId)) {
+                $rids[] = intval($secondaryRouteId);
+            }
+            $rids = $this->resolveAllBoundRouteIds($rids);
+            $ridsStr = implode(',', array_map('intval', $rids));
+
+            $placeholders = [];
+            foreach ($selectedIds as $k => $sid) {
+                $placeholders[] = ':sid_' . $k;
+            }
+            $placeholdersStr = implode(',', $placeholders);
+
             $this->db->query("
                 SELECT i.*, c.name as customer_name,
                 (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as true_grand_total,
-                COALESCE((SELECT SUM(amount) FROM customer_payment_allocations WHERE invoice_id = i.id AND is_reversed = 0), 0) as amount_paid
+                COALESCE(cpa_sum.amount_paid, 0) as amount_paid,
+                COALESCE(pc_sum.draft_paid, 0) as draft_paid
                 FROM invoices i
                 JOIN customers c ON i.customer_id = c.id
-                WHERE i.id IN ($idList) AND i.status != 'Voided'
+                LEFT JOIN (
+                    SELECT invoice_id, SUM(amount) as amount_paid 
+                    FROM customer_payment_allocations 
+                    WHERE is_reversed = 0 
+                    GROUP BY invoice_id
+                ) cpa_sum ON cpa_sum.invoice_id = i.id
+                LEFT JOIN (
+                    SELECT invoice_id, SUM(amount) as draft_paid 
+                    FROM pending_collections 
+                    WHERE route_id IN ($ridsStr) AND status = 'Pending' AND invoice_id IS NOT NULL 
+                    GROUP BY invoice_id
+                ) pc_sum ON pc_sum.invoice_id = i.id
+                WHERE i.id IN ($placeholdersStr) AND i.status != 'Voided'
                 ORDER BY i.invoice_date ASC, i.id ASC
             ");
-            return $this->db->resultSet();
+            foreach ($selectedIds as $k => $sid) {
+                $this->db->bind(':sid_' . $k, intval($sid));
+            }
+            return $this->db->resultSet() ?: [];
         }
 
         // Only show ticked bills. If none are ticked, return empty array.

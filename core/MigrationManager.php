@@ -159,7 +159,7 @@ class MigrationManager {
             'items_wholesale_price' => "ALTER TABLE items ADD COLUMN wholesale_price DECIMAL(10,2) NOT NULL DEFAULT 0.00",
             'items_item_code' => "ALTER TABLE items ADD COLUMN item_code VARCHAR(100) NULL",
             'items_name' => "ALTER TABLE items ADD COLUMN name VARCHAR(255) NOT NULL DEFAULT ''",
-            'items_qty' => "SELECT 1",
+            'items_qty' => function(PDO $dbh) { return true; },
             'items_description' => "ALTER TABLE items ADD COLUMN description TEXT NULL",
             'create_stock_batches' => "
                 CREATE TABLE IF NOT EXISTS stock_batches (
@@ -554,6 +554,7 @@ class MigrationManager {
                         ]);
                     }
                 }
+                return true;
             },
             'add_grand_total_to_invoices' => function(PDO $dbh) {
                 $stmt = $dbh->query("SHOW COLUMNS FROM invoices LIKE 'grand_total'");
@@ -568,6 +569,7 @@ class MigrationManager {
                     ) 
                     WHERE grand_total IS NULL
                 ");
+                return true;
             },
             'add_original_grand_total_to_invoices' => function(PDO $dbh) {
                 $stmt = $dbh->query("SHOW COLUMNS FROM invoices LIKE 'original_grand_total'");
@@ -582,6 +584,7 @@ class MigrationManager {
                     ))
                     WHERE original_grand_total IS NULL
                 ");
+                return true;
             },
             'create_sync_exceptions_table' => "
                 CREATE TABLE IF NOT EXISTS sync_exceptions (
@@ -1452,6 +1455,12 @@ class MigrationManager {
             return;
         }
 
+        // Fast-path: Check persistent cache so we don't query migrations on every single HTTP request
+        if (class_exists('Cache') && Cache::get('all_migrations_synced')) {
+            self::$initialized = true;
+            return;
+        }
+
         // 1. Ensure migrations table exists
         try {
             $dbh->exec("
@@ -1489,7 +1498,8 @@ class MigrationManager {
             $success = false;
             try {
                 if (is_callable($sql)) {
-                    $success = call_user_func($sql, $dbh);
+                    $res = call_user_func($sql, $dbh);
+                    $success = ($res !== false);
                 } else {
                     try {
                         $dbh->exec($sql);
@@ -1539,6 +1549,10 @@ class MigrationManager {
         if ($anyRan) {
             if (class_exists('Cache')) {
                 Cache::clear();
+            }
+        } else {
+            if (class_exists('Cache') && count($executed) >= count($migrations)) {
+                Cache::set('all_migrations_synced', true, 600);
             }
         }
 

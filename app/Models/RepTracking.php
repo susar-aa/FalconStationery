@@ -786,6 +786,7 @@ class RepTracking {
                 $this->db->bind(':rid', $payment->route_id);
                 $this->db->bind(':uid', $userId);
                 $this->db->execute();
+                $paymentId = intval($this->db->lastInsertId());
 
                 // If it is a cheque, register it in the cheques table as well
                 if ($method === 'Cheque') {
@@ -801,10 +802,60 @@ class RepTracking {
                     $this->db->execute();
                 }
 
-                // Settle customer invoices with newly finalized payment credit via FIFO
                 require_once __DIR__ . '/Payment.php';
                 $paymentModel = new Payment();
-                $paymentModel->settleCustomerInvoicesWithCreditNonTransactional($payment->customer_id, $userId);
+
+                // If this collection was specifically drafted for a credit invoice, allocate to it
+                if (!empty($payment->invoice_id)) {
+                    $invId = intval($payment->invoice_id);
+                    $this->db->query("
+                        SELECT i.id, i.invoice_number, 
+                               (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as total_amount,
+                               COALESCE((SELECT SUM(cpa.amount) FROM customer_payment_allocations cpa WHERE cpa.invoice_id = i.id AND cpa.is_reversed = 0), 0) as amount_paid
+                        FROM invoices i 
+                        WHERE i.id = :iid
+                    ");
+                    $this->db->bind(':iid', $invId);
+                    $invRow = $this->db->single();
+
+                    $allocAmount = 0.0;
+                    if ($invRow) {
+                        $balDue = max(0.0, floatval($invRow->total_amount) - floatval($invRow->amount_paid));
+                        $allocAmount = min($amount, $balDue);
+
+                        if ($allocAmount > 0.0) {
+                            $this->db->query("INSERT INTO customer_payment_allocations (customer_payment_id, invoice_id, amount) VALUES (:pid, :iid, :amt)");
+                            $this->db->bind(':pid', $paymentId);
+                            $this->db->bind(':iid', $invId);
+                            $this->db->bind(':amt', $allocAmount);
+                            $this->db->execute();
+
+                            $newPaidSum = floatval($invRow->amount_paid) + $allocAmount;
+                            if ($newPaidSum >= floatval($invRow->total_amount) - 0.01) {
+                                $this->db->query("UPDATE invoices SET status = 'Paid' WHERE id = :id");
+                                $this->db->bind(':id', $invId);
+                                $this->db->execute();
+                            } else {
+                                $this->db->query("UPDATE invoices SET status = 'Partially Paid' WHERE id = :id");
+                                $this->db->bind(':id', $invId);
+                                $this->db->execute();
+                            }
+                        }
+                    }
+
+                    $remainingUnallocated = max(0.0, $amount - $allocAmount);
+                    $this->db->query("UPDATE customer_payments SET unallocated_amount = :uamt WHERE id = :pid");
+                    $this->db->bind(':uamt', $remainingUnallocated);
+                    $this->db->bind(':pid', $paymentId);
+                    $this->db->execute();
+
+                    if ($remainingUnallocated > 0.01) {
+                        $paymentModel->settleCustomerInvoicesWithCreditNonTransactional($payment->customer_id, $userId);
+                    }
+                } else {
+                    // Normal collection: settle customer invoices with credit via FIFO
+                    $paymentModel->settleCustomerInvoicesWithCreditNonTransactional($payment->customer_id, $userId);
+                }
 
                 // Link pending collection to generated journal entry and mark as Finalized
                 $this->db->query("UPDATE pending_collections SET status = 'Finalized', journal_entry_id = :jid, finalized_by = :uid, finalized_at = NOW() WHERE id = :pid");

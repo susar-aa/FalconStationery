@@ -63,7 +63,8 @@ class Customer {
                 FROM transactions t
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
-                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
+                LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
         ";
@@ -138,7 +139,8 @@ class Customer {
                 FROM transactions t
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
-                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
+                LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
             " . $whereSql;
@@ -245,7 +247,8 @@ class Customer {
                 FROM transactions t
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
-                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200'
+                LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
         ";
@@ -297,7 +300,8 @@ class Customer {
                           FROM transactions t 
                           JOIN journal_entries je ON t.journal_entry_id = je.id 
                           JOIN chart_of_accounts coa ON t.account_id = coa.id 
-                          WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND (COALESCE(t.entity_id, je.entity_id) = :id) AND je.status = 'Posted' AND coa.account_code = '1200'");
+                          LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
+                          WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND (COALESCE(t.entity_id, je.entity_id) = :id) AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL");
         $this->db->bind(':id', $id);
         $je = $this->db->single();
 
@@ -337,7 +341,8 @@ class Customer {
             FROM transactions t
             JOIN journal_entries je ON t.journal_entry_id = je.id
             JOIN chart_of_accounts coa ON t.account_id = coa.id
-            WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND (COALESCE(t.entity_id, je.entity_id) = :c7) AND je.status = 'Posted' AND coa.account_code = '1200'
+            LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
+            WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND (COALESCE(t.entity_id, je.entity_id) = :c7) AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
             ORDER BY date ASC, created_at ASC
         ";
         $this->db->query($sql);

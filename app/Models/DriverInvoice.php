@@ -27,6 +27,7 @@ class DriverInvoice {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 customer_id INT NOT NULL,
                 route_id INT NOT NULL,
+                invoice_id INT DEFAULT NULL,
                 payment_method VARCHAR(50) DEFAULT 'Cash',
                 amount DECIMAL(12,2) DEFAULT 0.00,
                 bank_name VARCHAR(255) DEFAULT '',

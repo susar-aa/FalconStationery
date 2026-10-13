@@ -3863,13 +3863,45 @@
         currentTab10AttachedBills.forEach((bill, idx) => {
             const grandTotal = parseFloat(bill.true_grand_total || bill.total_amount || 0);
             const amountPaid = parseFloat(bill.amount_paid || 0);
-            const balanceDue = Math.max(0, grandTotal - amountPaid);
+            const draftPaid = parseFloat(bill.draft_paid || 0);
+            const balanceDue = Math.max(0, grandTotal - amountPaid - draftPaid);
             
             let statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#fef3c7; color:#d97706; text-transform:uppercase;">Unpaid</span>';
             if (balanceDue <= 0.01) {
-                statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#dcfce7; color:#16a34a; text-transform:uppercase;">Paid</span>';
-            } else if (amountPaid > 0) {
-                statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#e0f2fe; color:#0369a1; text-transform:uppercase;">Partially Paid</span>';
+                if (draftPaid > 0) {
+                    statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#e0f2fe; color:#0369a1; text-transform:uppercase;">Drafted (Rs ' + draftPaid.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ')</span>';
+                } else {
+                    statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#dcfce7; color:#16a34a; text-transform:uppercase;">Paid</span>';
+                }
+            } else if (amountPaid > 0 || draftPaid > 0) {
+                const draftInfo = draftPaid > 0 ? ' [Draft: Rs ' + draftPaid.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ']' : '';
+                statusBadge = '<span style="font-size:10px; padding:3px 8px; border-radius:4px; font-weight:700; background:#e0f2fe; color:#0369a1; text-transform:uppercase;">Partially Paid' + draftInfo + '</span>';
+            }
+
+            let actionHtml = '';
+            if (isReadOnly) {
+                actionHtml = '<span style="font-size:11px; color:#94a3b8; font-weight:600; font-style:italic;">Read Only</span>';
+            } else if (draftPaid > 0) {
+                actionHtml = `
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                        ${balanceDue > 0.01 ? `
+                            <button type="button" onclick="openApplyCreditPaymentModal(${bill.id})" style="padding:4px 10px; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(2,132,199,0.25);">
+                                <i class="ph ph-currency-dollar"></i> Apply More
+                            </button>
+                        ` : ''}
+                        <button type="button" onclick="cancelCreditBillDraft(${bill.id})" style="padding:4px 8px; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;" title="Cancel Draft Payment">
+                            <i class="ph ph-trash"></i> Cancel Draft
+                        </button>
+                    </div>
+                `;
+            } else if (balanceDue > 0.01) {
+                actionHtml = `
+                    <button type="button" onclick="openApplyCreditPaymentModal(${bill.id})" style="padding:5px 12px; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,132,199,0.25);">
+                        <i class="ph ph-currency-dollar"></i> Apply Pay
+                    </button>
+                `;
+            } else {
+                actionHtml = '<span style="font-size:11px; color:#16a34a; font-weight:600;">Settled</span>';
             }
 
             const rowBg = (idx % 2 === 0) ? '#ffffff' : '#f8fafc';
@@ -3887,15 +3919,7 @@
                 <td style="padding:10px 12px; text-align:right; font-family:monospace; font-weight:600; color:#334155; border-bottom:1px solid #f1f5f9;">Rs ${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                 <td style="padding:10px 12px; text-align:right; font-family:monospace; font-weight:700; color:${balanceDue > 0 ? '#dc2626' : '#16a34a'}; font-size:13px; border-bottom:1px solid #f1f5f9;">Rs ${balanceDue.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                 <td style="padding:10px 12px; text-align:center; border-bottom:1px solid #f1f5f9;">${statusBadge}</td>
-                <td style="padding:10px 12px; text-align:center; border-bottom:1px solid #f1f5f9;">
-                    ${balanceDue > 0.01 && !isReadOnly ? `
-                        <button type="button" onclick="openApplyCreditPaymentModal(${bill.id})" style="padding:5px 12px; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; border:none; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; box-shadow:0 2px 6px rgba(2,132,199,0.25);">
-                            <i class="ph ph-currency-dollar"></i> Apply Pay
-                        </button>
-                    ` : `
-                        <span style="font-size:11px; color:#94a3b8; font-weight:600; font-style:italic;">${isReadOnly ? 'Read Only' : 'Settled'}</span>
-                    `}
-                </td>
+                <td style="padding:10px 12px; text-align:center; border-bottom:1px solid #f1f5f9;">${actionHtml}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -3910,7 +3934,8 @@
 
         const grandTotal = parseFloat(bill.true_grand_total || bill.total_amount || 0);
         const amountPaid = parseFloat(bill.amount_paid || 0);
-        const balanceDue = Math.max(0, grandTotal - amountPaid);
+        const draftPaid = parseFloat(bill.draft_paid || 0);
+        const balanceDue = Math.max(0, grandTotal - amountPaid - draftPaid);
 
         document.getElementById('acpInvoiceId').value = bill.id;
         document.getElementById('acpCustomerId').value = bill.customer_id;
@@ -4065,10 +4090,36 @@
         });
     }
 
+    function cancelCreditBillDraft(invoiceId, collectionId = 0) {
+        if (!confirm("Are you sure you want to cancel and remove this draft payment?")) return;
+        fetchSecure('<?= APP_URL ?>/RepTracking/api_cancel_credit_bill_draft', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                route_id: currentRouteId, 
+                invoice_id: invoiceId, 
+                collection_id: collectionId 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                loadTab10Accounting(currentRouteId);
+                loadTab8Reconciliation(currentRouteId);
+            } else {
+                alert(data.message || 'Failed to cancel draft payment.');
+            }
+        })
+        .catch(err => {
+            alert('Error cancelling draft: ' + err.message);
+        });
+    }
+
     window.openApplyCreditPaymentModal = openApplyCreditPaymentModal;
     window.closeApplyCreditPaymentModal = closeApplyCreditPaymentModal;
     window.toggleAcpPaymentFields = toggleAcpPaymentFields;
     window.submitApplyCreditPayment = submitApplyCreditPayment;
+    window.cancelCreditBillDraft = cancelCreditBillDraft;
 
     function applyFinalizeDefensiveGuard(routeId, delId) {
         const guardEl = document.getElementById('tab11GuardContainer');
@@ -4432,7 +4483,10 @@
                 tableHTML += `
                     <tr class="settle-payment-row" data-pay-id="${p.id}" style="border-bottom:1px solid #f1f5f9;">
                         <td style="padding:6px 4px;">
-                            <strong>${p.customer_name}</strong><br>
+                            <strong>${p.customer_name}</strong>
+                            ${p.invoice_id ? `<span style="display:inline-block; font-size:10px; background:#e0f2fe; color:#0369a1; border-radius:4px; padding:1px 6px; margin-left:4px; font-weight:700;">Credit Bill Draft</span>` : ''}
+                            ${(!isReadOnly && p.invoice_id) ? `<button type="button" onclick="cancelCreditBillDraft(${p.invoice_id}, ${p.id})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:12px; margin-left:4px; padding:0; vertical-align:middle;" title="Cancel Draft Payment"><i class="ph ph-trash"></i></button>` : ''}
+                            <br>
                             <span style="font-size:10px; color:#64748b;">${p.payment_method} ${p.cheque_number ? '(' + p.cheque_number + ')' : (p.reference ? '(' + p.reference + ')' : '')}</span>
                             ${isReadOnly ? '<br><span style="font-size:10px; color:#2e7d32; font-weight:bold;">Posted to GL</span>' : ''}
                         </td>
