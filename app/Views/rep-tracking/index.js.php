@@ -2498,19 +2498,17 @@
         const rdata = document.getElementById('route_data_' + routeId);
         const delId = rdata ? rdata.getAttribute('data-delivery-id') : null;
 
-        if (!delId || delId === '0' || delId === '') {
-            summaryCards.innerHTML = '<div style="grid-column: span 4; text-align:center; padding:10px; color:#888;">Delivery has not been arranged/dispatched yet.</div>';
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#888;">No dispatch data available.</td></tr>';
-            return;
-        }
-
-        fetchSecure('<?= APP_URL ?>/RepTracking/api_get_delivery_details/' + delId)
+        fetchSecure('<?= APP_URL ?>/RepTracking/api_get_delivery_details/' + (delId || 0) + '?route_id=' + routeId)
             .then(res => res.json())
             .then(data => {
                 if (data.status !== 'success' || !data.delivery) {
                     summaryCards.innerHTML = '<div style="grid-column: span 4; text-align:center; color:red;">Error loading delivery.</div>';
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Failed to load details.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">' + (data.message || 'Failed to load details.') + '</td></tr>';
                     return;
+                }
+
+                if (rdata && data.delivery && data.delivery.id) {
+                    rdata.setAttribute('data-delivery-id', data.delivery.id);
                 }
 
                 const invoices = data.invoices || [];
@@ -2609,6 +2607,10 @@
                         </tr>
                     `;
                 });
+            })
+            .catch(err => {
+                console.error('[loadDeliveryLiveStage] fetch error:', err);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Failed to load details: ' + (err.message || 'Server error') + '</td></tr>';
             });
     }
 

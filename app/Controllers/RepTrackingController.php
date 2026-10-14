@@ -981,6 +981,7 @@ class RepTrackingController extends Controller {
 
     public function api_get_delivery_details($id) {
         $delivery = null;
+        $id = intval($id);
         $routeId = isset($_GET['route_id']) ? intval($_GET['route_id']) : 0;
         
         if ($id > 0) {
@@ -989,7 +990,7 @@ class RepTrackingController extends Controller {
         
         if (!$delivery && $routeId > 0) {
             $db = new Database();
-            $db->query("SELECT id FROM deliveries WHERE rep_route_id = :rid ORDER BY id DESC LIMIT 1");
+            $db->query("SELECT id FROM deliveries WHERE rep_route_id = :rid OR secondary_rep_route_id = :rid ORDER BY id DESC LIMIT 1");
             $db->bind(':rid', $routeId);
             $delRow = $db->single();
             if ($delRow) {
@@ -997,8 +998,23 @@ class RepTrackingController extends Controller {
             }
         }
         
+        // Handle common case where $id was actually passed as routeId
+        if (!$delivery && $id > 0) {
+            $db = new Database();
+            $db->query("SELECT id FROM deliveries WHERE rep_route_id = :rid OR secondary_rep_route_id = :rid ORDER BY id DESC LIMIT 1");
+            $db->bind(':rid', $id);
+            $delRow = $db->single();
+            if ($delRow) {
+                $delivery = $this->deliveryModel->getDeliveryById($delRow->id);
+            }
+        }
+
         if (!$delivery && $routeId > 0) {
             $delivery = $this->deliveryModel->getVirtualDeliveryByRouteId($routeId);
+        }
+
+        if (!$delivery && $id > 0) {
+            $delivery = $this->deliveryModel->getVirtualDeliveryByRouteId($id);
         }
         
         if (!$delivery) {
@@ -1007,9 +1023,26 @@ class RepTrackingController extends Controller {
             exit;
         }
 
-        $invoices = $this->deliveryModel->getDeliveryInvoices($delivery->rep_route_id, $delivery->secondary_rep_route_id ?? null);
-        $creditInvoices = $this->deliveryModel->getDeliveryCreditInvoices($delivery->rep_route_id, $delivery->secondary_rep_route_id ?? null);
-        $balancing = $this->deliveryModel->getDeliveryBalancingData($delivery->id, $delivery->rep_route_id);
+        try {
+            $invoices = $this->deliveryModel->getDeliveryInvoices($delivery->rep_route_id, $delivery->secondary_rep_route_id ?? null) ?: [];
+        } catch (Throwable $e) {
+            error_log("[api_get_delivery_details] Invoices error: " . $e->getMessage());
+            $invoices = [];
+        }
+
+        try {
+            $creditInvoices = $this->deliveryModel->getDeliveryCreditInvoices($delivery->rep_route_id, $delivery->secondary_rep_route_id ?? null) ?: [];
+        } catch (Throwable $e) {
+            error_log("[api_get_delivery_details] Credit Invoices error: " . $e->getMessage());
+            $creditInvoices = [];
+        }
+
+        try {
+            $balancing = $this->deliveryModel->getDeliveryBalancingData($delivery->id, $delivery->rep_route_id);
+        } catch (Throwable $e) {
+            error_log("[api_get_delivery_details] Balancing error: " . $e->getMessage());
+            $balancing = null;
+        }
 
         header('Content-Type: application/json');
         echo json_encode([

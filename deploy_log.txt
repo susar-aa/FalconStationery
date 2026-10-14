@@ -4212,3 +4212,20 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 10/13/2026 23:16:03.02 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Delivery.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/RepTracking.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/index.js.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app_errors.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'core/MigrationManager.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main e224bbf] Update: app/Controllers/RepTrackingController.php, app/Models/Customer.php, app/Models/Delivery.php, app/Models/DriverInvoice.php, app/Models/RepTracking.php, app/Views/rep-tracking/index.js.php, app_errors.log, core/Database.php, core/MigrationManager.php, deploy_log.txt
+ 10 files changed, 853 insertions(+), 152 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   83ebfec..e224bbf  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Wed 10/14/2026 15:05:46.63 
+=================================================== 
+Adding changes... 

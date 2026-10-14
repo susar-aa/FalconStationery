@@ -400,7 +400,35 @@ class Customer {
         $this->db->bind(':reviewed_by_user_id', $reviewedByUserId);
         $this->db->bind(':reviewed_at', $reviewedAt);
         $this->db->bind(':status', $status);
-        return $this->db->execute();
+        $result = $this->db->execute();
+        if ($result) {
+            $newId = $this->db->lastInsertId();
+            $newAmount = floatval($data['opening_balance'] ?? 0);
+            if ($newAmount > 0) {
+                $newDate = !empty($data['opening_balance_date']) ? $data['opening_balance_date'] : date('Y-m-d');
+                $userId = $_SESSION['user_id'] ?? 1;
+                $this->syncOpeningBalanceAccounting($newId, $newAmount, $newDate, $userId);
+
+                try {
+                    require_once __DIR__ . '/AuditLog.php';
+                    $auditLog = new AuditLog();
+                    $custName = $data['name'] ?? "Customer #{$newId}";
+                    $desc = "Added Opening Balance for Customer ID {$newId} ({$custName}): Rs: " . number_format($newAmount, 2) . " (Effective Date: {$newDate})";
+                    $auditLog->logAction(
+                        $userId,
+                        'Add Customer Opening Balance',
+                        'Customer',
+                        $desc,
+                        $newId,
+                        null,
+                        ['opening_balance' => $newAmount, 'opening_balance_date' => $newDate]
+                    );
+                } catch (\Throwable $e) {
+                    error_log("AuditLog Error in addCustomer: " . $e->getMessage());
+                }
+            }
+        }
+        return $result;
     }
 
     public function getLastInsertId() {
@@ -408,10 +436,23 @@ class Customer {
     }
 
     public function updateCustomer($data) {
+        $existing = null;
+        if (!empty($data['id'])) {
+            $this->db->query("SELECT id, name, opening_balance, opening_balance_date FROM customers WHERE id = :id LIMIT 1");
+            $this->db->bind(':id', $data['id']);
+            $existing = $this->db->single();
+        }
+
+        $hasOpeningBalance = array_key_exists('opening_balance', $data);
+
         $sql = "UPDATE customers SET name = :name, email = :email, phone = :phone, whatsapp = :whatsapp, 
                           address = :address, latitude = :lat, longitude = :lng, mca_id = :mca_id, territory = :territory, 
-                          credit_limit = :credit_limit, customer_type = :customer_type, notes = :notes, uuid = :uuid, vat_number = :vat_number, opening_balance = :opening_balance, opening_balance_date = :opening_balance_date";
+                          credit_limit = :credit_limit, customer_type = :customer_type, notes = :notes, uuid = :uuid, vat_number = :vat_number";
         
+        if ($hasOpeningBalance) {
+            $sql .= ", opening_balance = :opening_balance, opening_balance_date = :opening_balance_date";
+        }
+
         if (array_key_exists('review_status', $data)) {
             $sql .= ", review_status = :review_status";
         }
@@ -450,8 +491,11 @@ class Customer {
         $this->db->bind(':notes', $data['notes'] ?: null);
         $this->db->bind(':uuid', $data['uuid'] ?? null);
         $this->db->bind(':vat_number', $data['vat_number'] ?? null);
-        $this->db->bind(':opening_balance', $data['opening_balance'] ?? 0.00);
-        $this->db->bind(':opening_balance_date', $data['opening_balance_date'] ?? null);
+
+        if ($hasOpeningBalance) {
+            $this->db->bind(':opening_balance', floatval($data['opening_balance']));
+            $this->db->bind(':opening_balance_date', !empty($data['opening_balance_date']) ? $data['opening_balance_date'] : null);
+        }
 
         if (array_key_exists('review_status', $data)) {
             $this->db->bind(':review_status', $data['review_status']);
@@ -468,8 +512,35 @@ class Customer {
 
         $result = $this->db->execute();
         
-        if ($result && isset($data['opening_balance'])) {
-            $this->syncOpeningBalanceAccounting($data['id'], $data['opening_balance'], $data['opening_balance_date'] ?? date('Y-m-d'), $_SESSION['user_id'] ?? 1);
+        if ($result && $hasOpeningBalance && $existing) {
+            $oldAmount = floatval($existing->opening_balance ?? 0);
+            $newAmount = floatval($data['opening_balance']);
+            $oldDate = $existing->opening_balance_date ?? null;
+            $newDate = !empty($data['opening_balance_date']) ? $data['opening_balance_date'] : date('Y-m-d');
+
+            if (abs($oldAmount - $newAmount) > 0.0001 || ($newAmount > 0 && $oldDate !== $newDate)) {
+                $userId = $_SESSION['user_id'] ?? 1;
+                $this->syncOpeningBalanceAccounting($data['id'], $newAmount, $newDate, $userId);
+
+                try {
+                    require_once __DIR__ . '/AuditLog.php';
+                    $auditLog = new AuditLog();
+                    $custName = $data['name'] ?? ($existing->name ?? "Customer #{$data['id']}");
+                    $actionType = ($oldAmount <= 0 && $newAmount > 0) ? 'Add Customer Opening Balance' : 'Update Customer Opening Balance';
+                    $desc = "Customer Opening Balance for Customer ID {$data['id']} ({$custName}) updated from Rs: " . number_format($oldAmount, 2) . " to Rs: " . number_format($newAmount, 2) . " (Effective Date: {$newDate})";
+                    $auditLog->logAction(
+                        $userId,
+                        $actionType,
+                        'Customer',
+                        $desc,
+                        $data['id'],
+                        ['opening_balance' => $oldAmount, 'opening_balance_date' => $oldDate],
+                        ['opening_balance' => $newAmount, 'opening_balance_date' => $newDate]
+                    );
+                } catch (\Throwable $e) {
+                    error_log("AuditLog Error in updateCustomer: " . $e->getMessage());
+                }
+            }
         }
         
         return $result;
