@@ -406,8 +406,8 @@ foreach ($data['suppliers'] ?? [] as $s) {
         <input type="text" id="searchInput" placeholder="Search suppliers..." onkeyup="filterList()">
     </div>
     <div class="cmd-divider"></div>
-    <a href="<?= APP_URL ?>/supplier/exportCSV" class="cmd-cta" title="Export Suppliers to CSV" style="text-decoration:none; background:rgba(255,255,255,0.14); color:#fff; border:0.5px solid rgba(255,255,255,0.2); padding: 0 14px;">
-        <i class="fa-solid fa-file-arrow-down" style="font-size:12px;"></i> Export
+    <a href="<?= APP_URL ?>/supplier/exportCSV" id="btnExportSuppliers" class="cmd-cta" title="Export Suppliers to CSV" style="text-decoration:none; background:var(--c-green, #34c759); color:#fff; border:none; padding: 0 16px; font-weight:700; display:inline-flex; align-items:center; gap:7px;">
+        <i class="fa-solid fa-file-arrow-down" style="font-size:13px;"></i> Export
     </a>
     <button type="button" class="cmd-cta" onclick="openModal('addSupplierModal')"><i class="fa-solid fa-plus" style="font-size:13px;"></i> New</button>
 </div>
@@ -742,6 +742,24 @@ try {
         if (autoLoadId && !isNaN(autoLoadId)) {
             const tab = new URLSearchParams(window.location.search).get('tab');
             window.openSupplierModalPopup(autoLoadId, tab);
+        }
+
+        // Failsafe: Ensure export button is always inserted into floating cmd-bar
+        const cmdBar = document.querySelector('.cmd-bar');
+        if (cmdBar && !document.getElementById('btnExportSuppliers')) {
+            const expLink = document.createElement('a');
+            expLink.id = 'btnExportSuppliers';
+            expLink.href = '<?= APP_URL ?>/supplier/exportCSV';
+            expLink.className = 'cmd-cta';
+            expLink.title = 'Export Suppliers to CSV';
+            expLink.style.cssText = 'text-decoration:none; background:#34c759; color:#fff; border:none; padding: 0 16px; font-weight:700; display:inline-flex; align-items:center; gap:7px;';
+            expLink.innerHTML = '<i class="fa-solid fa-file-arrow-down" style="font-size:13px;"></i> Export';
+            const newBtn = cmdBar.querySelector('button.cmd-cta');
+            if (newBtn) {
+                cmdBar.insertBefore(expLink, newBtn);
+            } else {
+                cmdBar.appendChild(expLink);
+            }
         }
     });
 
