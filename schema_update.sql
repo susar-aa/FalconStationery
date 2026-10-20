@@ -1,9 +1,8 @@
--- Ensure deliveries route keys are indexed for sub-millisecond route resolution
-ALTER TABLE `deliveries` 
-  ADD INDEX `idx_deliveries_rep_route_id` (`rep_route_id`),
-  ADD INDEX `idx_deliveries_secondary_rep_route_id` (`secondary_rep_route_id`);
+-- Add clearance tracking columns and index to cheques table
+ALTER TABLE `cheques` 
+ADD COLUMN `cleared_date` DATE NULL AFTER `banking_date`,
+ADD COLUMN `cleared_by` INT(11) NULL AFTER `cleared_date`,
+ADD COLUMN `clearance_journal_id` INT(11) NULL AFTER `cleared_by`,
+ADD COLUMN `clearance_notes` VARCHAR(255) NULL AFTER `clearance_journal_id`;
 
--- Indexes for Supplier Center and Opening Balance performance
-ALTER TABLE `journal_entries` ADD INDEX `idx_je_reference` (`reference`);
-ALTER TABLE `vendors` ADD INDEX `idx_vendors_status_name` (`status`, `name`);
-
+ALTER TABLE `cheques` ADD INDEX `idx_chk_clearance` (`status`, `bank_account_id`, `cleared_date`);

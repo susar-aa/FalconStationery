@@ -185,6 +185,8 @@
 .act-btn.view:hover   { background: var(--c-purple-light); color: var(--c-purple); }
 .act-btn.edit:hover   { background: var(--c-blue-light); color: var(--c-blue); }
 .act-btn.delete:hover { background: var(--c-red-light); color: var(--c-red); }
+.act-btn.clear-chq:hover { background: var(--c-green-light); color: var(--c-green); }
+.act-btn.revert-chq:hover { background: #fef3c7; color: #b45309; }
 
 /* Command Bar (Dynamic Island) */
 .cmd-bar {
@@ -422,12 +424,24 @@
                                         <div class="sf-badge badge-<?= $chk->status ?>">
                                             <div class="dot"></div> <?= $chk->status === 'Endorsed' ? 'Endorsed (3rd Party)' : $chk->status ?>
                                         </div>
+                                        <?php if ($chk->status === 'Cleared' && !empty($chk->cleared_date)): ?>
+                                            <div style="font-size:10px; color:var(--c-green); font-weight:600; margin-top:3px;"><i class="fa-solid fa-circle-check"></i> Cleared: <?= date('d/m/Y', strtotime($chk->cleared_date)) ?></div>
+                                        <?php endif; ?>
                                     </td>
                                     <td style="text-align: right; font-weight: 600;">
                                         <?= number_format($chk->amount, 2) ?>
                                     </td>
                                     <td>
                                         <div class="row-acts">
+                                            <?php if ($isIssued && in_array($chk->status, ['Pending', 'Deposited', 'Endorsed'])): ?>
+                                                <button class="act-btn clear-chq" title="Clear Cheque to Bank" onclick="openClearModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, <?= $chk->bank_account_id ?: 'null' ?>, '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= $chk->banking_date ?>', '<?= $chk->status ?>')">
+                                                    <i class="fa-solid fa-building-columns"></i>
+                                                </button>
+                                            <?php elseif ($isIssued && $chk->status === 'Cleared'): ?>
+                                                <button class="act-btn revert-chq" title="Revert Clearance" onclick="openRevertClearModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= htmlspecialchars(addslashes($displayName)) ?>')">
+                                                    <i class="fa-solid fa-rotate-left"></i>
+                                                </button>
+                                            <?php endif; ?>
                                             <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
                                                 <i class="fa-regular fa-eye"></i>
                                             </button>
@@ -604,12 +618,24 @@
                                             <div class="sf-badge badge-<?= $chk->status ?>">
                                                 <div class="dot"></div> <?= $chk->status === 'Endorsed' ? 'Endorsed (3rd Party)' : $chk->status ?>
                                             </div>
+                                            <?php if ($chk->status === 'Cleared' && !empty($chk->cleared_date)): ?>
+                                                <div style="font-size:10px; color:var(--c-green); font-weight:600; margin-top:3px;"><i class="fa-solid fa-circle-check"></i> Cleared: <?= date('d/m/Y', strtotime($chk->cleared_date)) ?></div>
+                                            <?php endif; ?>
                                         </td>
                                         <td style="text-align: right; font-weight: 600;">
                                             <?= number_format($chk->amount, 2) ?>
                                         </td>
                                         <td>
                                             <div class="row-acts">
+                                                <?php if (in_array($chk->status, ['Pending', 'Deposited', 'Endorsed'])): ?>
+                                                    <button class="act-btn clear-chq" title="Clear Cheque to Bank" onclick="openClearModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, <?= $chk->bank_account_id ?: 'null' ?>, '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= $chk->banking_date ?>', '<?= $chk->status ?>')">
+                                                        <i class="fa-solid fa-building-columns"></i>
+                                                    </button>
+                                                <?php elseif ($chk->status === 'Cleared'): ?>
+                                                    <button class="act-btn revert-chq" title="Revert Clearance" onclick="openRevertClearModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= htmlspecialchars(addslashes($displayName)) ?>')">
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                    </button>
+                                                <?php endif; ?>
                                                 <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
                                                     <i class="fa-regular fa-eye"></i>
                                                 </button>
@@ -844,6 +870,120 @@
     </div>
 </div>
 
+<!-- Clear Issued Cheque Modal -->
+<div class="sf-modal" id="clearChequeModal">
+    <div class="sf-modal-box" style="width: 540px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+            <div>
+                <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--t-primary); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-building-columns" style="color: var(--c-green);"></i> Clear Issued Cheque
+                </h3>
+                <div style="font-size: 13px; color: var(--t-secondary); margin-top: 4px;">Post cheque clearance to double-entry general ledger & bank accounts</div>
+            </div>
+            <button type="button" class="act-btn" onclick="closeModal('clearChequeModal')" style="font-size: 16px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Cheque Info Card -->
+        <div style="background: var(--c-fill); border: 0.5px solid var(--c-separator); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                <div>
+                    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t-secondary); font-weight: 600;">Payee / Supplier</span>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--t-primary);" id="clear_display_payee">-</div>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t-secondary); font-weight: 600;">Cheque Number</span>
+                    <div>
+                        <span id="clear_display_cnum" style="font-family: var(--f-mono); background: var(--c-surface); padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 700; border: 0.5px solid var(--c-separator);">
+                            -
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 0.5px solid var(--c-separator); padding-top: 8px;">
+                <span style="font-size: 12px; color: var(--t-secondary);">Cheque Amount</span>
+                <span style="font-size: 18px; font-weight: 800; color: var(--t-primary);" id="clear_display_amount">Rs. 0.00</span>
+            </div>
+        </div>
+
+        <!-- Endorsed 3rd Party Notice -->
+        <div id="clear_endorsed_notice" style="display: none; background: #e0f2fe; border: 0.5px solid #7dd3fc; border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 18px; font-size: 13px; color: #0369a1; line-height: 1.4;">
+            <i class="fa-solid fa-circle-info" style="margin-right: 6px;"></i>
+            <strong>Endorsed 3rd Party Cheque:</strong> This cheque was received from a customer and handed to the supplier. Clearing it will update the status to <em>Cleared</em> without deducting company bank accounts.
+        </div>
+
+        <form action="<?= APP_URL ?>/cheque" method="POST" id="clearChequeForm">
+            <input type="hidden" name="action" value="clear_issued_cheque">
+            <input type="hidden" name="cheque_id" id="clear_cheque_id">
+
+            <div class="sf-form-group" id="clear_bank_group">
+                <label style="font-weight: 600; color: var(--t-primary);"><i class="fa-solid fa-building-columns" style="color: var(--c-blue); margin-right: 4px;"></i> Paying Bank Account (Deducted)</label>
+                <select name="bank_account_id" id="clear_bank_account_id" class="sf-input" required>
+                    <option value="">-- Select Company Bank Account --</option>
+                    <?php foreach($data['bank_accounts'] as $acc): ?>
+                        <option value="<?= $acc->id ?>">
+                            <?= htmlspecialchars($acc->account_code) ?> - <?= htmlspecialchars($acc->account_name) ?> (Balance: Rs. <?= number_format($acc->balance, 2) ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <div style="font-size: 11px; color: var(--t-secondary); margin-top: 4px;">
+                    Funds will be deducted from this bank account in Chart of Accounts & Banking Ledger.
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="sf-form-group">
+                    <label style="font-weight: 600; color: var(--t-primary);"><i class="fa-regular fa-calendar" style="color: var(--c-blue); margin-right: 4px;"></i> Clearance Date</label>
+                    <input type="date" name="clearance_date" id="clear_date" class="sf-input" value="<?= date('Y-m-d') ?>" required>
+                </div>
+                <div class="sf-form-group">
+                    <label style="font-weight: 600; color: var(--t-primary);"><i class="fa-solid fa-file-invoice" style="color: var(--c-blue); margin-right: 4px;"></i> Clearance Ref / Notes</label>
+                    <input type="text" name="clearance_notes" id="clear_notes" class="sf-input" placeholder="e.g. Bank statement ref, debit advise...">
+                </div>
+            </div>
+
+            <!-- Double-entry Accounting Preview -->
+            <div id="clear_accounting_box" style="background: #f0fdf4; border: 0.5px solid #86efac; border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 20px; font-size: 12px; color: #166534;">
+                <div style="font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-scale-balanced"></i> Double-Entry Impact:
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div>• <strong>Debit:</strong> 2050 Outstanding Cheques (Liability ↓)</div>
+                    <div>• <strong>Credit:</strong> Selected Bank Account (Asset ↓)</div>
+                </div>
+            </div>
+
+            <div class="sf-modal-acts">
+                <button type="button" class="sf-btn sf-btn-ghost" onclick="closeModal('clearChequeModal')">Cancel</button>
+                <button type="submit" class="sf-btn sf-btn-primary" style="background: #16a34a; border-color: #16a34a;">
+                    <i class="fa-solid fa-check" style="margin-right: 6px;"></i> Confirm Clearance
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Revert Clearance Modal -->
+<div class="sf-modal" id="revertClearModal">
+    <div class="sf-modal-box" style="width: 440px; text-align: center;">
+        <i class="fa-solid fa-rotate-left" style="font-size: 40px; color: #d97706; margin-bottom: 14px;"></i>
+        <h3 style="margin-bottom: 8px;">Revert Cheque Clearance?</h3>
+        <p style="color: var(--t-secondary); margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
+            Are you sure you want to revert clearance for Cheque <strong id="revert_display_cnum"></strong> (<span id="revert_display_amount"></span>) issued to <strong id="revert_display_payee"></strong>?<br>
+            <span style="font-size: 12px; color: #b45309; margin-top: 6px; display: block;">This will restore bank and liability account balances and return the cheque to Pending status.</span>
+        </p>
+        <form action="<?= APP_URL ?>/cheque" method="POST">
+            <input type="hidden" name="action" value="revert_issued_cheque">
+            <input type="hidden" name="cheque_id" id="revert_cheque_id">
+            <div class="sf-modal-acts" style="justify-content: center; gap: 10px;">
+                <button type="button" class="sf-btn sf-btn-ghost" onclick="closeModal('revertClearModal')">Cancel</button>
+                <button type="submit" class="sf-btn" style="background: #d97706; color: #fff; border: none; font-weight: 700;">
+                    Revert to Pending
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- View Cheque Modal -->
 <div class="sf-modal" id="viewModal">
     <div class="sf-modal-box" style="width: 760px; background:transparent; border:none; box-shadow:none; padding:0;">
@@ -1010,6 +1150,48 @@
         document.getElementById('delete_id').value = id;
         document.getElementById('del_cnum').innerText = cnum;
         openModal('deleteModal');
+    }
+
+    function openClearModal(id, cnum, amount, bankAccountId, payee, date, status) {
+        document.getElementById('clear_cheque_id').value = id;
+        document.getElementById('clear_display_payee').innerText = payee;
+        document.getElementById('clear_display_cnum').innerText = '#' + cnum;
+        document.getElementById('clear_display_amount').innerText = 'Rs. ' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        
+        const bankSelect = document.getElementById('clear_bank_account_id');
+        const bankGroup = document.getElementById('clear_bank_group');
+        const accountingBox = document.getElementById('clear_accounting_box');
+        const endorsedNotice = document.getElementById('clear_endorsed_notice');
+
+        if (status === 'Endorsed') {
+            endorsedNotice.style.display = 'block';
+            bankGroup.style.display = 'none';
+            accountingBox.style.display = 'none';
+            bankSelect.removeAttribute('required');
+            bankSelect.value = '';
+        } else {
+            endorsedNotice.style.display = 'none';
+            bankGroup.style.display = 'block';
+            accountingBox.style.display = 'block';
+            bankSelect.setAttribute('required', 'required');
+            if (bankAccountId) {
+                bankSelect.value = bankAccountId;
+            } else {
+                bankSelect.selectedIndex = bankSelect.options.length > 1 ? 1 : 0;
+            }
+        }
+        
+        document.getElementById('clear_date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('clear_notes').value = '';
+        openModal('clearChequeModal');
+    }
+
+    function openRevertClearModal(id, cnum, amount, payee) {
+        document.getElementById('revert_cheque_id').value = id;
+        document.getElementById('revert_display_payee').innerText = payee;
+        document.getElementById('revert_display_cnum').innerText = '#' + cnum;
+        document.getElementById('revert_display_amount').innerText = 'Rs. ' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        openModal('revertClearModal');
     }
 
     function numberToWords(amount) {

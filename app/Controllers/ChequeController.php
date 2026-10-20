@@ -132,11 +132,38 @@ class ChequeController extends Controller {
                 } else {
                     header('Location: ' . APP_URL . '/cheque?error=delete_failed'); exit;
                 }
+            } elseif ($_POST['action'] == 'clear_issued_cheque') {
+                $chequeId = intval($_POST['cheque_id'] ?? 0);
+                $bankAccountId = !empty($_POST['bank_account_id']) ? intval($_POST['bank_account_id']) : null;
+                $clearanceDate = !empty($_POST['clearance_date']) ? $_POST['clearance_date'] : date('Y-m-d');
+                $notes = trim($_POST['clearance_notes'] ?? '');
+                $userId = $_SESSION['user_id'] ?? 1;
+
+                $res = $this->chequeModel->clearIssuedCheque($chequeId, $bankAccountId, $clearanceDate, $notes, $userId);
+                if ($res['success']) {
+                    header('Location: ' . APP_URL . '/cheque?success=' . urlencode($res['message'])); exit;
+                } else {
+                    header('Location: ' . APP_URL . '/cheque?error=' . urlencode($res['message'])); exit;
+                }
+            } elseif ($_POST['action'] == 'revert_issued_cheque') {
+                $chequeId = intval($_POST['cheque_id'] ?? 0);
+                $userId = $_SESSION['user_id'] ?? 1;
+
+                $res = $this->chequeModel->revertIssuedCheque($chequeId, $userId);
+                if ($res['success']) {
+                    header('Location: ' . APP_URL . '/cheque?success=' . urlencode($res['message'])); exit;
+                } else {
+                    header('Location: ' . APP_URL . '/cheque?error=' . urlencode($res['message'])); exit;
+                }
             }
         }
 
         if (isset($_GET['success'])) {
-            $data['success'] = "Cheque record " . htmlspecialchars($_GET['success']) . " successfully!";
+            $s = $_GET['success'];
+            $data['success'] = in_array($s, ['added', 'updated', 'deleted']) ? ("Cheque record " . htmlspecialchars($s) . " successfully!") : htmlspecialchars($s);
+        }
+        if (isset($_GET['error'])) {
+            $data['error'] = htmlspecialchars($_GET['error']);
         }
 
         if (isset($_GET['export']) && $_GET['export'] == 'true') {
