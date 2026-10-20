@@ -4304,3 +4304,19 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 10/20/2026 15:09:08.57 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Cheque.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/cheques/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'schema_update.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scratch/check_banking_state.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scratch/inspect_cheques.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 401c389] Update: app/Controllers/ChequeController.php, app/Models/Cheque.php, app/Views/cheques/index.php, deploy_log.txt, schema_update.sql, scratch/check_banking_state.php, scratch/inspect_cheques.php
+ 7 files changed, 533 insertions(+), 14 deletions(-)
+ create mode 100644 scratch/check_banking_state.php
+ create mode 100644 scratch/inspect_cheques.php
+Pushing to GitHub... 
+^C=================================================== 
+Deployment Log - Tue 10/20/2026 15:09:20.65 
+=================================================== 
+Adding changes... 
