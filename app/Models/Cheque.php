@@ -36,7 +36,7 @@ class Cheque {
                        c.name as customer_name,
                        v.name as vendor_name,
                        sp.name as service_provider_name,
-                       u.name as cleared_by_name
+                       u.username as cleared_by_name
                 FROM cheques ch 
                 LEFT JOIN chart_of_accounts ba ON ch.bank_account_id = ba.id
                 LEFT JOIN customers c ON ch.customer_id = c.id
