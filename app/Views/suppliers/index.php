@@ -271,6 +271,10 @@ foreach ($data['suppliers'] ?? [] as $s) {
             </div>
             <!-- Reset Button -->
             <button type="button" onclick="clearAllFilters()" class="filter-reset">Reset</button>
+            <!-- Export CSV Button -->
+            <a href="<?= APP_URL ?>/supplier/exportCSV" class="filter-reset" title="Export Suppliers to CSV" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-file-arrow-down" style="color:var(--c-blue);"></i> Export CSV
+            </a>
             <!-- Counter -->
             <div class="filter-count">
                 <strong id="matching-count"><?= count($data['suppliers']) ?></strong> suppliers
@@ -402,6 +406,9 @@ foreach ($data['suppliers'] ?? [] as $s) {
         <input type="text" id="searchInput" placeholder="Search suppliers..." onkeyup="filterList()">
     </div>
     <div class="cmd-divider"></div>
+    <a href="<?= APP_URL ?>/supplier/exportCSV" class="cmd-cta" title="Export Suppliers to CSV" style="text-decoration:none; background:rgba(255,255,255,0.14); color:#fff; border:0.5px solid rgba(255,255,255,0.2); padding: 0 14px;">
+        <i class="fa-solid fa-file-arrow-down" style="font-size:12px;"></i> Export
+    </a>
     <button type="button" class="cmd-cta" onclick="openModal('addSupplierModal')"><i class="fa-solid fa-plus" style="font-size:13px;"></i> New</button>
 </div>
 

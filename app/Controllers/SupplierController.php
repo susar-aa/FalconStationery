@@ -112,4 +112,62 @@ class SupplierController extends Controller {
 
         $this->view('layouts/main', $data);
     }
+
+    /**
+     * Export all suppliers to a standard CSV file with financial totals.
+     */
+    public function exportCSV() {
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="suppliers_export_' . date('Y-m-d_His') . '.csv"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $output = fopen('php://output', 'w');
+        
+        // Write UTF-8 BOM for Excel compatibility
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+        // Column headers matching standard supplier attributes and balances
+        fputcsv($output, [
+            'Supplier ID',
+            'Company Name',
+            'Email',
+            'Phone',
+            'Address',
+            'Status',
+            'Opening Balance',
+            'Opening Balance Date',
+            'Total Billed',
+            'Total Paid',
+            'Total Returned',
+            'Outstanding Balance'
+        ]);
+
+        $suppliers = $this->supplierModel->getAllSuppliers();
+
+        foreach ($suppliers as $s) {
+            fputcsv($output, [
+                $s->id,
+                $s->name,
+                $s->email ?? '',
+                $s->phone ?? '',
+                $s->address ?? '',
+                $s->status ?? 'Active',
+                number_format(floatval($s->opening_balance ?? 0), 2, '.', ''),
+                $s->opening_balance_date ?? '',
+                number_format(floatval($s->total_billed ?? 0), 2, '.', ''),
+                number_format(floatval($s->total_paid ?? 0), 2, '.', ''),
+                number_format(floatval($s->total_returned ?? 0), 2, '.', ''),
+                number_format(floatval($s->outstanding_balance ?? 0), 2, '.', '')
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
 }
+

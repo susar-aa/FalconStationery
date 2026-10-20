@@ -86,14 +86,38 @@ class Supplier {
         $this->db->bind(':status', $status);
         $result = $this->db->execute();
         
-        if ($result && isset($data['opening_balance']) && floatval($data['opening_balance']) > 0) {
+        if ($result) {
             $newId = $this->db->lastInsertId();
-            $this->syncOpeningBalanceAccounting($newId, $data['opening_balance'], $data['opening_balance_date'] ?? date('Y-m-d'), $_SESSION['user_id'] ?? 1);
+            $newAmount = floatval($data['opening_balance'] ?? 0);
+            if ($newAmount > 0) {
+                $newDate = !empty($data['opening_balance_date']) ? $data['opening_balance_date'] : date('Y-m-d');
+                $userId = $_SESSION['user_id'] ?? 1;
+                $this->syncOpeningBalanceAccounting($newId, $newAmount, $newDate, $userId);
+
+                try {
+                    require_once __DIR__ . '/AuditLog.php';
+                    $auditLog = new AuditLog();
+                    $supName = $data['name'] ?? "Supplier #{$newId}";
+                    $desc = "Added Opening Balance for Supplier ID {$newId} ({$supName}): Rs: " . number_format($newAmount, 2) . " (Effective Date: {$newDate})";
+                    $auditLog->logAction(
+                        $userId,
+                        'Add Supplier Opening Balance',
+                        'Supplier',
+                        $desc,
+                        $newId,
+                        null,
+                        ['opening_balance' => $newAmount, 'opening_balance_date' => $newDate]
+                    );
+                } catch (\Throwable $e) {
+                    error_log("AuditLog Error in addSupplier: " . $e->getMessage());
+                }
+            }
         }
         return $result;
     }
 
     public function updateSupplier($data) {
+        $existing = $this->getSupplierById($data['id']);
         $status = isset($data['status']) && in_array($data['status'], ['Active', 'Inactive']) ? $data['status'] : 'Active';
         $this->db->query("UPDATE vendors SET name = :name, email = :email, phone = :phone, address = :address, opening_balance = :opening_balance, opening_balance_date = :opening_balance_date, status = :status WHERE id = :id");
         $this->db->bind(':id', $data['id']);
@@ -106,48 +130,141 @@ class Supplier {
         $this->db->bind(':status', $status);
         $result = $this->db->execute();
         
-        if ($result && isset($data['opening_balance'])) {
-            $this->syncOpeningBalanceAccounting($data['id'], $data['opening_balance'], $data['opening_balance_date'] ?? date('Y-m-d'), $_SESSION['user_id'] ?? 1);
+        if ($result && isset($data['opening_balance']) && $existing) {
+            $oldAmount = floatval($existing->opening_balance ?? 0);
+            $newAmount = floatval($data['opening_balance'] ?? 0);
+            $oldDate = $existing->opening_balance_date ?? null;
+            $newDate = !empty($data['opening_balance_date']) ? $data['opening_balance_date'] : date('Y-m-d');
+
+            if (abs($oldAmount - $newAmount) > 0.0001 || ($newAmount > 0 && $oldDate !== $newDate)) {
+                $userId = $_SESSION['user_id'] ?? 1;
+                $this->syncOpeningBalanceAccounting($data['id'], $newAmount, $newDate, $userId);
+
+                try {
+                    require_once __DIR__ . '/AuditLog.php';
+                    $auditLog = new AuditLog();
+                    $supName = $data['name'] ?? ($existing->name ?? "Supplier #{$data['id']}");
+                    $actionType = ($oldAmount <= 0 && $newAmount > 0) ? 'Add Supplier Opening Balance' : 'Update Supplier Opening Balance';
+                    $desc = "Supplier Opening Balance for Supplier ID {$data['id']} ({$supName}) updated from Rs: " . number_format($oldAmount, 2) . " to Rs: " . number_format($newAmount, 2) . " (Effective Date: {$newDate})";
+                    $auditLog->logAction(
+                        $userId,
+                        $actionType,
+                        'Supplier',
+                        $desc,
+                        $data['id'],
+                        ['opening_balance' => $oldAmount, 'opening_balance_date' => $oldDate],
+                        ['opening_balance' => $newAmount, 'opening_balance_date' => $newDate]
+                    );
+                } catch (\Throwable $e) {
+                    error_log("AuditLog Error in updateSupplier: " . $e->getMessage());
+                }
+            }
         }
         return $result;
     }
 
-    private function syncOpeningBalanceAccounting($supplierId, $amount, $date, $userId) {
-        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '2000' LIMIT 1");
+    public function syncOpeningBalanceAccounting($supplierId, $amount, $date, $userId) {
+        // 1. Find AP Account (2000 Accounts Payable)
+        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '2000' OR (account_type = 'Liability' AND account_name LIKE '%Payable%') LIMIT 1");
         $apAccount = $this->db->single();
         if (!$apAccount) return false;
 
-        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '3000' LIMIT 1");
+        // 2. Find Equity Account (3900 Opening Balance Equity, fallback to 3000)
+        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '3900' OR account_name LIKE '%Opening Balance Equity%' LIMIT 1");
         $eqAccount = $this->db->single();
-        if (!$eqAccount) return false;
+        if (!$eqAccount) {
+            $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '3000' LIMIT 1");
+            $eqAccount = $this->db->single();
+        }
+        if (!$eqAccount) {
+            $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, is_active) VALUES ('3900', 'Opening Balance Equity', 'Equity', 'Equity', 1)");
+            $this->db->execute();
+            $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '3900' LIMIT 1");
+            $eqAccount = $this->db->single();
+        }
 
-        $ref = "OB-SUP-" . $supplierId;
-        $this->db->query("DELETE FROM journal_entries WHERE reference = :ref");
-        $this->db->bind(':ref', $ref);
-        $this->db->execute();
+        $ref = "OPBAL-SUP-" . $supplierId;
+        $legacyRef = "OB-SUP-" . $supplierId;
+
+        // 3. Reverse existing Journal Entries if any
+        $this->db->query("SELECT id FROM journal_entries WHERE reference IN (:ref1, :ref2)");
+        $this->db->bind(':ref1', $ref);
+        $this->db->bind(':ref2', $legacyRef);
+        $existingJes = $this->db->resultSet();
+
+        foreach ($existingJes as $je) {
+            $this->db->query("SELECT * FROM transactions WHERE journal_entry_id = :jid");
+            $this->db->bind(':jid', $je->id);
+            $oldTxns = $this->db->resultSet();
+
+            foreach ($oldTxns as $txn) {
+                $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
+                $this->db->bind(':id', $txn->account_id);
+                $acc = $this->db->single();
+                if ($acc) {
+                    $sql = "UPDATE chart_of_accounts SET balance = balance ";
+                    $sql .= in_array($acc->account_type, ['Asset', 'Expense']) ? "- :debit + :credit " : "+ :debit - :credit ";
+                    $sql .= "WHERE id = :id";
+                    $this->db->query($sql);
+                    $this->db->bind(':debit', $txn->debit);
+                    $this->db->bind(':credit', $txn->credit);
+                    $this->db->bind(':id', $txn->account_id);
+                    $this->db->execute();
+                }
+            }
+
+            $this->db->query("DELETE FROM transactions WHERE journal_entry_id = :jid");
+            $this->db->bind(':jid', $je->id);
+            $this->db->execute();
+
+            $this->db->query("DELETE FROM journal_entries WHERE id = :jid");
+            $this->db->bind(':jid', $je->id);
+            $this->db->execute();
+        }
 
         $amount = floatval($amount);
-        if ($amount == 0) return true;
+        // 4. Create new Journal Entry if amount > 0
+        if ($amount > 0) {
+            $desc = "Opening Balance for Supplier ID " . $supplierId;
+            $this->db->query("INSERT INTO journal_entries (entry_date, reference, description, created_by, status) VALUES (:date, :ref, :desc, :uid, 'Posted')");
+            $this->db->bind(':date', $date);
+            $this->db->bind(':ref', $ref);
+            $this->db->bind(':desc', $desc);
+            $this->db->bind(':uid', $userId);
+            $this->db->execute();
+            $newJeId = $this->db->lastInsertId();
 
-        $this->db->query("INSERT INTO journal_entries (entry_date, reference, account_id, description, debit, credit, created_by) 
-                          VALUES (:date, :ref, :acc, :desc, :debit, 0, :uid)");
-        $this->db->bind(':date', $date);
-        $this->db->bind(':ref', $ref);
-        $this->db->bind(':acc', $eqAccount->id);
-        $this->db->bind(':desc', "Opening Balance for Supplier ID {$supplierId}");
-        $this->db->bind(':debit', $amount);
-        $this->db->bind(':uid', $userId);
-        $this->db->execute();
+            // Double Entry:
+            // Debit Equity (3900 Opening Balance Equity)
+            // Credit Liability (2000 Accounts Payable)
+            $lines = [
+                ['account_id' => $eqAccount->id, 'debit' => $amount, 'credit' => 0],
+                ['account_id' => $apAccount->id, 'debit' => 0, 'credit' => $amount]
+            ];
 
-        $this->db->query("INSERT INTO journal_entries (entry_date, reference, account_id, description, debit, credit, created_by) 
-                          VALUES (:date, :ref, :acc, :desc, 0, :credit, :uid)");
-        $this->db->bind(':date', $date);
-        $this->db->bind(':ref', $ref);
-        $this->db->bind(':acc', $apAccount->id);
-        $this->db->bind(':desc', "Opening Balance for Supplier ID {$supplierId}");
-        $this->db->bind(':credit', $amount);
-        $this->db->bind(':uid', $userId);
-        $this->db->execute();
+            foreach ($lines as $line) {
+                $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit) VALUES (:jid, :aid, :deb, :cred)");
+                $this->db->bind(':jid', $newJeId);
+                $this->db->bind(':aid', $line['account_id']);
+                $this->db->bind(':deb', $line['debit']);
+                $this->db->bind(':cred', $line['credit']);
+                $this->db->execute();
+
+                $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id");
+                $this->db->bind(':id', $line['account_id']);
+                $acc = $this->db->single();
+                if ($acc) {
+                    $sql = "UPDATE chart_of_accounts SET balance = balance ";
+                    $sql .= in_array($acc->account_type, ['Asset', 'Expense']) ? "+ :debit - :credit " : "- :debit + :credit ";
+                    $sql .= "WHERE id = :id";
+                    $this->db->query($sql);
+                    $this->db->bind(':debit', $line['debit']);
+                    $this->db->bind(':credit', $line['credit']);
+                    $this->db->bind(':id', $line['account_id']);
+                    $this->db->execute();
+                }
+            }
+        }
 
         return true;
     }
