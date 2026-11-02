@@ -322,7 +322,7 @@ class JournalEntry {
             } catch (Throwable $t) {}
 
             return true;
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
             $this->db->rollBack();
             return "Database Error: " . $e->getMessage();
         }
@@ -428,19 +428,27 @@ class JournalEntry {
                 $this->db->execute();
 
                 foreach ($sAllocs as $sal) {
-                    $this->db->query("UPDATE goods_receipt_notes SET payment_status = 'Unpaid' WHERE id = :gid AND payment_status = 'Paid'");
+                    $this->db->query("UPDATE goods_receipt_notes SET status = 'Unpaid' WHERE id = :gid AND status = 'Paid'");
                     $this->db->bind(':gid', $sal->grn_id);
                     $this->db->execute();
                 }
             }
 
             // 8. Cascade void to petty cash transactions
-            $this->db->query("UPDATE petty_cash_transactions SET status = 'Voided', updated_at = CURRENT_TIMESTAMP() WHERE journal_entry_id = :id");
+            $this->db->query("UPDATE petty_cash_transactions SET status = 'Rejected' WHERE journal_entry_id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            $this->db->query("UPDATE petty_cash_reimbursements SET status = 'Rejected' WHERE journal_entry_id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();
 
             // 10. Cascade void to cheques
-            $this->db->query("UPDATE cheques c JOIN supplier_payments sp ON c.supplier_payment_id = sp.id SET c.status = 'Voided' WHERE sp.journal_entry_id = :id");
+            $this->db->query("UPDATE cheques c JOIN supplier_payments sp ON c.supplier_payment_id = sp.id SET c.status = 'Cancelled' WHERE sp.journal_entry_id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            $this->db->query("UPDATE cheques SET status = 'Deposited', cleared_date = NULL, cleared_by = NULL, clearance_journal_id = NULL WHERE clearance_journal_id = :id");
             $this->db->bind(':id', $id);
             $this->db->execute();
 
@@ -492,7 +500,7 @@ class JournalEntry {
             } catch (Throwable $t) {}
 
             return true;
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
             $this->db->rollBack();
             return false;
         }
@@ -570,7 +578,7 @@ class JournalEntry {
             } catch (Throwable $t) {}
 
             return true;
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }

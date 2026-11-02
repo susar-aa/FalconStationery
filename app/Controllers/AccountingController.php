@@ -743,11 +743,20 @@ class AccountingController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $this->validateCsrfOrDie();
 
-            $id = intval($_POST['entry_id']);
-            if ($this->journalModel->voidEntry($id)) {
-                $_SESSION['flash_success'] = 'Journal Entry has been successfully voided and account balances reversed.';
+            $id = intval($_POST['entry_id'] ?? 0);
+            if ($id > 0) {
+                try {
+                    if ($this->journalModel->voidEntry($id)) {
+                        $_SESSION['flash_success'] = 'Journal Entry has been successfully voided and account balances reversed.';
+                    } else {
+                        $_SESSION['flash_error'] = 'Failed to void journal entry. (Maybe it belongs to a closed/locked period or is already voided).';
+                    }
+                } catch (Throwable $e) {
+                    error_log("Void Journal Error: " . $e->getMessage());
+                    $_SESSION['flash_error'] = 'An unexpected error occurred while voiding the journal entry: ' . $e->getMessage();
+                }
             } else {
-                $_SESSION['flash_error'] = 'Failed to void journal entry. (Maybe it belongs to a closed/locked period).';
+                $_SESSION['flash_error'] = 'Invalid journal entry ID.';
             }
         }
         header('Location: ' . APP_URL . '/accounting/journal');
