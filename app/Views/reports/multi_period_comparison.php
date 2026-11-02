@@ -203,18 +203,18 @@
         <div class="summary-grid">
             <div class="summary-mini-card">
                 <span class="card-label">Base Net Profit</span>
-                <div class="card-val" style="color:#0066cc;">Rs <?= number_format($baseNet, 2) ?></div>
+                <div class="card-val" style="color:#0066cc;"><?= number_format($baseNet, 2) ?></div>
             </div>
             
             <div class="summary-mini-card">
                 <span class="card-label">Comparison Net Profit</span>
-                <div class="card-val" style="color:#64748b;">Rs <?= number_format($compNet, 2) ?></div>
+                <div class="card-val" style="color:#64748b;"><?= number_format($compNet, 2) ?></div>
             </div>
             
             <div class="summary-mini-card">
                 <span class="card-label">Net Variance</span>
                 <div class="card-val <?= $netVariance >= 0 ? 'change-up' : 'change-down' ?>">
-                    Rs <?= ($netVariance >= 0 ? '+' : '') . number_format($netVariance, 2) ?>
+                    <?= ($netVariance >= 0 ? '+' : '') . number_format($netVariance, 2) ?>
                 </div>
             </div>
 
@@ -289,9 +289,9 @@
                         <tr class="account-row" data-search="<?= htmlspecialchars(strtolower($row['account_code'] . ' ' . $row['account_name'])) ?>">
                             <td style="font-weight: 700; color: #64748b;"><?= htmlspecialchars($row['account_code']) ?></td>
                             <td><?= htmlspecialchars($row['account_name']) ?></td>
-                            <td class="num">Rs <?= number_format($row['base_balance'], 2) ?></td>
-                            <td class="num">Rs <?= number_format($row['comp_balance'], 2) ?></td>
-                            <td class="num <?= $changeClass ?>"><?= $changeSymbol . 'Rs ' . $varStr ?></td>
+                            <td class="num"><?= number_format($row['base_balance'], 2) ?></td>
+                            <td class="num"><?= number_format($row['comp_balance'], 2) ?></td>
+                            <td class="num <?= $changeClass ?>"><?= $changeSymbol . $varStr ?></td>
                             <td class="num <?= $changeClass ?>"><?= $pctStr ?></td>
                         </tr>
                     <?php endforeach; ?>
@@ -312,9 +312,9 @@
                     ?>
                     <tr style="font-weight: bold; background: rgba(0,0,0,0.015);">
                         <td colspan="2">Total <?= $type ?>s</td>
-                        <td class="num">Rs <?= number_format($typeBaseSum, 2) ?></td>
-                        <td class="num">Rs <?= number_format($typeCompSum, 2) ?></td>
-                        <td class="num <?= $typeChangeClass ?>">Rs <?= number_format($typeVar, 2) ?></td>
+                        <td class="num"><?= number_format($typeBaseSum, 2) ?></td>
+                        <td class="num"><?= number_format($typeCompSum, 2) ?></td>
+                        <td class="num <?= $typeChangeClass ?>"><?= number_format($typeVar, 2) ?></td>
                         <td class="num <?= $typeChangeClass ?>"><?= number_format($typePct, 1) ?>%</td>
                     </tr>
                 <?php endforeach; ?>

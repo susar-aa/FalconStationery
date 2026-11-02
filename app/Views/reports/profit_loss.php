@@ -47,19 +47,19 @@
             <?php foreach($data['revenues'] as $acc): ?>
                 <tr><td><?= htmlspecialchars($acc->account_name) ?></td><td class="num"><?= number_format($acc->balance, 2) ?></td></tr>
             <?php endforeach; ?>
-            <tr class="total-row"><td>Total Income</td><td class="num">Rs: <?= number_format($data['total_revenue'], 2) ?></td></tr>
+            <tr class="total-row"><td>Total Income</td><td class="num"><?= number_format($data['total_revenue'], 2) ?></td></tr>
 
             <!-- EXPENSES -->
             <tr><td colspan="2" class="header-row" style="padding-top: 30px;">Expenses</td></tr>
             <?php foreach($data['expenses'] as $acc): ?>
                 <tr><td><?= htmlspecialchars($acc->account_name) ?></td><td class="num"><?= number_format($acc->balance, 2) ?></td></tr>
             <?php endforeach; ?>
-            <tr class="total-row"><td>Total Expenses</td><td class="num">Rs: <?= number_format($data['total_expense'], 2) ?></td></tr>
+            <tr class="total-row"><td>Total Expenses</td><td class="num"><?= number_format($data['total_expense'], 2) ?></td></tr>
 
             <!-- NET INCOME -->
             <tr class="total-row net-income">
                 <td style="padding-top: 30px;">Net Income (Profit/Loss)</td>
-                <td class="num" style="padding-top: 30px;">Rs: <?= number_format($data['net_income'], 2) ?></td>
+                <td class="num" style="padding-top: 30px;"><?= number_format($data['net_income'], 2) ?></td>
             </tr>
         </table>
     </div>

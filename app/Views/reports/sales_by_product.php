@@ -27,9 +27,9 @@
         <?php if (!empty($data['rows'])): ?>
         <tr class="total-row">
             <td colspan="2">Total</td>
-            <td class="num">Rs <?= number_format($tRev, 2) ?></td>
-            <td class="num">Rs <?= number_format($tCost, 2) ?></td>
-            <td class="num">Rs <?= number_format($tProfit, 2) ?></td>
+            <td class="num"><?= number_format($tRev, 2) ?></td>
+            <td class="num"><?= number_format($tCost, 2) ?></td>
+            <td class="num"><?= number_format($tProfit, 2) ?></td>
             <td class="num"><?= $tRev > 0 ? number_format(($tProfit / $tRev) * 100, 1) : 0 ?>%</td>
         </tr>
         <?php endif; ?>

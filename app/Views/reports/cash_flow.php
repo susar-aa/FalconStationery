@@ -130,17 +130,17 @@
             <tr><td colspan="2" class="header-row">Cash Flows from Operating Activities</td></tr>
             <tr>
                 <td style="padding-left: 15px;">Net Income (from P&L)</td>
-                <td class="num">Rs <?= number_format($data['net_income'], 2) ?></td>
+                <td class="num"><?= number_format($data['net_income'], 2) ?></td>
             </tr>
             <?php foreach($data['operating'] as $op): ?>
                 <tr>
                     <td class="sub-row" style="padding-left: 30px;"><?= htmlspecialchars($op['name']) ?></td>
-                    <td class="num">Rs <?= number_format($op['amount'], 2) ?></td>
+                    <td class="num"><?= number_format($op['amount'], 2) ?></td>
                 </tr>
             <?php endforeach; ?>
             <tr class="total-row">
                 <td>Net Cash from Operating Activities</td>
-                <td class="num">Rs <?= number_format($opTotal, 2) ?></td>
+                <td class="num"><?= number_format($opTotal, 2) ?></td>
             </tr>
 
             <!-- INVESTING ACTIVITIES -->
@@ -148,17 +148,17 @@
             <?php if(empty($data['investing'])): ?>
                 <tr>
                     <td class="sub-row" style="padding-left: 30px; font-style: italic;">No investing transactions in period</td>
-                    <td class="num">Rs 0.00</td>
+                    <td class="num">0.00</td>
                 </tr>
             <?php else: foreach($data['investing'] as $inv): ?>
                 <tr>
                     <td class="sub-row" style="padding-left: 30px;"><?= htmlspecialchars($inv['name']) ?></td>
-                    <td class="num">Rs <?= number_format($inv['amount'], 2) ?></td>
+                    <td class="num"><?= number_format($inv['amount'], 2) ?></td>
                 </tr>
             <?php endforeach; endif; ?>
             <tr class="total-row">
                 <td>Net Cash from Investing Activities</td>
-                <td class="num">Rs <?= number_format($invTotal, 2) ?></td>
+                <td class="num"><?= number_format($invTotal, 2) ?></td>
             </tr>
 
             <!-- FINANCING ACTIVITIES -->
@@ -166,27 +166,27 @@
             <?php if(empty($data['financing'])): ?>
                 <tr>
                     <td class="sub-row" style="padding-left: 30px; font-style: italic;">No financing transactions in period</td>
-                    <td class="num">Rs 0.00</td>
+                    <td class="num">0.00</td>
                 </tr>
             <?php else: foreach($data['financing'] as $fin): ?>
                 <tr>
                     <td class="sub-row" style="padding-left: 30px;"><?= htmlspecialchars($fin['name']) ?></td>
-                    <td class="num">Rs <?= number_format($fin['amount'], 2) ?></td>
+                    <td class="num"><?= number_format($fin['amount'], 2) ?></td>
                 </tr>
             <?php endforeach; endif; ?>
             <tr class="total-row">
                 <td>Net Cash from Financing Activities</td>
-                <td class="num">Rs <?= number_format($finTotal, 2) ?></td>
+                <td class="num"><?= number_format($finTotal, 2) ?></td>
             </tr>
 
             <!-- GRAND TOTALS -->
             <tr class="grand-total" style="height: 60px;">
                 <td style="padding-top: 25px; font-weight: bold;">Net Increase (Decrease) in Cash</td>
-                <td class="num" style="padding-top: 25px;">Rs <?= number_format($netCashIncrease, 2) ?></td>
+                <td class="num" style="padding-top: 25px;"><?= number_format($netCashIncrease, 2) ?></td>
             </tr>
             <tr class="grand-total-success" style="height: 60px;">
                 <td style="padding-top: 15px; font-weight: bold;">Ending Cash & Bank Balance</td>
-                <td class="num" style="padding-top: 15px;">Rs <?= number_format($data['ending_cash'], 2) ?></td>
+                <td class="num" style="padding-top: 15px;"><?= number_format($data['ending_cash'], 2) ?></td>
             </tr>
         </table>
     </div>

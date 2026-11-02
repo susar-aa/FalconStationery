@@ -3,7 +3,7 @@
     <thead>
         <tr>
             <th>Route / Territory</th><th>Rep</th><th>Start</th><th>Status</th>
-            <th class="num">Invoices</th><th class="num">Route Sales (Rs)</th>
+            <th class="num">Invoices</th><th class="num">Route Sales</th>
         </tr>
     </thead>
     <tbody>
@@ -27,7 +27,7 @@
         <tr class="total-row">
             <td colspan="4">Total</td>
             <td class="num"><?= intval($tInv) ?></td>
-            <td class="num">Rs <?= number_format($tSales, 2) ?></td>
+            <td class="num"><?= number_format($tSales, 2) ?></td>
         </tr>
         <?php endif; ?>
     </tbody>

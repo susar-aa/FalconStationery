@@ -424,21 +424,21 @@
         <div class="analytics-card" id="card-revenue">
             <div class="card-glow glow-blue"></div>
             <div class="card-label">Total Revenue</div>
-            <div class="card-value">Rs. <?= number_format($totalRevenue, 2) ?></div>
+            <div class="card-value"><?= number_format($totalRevenue, 2) ?></div>
             <div class="card-subtext">Cumulative invoiced retail/wholesale turnover</div>
         </div>
 
         <div class="analytics-card" id="card-cogs">
             <div class="card-glow glow-orange"></div>
             <div class="card-label">Total FIFO COGS</div>
-            <div class="card-value">Rs. <?= number_format($totalCost, 2) ?></div>
+            <div class="card-value"><?= number_format($totalCost, 2) ?></div>
             <div class="card-subtext">Real cost dynamically attributed from batches</div>
         </div>
 
         <div class="analytics-card" id="card-profit">
             <div class="card-glow glow-green"></div>
             <div class="card-label">FIFO Net Profit</div>
-            <div class="card-value" style="color: var(--success);">Rs. <?= number_format($totalProfit, 2) ?></div>
+            <div class="card-value" style="color: var(--success);"><?= number_format($totalProfit, 2) ?></div>
             <div class="card-subtext">
                 <span class="trend-up">↑ 100%</span> true inventory margins
             </div>
@@ -526,11 +526,11 @@
                             <td><strong><?= htmlspecialchars($inv->invoice_number) ?></strong></td>
                             <td><?= htmlspecialchars($inv->item_name) ?></td>
                             <td class="numeric"><?= number_format($qty, 0) ?></td>
-                            <td class="numeric">Rs. <?= number_format(floatval($inv->price), 2) ?></td>
-                            <td class="numeric">Rs. <?= number_format($rev, 2) ?></td>
-                            <td class="numeric" style="color: var(--text-muted);">Rs. <?= number_format(floatval($inv->unit_cost), 2) ?></td>
-                            <td class="numeric" style="color: var(--text-muted);">Rs. <?= number_format($tcost, 2) ?></td>
-                            <td class="numeric" style="color: var(--success); font-weight: 600;">Rs. <?= number_format($profit, 2) ?></td>
+                            <td class="numeric"><?= number_format(floatval($inv->price), 2) ?></td>
+                            <td class="numeric"><?= number_format($rev, 2) ?></td>
+                            <td class="numeric" style="color: var(--text-muted);"><?= number_format(floatval($inv->unit_cost), 2) ?></td>
+                            <td class="numeric" style="color: var(--text-muted);"><?= number_format($tcost, 2) ?></td>
+                            <td class="numeric" style="color: var(--success); font-weight: 600;"><?= number_format($profit, 2) ?></td>
                             <td style="text-align: center;">
                                 <span class="badge <?= $margin >= 20 ? 'badge-margin' : 'badge-margin-low' ?>">
                                     <?= number_format($margin, 1) ?>%

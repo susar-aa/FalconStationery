@@ -64,7 +64,7 @@
                     <td><?= number_format($data['totals']['sixty'], 2) ?></td>
                     <td><?= number_format($data['totals']['ninety'], 2) ?></td>
                     <td><?= number_format($data['totals']['older'], 2) ?></td>
-                    <td>Rs: <?= number_format($data['totals']['total'], 2) ?></td>
+                    <td><?= number_format($data['totals']['total'], 2) ?></td>
                 </tr>
             </tfoot>
         </table>
@@ -80,7 +80,7 @@
                     <th>Due Date</th>
                     <th>Days Overdue</th>
                     <th>Status</th>
-                    <th>Amount (Rs)</th>
+                    <th>Amount</th>
                 </tr>
             </thead>
             <tbody>

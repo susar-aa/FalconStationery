@@ -122,12 +122,12 @@
             <?php foreach($data['assets'] as $acc): ?>
                 <tr>
                     <td style="padding-left: 15px;"><?= htmlspecialchars($acc->account_name) ?> (GL-<?= htmlspecialchars($acc->account_code) ?>)</td>
-                    <td class="num">Rs <?= number_format($acc->balance, 2) ?></td>
+                    <td class="num"><?= number_format($acc->balance, 2) ?></td>
                 </tr>
             <?php endforeach; ?>
             <tr class="total-row grand-total">
                 <td>Total Assets</td>
-                <td class="num">Rs <?= number_format($data['total_assets'], 2) ?></td>
+                <td class="num"><?= number_format($data['total_assets'], 2) ?></td>
             </tr>
 
             <!-- LIABILITIES -->
@@ -135,12 +135,12 @@
             <?php foreach($data['liabilities'] as $acc): ?>
                 <tr>
                     <td style="padding-left: 15px;"><?= htmlspecialchars($acc->account_name) ?> (GL-<?= htmlspecialchars($acc->account_code) ?>)</td>
-                    <td class="num">Rs <?= number_format($acc->balance, 2) ?></td>
+                    <td class="num"><?= number_format($acc->balance, 2) ?></td>
                 </tr>
             <?php endforeach; ?>
             <tr class="total-row">
                 <td>Total Liabilities</td>
-                <td class="num">Rs <?= number_format($data['total_liabilities'], 2) ?></td>
+                <td class="num"><?= number_format($data['total_liabilities'], 2) ?></td>
             </tr>
 
             <!-- EQUITY -->
@@ -148,22 +148,22 @@
             <?php foreach($data['equities'] as $acc): ?>
                 <tr>
                     <td style="padding-left: 15px;"><?= htmlspecialchars($acc->account_name) ?> (GL-<?= htmlspecialchars($acc->account_code) ?>)</td>
-                    <td class="num">Rs <?= number_format($acc->balance, 2) ?></td>
+                    <td class="num"><?= number_format($acc->balance, 2) ?></td>
                 </tr>
             <?php endforeach; ?>
             <tr>
                 <td style="padding-left: 15px; font-style: italic;">Net Income (Current Period P&L)</td>
-                <td class="num" style="font-style: italic;">Rs <?= number_format($data['net_income'], 2) ?></td>
+                <td class="num" style="font-style: italic;"><?= number_format($data['net_income'], 2) ?></td>
             </tr>
             <tr class="total-row">
                 <td>Total Equity</td>
-                <td class="num">Rs <?= number_format($data['total_equity'], 2) ?></td>
+                <td class="num"><?= number_format($data['total_equity'], 2) ?></td>
             </tr>
 
             <!-- TOTAL LIABILITIES & EQUITY -->
             <tr class="total-row grand-total">
                 <td style="padding-top: 30px;">Total Liabilities & Equity</td>
-                <td class="num" style="padding-top: 30px;">Rs <?= number_format($data['total_liabilities_equity'], 2) ?></td>
+                <td class="num" style="padding-top: 30px;"><?= number_format($data['total_liabilities_equity'], 2) ?></td>
             </tr>
         </table>
         
@@ -173,7 +173,7 @@
             </div>
         <?php else: ?>
             <div class="status-alert status-warn">
-                ⚠ Balance Sheet integrity warning: Out of balance by Rs <?= number_format(abs($data['total_assets'] - $data['total_liabilities_equity']), 2) ?>
+                ⚠ Balance Sheet integrity warning: Out of balance by <?= number_format(abs($data['total_assets'] - $data['total_liabilities_equity']), 2) ?>
             </div>
         <?php endif; ?>
     </div>

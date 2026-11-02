@@ -1,7 +1,7 @@
 <?php include __DIR__ . '/_header.php'; $tot = $data['totals']; ?>
 <div class="kpi-row">
-    <div class="kpi"><span>Total Tax</span><strong>Rs <?= number_format($tot->total_tax ?? 0, 2) ?></strong></div>
-    <div class="kpi"><span>Grand Sales</span><strong>Rs <?= number_format($tot->grand_total ?? 0, 2) ?></strong></div>
+    <div class="kpi"><span>Total Tax</span><strong><?= number_format($tot->total_tax ?? 0, 2) ?></strong></div>
+    <div class="kpi"><span>Grand Sales</span><strong><?= number_format($tot->grand_total ?? 0, 2) ?></strong></div>
 </div>
 <table class="rpt">
     <thead>

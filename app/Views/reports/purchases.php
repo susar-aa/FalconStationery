@@ -25,8 +25,8 @@
         <?php if (!empty($data['rows'])): ?>
         <tr class="total-row">
             <td>Total</td><td></td>
-            <td class="num">Rs <?= number_format($tPo, 2) ?></td><td></td>
-            <td class="num">Rs <?= number_format($tGrn, 2) ?></td>
+            <td class="num"><?= number_format($tPo, 2) ?></td><td></td>
+            <td class="num"><?= number_format($tGrn, 2) ?></td>
         </tr>
         <?php endif; ?>
     </tbody>

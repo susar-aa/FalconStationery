@@ -26,9 +26,9 @@
         <?php if (!empty($data['rows'])): ?>
         <tr class="total-row">
             <td colspan="3">Grand Total</td>
-            <td class="num">Rs <?= number_format($tSales, 2) ?></td>
-            <td class="num">Rs <?= number_format($tPaid, 2) ?></td>
-            <td class="num">Rs <?= number_format($tOut, 2) ?></td>
+            <td class="num"><?= number_format($tSales, 2) ?></td>
+            <td class="num"><?= number_format($tPaid, 2) ?></td>
+            <td class="num"><?= number_format($tOut, 2) ?></td>
         </tr>
         <?php endif; ?>
     </tbody>

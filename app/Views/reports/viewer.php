@@ -1628,7 +1628,7 @@ $statuses = $data['statuses'] ?? [];
                 const drill = detectDrilldown(colKey, r, def);
 
                 if (def.type === 'currency') {
-                    td.textContent = 'Rs. ' + parseFloat(val || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    td.textContent = parseFloat(val || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 } else if (def.type === 'number') {
                     td.textContent = parseInt(val || 0).toLocaleString();
                 } else if (def.type === 'badge') {
@@ -1690,7 +1690,7 @@ $statuses = $data['statuses'] ?? [];
                 currentRows.forEach(r => {
                     sum += parseFloat(r[colKey] || 0);
                 });
-                td.textContent = (def.type === 'currency' ? 'Rs. ' : '') + sum.toLocaleString(undefined, {minimumFractionDigits: def.type === 'currency' ? 2 : 0, maximumFractionDigits: def.type === 'currency' ? 2 : 0});
+                td.textContent = sum.toLocaleString(undefined, {minimumFractionDigits: def.type === 'currency' ? 2 : 0, maximumFractionDigits: def.type === 'currency' ? 2 : 0});
             } else {
                 td.textContent = '-';
             }
@@ -1717,7 +1717,7 @@ $statuses = $data['statuses'] ?? [];
                 firstCol = false;
             } else if (def.total === 'sum' && grandTotals && grandTotals[colKey] !== undefined) {
                 const totalVal = parseFloat(grandTotals[colKey]);
-                td.textContent = (def.type === 'currency' ? 'Rs. ' : '') + totalVal.toLocaleString(undefined, {minimumFractionDigits: def.type === 'currency' ? 2 : 0, maximumFractionDigits: def.type === 'currency' ? 2 : 0});
+                td.textContent = totalVal.toLocaleString(undefined, {minimumFractionDigits: def.type === 'currency' ? 2 : 0, maximumFractionDigits: def.type === 'currency' ? 2 : 0});
             } else {
                 td.textContent = '-';
             }
@@ -1978,7 +1978,7 @@ $statuses = $data['statuses'] ?? [];
     }
 
     function formatCurrency(val) {
-        return 'Rs. ' + parseFloat(val || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        return parseFloat(val || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
     // --- Side Quick View Drawer Trigger ---

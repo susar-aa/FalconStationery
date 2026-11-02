@@ -971,20 +971,20 @@ class ReportEngine {
                     'actual' => ['label' => 'Actual Value', 'type' => 'text', 'align' => 'right'],
                     'variance' => ['label' => 'Variance', 'type' => 'text', 'align' => 'right']
                 ],
-                'sql' => "SELECT 'Monthly Sales Revenue' as metric, 'Rs. 1,000,000.00' as target, 
-                                 CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled') AND MONTH(invoice_date) = MONTH(NOW()) AND YEAR(invoice_date) = YEAR(NOW())), 0), 2)) as actual,
+                'sql' => "SELECT 'Monthly Sales Revenue' as metric, '1,000,000.00' as target, 
+                                 CONCAT('', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled') AND MONTH(invoice_date) = MONTH(NOW()) AND YEAR(invoice_date) = YEAR(NOW())), 0), 2)) as actual,
                                  CONCAT(FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled') AND MONTH(invoice_date) = MONTH(NOW()) AND YEAR(invoice_date) = YEAR(NOW())), 0) - 1000000.00, 2)) as variance
                           UNION ALL
                           SELECT 'New Customers Registered' as metric, '50' as target, 
                                  CAST(COALESCE((SELECT COUNT(*) FROM customers WHERE MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())), 0) as CHAR) as actual,
                                  CAST(COALESCE((SELECT COUNT(*) FROM customers WHERE MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW())), 0) - 50 as CHAR) as variance
                           UNION ALL
-                          SELECT 'Outstanding Receivables' as metric, 'Rs. 200,000.00' as target, 
-                                 CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Paid', 'Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')), 0), 2)) as actual,
+                          SELECT 'Outstanding Receivables' as metric, '200,000.00' as target, 
+                                 CONCAT('', FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Paid', 'Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')), 0), 2)) as actual,
                                  CONCAT(FORMAT(COALESCE((SELECT SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) FROM invoices WHERE status NOT IN ('Paid', 'Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')), 0) - 200000.00, 2)) as variance
                           UNION ALL
-                          SELECT 'Procurement (GRN) Value' as metric, 'Rs. 500,000.00' as target, 
-                                 CONCAT('Rs. ', FORMAT(COALESCE((SELECT SUM(quantity * unit_cost) FROM grn_items), 0), 2)) as actual,
+                          SELECT 'Procurement (GRN) Value' as metric, '500,000.00' as target, 
+                                 CONCAT('', FORMAT(COALESCE((SELECT SUM(quantity * unit_cost) FROM grn_items), 0), 2)) as actual,
                                  CONCAT(FORMAT(COALESCE((SELECT SUM(quantity * unit_cost) FROM grn_items), 0) - 500000.00, 2)) as variance"
             ]
         ];

@@ -405,7 +405,7 @@ class ReportController extends Controller {
                     foreach ($metadata['columns'] as $colKey => $c) {
                         $val = $r->$colKey ?? '';
                         if ($c['type'] === 'currency') {
-                            $val = 'Rs. ' . number_format((float)$val, 2);
+                            $val = number_format((float)$val, 2);
                         }
                         echo '<td>' . htmlspecialchars($val) . '</td>';
                     }

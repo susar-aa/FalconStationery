@@ -4345,3 +4345,20 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Mon 11/02/2026 14:18:24.59 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Supplier.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Services/ReportEngine.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/customers/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/viewer.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'report_queries.log', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 915af66] Update: app/Models/Customer.php, app/Models/Supplier.php, app/Services/ReportEngine.php, app/Views/customers/index.php, app/Views/reports/viewer.php, app/Views/suppliers/index.php, deploy_log.txt, report_queries.log, schema_update.sql
+ 9 files changed, 454 insertions(+), 14 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   d7f3ad6..915af66  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Mon 11/02/2026 15:18:51.46 
+=================================================== 
+Adding changes... 

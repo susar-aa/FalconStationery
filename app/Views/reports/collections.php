@@ -1,7 +1,7 @@
 <?php include __DIR__ . '/_header.php'; ?>
 <h3 class="section-h">By Payment Method</h3>
 <table class="rpt">
-    <thead><tr><th>Method</th><th class="num">Transactions</th><th class="num">Collected (Rs)</th></tr></thead>
+    <thead><tr><th>Method</th><th class="num">Transactions</th><th class="num">Collected</th></tr></thead>
     <tbody>
         <?php $t = 0; foreach ($data['by_method'] as $m): $t += $m->total_collected; ?>
         <tr>
@@ -11,7 +11,7 @@
         </tr>
         <?php endforeach; ?>
         <?php if (!empty($data['by_method'])): ?>
-        <tr class="total-row"><td>Total</td><td></td><td class="num">Rs <?= number_format($t, 2) ?></td></tr>
+        <tr class="total-row"><td>Total</td><td></td><td class="num"><?= number_format($t, 2) ?></td></tr>
         <?php endif; ?>
     </tbody>
 </table>
