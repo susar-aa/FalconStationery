@@ -4362,3 +4362,32 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Mon 11/02/2026 15:18:51.46 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/ReportController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Services/ReportEngine.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/ar_aging.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/balance_sheet.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/cash_flow.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/collections.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/fifo_profit.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/inventory_valuation.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/multi_period_comparison.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/profit_loss_period.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/purchases.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/sales_by_customer.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/sales_by_product.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/sales_by_rep.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/sales_summary.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/tax_summary.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/reports/viewer.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main db52cd2] Update: app/Controllers/ReportController.php, app/Services/ReportEngine.php, app/Views/reports/ar_aging.php, app/Views/reports/balance_sheet.php, app/Views/reports/cash_flow.php, app/Views/reports/collections.php, app/Views/reports/fifo_profit.php, app/Views/reports/inventory_valuation.php, app/Views/reports/multi_period_comparison.php, app/Views/reports/profit_loss.php, app/Views/reports/profit_loss_period.php, app/Views/reports/purchases.php, app/Views/reports/sales_by_customer.php, app/Views/reports/sales_by_product.php, app/Views/reports/sales_by_rep.php, app/Views/reports/sales_summary.php, app/Views/reports/tax_summary.php, app/Views/reports/viewer.php, deploy_log.txt, schema_update.sql
+ 20 files changed, 97 insertions(+), 90 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   915af66..db52cd2  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Mon 11/02/2026 16:02:09.25 
+=================================================== 
+Adding changes... 
