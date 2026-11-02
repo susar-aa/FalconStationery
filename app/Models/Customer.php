@@ -322,8 +322,16 @@ class Customer {
             0 as credit, created_at 
             FROM invoices WHERE customer_id = :c1 AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
             UNION ALL
-            SELECT 'Payment' as type, id, CONCAT(payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, payment_date as date, 0 as debit, amount as credit, created_at 
-            FROM customer_payments WHERE customer_id = :c2
+            SELECT 'Payment' as type, id, 
+                   CONCAT('Pay: ', payment_method, 
+                          IF(payment_method = 'Cheque', 
+                             COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE c.customer_id = customer_payments.customer_id AND c.amount = customer_payments.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, customer_payments.created_at)) < 60 ORDER BY c.id DESC LIMIT 1), ''),
+                             ''
+                          ),
+                          IF(reference != '', CONCAT(' (', reference, ')'), '')
+                   ) as ref, 
+                   payment_date as date, 0 as debit, amount as credit, created_at 
+            FROM customer_payments WHERE customer_id = :c2 AND status = 'Active'
             UNION ALL
             SELECT 'Credit Note' as type, id, credit_note_number as ref, note_date as date, 0 as debit, total_amount as credit, created_at 
             FROM credit_notes WHERE customer_id = :c3

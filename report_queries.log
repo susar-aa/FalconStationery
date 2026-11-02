@@ -3278,3 +3278,295 @@ Params: Array
 )
 
 
+2026-11-02 09:31:42 - Report: supplier_statement
+SQL: SELECT i.id, i.date, i.type, i.ref, i.debit, i.credit,
+                                 SUM(i.credit - i.debit) OVER (ORDER BY i.date, i.ref) as balance,
+                                 i.vendor_id
+                          FROM (
+                              SELECT grn.id, grn.grn_date as date, 'GRN' as type, grn.grn_number as ref,
+                                     0 as debit,
+                                     (SELECT COALESCE(SUM(total), 0) FROM grn_items WHERE grn_id = grn.id) as credit,
+                                     grn.vendor_id
+                              FROM goods_receipt_notes grn
+                              WHERE grn.is_approved = 1
+                              UNION ALL
+                              SELECT sp.id, sp.payment_date as date, 'Payment' as type, 
+                                     CONCAT('Pay: ', sp.payment_method, 
+                                            IF(sp.payment_method = 'Cheque', 
+                                               COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 10 ORDER BY c.id DESC LIMIT 1), ''),
+                                               IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                                            )
+                                     ) as ref,
+                                     sp.amount as debit,
+                                     0 as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Active'
+                              UNION ALL
+                              SELECT sr.id, sr.return_date as date, 'Supplier Return' as type, sr.return_number as ref,
+                                     sr.total_amount as debit,
+                                     0 as credit,
+                                     sr.vendor_id
+                              FROM supplier_returns sr
+                              UNION ALL
+                              SELECT e.id, e.expense_date as date, 'Expense' as type, CONCAT(e.reference, ' - ', e.description) as ref,
+                                     e.amount as debit,
+                                     0 as credit,
+                                     e.vendor_id
+                              FROM expenses e
+                              WHERE e.vendor_id IS NOT NULL
+                          ) as i
+                          WHERE 1=1  AND i.date >= :start_date AND i.date <= :end_date AND i.vendor_id = :supplier
+Params: Array
+(
+    [:start_date] => 2000-01-01 00:00:00
+    [:end_date] => 2026-11-02 23:59:59
+    [:supplier] => 18
+)
+
+
+2026-11-02 09:32:06 - Report: supplier_statement
+SQL: SELECT i.id, i.date, i.type, i.ref, i.debit, i.credit,
+                                 SUM(i.credit - i.debit) OVER (ORDER BY i.date, i.ref) as balance,
+                                 i.vendor_id
+                          FROM (
+                              SELECT grn.id, grn.grn_date as date, 'GRN' as type, grn.grn_number as ref,
+                                     0 as debit,
+                                     (SELECT COALESCE(SUM(total), 0) FROM grn_items WHERE grn_id = grn.id) as credit,
+                                     grn.vendor_id
+                              FROM goods_receipt_notes grn
+                              WHERE grn.is_approved = 1
+                              UNION ALL
+                              SELECT sp.id, sp.payment_date as date, 'Payment' as type, 
+                                     CONCAT('Pay: ', sp.payment_method, 
+                                            IF(sp.payment_method = 'Cheque', 
+                                               COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 10 ORDER BY c.id DESC LIMIT 1), ''),
+                                               IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                                            )
+                                     ) as ref,
+                                     sp.amount as debit,
+                                     0 as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Active'
+                              UNION ALL
+                              SELECT sr.id, sr.return_date as date, 'Supplier Return' as type, sr.return_number as ref,
+                                     sr.total_amount as debit,
+                                     0 as credit,
+                                     sr.vendor_id
+                              FROM supplier_returns sr
+                              UNION ALL
+                              SELECT e.id, e.expense_date as date, 'Expense' as type, CONCAT(e.reference, ' - ', e.description) as ref,
+                                     e.amount as debit,
+                                     0 as credit,
+                                     e.vendor_id
+                              FROM expenses e
+                              WHERE e.vendor_id IS NOT NULL
+                          ) as i
+                          WHERE 1=1  AND i.date >= :start_date AND i.date <= :end_date AND i.vendor_id = :supplier
+Params: Array
+(
+    [:start_date] => 2000-01-01 00:00:00
+    [:end_date] => 2026-11-02 23:59:59
+    [:supplier] => 18
+)
+
+
+2026-11-02 09:32:27 - Report: supplier_statement
+SQL: SELECT i.id, i.date, i.type, i.ref, i.debit, i.credit,
+                                 SUM(i.credit - i.debit) OVER (ORDER BY i.date, i.ref) as balance,
+                                 i.vendor_id
+                          FROM (
+                              SELECT grn.id, grn.grn_date as date, 'GRN' as type, grn.grn_number as ref,
+                                     0 as debit,
+                                     (SELECT COALESCE(SUM(total), 0) FROM grn_items WHERE grn_id = grn.id) as credit,
+                                     grn.vendor_id
+                              FROM goods_receipt_notes grn
+                              WHERE grn.is_approved = 1
+                              UNION ALL
+                              SELECT sp.id, sp.payment_date as date, 'Payment' as type, 
+                                     CONCAT('Pay: ', sp.payment_method, 
+                                            IF(sp.payment_method = 'Cheque', 
+                                               COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 10 ORDER BY c.id DESC LIMIT 1), ''),
+                                               IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                                            )
+                                     ) as ref,
+                                     sp.amount as debit,
+                                     0 as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Active'
+                              UNION ALL
+                              SELECT sr.id, sr.return_date as date, 'Supplier Return' as type, sr.return_number as ref,
+                                     sr.total_amount as debit,
+                                     0 as credit,
+                                     sr.vendor_id
+                              FROM supplier_returns sr
+                              UNION ALL
+                              SELECT e.id, e.expense_date as date, 'Expense' as type, CONCAT(e.reference, ' - ', e.description) as ref,
+                                     e.amount as debit,
+                                     0 as credit,
+                                     e.vendor_id
+                              FROM expenses e
+                              WHERE e.vendor_id IS NOT NULL
+                          ) as i
+                          WHERE 1=1  AND i.date >= :start_date AND i.date <= :end_date AND i.vendor_id = :supplier
+Params: Array
+(
+    [:start_date] => 2000-01-01 00:00:00
+    [:end_date] => 2026-12-31 23:59:59
+    [:supplier] => 18
+)
+
+
+2026-11-02 09:47:14 - Report: supplier_statement
+SQL: SELECT i.id, i.date, i.type, i.ref, i.debit, i.credit,
+                                 SUM(i.credit - i.debit) OVER (ORDER BY i.date, i.ref, i.id) as balance,
+                                 i.vendor_id
+                          FROM (
+                              SELECT grn.id, grn.grn_date as date, 'GRN' as type, grn.grn_number as ref,
+                                     0 as debit,
+                                     (SELECT COALESCE(SUM(total), 0) FROM grn_items WHERE grn_id = grn.id) as credit,
+                                     grn.vendor_id
+                              FROM goods_receipt_notes grn
+                              WHERE grn.is_approved = 1
+                              UNION ALL
+                              SELECT sp.id, sp.payment_date as date, 'Payment' as type, 
+                                     CONCAT('Pay: ', sp.payment_method, 
+                                            IF(sp.payment_method = 'Cheque', 
+                                               COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE (c.supplier_payment_id = sp.id OR (c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 60)) ORDER BY c.id DESC LIMIT 1), ''),
+                                               IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                                            )
+                                     ) as ref,
+                                     sp.amount as debit,
+                                     0 as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Active'
+                              UNION ALL
+                              SELECT sp.id, DATE(COALESCE(sp.reversed_at, sp.created_at)) as date, 'Payment Reversal' as type,
+                                     CONCAT('Payment Reversed: ', sp.payment_method, IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')) as ref,
+                                     0 as debit,
+                                     sp.amount as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Reversed'
+                              UNION ALL
+                              SELECT sr.id, sr.return_date as date, 'Supplier Return' as type, sr.return_number as ref,
+                                     sr.total_amount as debit,
+                                     0 as credit,
+                                     sr.vendor_id
+                              FROM supplier_returns sr
+                              UNION ALL
+                              SELECT e.id, e.expense_date as date, 'Expense' as type, CONCAT(e.reference, ' - ', e.description) as ref,
+                                     e.amount as debit,
+                                     0 as credit,
+                                     e.vendor_id
+                              FROM expenses e
+                              WHERE e.vendor_id IS NOT NULL
+                              UNION ALL
+                              SELECT v.id, COALESCE(v.opening_balance_date, DATE(v.created_at)) as date, 'Opening Bal' as type,
+                                     'System generated' as ref,
+                                     0 as debit,
+                                     v.opening_balance as credit,
+                                     v.id as vendor_id
+                              FROM vendors v
+                              WHERE v.opening_balance > 0
+                              UNION ALL
+                              SELECT je.id, je.entry_date as date, 'Journal Entry' as type,
+                                     IF(je.reference IS NOT NULL AND je.reference != '', CONCAT(je.reference, ' - ', COALESCE(t.description, je.description)), je.description) as ref,
+                                     t.debit as debit,
+                                     t.credit as credit,
+                                     COALESCE(t.entity_id, je.entity_id) as vendor_id
+                              FROM transactions t
+                              JOIN journal_entries je ON t.journal_entry_id = je.id
+                              JOIN chart_of_accounts coa ON t.account_id = coa.id
+                              WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier'))
+                                AND je.status = 'Posted'
+                                AND coa.account_code = '2000'
+                          ) as i
+                          WHERE 1=1  AND i.date >= :start_date AND i.date <= :end_date AND i.vendor_id = :supplier
+Params: Array
+(
+    [:start_date] => 2000-01-01 00:00:00
+    [:end_date] => 2099-12-31 23:59:59
+    [:supplier] => 18
+)
+
+
+2026-11-02 09:47:34 - Report: supplier_statement
+SQL: SELECT i.id, i.date, i.type, i.ref, i.debit, i.credit,
+                                 SUM(i.credit - i.debit) OVER (ORDER BY i.date, i.ref, i.id) as balance,
+                                 i.vendor_id
+                          FROM (
+                              SELECT grn.id, grn.grn_date as date, 'GRN' as type, grn.grn_number as ref,
+                                     0 as debit,
+                                     (SELECT COALESCE(SUM(total), 0) FROM grn_items WHERE grn_id = grn.id) as credit,
+                                     grn.vendor_id
+                              FROM goods_receipt_notes grn
+                              WHERE grn.is_approved = 1
+                              UNION ALL
+                              SELECT sp.id, sp.payment_date as date, 'Payment' as type, 
+                                     CONCAT('Pay: ', sp.payment_method, 
+                                            IF(sp.payment_method = 'Cheque', 
+                                               COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE (c.supplier_payment_id = sp.id OR (c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 60)) ORDER BY c.id DESC LIMIT 1), ''),
+                                               ''
+                                            ),
+                                            IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                                     ) as ref,
+                                     sp.amount as debit,
+                                     0 as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Active'
+                              UNION ALL
+                              SELECT sp.id, DATE(COALESCE(sp.reversed_at, sp.created_at)) as date, 'Payment Reversal' as type,
+                                     CONCAT('Payment Reversed: ', sp.payment_method, IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')) as ref,
+                                     0 as debit,
+                                     sp.amount as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Reversed'
+                              UNION ALL
+                              SELECT sr.id, sr.return_date as date, 'Supplier Return' as type, sr.return_number as ref,
+                                     sr.total_amount as debit,
+                                     0 as credit,
+                                     sr.vendor_id
+                              FROM supplier_returns sr
+                              UNION ALL
+                              SELECT e.id, e.expense_date as date, 'Expense' as type, CONCAT(e.reference, ' - ', e.description) as ref,
+                                     e.amount as debit,
+                                     0 as credit,
+                                     e.vendor_id
+                              FROM expenses e
+                              WHERE e.vendor_id IS NOT NULL
+                              UNION ALL
+                              SELECT v.id, COALESCE(v.opening_balance_date, DATE(v.created_at)) as date, 'Opening Bal' as type,
+                                     'System generated' as ref,
+                                     0 as debit,
+                                     v.opening_balance as credit,
+                                     v.id as vendor_id
+                              FROM vendors v
+                              WHERE v.opening_balance > 0
+                              UNION ALL
+                              SELECT je.id, je.entry_date as date, 'Journal Entry' as type,
+                                     IF(je.reference IS NOT NULL AND je.reference != '', CONCAT(je.reference, ' - ', COALESCE(t.description, je.description)), je.description) as ref,
+                                     t.debit as debit,
+                                     t.credit as credit,
+                                     COALESCE(t.entity_id, je.entity_id) as vendor_id
+                              FROM transactions t
+                              JOIN journal_entries je ON t.journal_entry_id = je.id
+                              JOIN chart_of_accounts coa ON t.account_id = coa.id
+                              WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier'))
+                                AND je.status = 'Posted'
+                                AND coa.account_code = '2000'
+                          ) as i
+                          WHERE 1=1  AND i.date >= :start_date AND i.date <= :end_date AND i.vendor_id = :supplier
+Params: Array
+(
+    [:start_date] => 2000-01-01 00:00:00
+    [:end_date] => 2099-12-31 23:59:59
+    [:supplier] => 18
+)
+
+

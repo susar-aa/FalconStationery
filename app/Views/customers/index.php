@@ -956,6 +956,12 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
             </div>
         </div>
         
+        <div style="margin-right: 12px; flex-shrink: 0;">
+            <a href="<?= APP_URL ?>/report/viewer/customer_statement?customer=<?= $c->id ?>&start_date=2000-01-01&end_date=2099-12-31" target="_blank" class="sf-btn neutral" style="padding: 6px 12px; font-size: 12px; gap: 5px;" title="Export detailed customer statement">
+                <i class="fa-solid fa-file-export" style="color:var(--c-blue);"></i> Export Statement
+            </a>
+        </div>
+
         <!-- Header Statistics Cards -->
         <div style="display: flex; gap: 8px; margin-right: 18px; flex-shrink: 0; align-items: center;">
             <div style="background: var(--c-fill); padding: 5px 10px; border-radius: var(--r-sm); text-align: center; min-width: 70px;">
@@ -1012,12 +1018,26 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                                     <a href="<?= APP_URL ?>/sales/show/<?= $l->id ?>" target="_blank" style="color:var(--c-blue); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
+                                <?php elseif($l->type == 'Payment'): ?>
+                                    <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $l->id ?>" target="_blank" style="color:var(--c-green); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;" title="View Payment Receipt">
+                                        <?= htmlspecialchars($l->ref) ?> ↗
+                                    </a>
                                 <?php elseif($l->type == 'Credit Note'): ?>
                                     <a href="<?= APP_URL ?>/creditnote/show/<?= $l->id ?>" target="_blank" style="color:var(--c-red); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
+                                <?php elseif($l->type == 'Cheque Returned'): ?>
+                                    <a href="<?= APP_URL ?>/cheque?search=<?= urlencode($l->id) ?>" target="_blank" style="color:var(--c-red); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;" title="View Cheque Details">
+                                        <?= htmlspecialchars($l->ref) ?> ↗
+                                    </a>
+                                <?php elseif($l->type == 'Journal Entry'): ?>
+                                    <a href="<?= APP_URL ?>/accounting/print_journal/<?= $l->id ?>" target="_blank" style="color:var(--c-blue); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;" title="View Journal Voucher">
+                                        <?= htmlspecialchars($l->ref) ?> ↗
+                                    </a>
                                 <?php elseif($l->type == 'Payment Reversal'): ?>
-                                    <span style="color: var(--c-orange); font-size: 11px; margin-left: 5px; font-weight:600; background: var(--c-orange-light); padding: 2px 6px; border-radius: 4px;"><?= htmlspecialchars($l->ref) ?></span>
+                                    <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $l->id ?>" target="_blank" style="color: var(--c-orange); font-size: 11px; margin-left: 5px; font-weight:600; background: var(--c-orange-light); padding: 2px 6px; border-radius: 4px; text-decoration:none;" title="View Reversed Receipt">
+                                        <?= htmlspecialchars($l->ref) ?> ↗
+                                    </a>
                                 <?php else: ?>
                                     <span style="color:var(--t-secondary); font-size: 11px; margin-left: 5px;"><?= htmlspecialchars($l->ref) ?></span>
                                 <?php endif; ?>

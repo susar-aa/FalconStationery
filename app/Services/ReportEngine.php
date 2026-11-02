@@ -597,7 +597,7 @@ class ReportEngine {
                     'balance' => ['label' => 'Running Balance', 'type' => 'currency', 'align' => 'right']
                 ],
                 'sql' => "SELECT i.id, i.date, i.type, i.ref, i.debit, i.credit,
-                                 SUM(i.debit - i.credit) OVER (ORDER BY i.date, i.ref) as balance,
+                                 SUM(i.debit - i.credit) OVER (ORDER BY i.date, i.ref, i.id) as balance,
                                  i.customer_id
                           FROM (
                               SELECT i2.id, i2.invoice_date as date, 'Invoice' as type, i2.invoice_number as ref, 
@@ -605,7 +605,7 @@ class ReportEngine {
                                      0 as credit,
                                      i2.customer_id
                               FROM invoices i2
-                              WHERE i2.status != 'Voided'
+                              WHERE i2.status NOT IN ('Voided', 'Cancelled') AND (i2.delivery_status IS NULL OR i2.delivery_status != 'Cancelled')
                               UNION ALL
                               SELECT cp.id, cp.payment_date as date, 'Payment' as type, 
                                      CONCAT('Pay: ', cp.payment_method, 
@@ -619,6 +619,50 @@ class ReportEngine {
                                      cp.customer_id
                               FROM customer_payments cp
                               WHERE cp.status = 'Active'
+                              UNION ALL
+                              SELECT cn.id, cn.note_date as date, 'Credit Note' as type, cn.credit_note_number as ref,
+                                     0 as debit,
+                                     cn.total_amount as credit,
+                                     cn.customer_id
+                              FROM credit_notes cn
+                              UNION ALL
+                              SELECT chk.id, COALESCE(chk.returned_date, chk.banking_date) as date, 'Cheque Returned' as type,
+                                     CONCAT('Cheque #', chk.cheque_number, ' (', chk.bank_name, ') - ', chk.status, IF(chk.return_reason IS NOT NULL, CONCAT(' [', chk.return_reason, ']'), '')) as ref,
+                                     (chk.amount + COALESCE(chk.return_charge, 0)) as debit,
+                                     0 as credit,
+                                     chk.customer_id
+                              FROM cheques chk
+                              WHERE chk.status IN ('Returned', 'Rejected', 'Bounced')
+                              UNION ALL
+                              SELECT c.id, COALESCE(c.opening_balance_date, DATE(c.created_at)) as date, 'Opening Bal' as type,
+                                     'System generated' as ref,
+                                     c.opening_balance as debit,
+                                     0 as credit,
+                                     c.id as customer_id
+                              FROM customers c
+                              WHERE c.opening_balance > 0
+                              UNION ALL
+                              SELECT cp.id, DATE(COALESCE(cp.reversed_at, cp.created_at)) as date, 'Payment Reversal' as type,
+                                     CONCAT('Payment Reversed: ', cp.payment_method, IF(cp.reference != '', CONCAT(' (', cp.reference, ')'), '')) as ref,
+                                     cp.amount as debit,
+                                     0 as credit,
+                                     cp.customer_id
+                              FROM customer_payments cp
+                              WHERE cp.status = 'Reversed'
+                              UNION ALL
+                              SELECT je.id, je.entry_date as date, 'Journal Entry' as type,
+                                     IF(je.reference IS NOT NULL AND je.reference != '', CONCAT(je.reference, ' - ', COALESCE(t.description, je.description)), je.description) as ref,
+                                     t.debit as debit,
+                                     t.credit as credit,
+                                     COALESCE(t.entity_id, je.entity_id) as customer_id
+                              FROM transactions t
+                              JOIN journal_entries je ON t.journal_entry_id = je.id
+                              JOIN chart_of_accounts coa ON t.account_id = coa.id
+                              LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
+                              WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer')
+                                AND je.status = 'Posted'
+                                AND coa.account_code = '1200'
+                                AND cp.id IS NULL
                           ) as i
                           WHERE 1=1 /*WHERE_CLAUSE*/"
             ],
@@ -638,7 +682,7 @@ class ReportEngine {
                     'balance' => ['label' => 'Running Balance', 'type' => 'currency', 'align' => 'right']
                 ],
                 'sql' => "SELECT i.id, i.date, i.type, i.ref, i.debit, i.credit,
-                                 SUM(i.credit - i.debit) OVER (ORDER BY i.date, i.ref) as balance,
+                                 SUM(i.credit - i.debit) OVER (ORDER BY i.date, i.ref, i.id) as balance,
                                  i.vendor_id
                           FROM (
                               SELECT grn.id, grn.grn_date as date, 'GRN' as type, grn.grn_number as ref,
@@ -651,15 +695,24 @@ class ReportEngine {
                               SELECT sp.id, sp.payment_date as date, 'Payment' as type, 
                                      CONCAT('Pay: ', sp.payment_method, 
                                             IF(sp.payment_method = 'Cheque', 
-                                               COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 10 ORDER BY c.id DESC LIMIT 1), ''),
-                                               IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
-                                            )
+                                               COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE (c.supplier_payment_id = sp.id OR (c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 60)) ORDER BY c.id DESC LIMIT 1), ''),
+                                               ''
+                                            ),
+                                            IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
                                      ) as ref,
                                      sp.amount as debit,
                                      0 as credit,
                                      sp.vendor_id
                               FROM supplier_payments sp
                               WHERE sp.status = 'Active'
+                              UNION ALL
+                              SELECT sp.id, DATE(COALESCE(sp.reversed_at, sp.created_at)) as date, 'Payment Reversal' as type,
+                                     CONCAT('Payment Reversed: ', sp.payment_method, IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')) as ref,
+                                     0 as debit,
+                                     sp.amount as credit,
+                                     sp.vendor_id
+                              FROM supplier_payments sp
+                              WHERE sp.status = 'Reversed'
                               UNION ALL
                               SELECT sr.id, sr.return_date as date, 'Supplier Return' as type, sr.return_number as ref,
                                      sr.total_amount as debit,
@@ -673,6 +726,26 @@ class ReportEngine {
                                      e.vendor_id
                               FROM expenses e
                               WHERE e.vendor_id IS NOT NULL
+                              UNION ALL
+                              SELECT v.id, COALESCE(v.opening_balance_date, DATE(v.created_at)) as date, 'Opening Bal' as type,
+                                     'System generated' as ref,
+                                     0 as debit,
+                                     v.opening_balance as credit,
+                                     v.id as vendor_id
+                              FROM vendors v
+                              WHERE v.opening_balance > 0
+                              UNION ALL
+                              SELECT je.id, je.entry_date as date, 'Journal Entry' as type,
+                                     IF(je.reference IS NOT NULL AND je.reference != '', CONCAT(je.reference, ' - ', COALESCE(t.description, je.description)), je.description) as ref,
+                                     t.debit as debit,
+                                     t.credit as credit,
+                                     COALESCE(t.entity_id, je.entity_id) as vendor_id
+                              FROM transactions t
+                              JOIN journal_entries je ON t.journal_entry_id = je.id
+                              JOIN chart_of_accounts coa ON t.account_id = coa.id
+                              WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier'))
+                                AND je.status = 'Posted'
+                                AND coa.account_code = '2000'
                           ) as i
                           WHERE 1=1 /*WHERE_CLAUSE*/"
             ],

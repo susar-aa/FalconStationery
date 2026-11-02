@@ -1137,11 +1137,11 @@ $statuses = $data['statuses'] ?? [];
                             </div>
                             <div class="sf-form-group">
                                 <label class="sf-form-label">Start Date</label>
-                                <input type="date" class="sf-input" name="start_date" id="filter_start_date" value="<?= date('Y-m-01') ?>">
+                                <input type="date" class="sf-input" name="start_date" id="filter_start_date" value="<?= in_array($reportKey, ['supplier_statement', 'customer_statement']) ? '2000-01-01' : date('Y-m-01') ?>">
                             </div>
                             <div class="sf-form-group">
                                 <label class="sf-form-label">End Date</label>
-                                <input type="date" class="sf-input" name="end_date" id="filter_end_date" value="<?= date('Y-m-d') ?>">
+                                <input type="date" class="sf-input" name="end_date" id="filter_end_date" value="<?= in_array($reportKey, ['supplier_statement', 'customer_statement']) ? '2099-12-31' : date('Y-m-d') ?>">
                             </div>
                         <?php endif; ?>
 
@@ -1517,7 +1517,7 @@ $statuses = $data['statuses'] ?? [];
             endInput.value = fmt(now);
         } else if (type === 'all_time') {
             startInput.value = '2000-01-01';
-            endInput.value = fmt(now);
+            endInput.value = '2099-12-31';
         }
         loadReportData(1);
     }

@@ -357,7 +357,15 @@ class Supplier {
             FROM supplier_returns sr
             WHERE sr.vendor_id = :vid3
             UNION ALL
-            SELECT 'Payment' as type, sp.id, CONCAT('Pay: ', sp.payment_method, IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')) as ref, sp.payment_date as date,
+            SELECT 'Payment' as type, sp.id, 
+                   CONCAT('Pay: ', sp.payment_method, 
+                          IF(sp.payment_method = 'Cheque', 
+                             COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE (c.supplier_payment_id = sp.id OR (c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 60)) ORDER BY c.id DESC LIMIT 1), ''),
+                             ''
+                          ),
+                          IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                   ) as ref, 
+                   sp.payment_date as date,
                    sp.amount as debit, 
                    0 as credit, 
                    sp.created_at
