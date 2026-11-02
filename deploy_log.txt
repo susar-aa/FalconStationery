@@ -4404,3 +4404,16 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Mon 11/02/2026 20:12:04.38 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/AccountingController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 989e264] Update: app/Controllers/AccountingController.php, app/Models/JournalEntry.php, deploy_log.txt, schema_update.sql
+ 4 files changed, 44 insertions(+), 10 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   2888ab0..989e264  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Mon 11/02/2026 20:12:15.79 
+=================================================== 
+Adding changes... 
