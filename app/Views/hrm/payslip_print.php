@@ -214,10 +214,13 @@
                 <tbody>
                     <tr><td>EPF Employee (8%)</td><td class="num-col" style="color: #ff3b30;">Rs. <?= number_format($slip->epf_employee ?? 0, 2) ?></td></tr>
                     <tr><td>Loan Repayments</td><td class="num-col" style="color: #ff3b30;">Rs. <?= number_format($slip->loan_deduction, 2) ?></td></tr>
+                    <?php if(floatval($slip->advance_deduction ?? 0) > 0): ?>
+                        <tr><td>Salary Advance Recovery</td><td class="num-col" style="color: #ff3b30;">Rs. <?= number_format($slip->advance_deduction, 2) ?></td></tr>
+                    <?php endif; ?>
                     <tr><td>Other Deductions</td><td class="num-col" style="color: #ff3b30;">Rs. <?= number_format($slip->other_deductions, 2) ?></td></tr>
                     <tr style="background: #f9f9fb; font-weight: 700;">
                         <td>Total Deductions</td>
-                        <td class="num-col" style="color: #ff3b30;">Rs. <?= number_format(($slip->epf_employee ?? 0) + $slip->loan_deduction + $slip->other_deductions, 2) ?></td>
+                        <td class="num-col" style="color: #ff3b30;">Rs. <?= number_format(($slip->epf_employee ?? 0) + $slip->loan_deduction + ($slip->advance_deduction ?? 0) + $slip->other_deductions, 2) ?></td>
                     </tr>
                 </tbody>
             </table>

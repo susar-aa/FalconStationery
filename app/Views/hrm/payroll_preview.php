@@ -262,14 +262,14 @@
                 <div class="summary-val red">Rs. <?= number_format($preview['total_epf_employee'] ?? 0, 2) ?></div>
             </div>
 
+            <div class="summary-card red">
+                <div class="summary-lbl">Advance Recoveries</div>
+                <div class="summary-val red">Rs. <?= number_format($preview['total_advance_deductions'] ?? 0, 2) ?></div>
+            </div>
+
             <div class="summary-card orange">
                 <div class="summary-lbl">EPF Employer (12%)</div>
                 <div class="summary-val orange">Rs. <?= number_format($preview['total_epf_employer'] ?? 0, 2) ?></div>
-            </div>
-
-            <div class="summary-card blue">
-                <div class="summary-lbl">ETF Employer (3%)</div>
-                <div class="summary-val blue">Rs. <?= number_format($preview['total_etf_employer'] ?? 0, 2) ?></div>
             </div>
 
             <div class="summary-card green">
@@ -277,6 +277,12 @@
                 <div class="summary-val green">Rs. <?= number_format($preview['total_net'] ?? 0, 2) ?></div>
             </div>
         </div>
+
+        <form id="payrollRunForm" action="<?= APP_URL ?>/payroll/run" method="POST">
+            <input type="hidden" name="action" value="run_payroll">
+            <input type="hidden" name="period_start" value="<?= $preview['period_start'] ?>">
+            <input type="hidden" name="period_end" value="<?= $preview['period_end'] ?>">
+            <input type="hidden" name="run_date" value="<?= $data['run_date'] ?>">
 
         <!-- Breakdown Table -->
         <div class="table-panel">
@@ -298,6 +304,7 @@
                             <th style="text-align: right; font-weight: 800;">Gross Salary</th>
                             <th style="text-align: right; color: var(--c-red);">- EPF 8%</th>
                             <th style="text-align: right; color: var(--c-red);">- Loan Ded.</th>
+                            <th style="text-align: right; color: var(--c-red);">- Advance Ded.</th>
                             <th style="text-align: right; color: var(--c-red);">- Other Ded.</th>
                             <th style="text-align: right; font-weight: 800; color: var(--c-green);">Net Pay</th>
                             <th style="text-align: right; color: var(--c-orange);">EPF 12% (Co)</th>
@@ -311,6 +318,8 @@
                             $etfEmpr = $slip['etf_employer_amount'] ?? ($slip['etf_employer'] ?? 0);
                             $commVal = floatval($slip['commissions'] ?? 0);
                             $otVal = floatval($slip['overtime'] ?? 0);
+                            $advOut = floatval($slip['outstanding_advance'] ?? 0);
+                            $advDed = floatval($slip['advance_deduction'] ?? 0);
                         ?>
                             <tr>
                                 <td>
@@ -320,6 +329,11 @@
                                     <?php if(!empty($slip['loan_details'])): ?>
                                         <div style="font-size: 11px; color: var(--c-orange); font-weight: 600; margin-top: 2px;">
                                             <i class="fa-solid fa-circle-info"></i> Active Loan Deduction
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if($advOut > 0): ?>
+                                        <div style="font-size: 11px; color: #af52de; font-weight: 600; margin-top: 2px;">
+                                            <i class="fa-solid fa-hand-holding-dollar"></i> Outstanding Advance: Rs. <?= number_format($advOut, 2) ?>
                                         </div>
                                     <?php endif; ?>
                                     <?php if($commVal > 0): ?>
@@ -341,6 +355,16 @@
                                 <td style="text-align: right; font-weight: 800; font-family: var(--f-mono);">Rs. <?= number_format($slip['gross_salary'], 2) ?></td>
                                 <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($epfEmp, 2) ?></td>
                                 <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip['loan_deduction'], 2) ?></td>
+                                <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">
+                                    <?php if($advOut > 0): ?>
+                                        <input type="number" step="0.01" min="0" max="<?= $advOut ?>" 
+                                               name="advance_deductions[<?= $slip['employee_id'] ?>]" 
+                                               value="<?= number_format($advDed, 2, '.', '') ?>"
+                                               style="width: 105px; padding: 4px 8px; font-size: 12px; font-family: var(--f-mono); text-align: right; border-radius: 6px; border: 1px solid var(--c-separator); background: var(--c-surface); color: var(--t-primary);">
+                                    <?php else: ?>
+                                        <span style="color: var(--t-tertiary);">&mdash;</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip['other_deductions'], 2) ?></td>
                                 <td style="text-align: right; font-weight: 800; color: var(--c-green); font-family: var(--f-mono);">Rs. <?= number_format($slip['net_salary'], 2) ?></td>
                                 <td style="text-align: right; color: var(--c-orange); font-family: var(--f-mono);">Rs. <?= number_format($epfEmpr, 2) ?></td>
@@ -356,18 +380,13 @@
         <div style="background: var(--c-surface); border-radius: var(--r-xl); padding: 20px 24px; border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
             <div style="font-size: 13.5px; color: var(--t-secondary);">
                 <i class="fa-solid fa-shield-check" style="color: var(--c-green); margin-right: 6px;"></i>
-                Ready to commit. Click confirm to store draft payroll and allow accounting posting.
+                Ready to commit. Adjust advance deductions if needed, then confirm to store draft payroll.
             </div>
-            <form action="<?= APP_URL ?>/payroll/run" method="POST" style="margin: 0;">
-                <input type="hidden" name="action" value="run_payroll">
-                <input type="hidden" name="period_start" value="<?= $preview['period_start'] ?>">
-                <input type="hidden" name="period_end" value="<?= $preview['period_end'] ?>">
-                <input type="hidden" name="run_date" value="<?= $data['run_date'] ?>">
-                <button type="submit" class="sf-btn success">
-                    <i class="fa-solid fa-circle-check"></i> Confirm &amp; Save as Draft Run
-                </button>
-            </form>
+            <button type="submit" class="sf-btn success">
+                <i class="fa-solid fa-circle-check"></i> Confirm &amp; Save as Draft Run
+            </button>
         </div>
+        </form>
 
     </div>
 </div>

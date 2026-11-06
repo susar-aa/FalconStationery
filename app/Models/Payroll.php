@@ -160,7 +160,7 @@ class Payroll {
         return $this->db->resultSet() ?: [];
     }
 
-    public function previewPayroll($periodStart, $periodEnd) {
+    public function previewPayroll($periodStart, $periodEnd, array $customAdvanceDeductions = []) {
         // Fetch all active employees combined with system user mapping
         $this->db->query("SELECT e.*, u.id as user_id 
                           FROM employees e 
@@ -171,10 +171,15 @@ class Payroll {
         require_once __DIR__ . '/RepPerformance.php';
         $repPerfModel = new RepPerformance();
 
+        require_once __DIR__ . '/SalaryAdvance.php';
+        $salaryAdvanceModel = new SalaryAdvance();
+
         $slips = [];
         $totalGross = 0;
         $totalNet = 0;
         $totalDeductions = 0;
+        $totalLoanDeductions = 0;
+        $totalAdvanceDeductions = 0;
         $totalEpfEmployee = 0;
         $totalEpfEmployer = 0;
         $totalEtfEmployer = 0;
@@ -256,12 +261,29 @@ class Payroll {
                 }
             }
 
+            // Calculate active salary advance deductions
+            $outstandingAdvance = $salaryAdvanceModel->getEmployeeOutstandingAdvance(intval($emp->id));
+            $advance_account = $salaryAdvanceModel->getEmployeeAdvanceAccount(intval($emp->id));
+            $advance_deduction = 0.00;
+
+            $netBeforeAdvance = max(0.0, $base + $allowances + $commissions + $overtime - $loan_deduction - $epfEmployeeAmount - $other_deductions);
+            if ($outstandingAdvance > 0) {
+                if (isset($customAdvanceDeductions[$emp->id])) {
+                    $custom = round(floatval($customAdvanceDeductions[$emp->id]), 2);
+                    $advance_deduction = max(0.0, min($custom, $outstandingAdvance, $netBeforeAdvance));
+                } else {
+                    $advance_deduction = min($outstandingAdvance, $netBeforeAdvance);
+                }
+            }
+
             $gross = $base + $allowances + $commissions + $overtime;
-            $net = $gross - $loan_deduction - $epfEmployeeAmount - $other_deductions;
+            $net = max(0.0, $gross - $loan_deduction - $advance_deduction - $epfEmployeeAmount - $other_deductions);
 
             $totalGross += $gross;
             $totalNet += $net;
-            $totalDeductions += $loan_deduction + $epfEmployeeAmount + $other_deductions;
+            $totalLoanDeductions += $loan_deduction;
+            $totalAdvanceDeductions += $advance_deduction;
+            $totalDeductions += $loan_deduction + $advance_deduction + $epfEmployeeAmount + $other_deductions;
             $totalEpfEmployee += $epfEmployeeAmount;
             $totalEpfEmployer += $epfEmployerAmount;
             $totalEtfEmployer += $etfEmployerAmount;
@@ -275,6 +297,10 @@ class Payroll {
                 'commissions' => $commissions,
                 'overtime' => $overtime,
                 'loan_deduction' => $loan_deduction,
+                'advance_deduction' => $advance_deduction,
+                'outstanding_advance' => $outstandingAdvance,
+                'advance_account_code' => $advance_account ? $advance_account->account_code : '1650',
+                'advance_account_name' => $advance_account ? $advance_account->account_name : 'Advance',
                 'other_deductions' => $other_deductions,
                 'epf_applicable_earnings' => $epfApplicableEarnings,
                 'epf_employee_amount' => $epfEmployeeAmount,
@@ -293,6 +319,8 @@ class Payroll {
             'total_gross' => $totalGross,
             'total_net' => $totalNet,
             'total_deductions' => $totalDeductions,
+            'total_loan_deductions' => $totalLoanDeductions,
+            'total_advance_deductions' => $totalAdvanceDeductions,
             'total_epf_employee' => $totalEpfEmployee,
             'total_epf_employer' => $totalEpfEmployer,
             'total_etf_employer' => $totalEtfEmployer,
@@ -307,22 +335,24 @@ class Payroll {
             $totalEpfEmployee = 0;
             $totalEpfEmployer = 0;
             $totalEtfEmployer = 0;
+            $totalAdvanceDeductions = 0;
 
             foreach ($slips as $s) {
                 $totalEpfEmployee += floatval($s['epf_employee_amount'] ?? 0);
                 $totalEpfEmployer += floatval($s['epf_employer_amount'] ?? 0);
                 $totalEtfEmployer += floatval($s['etf_employer_amount'] ?? 0);
+                $totalAdvanceDeductions += floatval($s['advance_deduction'] ?? 0);
             }
 
             // Insert Run
             $this->db->query("INSERT INTO payroll_runs (
-                                run_date, period_start, period_end, total_gross, 
+                                run_date, period_start, period_end, total_gross, total_advance_deductions,
                                 total_epf_employee, total_epf_employer, total_etf_employer, 
                                 epf_payment_status, etf_payment_status, epf_paid_amount, etf_paid_amount,
                                 created_by, status
                               ) 
                               VALUES (
-                                :rdate, :pstart, :pend, :gross, 
+                                :rdate, :pstart, :pend, :gross, :adv_ded,
                                 :epf_emp, :epf_empr, :etf_empr, 
                                 'Unpaid', 'Unpaid', 0.00, 0.00,
                                 :uid, 'Draft'
@@ -331,6 +361,7 @@ class Payroll {
             $this->db->bind(':pstart', $periodStart);
             $this->db->bind(':pend', $periodEnd);
             $this->db->bind(':gross', $totalGross);
+            $this->db->bind(':adv_ded', $totalAdvanceDeductions);
             $this->db->bind(':epf_emp', $totalEpfEmployee);
             $this->db->bind(':epf_empr', $totalEpfEmployer);
             $this->db->bind(':etf_empr', $totalEtfEmployer);
@@ -342,12 +373,12 @@ class Payroll {
             foreach ($slips as $s) {
                 $this->db->query("INSERT INTO payroll_slips (
                                     payroll_run_id, employee_id, basic_salary, allowances, commissions, overtime, 
-                                    loan_deduction, other_deductions, epf_applicable_earnings, epf_employee_amount, 
+                                    loan_deduction, advance_deduction, other_deductions, epf_applicable_earnings, epf_employee_amount, 
                                     epf_employer_amount, etf_employer_amount, gross_salary, net_salary, status
                                   )
                                   VALUES (
                                     :run_id, :emp_id, :base, :allowances, :commissions, :overtime, 
-                                    :loan_ded, :other_ded, :epf_app, :epf_emp, 
+                                    :loan_ded, :adv_ded, :other_ded, :epf_app, :epf_emp, 
                                     :epf_empr, :etf_empr, :gross, :net, 'Draft'
                                   )");
                 
@@ -358,6 +389,7 @@ class Payroll {
                 $this->db->bind(':commissions', $s['commissions']);
                 $this->db->bind(':overtime', $s['overtime']);
                 $this->db->bind(':loan_ded', $s['loan_deduction']);
+                $this->db->bind(':adv_ded', $s['advance_deduction'] ?? 0.00);
                 $this->db->bind(':other_ded', $s['other_deductions']);
                 $this->db->bind(':epf_app', $s['epf_applicable_earnings'] ?? $s['base_salary']);
                 $this->db->bind(':epf_emp', $s['epf_employee_amount'] ?? 0.00);
@@ -388,6 +420,7 @@ class Payroll {
         $totalGross = 0;
         $totalNet = 0;
         $totalLoanDeductions = 0;
+        $totalAdvanceDeductions = 0;
         $totalEpfEmployee = 0;
         $totalEpfEmployer = 0;
         $totalEtfEmployer = 0;
@@ -396,6 +429,7 @@ class Payroll {
             $totalGross += floatval($s->gross_salary);
             $totalNet += floatval($s->net_salary);
             $totalLoanDeductions += floatval($s->loan_deduction);
+            $totalAdvanceDeductions += floatval($s->advance_deduction ?? 0);
             $totalEpfEmployee += floatval($s->epf_employee_amount ?? 0);
             $totalEpfEmployer += floatval($s->epf_employer_amount ?? 0);
             $totalEtfEmployer += floatval($s->etf_employer_amount ?? 0);
@@ -404,8 +438,11 @@ class Payroll {
         try {
             $this->db->beginTransaction();
 
+            require_once __DIR__ . '/SalaryAdvance.php';
+            $salaryAdvanceModel = new SalaryAdvance();
+
             // Find System Accounts for EPF Payable (2001), ETF Payable (2002), EPF Employer Exp (6010), ETF Employer Exp (6020)
-            $this->db->query("SELECT id, account_code FROM chart_of_accounts WHERE account_code IN ('2001', '2002', '2003', '6000', '6010', '6020')");
+            $this->db->query("SELECT id, account_code FROM chart_of_accounts WHERE account_code IN ('2001', '2002', '2003', '6000', '6010', '6020', '1650')");
             $coaRows = $this->db->resultSet() ?: [];
             $coaMap = [];
             foreach ($coaRows as $c) {
@@ -416,6 +453,7 @@ class Payroll {
             $etfPayableAccId = $coaMap['2002'] ?? $salaryPayableAccId;
             $epfExpenseAccId = $coaMap['6010'] ?? $wageExpenseAccId;
             $etfExpenseAccId = $coaMap['6020'] ?? $wageExpenseAccId;
+            $defaultAdvanceAccId = $coaMap['1650'] ?? null;
 
             $desc = "Payroll Approval: " . date('M d', strtotime($run->period_start)) . " to " . date('M d, Y', strtotime($run->period_end));
             $reference = "PR-APP-" . $runId;
@@ -455,6 +493,23 @@ class Payroll {
                 }
             }
 
+            // Credit Salary Advance Accounts per employee deduction
+            foreach ($slips as $s) {
+                $advDed = floatval($s->advance_deduction ?? 0);
+                if ($advDed > 0) {
+                    $empAcc = $salaryAdvanceModel->getEmployeeAdvanceAccount(intval($s->employee_id));
+                    $advAccId = $empAcc ? intval($empAcc->id) : $defaultAdvanceAccId;
+                    if ($advAccId) {
+                        $lines[] = [
+                            'account_id' => $advAccId,
+                            'debit' => 0,
+                            'credit' => $advDed,
+                            'description' => "Salary Advance Recovery - {$s->first_name} {$s->last_name}"
+                        ];
+                    }
+                }
+            }
+
             require_once __DIR__ . '/JournalEntry.php';
             $journalModel = new JournalEntry();
 
@@ -476,6 +531,21 @@ class Payroll {
             $this->db->query("UPDATE payroll_slips SET status = 'Approved' WHERE payroll_run_id = :id");
             $this->db->bind(':id', $runId);
             $this->db->execute();
+
+            // Execute Salary Advance Recoveries
+            foreach ($slips as $s) {
+                $advDed = floatval($s->advance_deduction ?? 0);
+                if ($advDed > 0) {
+                    $salaryAdvanceModel->recoverEmployeeAdvance(
+                        intval($s->employee_id),
+                        $advDed,
+                        intval($s->id),
+                        date('Y-m-d'),
+                        $userId,
+                        "Payroll Recovery PR-" . $runId
+                    );
+                }
+            }
 
             $this->db->commit();
             return true;

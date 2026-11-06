@@ -1618,6 +1618,19 @@ if (!function_exists('hasPermission')) {
                                 <div class="desc">Issue & track advances</div>
                             </div>
                         </a>
+                        <a href="<?= APP_URL ?>/salaryadvance" class="mega-list-item">
+                            <div class="icon-wrapper"><i class="ph ph-money"></i></div>
+                            <div class="mega-list-item-content">
+                                <div class="title">Salary Advances</div>
+                                <div class="desc">Issue, track & recover advances</div>
+                            </div>
+                        </a>
+                            <div class="icon-wrapper"><i class="ph ph-hand-coins"></i></div>
+                            <div class="mega-list-item-content">
+                                <div class="title">Employee Loans</div>
+                                <div class="desc">Issue & track advances</div>
+                            </div>
+                        </a>
                         <a href="<?= APP_URL ?>/leave" class="mega-list-item">
                             <div class="icon-wrapper"><i class="ph ph-calendar-blank"></i></div>
                             <div class="mega-list-item-content">
@@ -2054,6 +2067,7 @@ if (!function_exists('hasPermission')) {
                             <a href="<?= APP_URL ?>/user" class="fs-link"><i class="ph ph-user-circle-gear"></i> HRM &amp; Employees</a>
                             <a href="<?= APP_URL ?>/payroll" class="fs-link"><i class="ph ph-bank"></i> Run Payroll</a>
                             <a href="<?= APP_URL ?>/epfetf" class="fs-link"><i class="ph ph-receipt"></i> EPF &amp; ETF</a>
+                            <a href="<?= APP_URL ?>/salaryadvance" class="fs-link"><i class="ph ph-money"></i> Salary Advances</a>
                         <?php endif; ?>
                         <?php if (hasPermission('project')): ?><a href="<?= APP_URL ?>/project" class="fs-link"><i class="ph ph-clipboard-text"></i> Projects</a><?php endif; ?>
                         <?php if (hasPermission('vehicle')): ?><a href="<?= APP_URL ?>/vehicle" class="fs-link"><i class="ph ph-car-profile"></i> Vehicles</a><?php endif; ?>

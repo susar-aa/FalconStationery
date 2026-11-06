@@ -4429,3 +4429,17 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Fri 11/06/2026  9:36:36.26 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/RepPerformanceController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep_performance/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main c366bc6] Update: app/Controllers/RepPerformanceController.php, app/Views/rep_performance/index.php, deploy_log.txt, schema_update.sql
+ 4 files changed, 198 insertions(+), 27 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   e5f3c11..c366bc6  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Fri 11/06/2026 10:32:23.80 
+=================================================== 
+Adding changes... 

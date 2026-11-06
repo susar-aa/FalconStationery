@@ -391,7 +391,9 @@ $statusLower = strtolower($run->status);
                                 <th>Employee</th>
                                 <th style="text-align: right;">Gross Salary</th>
                                 <th style="text-align: right; color: var(--c-red);">- EPF 8%</th>
-                                <th style="text-align: right; color: var(--c-red);">- Deductions</th>
+                                <th style="text-align: right; color: var(--c-red);">- Loan Ded.</th>
+                                <th style="text-align: right; color: var(--c-red);">- Advance Ded.</th>
+                                <th style="text-align: right; color: var(--c-red);">- Other Ded.</th>
                                 <th style="text-align: right; font-weight: 800; color: var(--c-green);">Net Pay</th>
                                 <th style="text-align: right; color: var(--c-orange);">EPF 12%</th>
                                 <th style="text-align: right; color: var(--c-purple);">ETF 3%</th>
@@ -411,7 +413,9 @@ $statusLower = strtolower($run->status);
                                     </td>
                                     <td style="text-align: right; font-family: var(--f-mono);">Rs. <?= number_format($slip->gross_salary, 2) ?></td>
                                     <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip->epf_employee ?? 0, 2) ?></td>
-                                    <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip->loan_deduction + $slip->other_deductions, 2) ?></td>
+                                    <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip->loan_deduction, 2) ?></td>
+                                    <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip->advance_deduction ?? 0, 2) ?></td>
+                                    <td style="text-align: right; color: var(--c-red); font-family: var(--f-mono);">Rs. <?= number_format($slip->other_deductions, 2) ?></td>
                                     <td style="text-align: right; font-weight: 800; color: var(--c-green); font-family: var(--f-mono);">Rs. <?= number_format($slip->net_salary, 2) ?></td>
                                     <td style="text-align: right; color: var(--c-orange); font-family: var(--f-mono);">Rs. <?= number_format($slip->epf_employer ?? 0, 2) ?></td>
                                     <td style="text-align: right; color: var(--c-purple); font-family: var(--f-mono);">Rs. <?= number_format($slip->etf_employer ?? 0, 2) ?></td>

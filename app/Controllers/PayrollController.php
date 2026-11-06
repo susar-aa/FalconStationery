@@ -39,8 +39,9 @@ class PayrollController extends Controller {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $periodStart = $_POST['period_start'];
             $periodEnd = $_POST['period_end'];
+            $customAdv = is_array($_POST['advance_deductions'] ?? null) ? $_POST['advance_deductions'] : [];
             
-            $previewData = $this->payrollModel->previewPayroll($periodStart, $periodEnd);
+            $previewData = $this->payrollModel->previewPayroll($periodStart, $periodEnd, $customAdv);
             
             $data = [
                 'title' => 'Payroll Preview',
@@ -62,9 +63,10 @@ class PayrollController extends Controller {
             $periodStart = $_POST['period_start'];
             $periodEnd = $_POST['period_end'];
             $runDate = $_POST['run_date'];
+            $customAdv = is_array($_POST['advance_deductions'] ?? null) ? $_POST['advance_deductions'] : [];
             
-            // Re-calculate to save
-            $previewData = $this->payrollModel->previewPayroll($periodStart, $periodEnd);
+            // Re-calculate to save with custom deductions if provided
+            $previewData = $this->payrollModel->previewPayroll($periodStart, $periodEnd, $customAdv);
             
             if (empty($previewData['slips'])) {
                 $_SESSION['flash_error'] = 'No active employees to process payroll.';
