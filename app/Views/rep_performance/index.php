@@ -123,11 +123,42 @@ if ($hasPerfData) {
     border:1px solid rgba(0,0,0,.1);border-radius:6px;
     background:#fff;color:var(--t1);padding:8px 12px;
     font-size:13px;font-weight:500;font-family:inherit;
-    outline:none; min-width: 160px;
+    outline:none; min-width: 140px;
 }
+.rp-fg input[type="date"] { min-width: 130px; }
 .rp-fg input { transition: border-color .2s, box-shadow .2s; }
 .rp-fg select:focus, .rp-fg input:focus {
     border-color:var(--g2);box-shadow:0 0 0 3px rgba(27,94,32,.12);
+}
+.rp-date-wrap {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.rp-preset-pills {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.rp-preset-btn {
+    background: rgba(0,0,0,0.04);
+    color: var(--t2, #475569);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 999px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s ease;
+    white-space: nowrap;
+    font-family: inherit;
+}
+.rp-preset-btn:hover {
+    background: var(--g1, #1b5e20);
+    color: #fff;
+    border-color: var(--g1, #1b5e20);
 }
 
 /* Buttons */
@@ -330,8 +361,12 @@ if ($hasPerfData) {
                 <h1>Rep Performance Dashboard</h1>
                 <p>
                     <?php
-                        $mName = date('F', mktime(0,0,0,intval($data['month']),1));
-                        echo "$mName {$data['year']}";
+                        if (($data['date_mode'] ?? 'month') === 'custom') {
+                            echo date('M d, Y', strtotime($data['start_date'])) . " &ndash; " . date('M d, Y', strtotime($data['end_date']));
+                        } else {
+                            $mName = date('F', mktime(0,0,0,intval($data['month']),1));
+                            echo "$mName {$data['year']}";
+                        }
                         if (!empty($data['selected_route_id'])) {
                             foreach($data['routes'] as $rt) if($rt->id==$data['selected_route_id']) echo " &bull; Route: ".htmlspecialchars($rt->route_name);
                         }
@@ -365,7 +400,7 @@ if ($hasPerfData) {
 </div>
 
 <!-- ══ FILTER BAR ════════════════════════════════════════════ -->
-<form method="GET" action="<?=APP_URL?>/repperformance">
+<form method="GET" action="<?=APP_URL?>/repperformance" id="rpFilterForm">
 <div class="rp-filters">
     <div class="rp-fg">
         <label>Representative</label>
@@ -378,22 +413,57 @@ if ($hasPerfData) {
             <?php endforeach; ?>
         </select>
     </div>
-    <div class="rp-fg">
-        <label>Month</label>
-        <select name="month">
-            <?php for($m=1;$m<=12;$m++): $mv=str_pad($m,2,'0',STR_PAD_LEFT); ?>
-                <option value="<?=$mv?>" <?=$data['month']===$mv?'selected':''?>><?=date('F',mktime(0,0,0,$m,1))?></option>
-            <?php endfor; ?>
+
+    <div class="rp-fg" style="min-width: 140px;">
+        <label>Date Filter</label>
+        <select name="date_mode" id="rpDateMode" onchange="toggleDateMode(this.value)">
+            <option value="month" <?= ($data['date_mode'] ?? 'month') === 'month' ? 'selected' : '' ?>>Month / Year</option>
+            <option value="custom" <?= ($data['date_mode'] ?? '') === 'custom' ? 'selected' : '' ?>>Custom Range</option>
         </select>
     </div>
-    <div class="rp-fg">
-        <label>Year</label>
-        <select name="year">
-            <?php for($y=date('Y');$y>=2024;$y--): ?>
-                <option value="<?=$y?>" <?=$data['year']==$y?'selected':''?>><?=$y?></option>
-            <?php endfor; ?>
-        </select>
+
+    <!-- Monthly Filter Container -->
+    <div id="rpMonthYearWrap" class="rp-date-wrap" style="display: <?= ($data['date_mode'] ?? 'month') === 'month' ? 'flex' : 'none' ?>;">
+        <div class="rp-fg" style="min-width: 130px;">
+            <label>Month</label>
+            <select name="month" id="rpMonthSelect">
+                <?php for($m=1;$m<=12;$m++): $mv=str_pad($m,2,'0',STR_PAD_LEFT); ?>
+                    <option value="<?=$mv?>" <?=$data['month']===$mv?'selected':''?>><?=date('F',mktime(0,0,0,$m,1))?></option>
+                <?php endfor; ?>
+            </select>
+        </div>
+        <div class="rp-fg" style="min-width: 90px;">
+            <label>Year</label>
+            <select name="year" id="rpYearSelect">
+                <?php for($y=date('Y');$y>=2024;$y--): ?>
+                    <option value="<?=$y?>" <?=$data['year']==$y?'selected':''?>><?=$y?></option>
+                <?php endfor; ?>
+            </select>
+        </div>
     </div>
+
+    <!-- Custom Date Range Container -->
+    <div id="rpCustomDateWrap" class="rp-date-wrap" style="display: <?= ($data['date_mode'] ?? '') === 'custom' ? 'flex' : 'none' ?>;">
+        <div class="rp-fg" style="min-width: 130px;">
+            <label>Start Date</label>
+            <input type="date" name="start_date" id="rpStartDate" value="<?= htmlspecialchars($data['start_date']) ?>">
+        </div>
+        <div class="rp-fg" style="min-width: 130px;">
+            <label>End Date</label>
+            <input type="date" name="end_date" id="rpEndDate" value="<?= htmlspecialchars($data['end_date']) ?>">
+        </div>
+        <div class="rp-fg" id="rpDatePresets">
+            <label style="font-size:10px; color:var(--t3); text-transform:uppercase;">Presets</label>
+            <div class="rp-preset-pills">
+                <button type="button" class="rp-preset-btn" onclick="setPreset('today')">Today</button>
+                <button type="button" class="rp-preset-btn" onclick="setPreset('this_week')">This Week</button>
+                <button type="button" class="rp-preset-btn" onclick="setPreset('this_month')">This Month</button>
+                <button type="button" class="rp-preset-btn" onclick="setPreset('last_month')">Last Month</button>
+                <button type="button" class="rp-preset-btn" onclick="setPreset('last_30')">Last 30 Days</button>
+            </div>
+        </div>
+    </div>
+
     <div class="rp-fg">
         <label>Route</label>
         <select name="route_id" onchange="this.form.submit()">
@@ -414,7 +484,7 @@ if ($hasPerfData) {
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
         <button type="submit" class="rp-btn rp-btn-primary"><i class="ph ph-funnel-simple"></i> Apply</button>
-        <a href="<?=APP_URL?>/repperformance" class="rp-btn rp-btn-ghost"><i class="ph ph-arrow-counter-clockwise"></i></a>
+        <a href="<?=APP_URL?>/repperformance" class="rp-btn rp-btn-ghost" title="Reset to Defaults"><i class="ph ph-arrow-counter-clockwise"></i></a>
     </div>
 </div>
 </form>
@@ -767,8 +837,13 @@ if ($hasPerfData) {
             <h4 class="rp-card-title"><i class="ph ph-git-diff" style="color:var(--b1)"></i> Side-by-Side Comparison</h4>
             <form method="GET" action="<?=APP_URL?>/repperformance" style="display:flex;gap:10px;align-items:flex-end;">
                 <input type="hidden" name="rep_user_id" value="<?=$data['selected_rep_id']?>">
+                <input type="hidden" name="date_mode" value="<?=$data['date_mode'] ?? 'month'?>">
                 <input type="hidden" name="month" value="<?=$data['month']?>">
                 <input type="hidden" name="year" value="<?=$data['year']?>">
+                <input type="hidden" name="start_date" value="<?=htmlspecialchars($data['start_date'])?>">
+                <input type="hidden" name="end_date" value="<?=htmlspecialchars($data['end_date'])?>">
+                <input type="hidden" name="route_id" value="<?=$data['selected_route_id']?>">
+                <input type="hidden" name="area_id" value="<?=$data['selected_area_id']?>">
                 <div class="rp-fg">
                     <label>Compare vs</label>
                     <select name="compare_user_id" onchange="this.form.submit()">
@@ -1190,6 +1265,74 @@ function rpTab(id,btn){
     document.querySelectorAll('.rp-tab').forEach(b=>b.classList.remove('active'));
     document.getElementById(id).classList.add('active');btn.classList.add('active');
 }
+
+function toggleDateMode(mode) {
+    const monthWrap = document.getElementById('rpMonthYearWrap');
+    const customWrap = document.getElementById('rpCustomDateWrap');
+    if (mode === 'custom') {
+        if (monthWrap) monthWrap.style.display = 'none';
+        if (customWrap) customWrap.style.display = 'flex';
+    } else {
+        if (monthWrap) monthWrap.style.display = 'flex';
+        if (customWrap) customWrap.style.display = 'none';
+    }
+}
+
+function setPreset(type) {
+    const startInput = document.getElementById('rpStartDate');
+    const endInput = document.getElementById('rpEndDate');
+    if (!startInput || !endInput) return;
+
+    const today = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    if (type === 'today') {
+        startInput.value = fmt(today);
+        endInput.value = fmt(today);
+    } else if (type === 'this_week') {
+        const d = new Date(today);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+        const monday = new Date(d.setDate(diff));
+        startInput.value = fmt(monday);
+        endInput.value = fmt(today);
+    } else if (type === 'this_month') {
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        startInput.value = fmt(firstDay);
+        endInput.value = fmt(today);
+    } else if (type === 'last_month') {
+        const firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        startInput.value = fmt(firstDayLastMonth);
+        endInput.value = fmt(lastDayLastMonth);
+    } else if (type === 'last_30') {
+        const past30 = new Date(today);
+        past30.setDate(today.getDate() - 30);
+        startInput.value = fmt(past30);
+        endInput.value = fmt(today);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('rpFilterForm');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const mode = document.getElementById('rpDateMode');
+            if (mode && mode.value === 'custom') {
+                const m = document.getElementById('rpMonthSelect');
+                const y = document.getElementById('rpYearSelect');
+                if (m) m.disabled = true;
+                if (y) y.disabled = true;
+            } else if (mode && mode.value === 'month') {
+                const s = document.getElementById('rpStartDate');
+                const e = document.getElementById('rpEndDate');
+                if (s) s.disabled = true;
+                if (e) e.disabled = true;
+            }
+        });
+    }
+});
 
 // Global Chart defaults
 Chart.defaults.font.family="'Inter',system-ui,sans-serif";

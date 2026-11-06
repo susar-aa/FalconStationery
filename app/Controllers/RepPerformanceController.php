@@ -31,11 +31,26 @@ class RepPerformanceController extends Controller {
         // 2. Resolve active filter parameters
         $repUserId = isset($_GET['rep_user_id']) && $_GET['rep_user_id'] !== '' ? intval($_GET['rep_user_id']) : 0;
 
-        // Handle month/year filters (defaulting to the current month & year)
-        $month = $_GET['month'] ?? date('m');
-        $year = $_GET['year'] ?? date('Y');
-        $startDate = date("$year-$month-01");
-        $endDate = date("$year-$month-t");
+        // Resolve date filter mode: 'month' (default) or 'custom'
+        $dateMode = $_GET['date_mode'] ?? (!empty($_GET['start_date']) && !empty($_GET['end_date']) && empty($_GET['month']) ? 'custom' : 'month');
+
+        if ($dateMode === 'custom' && !empty($_GET['start_date']) && !empty($_GET['end_date'])) {
+            $startDate = date('Y-m-d', strtotime($_GET['start_date']));
+            $endDate = date('Y-m-d', strtotime($_GET['end_date']));
+            if ($startDate > $endDate) {
+                $temp = $startDate;
+                $startDate = $endDate;
+                $endDate = $temp;
+            }
+            $month = date('m', strtotime($startDate));
+            $year = date('Y', strtotime($startDate));
+        } else {
+            $dateMode = 'month';
+            $month = isset($_GET['month']) && $_GET['month'] !== '' ? str_pad(strval(intval($_GET['month'])), 2, '0', STR_PAD_LEFT) : date('m');
+            $year = isset($_GET['year']) && $_GET['year'] !== '' ? strval(intval($_GET['year'])) : date('Y');
+            $startDate = date("$year-$month-01");
+            $endDate = date("$year-$month-t");
+        }
 
         $routeId = !empty($_GET['route_id']) ? intval($_GET['route_id']) : null;
         $areaId = !empty($_GET['area_id']) ? intval($_GET['area_id']) : null;
@@ -186,6 +201,7 @@ class RepPerformanceController extends Controller {
             'routes' => $routes,
             'areas' => $areas,
             'selected_rep_id' => $repUserId,
+            'date_mode' => $dateMode,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'selected_route_id' => $routeId,
