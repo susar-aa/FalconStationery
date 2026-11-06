@@ -47,7 +47,7 @@ class SalaryAdvanceController extends Controller {
         $this->db->query("SELECT ba.id, ba.bank_name, ba.account_number, coa.account_name, coa.account_code 
                           FROM bank_accounts ba 
                           JOIN chart_of_accounts coa ON ba.chart_of_account_id = coa.id 
-                          WHERE ba.is_active = 1 
+                          WHERE (ba.status = 'Active' OR ba.status IS NULL) 
                           ORDER BY ba.bank_name ASC");
         $bankAccounts = $this->db->resultSet() ?: [];
 
