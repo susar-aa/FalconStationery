@@ -4443,3 +4443,29 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Fri 11/06/2026 10:32:23.80 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/PayrollController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/Payroll.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/hrm/payroll_preview.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/hrm/payroll_show.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/hrm/payslip_print.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'schema_update.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Controllers/SalaryAdvanceController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/SalaryAdvance.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/salary_advances/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/salary_advances/voucher.php', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main b779edb] Update: app/Controllers/PayrollController.php, app/Models/Payroll.php, app/Views/hrm/payroll_preview.php, app/Views/hrm/payroll_show.php, app/Views/hrm/payslip_print.php, app/Views/layouts/main.php, deploy_log.txt, schema_update.sql, app/Controllers/SalaryAdvanceController.php, app/Models/SalaryAdvance.php, app/Views/salary_advances/
+ 12 files changed, 2363 insertions(+), 33 deletions(-)
+ create mode 100644 app/Controllers/SalaryAdvanceController.php
+ create mode 100644 app/Models/SalaryAdvance.php
+ create mode 100644 app/Views/salary_advances/index.php
+ create mode 100644 app/Views/salary_advances/voucher.php
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   c366bc6..b779edb  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Fri 11/06/2026 10:34:14.19 
+=================================================== 
+Adding changes... 
