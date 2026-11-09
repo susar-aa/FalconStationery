@@ -328,6 +328,15 @@ class Customer {
                              COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE c.customer_id = customer_payments.customer_id AND c.amount = customer_payments.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, customer_payments.created_at)) < 60 ORDER BY c.id DESC LIMIT 1), ''),
                              ''
                           ),
+                          IF(payment_method = 'Bank Transfer',
+                             COALESCE((SELECT CONCAT(' (', COALESCE(ba.bank_name, coa.account_name), ')') 
+                                       FROM transactions t 
+                                       JOIN chart_of_accounts coa ON t.account_id = coa.id 
+                                       LEFT JOIN bank_accounts ba ON ba.chart_of_account_id = coa.id 
+                                       WHERE t.journal_entry_id = customer_payments.journal_entry_id AND t.debit > 0 
+                                       LIMIT 1), ''),
+                             ''
+                          ),
                           IF(reference != '', CONCAT(' (', reference, ')'), '')
                    ) as ref, 
                    payment_date as date, 0 as debit, amount as credit, created_at 
@@ -342,7 +351,20 @@ class Customer {
             SELECT 'Opening Bal' as type, id, 'System generated' as ref, COALESCE(opening_balance_date, DATE(created_at)) as date, opening_balance as debit, 0 as credit, created_at 
             FROM customers WHERE id = :c5 AND opening_balance > 0
             UNION ALL
-            SELECT 'Payment Reversal' as type, id, CONCAT('Payment Reversed: ', payment_method, IF(reference != '', CONCAT(' (', reference, ')'), '')) as ref, DATE(COALESCE(reversed_at, created_at)) as date, amount as debit, 0 as credit, COALESCE(reversed_at, created_at) as created_at 
+            SELECT 'Payment Reversal' as type, id, 
+                   CONCAT('Payment Reversed: ', payment_method, 
+                          IF(payment_method = 'Bank Transfer',
+                             COALESCE((SELECT CONCAT(' (', COALESCE(ba.bank_name, coa.account_name), ')') 
+                                       FROM transactions t 
+                                       JOIN chart_of_accounts coa ON t.account_id = coa.id 
+                                       LEFT JOIN bank_accounts ba ON ba.chart_of_account_id = coa.id 
+                                       WHERE t.journal_entry_id = customer_payments.journal_entry_id AND t.debit > 0 
+                                       LIMIT 1), ''),
+                             ''
+                          ),
+                          IF(reference != '', CONCAT(' (', reference, ')'), '')
+                   ) as ref, 
+                   DATE(COALESCE(reversed_at, created_at)) as date, amount as debit, 0 as credit, COALESCE(reversed_at, created_at) as created_at 
             FROM customer_payments WHERE customer_id = :c6 AND status = 'Reversed'
             UNION ALL
             SELECT 'Journal Entry' as type, je.id, IF(je.reference IS NOT NULL AND je.reference != '', CONCAT(je.reference, ' - ', COALESCE(t.description, je.description)), je.description) as ref, je.entry_date as date, t.debit as debit, t.credit as credit, je.created_at 

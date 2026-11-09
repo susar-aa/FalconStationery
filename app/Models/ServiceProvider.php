@@ -211,7 +211,31 @@ class ServiceProvider {
             FROM supplier_returns sr
             WHERE sr.service_provider_id = :vid3
             UNION ALL
-            SELECT 'Payment' as type, sp.id, CONCAT('Pay: ', sp.payment_method, IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')) as ref, sp.payment_date as date,
+            SELECT 'Payment' as type, sp.id, 
+                   CONCAT('Pay: ', sp.payment_method, 
+                          IF(sp.payment_method = 'Cheque', 
+                             COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE (c.supplier_payment_id = sp.id OR (c.service_provider_id = sp.service_provider_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 60)) ORDER BY c.id DESC LIMIT 1), ''),
+                             ''
+                          ),
+                          IF(sp.payment_method = 'Bank Transfer',
+                             COALESCE(
+                                 (SELECT CONCAT(' (', COALESCE(ba.bank_name, coa.account_name), ')')
+                                  FROM chart_of_accounts coa
+                                  LEFT JOIN bank_accounts ba ON ba.chart_of_account_id = coa.id OR ba.id = sp.bank_account_id
+                                  WHERE coa.id = sp.bank_account_id
+                                  LIMIT 1),
+                                 (SELECT CONCAT(' (', COALESCE(ba2.bank_name, coa2.account_name), ')')
+                                  FROM transactions t
+                                  JOIN chart_of_accounts coa2 ON t.account_id = coa2.id
+                                  LEFT JOIN bank_accounts ba2 ON ba2.chart_of_account_id = coa2.id
+                                  WHERE t.journal_entry_id = sp.journal_entry_id AND t.credit > 0 AND t.account_id != 20
+                                  LIMIT 1),
+                                 ''
+                             ),
+                             ''
+                          ),
+                          IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                   ) as ref, sp.payment_date as date,
                    sp.amount as debit, 
                    0 as credit, 
                    sp.created_at

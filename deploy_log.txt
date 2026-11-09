@@ -4494,3 +4494,19 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Mon 11/09/2026 14:41:59.97 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Payroll.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/SalaryAdvance.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/salary_advances/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'schema_update.sql', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 1f574a5] Update: app/Models/Payroll.php, app/Models/SalaryAdvance.php, app/Views/salary_advances/index.php, deploy_log.txt, schema_update.sql
+ 5 files changed, 92 insertions(+), 159 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   940baef..1f574a5  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Mon 11/09/2026 15:15:34.10 
+=================================================== 
+Adding changes... 

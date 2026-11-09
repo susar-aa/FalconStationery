@@ -2,238 +2,623 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Payment Voucher - Curtiss ERP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Voucher - <?= htmlspecialchars($data['payment']->reference ?: 'AP-' . $data['payment']->id) ?> - Curtiss ERP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --bg-page: #f1f5f9;
+            --bg-card: #ffffff;
+            --t-primary: #0f172a;
+            --t-secondary: #475569;
+            --t-muted: #64748b;
+            --border: #e2e8f0;
+            --c-brand: #d97706;
+            --c-brand-light: #fef3c7;
+            --c-success: #059669;
+            --c-success-light: #ecfdf5;
+            --c-danger: #dc2626;
+            --c-danger-light: #fef2f2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #333;
-            margin: 30px;
-            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--t-primary);
+            font-size: 13.5px;
             line-height: 1.5;
-        }
-        .header {
+            min-height: 100vh;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #333;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 28px 16px;
+            -webkit-font-smoothing: antialiased;
         }
-        .logo-section h2 {
-            margin: 0;
-            font-size: 26px;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            color: #1a1a1a;
-        }
-        .logo-section p {
-            margin: 3px 0 0 0;
-            font-size: 12px;
-            color: #666;
-        }
-        .receipt-title {
-            text-align: right;
-        }
-        .receipt-title h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #f59e0b;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .receipt-title p {
-            margin: 5px 0 0 0;
-            font-family: monospace;
-            font-size: 13px;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 30px;
-        }
-        .info-block h3 {
-            margin: 0 0 8px 0;
-            font-size: 13px;
-            text-transform: uppercase;
-            color: #777;
-            letter-spacing: 0.5px;
-        }
-        .info-block p {
-            margin: 0 0 4px 0;
-            font-weight: 500;
-        }
-        .amount-box {
-            background: #f3f4f6;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 15px 20px;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 30px;
+
+        /* Top Action Bar (Screen Only) */
+        .action-bar {
+            width: 100%;
+            max-width: 800px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 18px;
+            gap: 12px;
         }
-        .amount-box span.lbl {
-            font-size: 13px;
-            color: #666;
-            text-transform: uppercase;
-        }
-        .amount-box span.val {
-            color: #ef6c00;
-            font-family: monospace;
-            font-size: 22px;
-        }
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-        }
-        .details-table th, .details-table td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .details-table th {
-            background-color: #f9fafb;
-            font-weight: 600;
-            color: #666;
-            text-transform: uppercase;
-            font-size: 11px;
-        }
-        .details-table td {
-            font-size: 13px;
-        }
-        .signatures {
-            margin-top: 60px;
+
+        .bar-left {
             display: flex;
-            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
         }
-        .sig-block {
-            text-align: center;
-            width: 200px;
-        }
-        .sig-line {
-            border-top: 1px solid #888;
-            margin-top: 50px;
-            padding-top: 8px;
+
+        .badge-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fef3c7;
+            color: #b45309;
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-            color: #555;
+            letter-spacing: 0.02em;
         }
+
+        .bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: #d97706;
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #b45309;
+            box-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.35);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: var(--t-secondary);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            color: var(--t-primary);
+        }
+
+        /* Receipt Card Container */
+        .receipt-card {
+            width: 100%;
+            max-width: 800px;
+            background: var(--bg-card);
+            border-radius: 14px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+            border: 1px solid var(--border);
+            padding: 36px 42px;
+            margin-bottom: 28px;
+            transition: all 0.2s;
+        }
+
+        /* Header */
+        .receipt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 22px;
+            border-bottom: 1.5px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .company-info h2 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .company-info p {
+            font-size: 12px;
+            color: var(--t-muted);
+            line-height: 1.45;
+        }
+
+        .receipt-title-box {
+            text-align: right;
+        }
+
+        .receipt-title-box h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #d97706;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .receipt-meta {
+            font-size: 12.5px;
+            color: var(--t-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .receipt-meta .ref-num {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 700;
+            color: var(--t-primary);
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 32px;
+            margin-bottom: 26px;
+        }
+
+        .info-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 18px;
+        }
+
+        .info-card h3 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--t-muted);
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .info-card .party-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--t-primary);
+            margin-bottom: 4px;
+        }
+
+        .info-card .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 12.5px;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        .info-card .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-row .lbl {
+            color: var(--t-muted);
+            min-width: 95px;
+        }
+
+        .detail-row .val {
+            color: var(--t-primary);
+            font-weight: 600;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-active {
+            background: var(--c-success-light);
+            color: var(--c-success);
+        }
+
+        .badge-reversed {
+            background: var(--c-danger-light);
+            color: var(--c-danger);
+        }
+
+        /* Amount Highlight Box */
+        .amount-card {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1.5px solid #fde68a;
+            border-radius: 12px;
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .amount-card .amount-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #92400e;
+        }
+
+        .amount-card .amount-value {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 26px;
+            font-weight: 800;
+            color: #b45309;
+        }
+
+        /* Table */
+        .section-heading {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--t-muted);
+            margin-bottom: 10px;
+        }
+
+        .allocations-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .allocations-table th {
+            background: #f8fafc;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--t-secondary);
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .allocations-table td {
+            padding: 10px 14px;
+            font-size: 12.5px;
+            border-bottom: 1px solid var(--border);
+            color: var(--t-primary);
+        }
+
+        .allocations-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .allocations-table .num {
+            text-align: right;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 600;
+        }
+
+        .unallocated-row td {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        /* Notes Box */
+        .notes-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--c-brand);
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 32px;
+            font-size: 12px;
+        }
+
+        .notes-card strong {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--t-muted);
+            letter-spacing: 0.03em;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        /* Signatures */
+        .signatures-grid {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 48px;
+            padding-top: 10px;
+        }
+
+        .sig-box {
+            width: 180px;
+            text-align: center;
+        }
+
+        .sig-line {
+            border-top: 1.5px solid #94a3b8;
+            padding-top: 8px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--t-secondary);
+        }
+
+        /* Print Media Styles */
         @media print {
-            body { margin: 20px; }
-            .no-print { display: none; }
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .action-bar, .no-print {
+                display: none !important;
+            }
+
+            .receipt-card {
+                border: none !important;
+                box-shadow: none !important;
+                max-width: 100% !important;
+                padding: 20px 24px !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+            }
+
+            .amount-card {
+                background: #fef3c7 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .info-card {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .allocations-table th {
+                background: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="no-print" style="margin-bottom: 20px; background: #fef3c7; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight:600; color:#d97706;">Print Preview Mode (Supplier Payout)</span>
-        <button onclick="window.print()" style="padding: 6px 15px; background: #f59e0b; color:#fff; border:none; border-radius:4px; font-weight:600; cursor:pointer;">
-            🖨 Print Voucher
-        </button>
+
+    <!-- Action Toolbar (Screen Only) -->
+    <div class="action-bar no-print">
+        <div class="bar-left">
+            <span class="badge-preview">
+                <i class="fa-solid fa-file-invoice-dollar"></i> Payment Voucher Preview (Supplier Payout)
+            </span>
+        </div>
+        <div class="bar-actions">
+            <button onclick="window.close()" class="btn btn-secondary">
+                <i class="fa-solid fa-xmark"></i> Close
+            </button>
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fa-solid fa-print"></i> Print Voucher
+            </button>
+        </div>
     </div>
 
-    <div class="header">
-        <div class="logo-section">
-            <h2>CURTISS ENTERPRISES</h2>
-            <p>123 Business Avenue, Colombo, Sri Lanka<br>Phone: +94 11 2345678 | Email: finance@curtiss.com</p>
+    <!-- Receipt Card (Standard Centered Container) -->
+    <div class="receipt-card">
+        <!-- Header -->
+        <div class="receipt-header">
+            <div class="company-info">
+                <h2>CURTISS ENTERPRISES</h2>
+                <p>123 Business Avenue, Colombo, Sri Lanka<br>Phone: +94 11 2345678 | Email: finance@curtiss.com</p>
+            </div>
+            <div class="receipt-title-box">
+                <h1>Payment Voucher</h1>
+                <div class="receipt-meta">
+                    <div>Voucher #: <span class="ref-num">AP-PAY-<?= str_pad($data['payment']->id, 5, '0', STR_PAD_LEFT) ?></span></div>
+                    <div>Date: <span class="ref-num"><?= date('Y-m-d', strtotime($data['payment']->payment_date)) ?></span></div>
+                </div>
+            </div>
         </div>
-        <div class="receipt-title">
-            <h1>Payment Voucher</h1>
-            <p>Voucher #: AP-PAY-<?= str_pad($data['payment']->id, 5, '0', STR_PAD_LEFT) ?></p>
-            <p style="margin-top:2px;">Date: <?= date('Y-m-d', strtotime($data['payment']->payment_date)) ?></p>
-        </div>
-    </div>
 
-    <div class="info-grid">
-        <div class="info-block">
-            <h3>Paid To (Supplier)</h3>
-            <p style="font-size: 16px; color:#111; font-weight:700;"><?= htmlspecialchars($data['payment']->supplier_name) ?></p>
-            <p><?= htmlspecialchars($data['payment']->supplier_address ?: 'No Address Stated') ?></p>
-            <p>Phone: <?= htmlspecialchars($data['payment']->supplier_phone ?: 'N/A') ?></p>
-            <p>Email: <?= htmlspecialchars($data['payment']->supplier_email ?: 'N/A') ?></p>
-        </div>
-        <div class="info-block" style="text-align: right;">
-            <h3>Payment Information</h3>
-            <p>Payment Method: <strong><?= $data['payment']->payment_method ?></strong></p>
-            <?php if ($data['payment']->payment_method === 'Cheque'): ?>
-                <p>Cheque Number: <strong><?= htmlspecialchars($data['payment']->cheque_number ?: '-') ?></strong></p>
-                <p>Cheque Bank: <strong><?= htmlspecialchars($data['payment']->cheque_bank ?: '-') ?></strong></p>
-                <p>Banking Date: <strong><?= htmlspecialchars($data['payment']->cheque_date ?: '-') ?></strong></p>
-                <?php if (!empty($data['payment']->bank_account_name)): ?>
-                    <p>Drawn Bank: <strong><?= htmlspecialchars($data['payment']->bank_account_name) ?> (<?= htmlspecialchars($data['payment']->bank_account_code) ?>)</strong></p>
+        <!-- 2-Column Info Grid -->
+        <div class="info-grid">
+            <!-- Paid To -->
+            <div class="info-card">
+                <h3>Paid To (Supplier / Vendor)</h3>
+                <div class="party-name"><?= htmlspecialchars($data['payment']->supplier_name) ?></div>
+                <div style="font-size: 12px; color: var(--t-secondary); margin-bottom: 8px; line-height: 1.4;">
+                    <?= htmlspecialchars($data['payment']->supplier_address ?: 'No Address Stated') ?>
+                </div>
+                <div class="detail-row">
+                    <span class="lbl">Phone:</span>
+                    <span class="val"><?= htmlspecialchars($data['payment']->supplier_phone ?: 'N/A') ?></span>
+                </div>
+                <?php if ($data['payment']->supplier_email): ?>
+                    <div class="detail-row">
+                        <span class="lbl">Email:</span>
+                        <span class="val"><?= htmlspecialchars($data['payment']->supplier_email) ?></span>
+                    </div>
                 <?php endif; ?>
-            <?php elseif (!empty($data['payment']->bank_account_name)): ?>
-                <p>Bank Account: <strong><?= htmlspecialchars($data['payment']->bank_account_name) ?> (<?= htmlspecialchars($data['payment']->bank_account_code) ?>)</strong></p>
-            <?php endif; ?>
-            <?php if ($data['payment']->reference): ?>
-                <p>Reference: <strong><?= htmlspecialchars($data['payment']->reference) ?></strong></p>
-            <?php endif; ?>
-            <p>Status: <strong style="color: <?= $data['payment']->status === 'Reversed' ? '#ef4444' : '#10b981' ?>;"><?= $data['payment']->status ?></strong></p>
-            <p>Posted Entry: <strong>JE-<?= str_pad($data['payment']->journal_entry_id, 5, '0', STR_PAD_LEFT) ?></strong></p>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="info-card">
+                <h3>Payment Information</h3>
+                <div class="detail-row">
+                    <span class="lbl">Payment Method:</span>
+                    <span class="val" style="color: #b45309; font-weight: 700;"><?= htmlspecialchars($data['payment']->payment_method) ?></span>
+                </div>
+
+                <?php if ($data['payment']->payment_method === 'Bank Transfer'): ?>
+                    <?php if (!empty($data['payment']->transfer_bank_name)): ?>
+                        <div class="detail-row">
+                            <span class="lbl">Transferred Bank:</span>
+                            <span class="val" style="color: #1e3a8a; font-weight: 700;"><?= htmlspecialchars($data['payment']->transfer_bank_name) ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (!empty($data['payment']->transfer_account_number)): ?>
+                        <div class="detail-row">
+                            <span class="lbl">Account Number:</span>
+                            <span class="val" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;"><?= htmlspecialchars($data['payment']->transfer_account_number) ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (!empty($data['payment']->transfer_branch_name)): ?>
+                        <div class="detail-row">
+                            <span class="lbl">Branch:</span>
+                            <span class="val"><?= htmlspecialchars($data['payment']->transfer_branch_name) ?></span>
+                        </div>
+                    <?php endif; ?>
+                <?php elseif ($data['payment']->payment_method === 'Cheque'): ?>
+                    <?php if (!empty($data['payment']->cheque_number)): ?>
+                        <div class="detail-row">
+                            <span class="lbl">Cheque Number:</span>
+                            <span class="val" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700;"><?= htmlspecialchars($data['payment']->cheque_number) ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (!empty($data['payment']->cheque_bank)): ?>
+                        <div class="detail-row">
+                            <span class="lbl">Cheque Bank:</span>
+                            <span class="val"><?= htmlspecialchars($data['payment']->cheque_bank) ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (!empty($data['payment']->cheque_date)): ?>
+                        <div class="detail-row">
+                            <span class="lbl">Banking Date:</span>
+                            <span class="val"><?= htmlspecialchars($data['payment']->cheque_date) ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (!empty($data['payment']->bank_account_name)): ?>
+                        <div class="detail-row">
+                            <span class="lbl">Drawn Bank:</span>
+                            <span class="val"><?= htmlspecialchars($data['payment']->bank_account_name) ?> (<?= htmlspecialchars($data['payment']->bank_account_code) ?>)</span>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <?php if ($data['payment']->reference): ?>
+                    <div class="detail-row">
+                        <span class="lbl">Reference #:</span>
+                        <span class="val"><?= htmlspecialchars($data['payment']->reference) ?></span>
+                    </div>
+                <?php endif; ?>
+
+                <div class="detail-row">
+                    <span class="lbl">Payment Status:</span>
+                    <span class="val">
+                        <span class="badge-status <?= $data['payment']->status === 'Reversed' ? 'badge-reversed' : 'badge-active' ?>">
+                            <?= htmlspecialchars($data['payment']->status) ?>
+                        </span>
+                    </span>
+                </div>
+
+                <?php if (!empty($data['payment']->journal_entry_id)): ?>
+                    <div class="detail-row">
+                        <span class="lbl">Posted Entry:</span>
+                        <span class="val" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">JE-<?= str_pad($data['payment']->journal_entry_id, 5, '0', STR_PAD_LEFT) ?></span>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
-    </div>
 
-    <div class="amount-box">
-        <span class="lbl">Amount Disbursed</span>
-        <span class="val">Rs: <?= number_format($data['payment']->amount, 2) ?></span>
-    </div>
+        <!-- Amount Box -->
+        <div class="amount-card">
+            <div class="amount-label">
+                <i class="fa-solid fa-circle-check" style="margin-right: 4px;"></i> Total Amount Disbursed
+            </div>
+            <div class="amount-value">
+                Rs: <?= number_format($data['payment']->amount, 2) ?>
+            </div>
+        </div>
 
-    <h3 style="font-size: 13px; text-transform: uppercase; color: #777; letter-spacing: 0.5px; margin-bottom: 12px;">
-        Document Allocation Breakdown
-    </h3>
-    <table class="details-table">
-        <thead>
-            <tr>
-                <th>GRN Number</th>
-                <th>GRN Date</th>
-                <th style="text-align: right;">Allocated Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (empty($data['allocations'])): ?>
+        <!-- Allocation Breakdown -->
+        <div class="section-heading">Document Allocation Breakdown</div>
+        <table class="allocations-table">
+            <thead>
                 <tr>
-                    <td colspan="3" style="text-align: center; color: #666; font-style: italic; padding: 20px;">
-                        No direct GRN allocation. Paid as Advance Credit.
-                    </td>
+                    <th>GRN Number</th>
+                    <th>GRN Date</th>
+                    <th style="text-align: right;">Allocated Amount</th>
                 </tr>
-            <?php else: foreach ($data['allocations'] as $alloc): ?>
-                <tr>
-                    <td><strong><?= htmlspecialchars($alloc->grn_number) ?></strong></td>
-                    <td><?= date('Y-m-d', strtotime($alloc->grn_date)) ?></td>
-                    <td style="text-align: right; font-weight: 700; font-family: monospace;">Rs: <?= number_format($alloc->amount, 2) ?></td>
-                </tr>
-            <?php endforeach; endif; ?>
+            </thead>
+            <tbody>
+                <?php if (empty($data['allocations'])): ?>
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--t-muted); font-style: italic; padding: 22px;">
+                            No direct GRN allocation. Paid as Advance Credit.
+                        </td>
+                    </tr>
+                <?php else: foreach ($data['allocations'] as $alloc): ?>
+                    <tr>
+                        <td><strong style="color: #b45309;"><?= htmlspecialchars($alloc->grn_number) ?></strong></td>
+                        <td style="color: var(--t-secondary);"><?= date('Y-m-d', strtotime($alloc->grn_date)) ?></td>
+                        <td class="num" style="color: #b45309;">Rs: <?= number_format($alloc->amount, 2) ?></td>
+                    </tr>
+                <?php endforeach; endif; ?>
 
-            <?php if ($data['payment']->unallocated_amount > 0.01): ?>
-                <tr style="background: #f9fafb;">
-                    <td colspan="2" style="text-align: right; font-weight: 600; color: #666;">Remaining Advance Balance (Unallocated)</td>
-                    <td style="text-align: right; font-weight: 700; font-family: monospace; color: #f59e0b;">Rs: <?= number_format($data['payment']->unallocated_amount, 2) ?></td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+                <?php if ($data['payment']->unallocated_amount > 0.01): ?>
+                    <tr class="unallocated-row">
+                        <td colspan="2" style="text-align: right; color: var(--t-secondary);">Remaining Advance Balance (Unallocated)</td>
+                        <td class="num" style="color: #d97706;">Rs: <?= number_format($data['payment']->unallocated_amount, 2) ?></td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
 
-    <?php if ($data['payment']->notes): ?>
-        <div style="background: #fafafa; border: 1px solid #eee; padding: 12px; border-radius: 6px; margin-bottom: 30px;">
-            <strong style="font-size:12px; text-transform:uppercase; color:#666;">Memo / Notes:</strong>
-            <p style="margin: 5px 0 0 0; font-size:13px; color:#444;"><?= nl2br(htmlspecialchars($data['payment']->notes)) ?></p>
-        </div>
-    <?php endif; ?>
+        <!-- Notes / Memo -->
+        <?php if (!empty($data['payment']->notes)): ?>
+            <div class="notes-card">
+                <strong>Memo / Payment Notes</strong>
+                <p style="color: var(--t-secondary);"><?= nl2br(htmlspecialchars($data['payment']->notes)) ?></p>
+            </div>
+        <?php endif; ?>
 
-    <div class="signatures">
-        <div class="sig-block">
-            <div class="sig-line">Prepared By (<?= htmlspecialchars($data['payment']->creator_name ?: 'Accounts Officer') ?>)</div>
-        </div>
-        <div class="sig-block">
-            <div class="sig-line">Authorized By</div>
-        </div>
-        <div class="sig-block">
-            <div class="sig-line">Receiver's Signature</div>
+        <!-- Signatures -->
+        <div class="signatures-grid">
+            <div class="sig-box">
+                <div class="sig-line">Prepared By (<?= htmlspecialchars($data['payment']->creator_name ?: 'Accounts Officer') ?>)</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line">Authorized By</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line">Receiver's Signature</div>
+            </div>
         </div>
     </div>
+
 </body>
 </html>

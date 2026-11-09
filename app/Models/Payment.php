@@ -930,13 +930,22 @@ class Payment {
     public function getCustomerPaymentById($id) {
         $this->db->query("
             SELECT p.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone, c.address as customer_address, u.username as creator_name, ur.username as reverser_name,
-                   ch.bank_name as cheque_bank, ch.cheque_number, ch.banking_date as cheque_date
+                   ch.bank_name as cheque_bank, ch.cheque_number, ch.banking_date as cheque_date,
+                   COALESCE(ba.bank_name, coa.account_name) as transfer_bank_name,
+                   ba.account_number as transfer_account_number,
+                   ba.branch_name as transfer_branch_name,
+                   coa.account_name as bank_account_name,
+                   coa.account_code as bank_account_code
             FROM customer_payments p
             JOIN customers c ON p.customer_id = c.id
             LEFT JOIN users u ON p.created_by = u.id
             LEFT JOIN users ur ON p.reversed_by = ur.id
             LEFT JOIN cheques ch ON ch.customer_id = p.customer_id AND ch.amount = p.amount AND ABS(TIMESTAMPDIFF(SECOND, ch.created_at, p.created_at)) < 60
+            LEFT JOIN transactions t ON t.journal_entry_id = p.journal_entry_id AND t.debit > 0
+            LEFT JOIN chart_of_accounts coa ON t.account_id = coa.id
+            LEFT JOIN bank_accounts ba ON ba.chart_of_account_id = coa.id
             WHERE p.id = :id
+            LIMIT 1
         ");
         $this->db->bind(':id', $id);
         return $this->db->single();
@@ -949,7 +958,11 @@ class Payment {
         $this->db->query("
             SELECT p.*, COALESCE(v.name, sp.name) as supplier_name, COALESCE(v.email, sp.email) as supplier_email, COALESCE(v.phone, sp.phone) as supplier_phone, COALESCE(v.address, sp.address) as supplier_address, u.username as creator_name, ur.username as reverser_name,
                    ch.id as cheque_id, ch.bank_name as cheque_bank, ch.cheque_number, ch.banking_date as cheque_date, ch.status as cheque_status,
-                   ba.account_name as bank_account_name, ba.account_code as bank_account_code
+                   COALESCE(real_ba.bank_name, real_ba2.bank_name, ba.account_name, coa2.account_name) as transfer_bank_name,
+                   COALESCE(real_ba.account_number, real_ba2.account_number) as transfer_account_number,
+                   COALESCE(real_ba.branch_name, real_ba2.branch_name) as transfer_branch_name,
+                   COALESCE(ba.account_name, coa2.account_name) as bank_account_name,
+                   COALESCE(ba.account_code, coa2.account_code) as bank_account_code
             FROM supplier_payments p
             LEFT JOIN vendors v ON p.vendor_id = v.id
             LEFT JOIN service_providers sp ON p.service_provider_id = sp.id
@@ -957,7 +970,12 @@ class Payment {
             LEFT JOIN users ur ON p.reversed_by = ur.id
             LEFT JOIN cheques ch ON ch.supplier_payment_id = p.id OR ((ch.vendor_id = p.vendor_id OR ch.service_provider_id = p.service_provider_id) AND ch.amount = p.amount AND ABS(TIMESTAMPDIFF(SECOND, ch.created_at, p.created_at)) < 60)
             LEFT JOIN chart_of_accounts ba ON p.bank_account_id = ba.id OR ch.bank_account_id = ba.id
+            LEFT JOIN bank_accounts real_ba ON (real_ba.chart_of_account_id = ba.id OR real_ba.id = p.bank_account_id)
+            LEFT JOIN transactions t ON t.journal_entry_id = p.journal_entry_id AND t.credit > 0 AND t.account_id != 20
+            LEFT JOIN chart_of_accounts coa2 ON t.account_id = coa2.id
+            LEFT JOIN bank_accounts real_ba2 ON real_ba2.chart_of_account_id = coa2.id
             WHERE p.id = :id
+            LIMIT 1
         ");
         $this->db->bind(':id', $id);
         return $this->db->single();

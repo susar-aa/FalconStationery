@@ -363,6 +363,23 @@ class Supplier {
                              COALESCE((SELECT CONCAT(' #', c.cheque_number) FROM cheques c WHERE (c.supplier_payment_id = sp.id OR (c.vendor_id = sp.vendor_id AND c.amount = sp.amount AND ABS(TIMESTAMPDIFF(SECOND, c.created_at, sp.created_at)) < 60)) ORDER BY c.id DESC LIMIT 1), ''),
                              ''
                           ),
+                          IF(sp.payment_method = 'Bank Transfer',
+                             COALESCE(
+                                 (SELECT CONCAT(' (', COALESCE(ba.bank_name, coa.account_name), ')')
+                                  FROM chart_of_accounts coa
+                                  LEFT JOIN bank_accounts ba ON ba.chart_of_account_id = coa.id OR ba.id = sp.bank_account_id
+                                  WHERE coa.id = sp.bank_account_id
+                                  LIMIT 1),
+                                 (SELECT CONCAT(' (', COALESCE(ba2.bank_name, coa2.account_name), ')')
+                                  FROM transactions t
+                                  JOIN chart_of_accounts coa2 ON t.account_id = coa2.id
+                                  LEFT JOIN bank_accounts ba2 ON ba2.chart_of_account_id = coa2.id
+                                  WHERE t.journal_entry_id = sp.journal_entry_id AND t.credit > 0 AND t.account_id != 20
+                                  LIMIT 1),
+                                 ''
+                             ),
+                             ''
+                          ),
                           IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
                    ) as ref, 
                    sp.payment_date as date,
@@ -372,7 +389,28 @@ class Supplier {
             FROM supplier_payments sp
             WHERE sp.vendor_id = :vid4 AND sp.status = 'Active'
             UNION ALL
-            SELECT 'Payment Reversal' as type, sp.id, CONCAT('Payment Reversed: ', sp.payment_method, IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')) as ref, DATE(COALESCE(sp.reversed_at, sp.created_at)) as date,
+            SELECT 'Payment Reversal' as type, sp.id, 
+                   CONCAT('Payment Reversed: ', sp.payment_method, 
+                          IF(sp.payment_method = 'Bank Transfer',
+                             COALESCE(
+                                 (SELECT CONCAT(' (', COALESCE(ba.bank_name, coa.account_name), ')')
+                                  FROM chart_of_accounts coa
+                                  LEFT JOIN bank_accounts ba ON ba.chart_of_account_id = coa.id OR ba.id = sp.bank_account_id
+                                  WHERE coa.id = sp.bank_account_id
+                                  LIMIT 1),
+                                 (SELECT CONCAT(' (', COALESCE(ba2.bank_name, coa2.account_name), ')')
+                                  FROM transactions t
+                                  JOIN chart_of_accounts coa2 ON t.account_id = coa2.id
+                                  LEFT JOIN bank_accounts ba2 ON ba2.chart_of_account_id = coa2.id
+                                  WHERE t.journal_entry_id = sp.journal_entry_id AND t.credit > 0 AND t.account_id != 20
+                                  LIMIT 1),
+                                 ''
+                             ),
+                             ''
+                          ),
+                          IF(sp.reference != '', CONCAT(' (', sp.reference, ')'), '')
+                   ) as ref, 
+                   DATE(COALESCE(sp.reversed_at, sp.created_at)) as date,
                    0 as debit, 
                    sp.amount as credit, 
                    COALESCE(sp.reversed_at, sp.created_at) as created_at
