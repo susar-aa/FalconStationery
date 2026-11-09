@@ -60,26 +60,18 @@ class SalaryAdvance {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
             $this->db->execute();
 
-            // Self-heal accounts 1659 and 1660 if missing
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1659'");
-            if (!$this->db->single()) {
-                $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1650'");
-                $parent = $this->db->single();
-                $parentId = $parent ? intval($parent->id) : null;
-                $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, parent_id, balance, is_active) 
-                                  VALUES ('1659', 'Salary Advance - Damith', 'Asset', 'Current Asset', :parent_id, 0.00, 1)");
-                $this->db->bind(':parent_id', $parentId);
-                $this->db->execute();
-            }
-
-            $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1660'");
-            if (!$this->db->single()) {
-                $this->db->query("SELECT id FROM chart_of_accounts WHERE account_code = '1650'");
-                $parent = $this->db->single();
-                $parentId = $parent ? intval($parent->id) : null;
-                $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, parent_id, balance, is_active) 
-                                  VALUES ('1660', 'Salary Advance - Kaveen', 'Asset', 'Current Asset', :parent_id, 0.00, 1)");
-                $this->db->bind(':parent_id', $parentId);
+            // Ensure single Salary Advance account (1650) exists and is named 'Salary Advance'
+            $this->db->query("SELECT id, account_name FROM chart_of_accounts WHERE account_code = '1650'");
+            $acc1650 = $this->db->single();
+            if ($acc1650) {
+                if ($acc1650->account_name !== 'Salary Advance') {
+                    $this->db->query("UPDATE chart_of_accounts SET account_name = 'Salary Advance' WHERE id = :id");
+                    $this->db->bind(':id', $acc1650->id);
+                    $this->db->execute();
+                }
+            } else {
+                $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) 
+                                  VALUES ('1650', 'Salary Advance', 'Asset', 'Current Asset', 0.00, 1)");
                 $this->db->execute();
             }
 
@@ -114,60 +106,43 @@ class SalaryAdvance {
         return $prefix . str_pad((string)$nextSeq, 4, '0', STR_PAD_LEFT);
     }
 
-    public function getEmployeeAdvanceAccount(int $employeeId): ?object {
-        // 1. Fetch employee record
-        $this->db->query("SELECT id, first_name, last_name FROM employees WHERE id = :id");
-        $this->db->bind(':id', $employeeId);
-        $emp = $this->db->single();
-        if (!$emp) {
+    public function getSalaryAdvanceAccount(): ?object {
+        // 1. Check account_code 1650
+        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '1650' LIMIT 1");
+        $acc = $this->db->single();
+        if ($acc) {
+            if ($acc->account_name !== 'Salary Advance') {
+                try {
+                    $this->db->query("UPDATE chart_of_accounts SET account_name = 'Salary Advance' WHERE id = :id");
+                    $this->db->bind(':id', $acc->id);
+                    $this->db->execute();
+                    $acc->account_name = 'Salary Advance';
+                } catch (Throwable $t) {}
+            }
+            return $acc;
+        }
+
+        // 2. Check account_name 'Salary Advance'
+        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_name = 'Salary Advance' LIMIT 1");
+        $acc = $this->db->single();
+        if ($acc) {
+            return $acc;
+        }
+
+        // 3. Fallback: Create account 1650 - Salary Advance
+        try {
+            $this->db->query("INSERT INTO chart_of_accounts (account_code, account_name, account_type, account_category, balance, is_active) 
+                              VALUES ('1650', 'Salary Advance', 'Asset', 'Current Asset', 0.00, 1)");
+            $this->db->execute();
+            $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '1650' LIMIT 1");
+            return $this->db->single();
+        } catch (Throwable $t) {
             return null;
         }
+    }
 
-        $firstName = trim($emp->first_name);
-        $lastName = trim($emp->last_name);
-
-        // Explicit account code map per requirements
-        $nameToCode = [
-            'ruwinda' => '1651',
-            'chandana' => '1652',
-            'madusanka' => '1653',
-            'sarath' => '1654',
-            'abiman' => '1655',
-            'pasindu' => '1656',
-            'chethiya' => '1657',
-            'madushan' => '1658',
-            'damith' => '1659',
-            'kaveen' => '1660'
-        ];
-
-        $matchedCode = null;
-        $fnLower = strtolower($firstName);
-        $lnLower = strtolower($lastName);
-
-        foreach ($nameToCode as $keyword => $code) {
-            if (strpos($fnLower, $keyword) !== false || strpos($lnLower, $keyword) !== false) {
-                $matchedCode = $code;
-                break;
-            }
-        }
-
-        if ($matchedCode) {
-            $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = :code LIMIT 1");
-            $this->db->bind(':code', $matchedCode);
-            $acc = $this->db->single();
-            if ($acc) return $acc;
-        }
-
-        // Try exact/partial matching on account_name in 165% accounts
-        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code LIKE '165%' AND (account_name LIKE :fn OR account_name LIKE :ln) AND account_code != '1650' LIMIT 1");
-        $this->db->bind(':fn', '%' . $firstName . '%');
-        $this->db->bind(':ln', '%' . $lastName . '%');
-        $acc = $this->db->single();
-        if ($acc) return $acc;
-
-        // Fallback to parent account 1650 - Advance
-        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '1650' LIMIT 1");
-        return $this->db->single();
+    public function getEmployeeAdvanceAccount(?int $employeeId = null): ?object {
+        return $this->getSalaryAdvanceAccount();
     }
 
     public function getActiveEmployeesWithAccounts(): array {
@@ -177,11 +152,15 @@ class SalaryAdvance {
                           ORDER BY first_name ASC, last_name ASC");
         $employees = $this->db->resultSet() ?: [];
 
+        $advAcc = $this->getSalaryAdvanceAccount();
+        $advAccId = $advAcc ? intval($advAcc->id) : null;
+        $advAccCode = $advAcc ? $advAcc->account_code : '1650';
+        $advAccName = $advAcc ? $advAcc->account_name : 'Salary Advance';
+
         foreach ($employees as $emp) {
-            $acc = $this->getEmployeeAdvanceAccount(intval($emp->id));
-            $emp->advance_account_id = $acc ? intval($acc->id) : null;
-            $emp->advance_account_code = $acc ? $acc->account_code : '1650';
-            $emp->advance_account_name = $acc ? $acc->account_name : 'Advance';
+            $emp->advance_account_id = $advAccId;
+            $emp->advance_account_code = $advAccCode;
+            $emp->advance_account_name = $advAccName;
             $emp->outstanding_advance = $this->getEmployeeOutstandingAdvance(intval($emp->id));
         }
 
@@ -230,10 +209,10 @@ class SalaryAdvance {
             return ['success' => false, 'message' => 'Selected employee not found.'];
         }
 
-        // Advance receivable account (Dr)
-        $advanceAcc = $this->getEmployeeAdvanceAccount($employeeId);
+        // Advance receivable account (Dr) - Unified Salary Advance account
+        $advanceAcc = $this->getSalaryAdvanceAccount();
         if (!$advanceAcc) {
-            return ['success' => false, 'message' => 'Could not map employee to a Salary Advance account in Chart of Accounts.'];
+            return ['success' => false, 'message' => 'Could not find the Salary Advance account in Chart of Accounts.'];
         }
         $advanceAccountId = intval($advanceAcc->id);
 

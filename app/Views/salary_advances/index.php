@@ -534,14 +534,14 @@ $bankAccounts = $data['bank_accounts'] ?? [];
 
                 <div class="sa-field">
                     <label>Employee</label>
-                    <select name="employee_id" class="sa-select">
-                        <option value="">All Employees</option>
-                        <?php foreach($employees as $emp): ?>
-                            <option value="<?= $emp->id ?>" <?= ($filters['employee_id'] == $emp->id) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($emp->first_name . ' ' . $emp->last_name) ?> (<?= htmlspecialchars($emp->advance_account_code) ?>)
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                        <select name="employee_id" class="sa-select">
+                            <option value="">All Employees</option>
+                            <?php foreach($employees as $emp): ?>
+                                <option value="<?= $emp->id ?>" <?= ($filters['employee_id'] == $emp->id) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($emp->first_name . ' ' . $emp->last_name) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
                 </div>
 
                 <div class="sa-field">
@@ -628,7 +628,7 @@ $bankAccounts = $data['bank_accounts'] ?? [];
                                                 <?= htmlspecialchars($row->first_name . ' ' . $row->last_name) ?>
                                             </div>
                                             <div style="font-size: 11px; color: var(--t-secondary);">
-                                                <?= htmlspecialchars($row->department ?? 'General') ?> &bull; <?= htmlspecialchars($row->advance_account_code) ?>
+                                                <?= htmlspecialchars($row->department ?? 'General') ?>
                                             </div>
                                         </td>
                                         <td style="white-space: nowrap; font-size: 12.5px;">
@@ -770,7 +770,7 @@ $bankAccounts = $data['bank_accounts'] ?? [];
                         </select>
                         
                         <div id="employeeCoaCallout" class="sa-coa-callout" style="display: none;">
-                            <strong>COA Mapping:</strong> <span id="calloutAccountName">-</span><br>
+                            <strong>Account:</strong> 1650 - Salary Advance<br>
                             <strong>Current Outstanding Advance:</strong> Rs. <span id="calloutOutstanding">-</span>
                         </div>
                     </div>
@@ -848,7 +848,6 @@ function handleEmployeeChange() {
     const callout = document.getElementById('employeeCoaCallout');
     
     if (select.value) {
-        document.getElementById('calloutAccountName').innerText = opt.getAttribute('data-coa');
         document.getElementById('calloutOutstanding').innerText = opt.getAttribute('data-out');
         callout.style.display = 'block';
     } else {

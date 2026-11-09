@@ -173,6 +173,7 @@ class Payroll {
 
         require_once __DIR__ . '/SalaryAdvance.php';
         $salaryAdvanceModel = new SalaryAdvance();
+        $unifiedAdvanceAcc = $salaryAdvanceModel->getSalaryAdvanceAccount();
 
         $slips = [];
         $totalGross = 0;
@@ -263,7 +264,6 @@ class Payroll {
 
             // Calculate active salary advance deductions
             $outstandingAdvance = $salaryAdvanceModel->getEmployeeOutstandingAdvance(intval($emp->id));
-            $advance_account = $salaryAdvanceModel->getEmployeeAdvanceAccount(intval($emp->id));
             $advance_deduction = 0.00;
 
             $netBeforeAdvance = max(0.0, $base + $allowances + $commissions + $overtime - $loan_deduction - $epfEmployeeAmount - $other_deductions);
@@ -299,8 +299,8 @@ class Payroll {
                 'loan_deduction' => $loan_deduction,
                 'advance_deduction' => $advance_deduction,
                 'outstanding_advance' => $outstandingAdvance,
-                'advance_account_code' => $advance_account ? $advance_account->account_code : '1650',
-                'advance_account_name' => $advance_account ? $advance_account->account_name : 'Advance',
+                'advance_account_code' => $unifiedAdvanceAcc ? $unifiedAdvanceAcc->account_code : '1650',
+                'advance_account_name' => $unifiedAdvanceAcc ? $unifiedAdvanceAcc->account_name : 'Salary Advance',
                 'other_deductions' => $other_deductions,
                 'epf_applicable_earnings' => $epfApplicableEarnings,
                 'epf_employee_amount' => $epfEmployeeAmount,
@@ -493,13 +493,14 @@ class Payroll {
                 }
             }
 
-            // Credit Salary Advance Accounts per employee deduction
-            foreach ($slips as $s) {
-                $advDed = floatval($s->advance_deduction ?? 0);
-                if ($advDed > 0) {
-                    $empAcc = $salaryAdvanceModel->getEmployeeAdvanceAccount(intval($s->employee_id));
-                    $advAccId = $empAcc ? intval($empAcc->id) : $defaultAdvanceAccId;
-                    if ($advAccId) {
+            // Credit Unified Salary Advance Account for recoveries
+            $singleAdvAcc = $salaryAdvanceModel->getSalaryAdvanceAccount();
+            $advAccId = $singleAdvAcc ? intval($singleAdvAcc->id) : $defaultAdvanceAccId;
+
+            if ($totalAdvanceDeductions > 0 && $advAccId) {
+                foreach ($slips as $s) {
+                    $advDed = floatval($s->advance_deduction ?? 0);
+                    if ($advDed > 0) {
                         $lines[] = [
                             'account_id' => $advAccId,
                             'debit' => 0,
