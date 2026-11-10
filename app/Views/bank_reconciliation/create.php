@@ -16,6 +16,7 @@
     --c-green:        #34c759;
     --c-green-light:  #e6f9ec;
     --c-orange:       #ff9500;
+    --c-orange-light: #fff4e5;
     --c-red:          #ff3b30;
     --c-red-light:    #fff0ef;
 
@@ -153,6 +154,19 @@
 .btn-sf-primary:hover { opacity: 0.9; transform: translateY(-1px); color: #fff; }
 .btn-sf-secondary { background: var(--c-fill); color: var(--t-primary); }
 .btn-sf-secondary:hover { background: var(--c-fill2); }
+
+.info-banner {
+    padding: 12px 16px;
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    line-height: 1.45;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.banner-info { background: var(--c-blue-light); color: #1e40af; border: 0.5px solid rgba(0,122,255,0.2); }
+.banner-warning { background: var(--c-orange-light); color: #9a3412; border: 0.5px solid rgba(255,149,0,0.3); }
 </style>
 
 <div class="create-container">
@@ -166,10 +180,10 @@
     </div>
 
     <div class="form-card">
-        <form action="<?= APP_URL ?>/bankreconciliation/store" method="POST">
+        <form action="<?= APP_URL ?>/bankreconciliation/store" method="POST" id="createRecForm">
             <div class="form-group">
                 <label>Select Bank Account <span style="color: var(--c-red);">*</span></label>
-                <select name="account_id" class="form-control-sf" required>
+                <select name="account_id" id="accountSelect" class="form-control-sf" required>
                     <option value="">-- Choose Bank Account --</option>
                     <?php foreach ($data['bankAccounts'] as $acc): ?>
                         <option value="<?= $acc->id; ?>">
@@ -179,25 +193,30 @@
                 </select>
             </div>
 
+            <!-- Dynamic Balance & Status Notice -->
+            <div id="noticeContainer" style="display: none;"></div>
+
             <div class="grid-2">
                 <div class="form-group">
                     <label>Statement Start Date <span style="color: var(--c-red);">*</span></label>
-                    <input type="date" name="statement_date_start" class="form-control-sf" value="<?= date('Y-m-01'); ?>" required>
+                    <input type="date" name="statement_date_start" id="startDateInput" class="form-control-sf" value="<?= date('Y-m-01'); ?>" required>
                 </div>
                 <div class="form-group">
                     <label>Statement End Date <span style="color: var(--c-red);">*</span></label>
-                    <input type="date" name="statement_date_end" class="form-control-sf" value="<?= date('Y-m-t'); ?>" required>
+                    <input type="date" name="statement_date_end" id="endDateInput" class="form-control-sf" value="<?= date('Y-m-t'); ?>" required>
                 </div>
             </div>
 
             <div class="grid-2">
                 <div class="form-group">
                     <label>Statement Opening Balance (LKR) <span style="color: var(--c-red);">*</span></label>
-                    <input type="number" step="0.01" name="statement_opening_balance" class="form-control-sf" placeholder="0.00" required>
+                    <input type="number" step="0.01" name="statement_opening_balance" id="openingBalInput" class="form-control-sf" placeholder="0.00" required>
+                    <div id="obSourceNote" style="font-size: 11.5px; color: var(--t-label); margin-top: 4px;"></div>
                 </div>
                 <div class="form-group">
                     <label>Statement Closing Balance (LKR) <span style="color: var(--c-red);">*</span></label>
-                    <input type="number" step="0.01" name="statement_closing_balance" class="form-control-sf" placeholder="0.00" required>
+                    <input type="number" step="0.01" name="statement_closing_balance" id="closingBalInput" class="form-control-sf" placeholder="0.00" required>
+                    <div style="font-size: 11.5px; color: var(--t-label); margin-top: 4px;">Ending balance from physical bank statement</div>
                 </div>
             </div>
 
@@ -210,3 +229,52 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const accSelect = document.getElementById('accountSelect');
+    const startInput = document.getElementById('startDateInput');
+    const endInput = document.getElementById('endDateInput');
+    const obInput = document.getElementById('openingBalInput');
+    const obNote = document.getElementById('obSourceNote');
+    const noticeContainer = document.getElementById('noticeContainer');
+
+    accSelect.addEventListener('change', function() {
+        const accountId = this.value;
+        if (!accountId) {
+            noticeContainer.style.display = 'none';
+            obNote.textContent = '';
+            return;
+        }
+
+        fetch('<?= APP_URL ?>/bankreconciliation/get_account_info_ajax?account_id=' + accountId)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    obInput.value = data.opening_balance.toFixed(2);
+                    if (data.suggested_start) startInput.value = data.suggested_start;
+                    if (data.suggested_end) endInput.value = data.suggested_end;
+
+                    obNote.textContent = data.message || '';
+
+                    if (data.has_draft && data.draft_warning) {
+                        noticeContainer.className = 'info-banner banner-warning';
+                        noticeContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="margin-top:2px;"></i><div><strong>Unfinalized Previous Draft:</strong> ' + data.draft_warning + '</div>';
+                        noticeContainer.style.display = 'flex';
+                    } else if (data.has_finalized) {
+                        noticeContainer.className = 'info-banner banner-info';
+                        noticeContainer.innerHTML = '<i class="fa-solid fa-circle-check" style="margin-top:2px;"></i><div><strong>Prior Month Confirmed:</strong> Automatically carried forward closing balance from ' + data.prev_rec_number + ' (Ending ' + data.prev_end_date + ').</div>';
+                        noticeContainer.style.display = 'flex';
+                    } else {
+                        noticeContainer.className = 'info-banner banner-info';
+                        noticeContainer.innerHTML = '<i class="fa-solid fa-info-circle" style="margin-top:2px;"></i><div><strong>Initial Setup:</strong> ' + (data.message || 'Starting initial reconciliation for this bank account.') + '</div>';
+                        noticeContainer.style.display = 'flex';
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    });
+});
+</script>

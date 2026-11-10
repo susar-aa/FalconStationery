@@ -4,7 +4,13 @@
 
 <?php 
 $rec = $data['reconciliation']; 
+$summary = $data['summary'] ?? [];
 $isFinalized = ($rec->status === 'Finalized');
+
+// Cleared balance = confirmed opening balance + matched deposits - matched payments
+$matchedDeposits = $summary['matched_deposits'] ?? 0.0;
+$matchedPayments = $summary['matched_payments'] ?? 0.0;
+$clearedBalance = round(floatval($rec->statement_opening_balance) + $matchedDeposits - $matchedPayments, 2);
 ?>
 
 <style>
@@ -21,6 +27,7 @@ $isFinalized = ($rec->status === 'Finalized');
     --c-green:        #34c759;
     --c-green-light:  #e6f9ec;
     --c-orange:       #ff9500;
+    --c-orange-light: #fff4e5;
     --c-red:          #ff3b30;
     --c-red-light:    #fff0ef;
 
@@ -85,7 +92,7 @@ $isFinalized = ($rec->status === 'Finalized');
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 @media (max-width: 900px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
@@ -93,7 +100,7 @@ $isFinalized = ($rec->status === 'Finalized');
 .kpi-card {
     background: var(--c-surface);
     border-radius: var(--r-md);
-    padding: 18px 20px;
+    padding: 16px 20px;
     border: 0.5px solid var(--c-separator);
     box-shadow: var(--shadow-xs);
     display: flex;
@@ -101,7 +108,7 @@ $isFinalized = ($rec->status === 'Finalized');
     gap: 4px;
 }
 .kpi-card.highlight { background: var(--c-blue); color: #fff; border-color: var(--c-blue); }
-.kpi-card.highlight .kpi-label, .kpi-card.highlight .kpi-sub { color: rgba(255,255,255,0.8); }
+.kpi-card.highlight .kpi-label, .kpi-card.highlight .kpi-sub { color: rgba(255,255,255,0.85); }
 .kpi-card.highlight .kpi-val { color: #fff; }
 
 .kpi-card.danger { background: var(--c-red-light); border-color: rgba(255,59,48,0.3); }
@@ -110,8 +117,26 @@ $isFinalized = ($rec->status === 'Finalized');
 .kpi-card.success .kpi-val { color: #15803d; }
 
 .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t-secondary); }
-.kpi-val { font-size: 22px; font-weight: 800; color: var(--t-primary); }
-.kpi-sub { font-size: 12px; color: var(--t-label); }
+.kpi-val { font-size: 20px; font-weight: 800; color: var(--t-primary); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.kpi-sub { font-size: 11.5px; color: var(--t-label); }
+
+/* Secondary Metrics Bar */
+.secondary-metrics-bar {
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-sm);
+    padding: 10px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--t-secondary);
+}
+.metric-item { display: flex; align-items: center; gap: 6px; }
+.metric-item strong { color: var(--t-primary); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
 /* Toolbar */
 .toolbar-panel {
@@ -176,6 +201,20 @@ $isFinalized = ($rec->status === 'Finalized');
     vertical-align: middle;
 }
 .sf-table tr:hover td { background: var(--c-fill); }
+
+.badge-carried {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #b45309;
+    background: #fef3c7;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    letter-spacing: 0.02em;
+}
 
 .btn-sf {
     padding: 8px 16px;
@@ -247,31 +286,55 @@ $isFinalized = ($rec->status === 'Finalized');
                 <button type="button" class="btn-sf btn-sf-success" id="btnFinalize" <?= (abs($rec->difference) > 0.009) ? 'disabled' : '' ?>>
                     <i class="fa-solid fa-check"></i> Finalize
                 </button>
+            <?php else: ?>
+                <button type="button" class="btn-sf btn-sf-secondary" id="btnReopen" style="color: #b45309; border: 0.5px solid rgba(217, 119, 6, 0.4);">
+                    <i class="fa-solid fa-lock-open"></i> Reopen for Editing
+                </button>
             <?php endif; ?>
         </div>
     </div>
 
     <!-- KPI Summary Grid -->
     <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Statement Opening</div>
+            <div class="kpi-val">LKR <?= number_format($rec->statement_opening_balance, 2) ?></div>
+            <div class="kpi-sub">Confirmed Prior Closing</div>
+        </div>
         <div class="kpi-card highlight">
             <div class="kpi-label">Statement Closing</div>
             <div class="kpi-val">LKR <?= number_format($rec->statement_closing_balance, 2) ?></div>
-            <div class="kpi-sub">Bank Statement</div>
+            <div class="kpi-sub">Bank Statement Target</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-label">Adjusted Bank</div>
-            <div class="kpi-val">LKR <?= number_format($rec->adjusted_bank_balance, 2) ?></div>
-            <div class="kpi-sub">Stmt + Transit - Outstanding</div>
+            <div class="kpi-label">Cleared in Bank</div>
+            <div class="kpi-val" id="clearedVal">LKR <?= number_format($clearedBalance, 2) ?></div>
+            <div class="kpi-sub">Opening + Matched In/Out</div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Adjusted Book / GL</div>
-            <div class="kpi-val">LKR <?= number_format($rec->adjusted_book_balance, 2) ?></div>
-            <div class="kpi-sub">General Ledger Balance</div>
-        </div>
-        <div class="kpi-card <?= (abs($rec->difference) > 0.009) ? 'danger' : 'success' ?>">
+        <div class="kpi-card <?= (abs($rec->difference) > 0.009) ? 'danger' : 'success' ?>" id="diffCard">
             <div class="kpi-label">Difference</div>
-            <div class="kpi-val">LKR <?= number_format($rec->difference, 2) ?></div>
-            <div class="kpi-sub"><?= (abs($rec->difference) > 0.009) ? 'Unbalanced' : 'Balanced' ?></div>
+            <div class="kpi-val" id="diffVal">LKR <?= number_format($rec->difference, 2) ?></div>
+            <div class="kpi-sub" id="diffSub"><?= (abs($rec->difference) > 0.009) ? 'Unreconciled Difference' : 'Balanced (0.00)' ?></div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics Bar -->
+    <div class="secondary-metrics-bar">
+        <div class="metric-item">
+            <span>Deposits in Transit:</span>
+            <strong style="color: #15803d;" id="transitVal">LKR <?= number_format($summary['deposits_in_transit'] ?? 0, 2) ?></strong>
+        </div>
+        <div class="metric-item">
+            <span>Outstanding Cheques / Outflows:</span>
+            <strong style="color: var(--c-red);" id="outstandingVal">LKR <?= number_format($summary['outstanding_cheques'] ?? 0, 2) ?></strong>
+        </div>
+        <div class="metric-item">
+            <span>Adjusted Bank:</span>
+            <strong id="adjBankVal">LKR <?= number_format($rec->adjusted_bank_balance, 2) ?></strong>
+        </div>
+        <div class="metric-item">
+            <span>Adjusted Book / GL:</span>
+            <strong id="adjBookVal">LKR <?= number_format($rec->adjusted_book_balance, 2) ?></strong>
         </div>
     </div>
 
@@ -283,10 +346,15 @@ $isFinalized = ($rec->status === 'Finalized');
             <option value="matched">Matched Only</option>
             <option value="unmatched">Unmatched Only (Outstanding)</option>
         </select>
+        <select id="filterOrigin" class="filter-select">
+            <option value="all">All Periods (Current + Carried Forward)</option>
+            <option value="carried">Carried Forward (Prior Period Only)</option>
+            <option value="current">Current Period Only</option>
+        </select>
         <select id="filterType" class="filter-select">
             <option value="all">All Types (Deposits & Payments)</option>
-            <option value="debit">Deposits / Credits (Debit to Bank)</option>
-            <option value="credit">Payments / Cheques (Credit to Bank)</option>
+            <option value="debit">Deposits / Inflows (Dr)</option>
+            <option value="credit">Payments / Outflows (Cr)</option>
         </select>
         <button type="button" class="btn-sf btn-sf-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="resetFilters()">Reset</button>
     </div>
@@ -311,6 +379,7 @@ $isFinalized = ($rec->status === 'Finalized');
                         <tr class="tx-row" 
                             data-matched="<?= $item->is_matched ? 'matched' : 'unmatched' ?>" 
                             data-type="<?= ($item->debit > 0) ? 'debit' : 'credit' ?>"
+                            data-origin="<?= $item->is_carried_forward ? 'carried' : 'current' ?>"
                             data-search="<?= strtolower(htmlspecialchars(($item->reference ?? '') . ' ' . ($item->description ?? '') . ' ' . $item->debit . ' ' . $item->credit)) ?>">
                             <td style="text-align: center;">
                                 <input type="checkbox" 
@@ -320,13 +389,22 @@ $isFinalized = ($rec->status === 'Finalized');
                                        <?= $isFinalized ? 'disabled' : '' ?> 
                                        style="transform: scale(1.3); cursor: pointer;">
                             </td>
-                            <td><?= date('Y-m-d', strtotime($item->transaction_date)) ?></td>
+                            <td style="white-space: nowrap;">
+                                <?= date('Y-m-d', strtotime($item->transaction_date)) ?>
+                            </td>
                             <td style="font-weight: 700;"><?= htmlspecialchars($item->reference ?? '-') ?></td>
                             <td>
-                                <div><?= htmlspecialchars($item->description) ?></div>
-                                <?php if ($item->transaction_type === 'BANK_ONLY'): ?>
-                                    <span style="font-size: 10px; font-weight: 700; color: var(--c-blue); background: var(--c-blue-light); padding: 2px 6px; border-radius: 4px;">Bank Entry</span>
-                                <?php endif; ?>
+                                <div style="display: flex; align-items: center; flex-wrap: wrap;">
+                                    <span><?= htmlspecialchars($item->description) ?></span>
+                                    <?php if ($item->is_carried_forward): ?>
+                                        <span class="badge-carried">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> Carried Forward
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if ($item->transaction_type === 'BANK_ONLY'): ?>
+                                        <span style="font-size: 10px; font-weight: 700; color: var(--c-blue); background: var(--c-blue-light); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Bank Entry</span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td>
                                 <?php if ($item->debit > 0): ?>
@@ -335,10 +413,10 @@ $isFinalized = ($rec->status === 'Finalized');
                                     <span style="color: var(--t-secondary); font-weight: 700; font-size: 11px;">Payment / Outflow</span>
                                 <?php endif; ?>
                             </td>
-                            <td style="text-align: right; font-weight: 700; color: <?= ($item->debit > 0) ? 'var(--c-green)' : 'var(--t-label)' ?>;">
+                            <td style="text-align: right; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: <?= ($item->debit > 0) ? 'var(--c-green)' : 'var(--t-label)' ?>;">
                                 <?= ($item->debit > 0) ? 'LKR ' . number_format($item->debit, 2) : '-' ?>
                             </td>
-                            <td style="text-align: right; font-weight: 700; color: <?= ($item->credit > 0) ? 'var(--c-red)' : 'var(--t-label)' ?>;">
+                            <td style="text-align: right; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color: <?= ($item->credit > 0) ? 'var(--c-red)' : 'var(--t-label)' ?>;">
                                 <?= ($item->credit > 0) ? 'LKR ' . number_format($item->credit, 2) : '-' ?>
                             </td>
                         </tr>
@@ -412,33 +490,39 @@ function closeBankOnlyModal() { document.getElementById('bankOnlyModal').classLi
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchTerm');
     const filterMatch = document.getElementById('filterMatch');
+    const filterOrigin = document.getElementById('filterOrigin');
     const filterType = document.getElementById('filterType');
 
     function filterRows() {
         const query = searchInput.value.toLowerCase().trim();
         const matchVal = filterMatch.value;
+        const originVal = filterOrigin.value;
         const typeVal = filterType.value;
 
         document.querySelectorAll('.tx-row').forEach(row => {
             const rowSearch = row.getAttribute('data-search');
             const rowMatched = row.getAttribute('data-matched');
+            const rowOrigin = row.getAttribute('data-origin');
             const rowType = row.getAttribute('data-type');
 
             let matchesQuery = !query || rowSearch.includes(query);
             let matchesMatch = (matchVal === 'all') || (rowMatched === matchVal);
+            let matchesOrigin = (originVal === 'all') || (rowOrigin === originVal);
             let matchesType = (typeVal === 'all') || (rowType === typeVal);
 
-            row.style.display = (matchesQuery && matchesMatch && matchesType) ? '' : 'none';
+            row.style.display = (matchesQuery && matchesMatch && matchesOrigin && matchesType) ? '' : 'none';
         });
     }
 
     if (searchInput) searchInput.addEventListener('input', filterRows);
     if (filterMatch) filterMatch.addEventListener('change', filterRows);
+    if (filterOrigin) filterOrigin.addEventListener('change', filterRows);
     if (filterType) filterType.addEventListener('change', filterRows);
 
     window.resetFilters = function() {
         searchInput.value = '';
         filterMatch.value = 'all';
+        filterOrigin.value = 'all';
         filterType.value = 'all';
         filterRows();
     };
@@ -448,6 +532,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cb.addEventListener('change', function() {
             const itemId = this.getAttribute('data-item-id');
             const isMatched = this.checked ? 1 : 0;
+            const row = this.closest('.tx-row');
 
             const formData = new FormData();
             formData.append('item_id', itemId);
@@ -459,8 +544,31 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') {
-                    window.location.reload();
+                if (data.status === 'success' && data.summary) {
+                    row.setAttribute('data-matched', isMatched ? 'matched' : 'unmatched');
+                    filterRows();
+
+                    const s = data.summary;
+                    document.getElementById('clearedVal').textContent = 'LKR ' + s.cleared_balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('diffVal').textContent = 'LKR ' + s.difference.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('transitVal').textContent = 'LKR ' + s.deposits_in_transit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('outstandingVal').textContent = 'LKR ' + s.outstanding_cheques.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('adjBankVal').textContent = 'LKR ' + s.adjusted_bank.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('adjBookVal').textContent = 'LKR ' + s.adjusted_book.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                    const diffCard = document.getElementById('diffCard');
+                    const diffSub = document.getElementById('diffSub');
+                    const btnFinalize = document.getElementById('btnFinalize');
+
+                    if (Math.abs(s.difference) < 0.009) {
+                        diffCard.className = 'kpi-card success';
+                        diffSub.textContent = 'Balanced (0.00)';
+                        if (btnFinalize) btnFinalize.disabled = false;
+                    } else {
+                        diffCard.className = 'kpi-card danger';
+                        diffSub.textContent = 'Unreconciled Difference';
+                        if (btnFinalize) btnFinalize.disabled = true;
+                    }
                 } else {
                     alert(data.message || 'Failed to update match');
                     this.checked = !this.checked;
@@ -504,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnFinalize = document.getElementById('btnFinalize');
     if (btnFinalize) {
         btnFinalize.addEventListener('click', function() {
-            if (!confirm('Are you sure you want to finalize and lock this Bank Reconciliation?')) {
+            if (!confirm('Are you sure you want to finalize and lock this Bank Reconciliation? This will lock matched transactions and establish the confirmed closing balance for the next month.')) {
                 return;
             }
 
@@ -512,6 +620,35 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('reconciliation_id', '<?= $rec->id ?>');
 
             fetch('<?= APP_URL ?>/bankreconciliation/finalize_ajax', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                if (data.status === 'success') {
+                    window.location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Server connection error.');
+            });
+        });
+    }
+
+    // AJAX Reopen
+    const btnReopen = document.getElementById('btnReopen');
+    if (btnReopen) {
+        btnReopen.addEventListener('click', function() {
+            if (!confirm('Are you sure you want to reopen this finalized Bank Reconciliation for editing? Transactions will be unlocked.')) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('reconciliation_id', '<?= $rec->id ?>');
+
+            fetch('<?= APP_URL ?>/bankreconciliation/reopen_ajax', {
                 method: 'POST',
                 body: formData
             })
