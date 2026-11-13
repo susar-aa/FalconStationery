@@ -608,18 +608,12 @@ class Delivery {
             // so the reconciliation gate evaluates actual ledger state rather than an unposted pre-finalization state
             $this->ensureAndPostRouteInvoiceJournalEntries($ridsStr, $adminUserId, $debitAccounts, $creditAccounts);
 
-            // GATE 4: Reconciliation variance must be approved with an explicit reason if variance > 0.01
+            // Reconciliation variance check (optional reason recorded if provided, no blocking exception)
             require_once __DIR__ . '/RepTracking.php';
             $trackingModel = new RepTracking();
             $rec = $trackingModel->getRouteGLReconciliation(intval($delivery->rep_route_id));
             $variance = round(abs(floatval($rec['variance'] ?? 0.0)), 2);
-
             $cleanReason = !empty($varianceApprovalReason) ? trim($varianceApprovalReason) : null;
-            if ($variance > 0.01) {
-                if (empty($cleanReason)) {
-                    throw new Exception("Cannot finalize route: A reconciliation variance of Rs. " . number_format($variance, 2) . " exists between invoice sales total (Rs. " . number_format($rec['invoice_sales_total'], 2) . ") and GL AR entries (Rs. " . number_format($rec['gl_ar_total'], 2) . "). An explicit variance approval reason must be provided to approve and close this route.");
-                }
-            }
 
             if ($vehicleNumber !== null && $driverName !== null) {
                 $this->db->query("UPDATE deliveries 
@@ -669,6 +663,9 @@ class Delivery {
             $this->db->query("SELECT id, invoice_number, total_amount, global_discount_val, global_discount_type, tax_amount, journal_entry_id, delivery_status, stock_status FROM invoices WHERE rep_route_id IN ($ridsStr) AND status != 'Voided'");
             $invoices = $this->db->resultSet();
 
+            if (!class_exists('Cache') && file_exists(dirname(__DIR__, 2) . '/core/Cache.php')) {
+                require_once dirname(__DIR__, 2) . '/core/Cache.php';
+            }
             require_once __DIR__ . '/FIFO.php';
             require_once __DIR__ . '/Item.php';
             require_once __DIR__ . '/StockLedger.php';

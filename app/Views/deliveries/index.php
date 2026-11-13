@@ -1409,42 +1409,6 @@ error_reporting(E_ALL);
                 // Swap view status filter to Finalized list and reload details
                 setStatusFilter('Finalized');
                 loadDeliveryDetails(currentDeliveryId);
-            } else if (res.message && res.message.includes("explicit variance approval reason must be provided")) {
-                const reason = prompt(res.message + "\n\nPlease enter the variance approval reason to authorize closure:");
-                if (reason && reason.trim().length > 0) {
-                    btnFinalize.disabled = true;
-                    btnFinalize.innerText = "⚖️ Approving with Variance...";
-                    fetch('<?= APP_URL ?>/delivery/finalize', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            delivery_id: currentDeliveryId,
-                            selected_payment_ids: selectedPaymentIds,
-                            selected_invoice_ids: selectedInvoiceIds,
-                            debit_accounts: debitAccounts,
-                            credit_accounts: creditAccounts,
-                            returned_items: returnedItems,
-                            variance_approval_reason: reason.trim()
-                        })
-                    })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            alert("Delivery settled and finalized with approved variance!");
-                            const meta = document.getElementById('del_data_' + currentDeliveryId);
-                            if (meta) meta.setAttribute('data-status', 'Finalized');
-                            setStatusFilter('Finalized');
-                            loadDeliveryDetails(currentDeliveryId);
-                        } else {
-                            alert("Error during finalization: " + data.message);
-                            btnFinalize.disabled = false;
-                            btnFinalize.innerText = "⚖️ Finalize & Balance Settle Route";
-                        }
-                    });
-                } else {
-                    btnFinalize.disabled = false;
-                    btnFinalize.innerText = "⚖️ Finalize & Balance Settle Route";
-                }
             } else {
                 alert("Error during finalization: " + res.message);
                 btnFinalize.disabled = false;

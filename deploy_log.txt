@@ -4571,3 +4571,19 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Sat 11/14/2026  1:04:22.03 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Models/Delivery.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/RepTracking.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/deliveries/index.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/rep-tracking/index.js.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 2c53ee0] Update: app/Models/Delivery.php, app/Models/RepTracking.php, app/Views/deliveries/index.php, app/Views/rep-tracking/index.js.php, deploy_log.txt
+ 5 files changed, 245 insertions(+), 162 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   633494e..2c53ee0  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Sat 11/14/2026  1:12:11.26 
+=================================================== 
+Adding changes... 
