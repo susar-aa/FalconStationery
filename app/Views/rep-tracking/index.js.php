@@ -4646,6 +4646,45 @@
                 alert("Settle balancing successfully completed! Route marked as Completed.");
                 window.shouldReloadOnClose = true;
                 openBalancingReportModal(delId);
+            } else if (data.message && data.message.includes("explicit variance approval reason must be provided")) {
+                const reason = prompt(data.message + "\n\nPlease enter the variance approval reason to approve and close this route:");
+                if (reason && reason.trim().length > 0) {
+                    btn.disabled = true;
+                    btn.innerText = 'Approving with Variance...';
+                    fetchSecure('<?= APP_URL ?>/RepTracking/finalize', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            delivery_id: parseInt(delId),
+                            selected_payment_ids: selectedPaymentIds,
+                            selected_invoice_ids: selectedInvoiceIds,
+                            debit_accounts: debitAccounts,
+                            credit_accounts: creditAccounts,
+                            returned_items: returnedItems,
+                            vehicle_number: vehicle,
+                            driver_name: driver,
+                            partner_name: partner,
+                            variance_approval_reason: reason.trim()
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(resData => {
+                        if (resData.status === 'success') {
+                            alert("Route finalized with approved variance successfully! Route marked as Completed.");
+                            window.shouldReloadOnClose = true;
+                            openBalancingReportModal(delId);
+                        } else {
+                            alert("Error: " + resData.message);
+                            btn.disabled = false;
+                            btn.innerText = '<i class="ph ph-scales"></i> Settle Balancing & Finalize Route';
+                            checkSettleVerification();
+                        }
+                    });
+                } else {
+                    btn.disabled = false;
+                    btn.innerText = '<i class="ph ph-scales"></i> Settle Balancing & Finalize Route';
+                    checkSettleVerification();
+                }
             } else {
                 alert("Error: " + data.message);
                 btn.disabled = false;

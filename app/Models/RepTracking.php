@@ -230,18 +230,19 @@ class RepTracking {
         $invoiceSalesTotal = floatval($invRow->invoice_sales_total ?? 0.0);
         $invoiceCount = intval($invRow->total_invoices ?? 0);
 
-        // 2. GL Accounts Receivable (Debit sum on AR account 1200) for route invoices
+        // 2. GL Accounts Receivable (Debit sum on AR account 1200 / Asset Receivables) for route invoices
         $this->db->query("
             SELECT COALESCE(SUM(inv_ar.ar_debit), 0.0) as gl_ar_debit
             FROM (
                 SELECT i.id, MAX(t.debit) as ar_debit
                 FROM invoices i
-                JOIN journal_entries je ON i.journal_entry_id = je.id
+                JOIN journal_entries je ON (i.journal_entry_id = je.id OR (i.journal_entry_id IS NULL AND je.reference = i.invoice_number))
                 JOIN transactions t ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
                 WHERE i.rep_route_id IN ($placeholdersStr) 
                   AND i.status NOT IN ('Voided', 'Cancelled') AND (i.delivery_status IS NULL OR i.delivery_status != 'Cancelled')
-                  AND coa.account_code = '1200'
+                  AND (coa.account_code = '1200' OR coa.account_code LIKE '1200%' OR (coa.account_type = 'Asset' AND (coa.account_name LIKE '%Receivable%' OR coa.account_name LIKE '%Debtor%')))
+                  AND t.debit > 0
                 GROUP BY i.id
             ) inv_ar
         ");
@@ -260,11 +261,11 @@ class RepTracking {
             FROM (
                 SELECT 
                     i.id,
-                    MAX(CASE WHEN coa.account_code = '4000' THEN t.credit ELSE 0 END) as gl_gross_sales,
-                    MAX(CASE WHEN coa.account_code = '4050' THEN t.debit ELSE 0 END) as gl_discounts,
-                    MAX(CASE WHEN coa.account_code = '2110' THEN t.credit ELSE 0 END) as gl_tax
+                    MAX(CASE WHEN (coa.account_code = '4000' OR coa.account_code LIKE '4000%' OR coa.account_type = 'Revenue') THEN t.credit ELSE 0 END) as gl_gross_sales,
+                    MAX(CASE WHEN (coa.account_code = '4050' OR coa.account_code LIKE '4050%') THEN t.debit ELSE 0 END) as gl_discounts,
+                    MAX(CASE WHEN (coa.account_code = '2110' OR coa.account_code LIKE '2110%') THEN t.credit ELSE 0 END) as gl_tax
                 FROM invoices i
-                JOIN journal_entries je ON i.journal_entry_id = je.id
+                JOIN journal_entries je ON (i.journal_entry_id = je.id OR (i.journal_entry_id IS NULL AND je.reference = i.invoice_number))
                 JOIN transactions t ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
                 WHERE i.rep_route_id IN ($placeholdersStr) 
