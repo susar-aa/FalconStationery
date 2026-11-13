@@ -4528,3 +4528,21 @@ To https://github.com/susar-aa/FalconStationery.git
 Deployment Log - Tue 11/10/2026 12:36:25.16 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'app/Controllers/BankReconciliationController.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Models/BankReconciliation.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/bank_reconciliation/create.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/bank_reconciliation/reconcile.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/Views/bank_reconciliation/report.php', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'schema_update.sql', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 8d3cea8] Update: app/Controllers/BankReconciliationController.php, app/Models/BankReconciliation.php, app/Views/bank_reconciliation/create.php, app/Views/bank_reconciliation/reconcile.php, app/Views/bank_reconciliation/report.php, deploy_log.txt, schema_update.sql
+ 7 files changed, 720 insertions(+), 125 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   858eef8..8d3cea8  main -> main
+=================================================== 
+=================================================== 
+Deployment Log - Fri 11/13/2026 15:40:09.44 
+=================================================== 
+Adding changes... 
