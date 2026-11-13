@@ -190,6 +190,44 @@ class BankingController extends Controller {
 
         $transactions = $this->coaModel->getBankLedger($accountId);
 
+        // Export to Excel / CSV if requested
+        if (isset($_GET['export']) && in_array(strtolower($_GET['export']), ['excel', 'csv', 'true', '1'])) {
+            if (ob_get_level()) { ob_end_clean(); }
+            $cleanCode = preg_replace('/[^a-zA-Z0-9_-]/', '_', $account->account_code ?: 'bank');
+            $filename = 'bank_register_' . $cleanCode . '_' . date('Ymd_His') . '.csv';
+
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Pragma: no-cache');
+            header('Expires: 0');
+
+            $output = fopen('php://output', 'w');
+            // Write UTF-8 BOM so Microsoft Excel correctly renders Unicode characters
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Header row
+            fputcsv($output, ['Date', 'Reference', 'Description', 'Debit', 'Credit', 'Status']);
+
+            foreach ($transactions as $t) {
+                $st = $t->status ?? $t->entry_status ?? '';
+                $statusText = ($st === 'Voided') ? 'Voided' : ($t->is_cleared ? 'Cleared' : 'Uncleared');
+                $debitVal = ($t->debit > 0) ? number_format((float)$t->debit, 2, '.', '') : '0.00';
+                $creditVal = ($t->credit > 0) ? number_format((float)$t->credit, 2, '.', '') : '0.00';
+
+                fputcsv($output, [
+                    date('Y-m-d', strtotime($t->entry_date)),
+                    $t->reference ?? '',
+                    $t->description ?? '',
+                    $debitVal,
+                    $creditVal,
+                    $statusText
+                ]);
+            }
+
+            fclose($output);
+            exit;
+        }
+
         $data = [
             'title' => 'Account Ledger: ' . $account->account_name,
             'content_view' => 'banking/ledger',

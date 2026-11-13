@@ -122,6 +122,26 @@ foreach ($data['transactions'] ?? [] as $t) {
     font-size: 15px; color: var(--t-secondary); margin: 6px 0 0 0; font-weight: 500;
 }
 
+/* ---- Action Buttons ---- */
+.sf-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 9px 16px; font-size: 13px; font-weight: 600;
+    border-radius: var(--r-sm); border: none; cursor: pointer;
+    transition: all var(--dur-fast); text-decoration: none;
+    box-shadow: var(--shadow-xs);
+}
+.sf-btn-excel {
+    background: #107c41; color: #ffffff;
+}
+.sf-btn-excel:hover {
+    background: #0b5a2f; color: #ffffff;
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+.sf-btn-excel:active {
+    transform: translateY(0);
+}
+
 /* ---- Quick Stats Grid ---- */
 .stats-grid {
     display: grid;
@@ -219,6 +239,11 @@ foreach ($data['transactions'] ?? [] as $t) {
                 <div class="sf-title-col">
                     <h1>Bank Register</h1>
                     <p><?= htmlspecialchars($data['account']->account_code) ?> — <?= htmlspecialchars($data['account']->account_name) ?></p>
+                </div>
+                <div class="sf-actions-col">
+                    <a href="<?= APP_URL ?>/banking/ledger/<?= $data['account']->id ?>?export=excel" class="sf-btn sf-btn-excel">
+                        <i class="fa-solid fa-file-excel"></i> Export Excel
+                    </a>
                 </div>
             </div>
         </div>
