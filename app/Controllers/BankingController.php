@@ -189,6 +189,7 @@ class BankingController extends Controller {
         if (!$account) { die("Account not found."); }
 
         $transactions = $this->coaModel->getBankLedger($accountId);
+        $searchQuery = trim($_GET['q'] ?? '');
 
         // Export to Excel / CSV if requested
         if (isset($_GET['export']) && in_array(strtolower($_GET['export']), ['excel', 'csv', 'true', '1'])) {
@@ -208,7 +209,35 @@ class BankingController extends Controller {
             // Header row
             fputcsv($output, ['Date', 'Reference', 'Description', 'Debit', 'Credit', 'Status']);
 
-            foreach ($transactions as $t) {
+            $exportList = $transactions;
+            if ($searchQuery !== '') {
+                $lowerQ = strtolower($searchQuery);
+                $lowerQNoComma = str_replace(',', '', $lowerQ);
+                $exportList = array_values(array_filter($exportList, function($t) use ($lowerQ, $lowerQNoComma) {
+                    $ref = strtolower($t->reference ?? '');
+                    $desc = strtolower($t->description ?? '');
+                    $dateFormatted = strtolower(date('M d, Y', strtotime($t->entry_date)));
+                    $dateIso = strtolower(date('Y-m-d', strtotime($t->entry_date)));
+                    $st = $t->status ?? $t->entry_status ?? '';
+                    $statusText = strtolower(($st === 'Voided') ? 'voided' : ($t->is_cleared ? 'cleared' : 'uncleared'));
+                    $debit = (float)$t->debit;
+                    $credit = (float)$t->credit;
+
+                    return (
+                        strpos($ref, $lowerQ) !== false ||
+                        strpos($desc, $lowerQ) !== false ||
+                        strpos($dateFormatted, $lowerQ) !== false ||
+                        strpos($dateIso, $lowerQ) !== false ||
+                        strpos($statusText, $lowerQ) !== false ||
+                        strpos((string)$debit, $lowerQNoComma) !== false ||
+                        strpos((string)$credit, $lowerQNoComma) !== false ||
+                        strpos(number_format($debit, 2), $lowerQ) !== false ||
+                        strpos(number_format($credit, 2), $lowerQ) !== false
+                    );
+                }));
+            }
+
+            foreach ($exportList as $t) {
                 $st = $t->status ?? $t->entry_status ?? '';
                 $statusText = ($st === 'Voided') ? 'Voided' : ($t->is_cleared ? 'Cleared' : 'Uncleared');
                 $debitVal = ($t->debit > 0) ? number_format((float)$t->debit, 2, '.', '') : '0.00';
@@ -232,7 +261,8 @@ class BankingController extends Controller {
             'title' => 'Account Ledger: ' . $account->account_name,
             'content_view' => 'banking/ledger',
             'account' => $account,
-            'transactions' => $transactions
+            'transactions' => $transactions,
+            'searchQuery' => $searchQuery
         ];
 
         $this->view('layouts/main', $data);

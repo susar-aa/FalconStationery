@@ -122,7 +122,71 @@ foreach ($data['transactions'] ?? [] as $t) {
     font-size: 15px; color: var(--t-secondary); margin: 6px 0 0 0; font-weight: 500;
 }
 
-/* ---- Action Buttons ---- */
+/* ---- Action Buttons & Search ---- */
+.sf-actions-col {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.sf-search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-separator);
+    border-radius: var(--r-pill);
+    padding: 8px 16px;
+    width: 320px;
+    box-shadow: var(--shadow-xs);
+    transition: all var(--dur-fast);
+}
+.sf-search-box:focus-within {
+    border-color: var(--c-blue);
+    box-shadow: 0 0 0 3px var(--c-blue-light);
+}
+.sf-search-box i.search-icon {
+    color: var(--t-label);
+    font-size: 13px;
+}
+.sf-search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--t-primary);
+    width: 100%;
+}
+.sf-search-box input::placeholder {
+    color: var(--t-tertiary);
+    font-weight: 400;
+}
+.sf-search-clear {
+    background: transparent;
+    border: none;
+    color: var(--t-tertiary);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color var(--dur-fast);
+}
+.sf-search-clear:hover {
+    color: var(--t-primary);
+}
+.search-status-bar {
+    padding: 10px 20px;
+    background: var(--c-surface2);
+    border-bottom: 0.5px solid var(--c-separator);
+    font-size: 13px;
+    color: var(--t-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 .sf-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 9px 16px; font-size: 13px; font-weight: 600;
@@ -241,7 +305,14 @@ foreach ($data['transactions'] ?? [] as $t) {
                     <p><?= htmlspecialchars($data['account']->account_code) ?> — <?= htmlspecialchars($data['account']->account_name) ?></p>
                 </div>
                 <div class="sf-actions-col">
-                    <a href="<?= APP_URL ?>/banking/ledger/<?= $data['account']->id ?>?export=excel" class="sf-btn sf-btn-excel">
+                    <div class="sf-search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="ledgerSearchInput" placeholder="Search date, ref, description, amount..." value="<?= htmlspecialchars($data['searchQuery'] ?? '') ?>" autocomplete="off">
+                        <button type="button" id="ledgerSearchClear" class="sf-search-clear" style="display: none;" title="Clear search">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <a href="<?= APP_URL ?>/banking/ledger/<?= $data['account']->id ?>?export=excel" class="sf-btn sf-btn-excel" id="btnExportExcel">
                         <i class="fa-solid fa-file-excel"></i> Export Excel
                     </a>
                 </div>
@@ -252,7 +323,7 @@ foreach ($data['transactions'] ?? [] as $t) {
             <div class="stat-card blue">
                 <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
                 <div class="stat-info">
-                    <div class="stat-num">Rs: <?= number_format($data['account']->balance, 2) ?></div>
+                    <div class="stat-num">Rs: <?= number_format($data['account']->balance ?? 0, 2) ?></div>
                     <div class="stat-lbl">Current Balance</div>
                 </div>
             </div>
@@ -273,6 +344,12 @@ foreach ($data['transactions'] ?? [] as $t) {
         </div>
 
         <div class="sf-card">
+            <div id="searchStatusBar" class="search-status-bar" style="display: none;">
+                <span id="searchResultText" style="font-weight: 600;"></span>
+                <a href="javascript:void(0)" onclick="clearLedgerSearch()" style="font-size: 12px; font-weight: 700; color: var(--c-blue); text-decoration: none;">
+                    <i class="fa-solid fa-rotate-left" style="margin-right: 4px;"></i>Reset Search
+                </a>
+            </div>
             <div class="sf-table-wrapper">
                 <table class="sf-table">
                     <thead>
@@ -300,7 +377,7 @@ foreach ($data['transactions'] ?? [] as $t) {
                             $st = $t->status ?? $t->entry_status ?? '';
                             $isVoided = ($st === 'Voided');
                         ?>
-                            <tr style="<?= $isVoided ? 'opacity: 0.6; background: rgba(255, 59, 48, 0.05);' : '' ?>">
+                            <tr class="ledger-row" style="<?= $isVoided ? 'opacity: 0.6; background: rgba(255, 59, 48, 0.05);' : '' ?>">
                                 <td class="td-date"><?= date('M d, Y', strtotime($t->entry_date)) ?></td>
                                 <td class="td-ref"><?= htmlspecialchars($t->reference) ?></td>
                                 <td class="td-desc" title="<?= htmlspecialchars($t->description) ?>">
@@ -321,7 +398,20 @@ foreach ($data['transactions'] ?? [] as $t) {
                                     <?php endif; ?>
                                 </td>
                             </tr>
-                        <?php endforeach; endif; ?>
+                        <?php endforeach; ?>
+                            <tr id="searchNoMatchRow" style="display: none;">
+                                <td colspan="6" style="text-align: center; padding: 48px 20px;">
+                                    <div style="font-size: 32px; color: var(--t-tertiary); margin-bottom: 10px;">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </div>
+                                    <div style="font-size: 16px; font-weight: 700; color: var(--t-primary);">No transactions match your search</div>
+                                    <div style="font-size: 13px; color: var(--t-secondary); margin-top: 4px;" id="searchNoMatchQuery"></div>
+                                    <button type="button" onclick="clearLedgerSearch()" class="sf-btn" style="margin-top: 14px; background: var(--c-fill2); color: var(--t-primary); font-size: 12.5px; padding: 6px 16px;">
+                                        Clear Search
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -329,3 +419,120 @@ foreach ($data['transactions'] ?? [] as $t) {
 
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('ledgerSearchInput');
+    const searchClear = document.getElementById('ledgerSearchClear');
+    const exportBtn = document.getElementById('btnExportExcel');
+    const statusBar = document.getElementById('searchStatusBar');
+    const resultText = document.getElementById('searchResultText');
+    const noMatchRow = document.getElementById('searchNoMatchRow');
+    const noMatchQuery = document.getElementById('searchNoMatchQuery');
+    const rows = Array.from(document.querySelectorAll('.ledger-row'));
+    const totalRows = rows.length;
+    const baseExportUrl = '<?= APP_URL ?>/banking/ledger/<?= $data['account']->id ?>?export=excel';
+
+    function filterLedger() {
+        if (!searchInput) return;
+        const rawQuery = searchInput.value;
+        const query = rawQuery.toLowerCase().trim();
+        const queryNoComma = query.replace(/,/g, '');
+
+        if (searchClear) {
+            searchClear.style.display = query.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        // Update Export Excel link with search parameter
+        if (exportBtn) {
+            exportBtn.href = query ? (baseExportUrl + '&q=' + encodeURIComponent(rawQuery.trim())) : baseExportUrl;
+        }
+
+        // Update URL query state without full page reload
+        try {
+            const url = new URL(window.location.href);
+            if (query) {
+                url.searchParams.set('q', rawQuery.trim());
+            } else {
+                url.searchParams.delete('q');
+            }
+            window.history.replaceState({}, '', url.toString());
+        } catch (e) {}
+
+        if (!query) {
+            rows.forEach(r => r.style.display = '');
+            if (noMatchRow) noMatchRow.style.display = 'none';
+            if (statusBar) statusBar.style.display = 'none';
+            return;
+        }
+
+        let matchCount = 0;
+        rows.forEach(row => {
+            const rowText = row.innerText.toLowerCase();
+            const rowTextNoComma = rowText.replace(/,/g, '');
+            const matches = rowText.includes(query) || rowTextNoComma.includes(queryNoComma);
+
+            if (matches) {
+                row.style.display = '';
+                matchCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (matchCount === 0) {
+            if (noMatchRow) {
+                noMatchRow.style.display = '';
+                if (noMatchQuery) {
+                    noMatchQuery.textContent = 'No records found matching "' + rawQuery.trim() + '"';
+                }
+            }
+        } else {
+            if (noMatchRow) noMatchRow.style.display = 'none';
+        }
+
+        if (statusBar && resultText) {
+            statusBar.style.display = 'flex';
+            resultText.textContent = 'Showing ' + matchCount + ' of ' + totalRows + ' transaction' + (totalRows === 1 ? '' : 's') + ' matching "' + rawQuery.trim() + '"';
+        }
+    }
+
+    window.clearLedgerSearch = function() {
+        if (searchInput) {
+            searchInput.value = '';
+            filterLedger();
+            searchInput.focus();
+        }
+    };
+
+    if (searchInput) {
+        searchInput.addEventListener('input', filterLedger);
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                clearLedgerSearch();
+                searchInput.blur();
+            }
+        });
+    }
+
+    if (searchClear) {
+        searchClear.addEventListener('click', clearLedgerSearch);
+    }
+
+    // Keyboard shortcut: Press '/' to focus search input
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement !== searchInput && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+    });
+
+    // Execute filter on initial page load if query parameter exists
+    if (searchInput && searchInput.value.trim() !== '') {
+        filterLedger();
+    }
+});
+</script>

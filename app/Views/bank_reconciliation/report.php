@@ -46,7 +46,7 @@ $clearedBankBalance = round($stmtOpening + $totalMatchedDeposits - $totalMatched
 <body class="p-4">
     <div class="container" style="max-width: 900px;">
         <div class="no-print mb-4 d-flex justify-content-between align-items-center">
-            <a href="<?php echo URLROOT; ?>/bankreconciliation/reconcile/<?php echo $rec->id; ?>" class="btn btn-outline-secondary btn-sm">
+            <a href="<?php echo APP_URL; ?>/bankreconciliation/reconcile/<?php echo $rec->id; ?>" class="btn btn-outline-secondary btn-sm">
                 &larr; Back to Workspace
             </a>
             <button onclick="window.print();" class="btn btn-primary btn-sm px-4">

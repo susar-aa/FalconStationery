@@ -83,6 +83,10 @@ if (isset($_SERVER['HTTP_HOST'])) {
     define('APP_URL', 'https://falcon.trycurtiss.com');
 }
 
+if (!defined('URLROOT')) {
+    define('URLROOT', APP_URL);
+}
+
 // Site Name
 define('APP_NAME', 'CURTISS ERP');
 

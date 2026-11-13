@@ -5,7 +5,7 @@ class BankReconciliationController extends Controller {
 
     public function __construct() {
         if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . URLROOT . '/users/login');
+            header('Location: ' . APP_URL . '/users/login');
             exit;
         }
         $this->recModel = $this->model('BankReconciliation');
@@ -57,7 +57,7 @@ class BankReconciliationController extends Controller {
 
                 if ($accountId <= 0 || empty($startDate) || empty($endDate)) {
                     $_SESSION['flash_error'] = 'Please select a bank account and statement date period.';
-                    header('Location: ' . URLROOT . '/bankreconciliation/create');
+                    header('Location: ' . APP_URL . '/bankreconciliation/create');
                     exit;
                 }
 
@@ -79,17 +79,17 @@ class BankReconciliationController extends Controller {
 
                 $recId = $this->recModel->createDraft($data);
                 if ($recId) {
-                    header('Location: ' . URLROOT . '/bankreconciliation/reconcile/' . $recId);
+                    header('Location: ' . APP_URL . '/bankreconciliation/reconcile/' . $recId);
                     exit;
                 } else {
                     $_SESSION['flash_error'] = 'Failed to create reconciliation workspace.';
-                    header('Location: ' . URLROOT . '/bankreconciliation/create');
+                    header('Location: ' . APP_URL . '/bankreconciliation/create');
                     exit;
                 }
             } catch (Throwable $e) {
                 error_log("store reconciliation error: " . $e->getMessage());
                 $_SESSION['flash_error'] = 'Failed to create reconciliation: ' . $e->getMessage();
-                header('Location: ' . URLROOT . '/bankreconciliation/create');
+                header('Location: ' . APP_URL . '/bankreconciliation/create');
                 exit;
             }
         }
@@ -101,7 +101,7 @@ class BankReconciliationController extends Controller {
             $reconciliation = $this->recModel->getReconciliationById($id);
             if (!$reconciliation) {
                 $_SESSION['flash_error'] = 'Reconciliation record not found.';
-                header('Location: ' . URLROOT . '/bankreconciliation');
+                header('Location: ' . APP_URL . '/bankreconciliation');
                 exit;
             }
 
@@ -127,7 +127,7 @@ class BankReconciliationController extends Controller {
         } catch (Throwable $e) {
             error_log("reconcile workspace error: " . $e->getMessage());
             $_SESSION['flash_error'] = 'Error loading reconciliation workspace: ' . $e->getMessage();
-            header('Location: ' . URLROOT . '/bankreconciliation');
+            header('Location: ' . APP_URL . '/bankreconciliation');
             exit;
         }
     }
@@ -210,7 +210,7 @@ class BankReconciliationController extends Controller {
         $reconciliation = $this->recModel->getReconciliationById($id);
         if (!$reconciliation) {
             flash('rec_message', 'Reconciliation record not found', 'alert alert-danger');
-            header('Location: ' . URLROOT . '/bankreconciliation');
+            header('Location: ' . APP_URL . '/bankreconciliation');
             exit;
         }
 
@@ -238,7 +238,7 @@ class BankReconciliationController extends Controller {
                 flash('rec_message', $result['message'], 'alert alert-danger');
             }
         }
-        header('Location: ' . URLROOT . '/bankreconciliation');
+        header('Location: ' . APP_URL . '/bankreconciliation');
         exit;
     }
 }
