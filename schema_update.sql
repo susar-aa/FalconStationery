@@ -19,3 +19,13 @@ ALTER TABLE `cheques`
   ADD COLUMN IF NOT EXISTS `loan_id` int(11) DEFAULT NULL AFTER `loan_repayment_id`,
   ADD INDEX IF NOT EXISTS `idx_cheques_loan_rep` (`loan_repayment_id`),
   ADD INDEX IF NOT EXISTS `idx_cheques_loan` (`loan_id`);
+
+-- 4. Add missing loan accounts and tracking columns to loans table
+ALTER TABLE `loans` 
+  ADD COLUMN IF NOT EXISTS `interest_expense_account_id` int(11) DEFAULT NULL AFTER `liability_account_id`,
+  ADD COLUMN IF NOT EXISTS `bank_charges_account_id` int(11) DEFAULT NULL AFTER `interest_expense_account_id`,
+  ADD COLUMN IF NOT EXISTS `loan_type` varchar(50) DEFAULT 'Term Loan' AFTER `loan_number`,
+  ADD COLUMN IF NOT EXISTS `monthly_installment` decimal(15,2) DEFAULT 0.00 AFTER `principal_amount`,
+  ADD COLUMN IF NOT EXISTS `interest_type` varchar(50) DEFAULT 'Flat Rate' AFTER `interest_rate`,
+  ADD COLUMN IF NOT EXISTS `is_historical_opening` tinyint(1) DEFAULT 0 AFTER `status`,
+  ADD COLUMN IF NOT EXISTS `opening_balance` decimal(15,2) DEFAULT 0.00 AFTER `is_historical_opening`;

@@ -4,6 +4,90 @@ class Loan {
 
     public function __construct() {
         $this->db = new Database();
+        $this->selfHealLoansTable();
+    }
+
+    public function selfHealLoansTable(): void {
+        try {
+            $this->db->query("SHOW COLUMNS FROM loans LIKE 'interest_expense_account_id'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loans ADD COLUMN interest_expense_account_id int(11) DEFAULT NULL AFTER liability_account_id");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM loans LIKE 'bank_charges_account_id'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loans ADD COLUMN bank_charges_account_id int(11) DEFAULT NULL AFTER interest_expense_account_id");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM loans LIKE 'loan_type'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loans ADD COLUMN loan_type varchar(50) DEFAULT 'Term Loan' AFTER loan_number");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM loans LIKE 'monthly_installment'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loans ADD COLUMN monthly_installment decimal(15,2) DEFAULT 0.00 AFTER principal_amount");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM loans LIKE 'interest_type'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loans ADD COLUMN interest_type varchar(50) DEFAULT 'Flat Rate' AFTER interest_rate");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM loans LIKE 'is_historical_opening'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loans ADD COLUMN is_historical_opening tinyint(1) DEFAULT 0 AFTER status");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM loans LIKE 'opening_balance'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loans ADD COLUMN opening_balance decimal(15,2) DEFAULT 0.00 AFTER is_historical_opening");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM loan_repayments LIKE 'payment_method'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loan_repayments 
+                    ADD COLUMN journal_entry_id int(11) DEFAULT NULL AFTER loan_id,
+                    ADD COLUMN penalty_charges decimal(15,2) NOT NULL DEFAULT 0.00 AFTER bank_charges,
+                    ADD COLUMN early_settlement_rebate decimal(15,2) NOT NULL DEFAULT 0.00 AFTER penalty_charges,
+                    ADD COLUMN payment_method enum('Bank Transfer','Standing Order','Direct Debit','Cheque','Cash') DEFAULT 'Bank Transfer' AFTER total_payment,
+                    ADD COLUMN cheque_number varchar(50) DEFAULT NULL AFTER payment_method,
+                    ADD COLUMN cheque_date date DEFAULT NULL AFTER cheque_number,
+                    ADD COLUMN banking_date date DEFAULT NULL AFTER cheque_date");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            $this->db->query("SHOW COLUMNS FROM cheques LIKE 'loan_repayment_id'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE cheques 
+                    ADD COLUMN loan_repayment_id int(11) DEFAULT NULL AFTER supplier_payment_id,
+                    ADD COLUMN loan_id int(11) DEFAULT NULL AFTER loan_repayment_id");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
     }
 
     public function getAllBankAccounts() {
