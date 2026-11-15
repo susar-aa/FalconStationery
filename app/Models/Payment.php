@@ -471,10 +471,24 @@ class Payment {
 
             // 4. Save Cheque details if applicable
             if ($data['method'] === 'Cheque') {
-                $this->db->query("INSERT INTO cheques (vendor_id, service_provider_id, customer_id, bank_name, cheque_number, amount, banking_date, status, bank_account_id, supplier_payment_id, created_by) 
-                                  VALUES (:vid, :spid, NULL, :bn, :cn, :amt, :bdate, 'Pending', :bank_account_id, :supplier_payment_id, :uid)");
+                $payeeName = null;
+                if (!empty($data['supplier_id'])) {
+                    $this->db->query("SELECT name FROM vendors WHERE id = :vid");
+                    $this->db->bind(':vid', $data['supplier_id']);
+                    $vRow = $this->db->single();
+                    if ($vRow) $payeeName = $vRow->name;
+                } elseif (!empty($data['service_provider_id'])) {
+                    $this->db->query("SELECT name FROM service_providers WHERE id = :spid");
+                    $this->db->bind(':spid', $data['service_provider_id']);
+                    $spRow = $this->db->single();
+                    if ($spRow) $payeeName = $spRow->name;
+                }
+
+                $this->db->query("INSERT INTO cheques (type, vendor_id, service_provider_id, customer_id, payee_name, bank_name, cheque_number, amount, banking_date, status, bank_account_id, supplier_payment_id, created_by) 
+                                  VALUES ('Issued', :vid, :spid, NULL, :payee, :bn, :cn, :amt, :bdate, 'Pending', :bank_account_id, :supplier_payment_id, :uid)");
                 $this->db->bind(':vid', !empty($data['supplier_id']) ? $data['supplier_id'] : null);
                 $this->db->bind(':spid', !empty($data['service_provider_id']) ? $data['service_provider_id'] : null);
+                $this->db->bind(':payee', $payeeName);
                 $this->db->bind(':bn', $data['cheque_bank']);
                 $this->db->bind(':cn', $data['cheque_number']);
                 $this->db->bind(':amt', $data['amount']);
@@ -1652,10 +1666,24 @@ class Payment {
                     $this->db->bind(':id', $chk->id);
                     $this->db->execute();
                 } else {
-                    $this->db->query("INSERT INTO cheques (vendor_id, service_provider_id, customer_id, bank_name, cheque_number, amount, banking_date, status, bank_account_id, supplier_payment_id, created_by) 
-                                      VALUES (:vid, :spid, NULL, :bn, :cn, :amt, :bdate, 'Pending', :bank_account_id, :supplier_payment_id, :uid)");
+                    $payeeName = null;
+                    if (!empty($data['supplier_id'])) {
+                        $this->db->query("SELECT name FROM vendors WHERE id = :vid");
+                        $this->db->bind(':vid', $data['supplier_id']);
+                        $vRow = $this->db->single();
+                        if ($vRow) $payeeName = $vRow->name;
+                    } elseif (!empty($data['service_provider_id'])) {
+                        $this->db->query("SELECT name FROM service_providers WHERE id = :spid");
+                        $this->db->bind(':spid', $data['service_provider_id']);
+                        $spRow = $this->db->single();
+                        if ($spRow) $payeeName = $spRow->name;
+                    }
+
+                    $this->db->query("INSERT INTO cheques (type, vendor_id, service_provider_id, customer_id, payee_name, bank_name, cheque_number, amount, banking_date, status, bank_account_id, supplier_payment_id, created_by) 
+                                      VALUES ('Issued', :vid, :spid, NULL, :payee, :bn, :cn, :amt, :bdate, 'Pending', :bank_account_id, :supplier_payment_id, :uid)");
                     $this->db->bind(':vid', !empty($data['supplier_id']) ? $data['supplier_id'] : null);
                     $this->db->bind(':spid', !empty($data['service_provider_id']) ? $data['service_provider_id'] : null);
+                    $this->db->bind(':payee', $payeeName);
                     $this->db->bind(':bn', $data['cheque_bank']);
                     $this->db->bind(':cn', $data['cheque_number']);
                     $this->db->bind(':amt', $data['amount']);

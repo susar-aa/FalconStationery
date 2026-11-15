@@ -294,7 +294,7 @@ class Report {
                    COALESCE(SUM({$gt}), 0) as route_sales
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN invoices i ON i.rep_route_id = r.id AND i.status != 'Voided'
                 AND i.invoice_date BETWEEN :start AND :end
             WHERE DATE(r.start_time) BETWEEN :start2 AND :end2

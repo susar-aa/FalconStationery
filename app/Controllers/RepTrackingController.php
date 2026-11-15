@@ -226,7 +226,7 @@ class RepTrackingController extends Controller {
             SELECT COUNT(DISTINCT r.id) as cnt
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN route_bindings rb ON r.route_binding_id = rb.id
             WHERE r.status != 'Bound' AND r.status != 'Bound Into Route'
               AND r.status != 'Completed' AND r.status != 'Finalized'
@@ -261,7 +261,7 @@ class RepTrackingController extends Controller {
                 COALESCE(dpi.verified_items, 0) as verified_items
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN route_bindings rb ON r.route_binding_id = rb.id
             LEFT JOIN (
                 SELECT rep_route_id, 
@@ -360,7 +360,7 @@ class RepTrackingController extends Controller {
             SELECT COUNT(DISTINCT r.id) as cnt
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN route_bindings rb ON r.route_binding_id = rb.id
             WHERE r.status IN ('Completed', 'Finalized')
               $filterSql
@@ -394,7 +394,7 @@ class RepTrackingController extends Controller {
                 COALESCE(dpi.verified_items, 0) as verified_items
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN route_bindings rb ON r.route_binding_id = rb.id
             LEFT JOIN (
                 SELECT rep_route_id, 
@@ -3509,7 +3509,7 @@ class RepTrackingController extends Controller {
         $db->query("SELECT r.route_name, r.route_number, COALESCE(e.first_name, u.username) as rep_first_name, COALESCE(e.last_name, '') as rep_last_name
                     FROM rep_daily_routes r
                     LEFT JOIN users u ON r.user_id = u.id
-                    LEFT JOIN employees e ON u.email = e.email
+                    LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
                     WHERE r.id = :rid");
         $db->bind(':rid', $creditNote->rep_route_id);
         $routeInfo = $db->single();

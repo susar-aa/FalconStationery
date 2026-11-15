@@ -2468,7 +2468,7 @@ class RepDashboardController extends Controller {
                 JOIN customers c ON i.customer_id = c.id
                 LEFT JOIN rep_daily_routes r ON i.rep_route_id = r.id
                 LEFT JOIN users u ON i.created_by = u.id
-                LEFT JOIN employees e ON u.email = e.email
+                LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
                 LEFT JOIN payment_terms pt ON i.payment_term_id = pt.id
                 WHERE i.id = :invoice_id
                   AND (i.created_by = :uid1 OR i.rep_route_id IN (SELECT id FROM rep_daily_routes WHERE user_id = :uid2))";

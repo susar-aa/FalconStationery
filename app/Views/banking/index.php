@@ -283,6 +283,13 @@ if (isset($_GET['success'])) {
             </div>
         <?php endif; ?>
 
+        <!-- Bank Accounts Section Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h2 style="font-size: 18px; font-weight: 700; color: var(--t-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-building-columns" style="color: var(--c-blue); font-size: 16px;"></i> Bank Accounts
+            </h2>
+        </div>
+
         <!-- Bank Accounts Grid -->
         <div class="bank-grid" id="bankGrid">
             <?php if(empty($data['bank_accounts'])): ?>
@@ -342,6 +349,50 @@ if (isset($_GET['success'])) {
                 </div>
             <?php endforeach; endif; ?>
         </div>
+
+        <?php if(!empty($data['cash_accounts'])): ?>
+            <!-- Cash Registers Section Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 36px; margin-bottom: 16px;">
+                <h2 style="font-size: 18px; font-weight: 700; color: var(--t-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-cash-register" style="color: #34c759; font-size: 16px;"></i> Cash Accounts & Registers
+                </h2>
+            </div>
+            
+            <div class="bank-grid" id="cashGrid">
+                <?php foreach($data['cash_accounts'] as $cacc): 
+                    $searchTerms = strtolower($cacc->account_name . ' ' . $cacc->account_code . ' ' . ($cacc->account_category ?? ''));
+                ?>
+                    <div class="bank-card real-bank bank-card-item" data-search="<?= htmlspecialchars($searchTerms, ENT_QUOTES) ?>">
+                        <div class="b-head">
+                            <div>
+                                <span class="status-pill real" style="background: rgba(52, 199, 89, 0.12); color: #28a745;">Cash Register</span>
+                            </div>
+                        </div>
+
+                        <div class="b-title" style="margin-top: 8px;">
+                            <?= htmlspecialchars($cacc->account_name) ?>
+                        </div>
+                        
+                        <div class="b-code">GL: <?= htmlspecialchars($cacc->account_code) ?></div>
+                        
+                        <div class="b-details">
+                            <div><i class="fa-solid fa-money-bill-wave" style="width: 16px; text-align: center;"></i> <?= htmlspecialchars($cacc->account_type) ?> &bull; <?= htmlspecialchars($cacc->account_category ?? 'Current Asset') ?></div>
+                            <div>&nbsp;</div>
+                        </div>
+                        
+                        <div class="b-bal-wrap">
+                            <div class="b-bal-lbl">Current Ledger Balance</div>
+                            <div class="b-bal-val" style="color: <?= $cacc->balance < 0 ? 'var(--c-red)' : 'var(--t-primary)' ?>;">Rs <?= number_format($cacc->balance, 2) ?></div>
+                        </div>
+                        
+                        <div class="b-actions">
+                            <a href="<?= APP_URL ?>/banking/ledger/<?= $cacc->id ?>" class="sf-btn sf-btn-secondary"><i class="fa-solid fa-list"></i> Cash Register</a>
+                            <a href="<?= APP_URL ?>/accounting/history/<?= $cacc->id ?>" class="sf-btn sf-btn-secondary" title="View Account History" style="padding: 9px 12px;"><i class="fa-solid fa-clock-rotate-left"></i></a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
 
     </div>
 </div>

@@ -41,7 +41,7 @@ class MasterRouteController extends RepTrackingController {
             SELECT COUNT(DISTINCT r.id) as cnt
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN route_bindings rb ON r.route_binding_id = rb.id
             WHERE 1=1
               $filterSql
@@ -74,7 +74,7 @@ class MasterRouteController extends RepTrackingController {
                 COALESCE(dpi.verified_items, 0) as verified_items
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN route_bindings rb ON r.route_binding_id = rb.id
             LEFT JOIN (
                 SELECT rep_route_id, 

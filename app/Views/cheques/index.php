@@ -374,18 +374,20 @@
                             <thead>
                                 <tr>
                                     <th style="width: 25%;">Payee / Customer / Supplier</th>
-                                    <th style="width: 20%;">Bank details</th>
-                                    <th style="width: 15%;">Cheque Number</th>
+                                    <th style="width: 18%;">Bank details</th>
+                                    <th style="width: 13%;">Cheque Number</th>
+                                    <th style="width: 15%;">Banking Date</th>
                                     <th style="width: 12%;">Status</th>
                                     <th style="width: 15%; text-align: right;">Amount (Rs:)</th>
-                                    <th style="width: 13%; text-align: right;"></th>
+                                    <th style="width: 12%; text-align: right;"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach($cheques as $chk): 
-                                    $isIssued = ($chk->type === 'Issued') || !empty($chk->bank_account_id) || !empty($chk->vendor_id) || !empty($chk->service_provider_id);
+                                    $isLoan = !empty($chk->loan_repayment_id) || !empty($chk->loan_id) || !empty($chk->loan_lender_name);
+                                    $isIssued = ($chk->type === 'Issued') || !empty($chk->bank_account_id) || !empty($chk->vendor_id) || !empty($chk->service_provider_id) || $isLoan;
                                     $typeTag = $isIssued ? 'issued' : 'received';
-                                    $displayName = $chk->customer_name ?: ($chk->vendor_name ?: ($chk->service_provider_name ?: ($chk->payee_name ?: '-')));
+                                    $displayName = $isLoan ? ($chk->loan_lender_name ?: $chk->payee_name) : ($chk->customer_name ?: ($chk->vendor_name ?: ($chk->service_provider_name ?: ($chk->payee_name ?: '-'))));
                                 ?>
                                 <tr>
                                     <td>
@@ -395,6 +397,8 @@
                                             <?php if (!empty($chk->customer_name)): ?>
                                                 <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Customer: <?= htmlspecialchars($chk->customer_name) ?></div>
                                             <?php endif; ?>
+                                        <?php elseif ($isLoan): ?>
+                                            <div style="font-size:11px; color:#2563eb; font-weight:600; margin-top:2px;"><i class="fa-solid fa-landmark"></i> Bank Loan Repayment<?= !empty($chk->loan_number_ref) ? ' (#'.htmlspecialchars($chk->loan_number_ref).')' : '' ?></div>
                                         <?php elseif (!empty($chk->customer_name)): ?>
                                             <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Customer: <?= htmlspecialchars($chk->customer_name) ?></div>
                                         <?php elseif (!empty($chk->vendor_name)): ?>
@@ -421,6 +425,23 @@
                                         </span>
                                     </td>
                                     <td>
+                                        <div style="font-weight:600; font-size:13px; color:var(--t-primary);">
+                                            <?= date('d M Y', strtotime($chk->banking_date)) ?>
+                                        </div>
+                                        <?php if ($chk->status === 'Pending'): ?>
+                                            <?php 
+                                                $diffDays = (int)floor((strtotime($chk->banking_date) - strtotime('today')) / 86400);
+                                            ?>
+                                            <?php if ($diffDays < 0): ?>
+                                                <span style="font-size:10px; color:#dc2626; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Overdue (<?= abs($diffDays) ?>d)</span>
+                                            <?php elseif ($diffDays === 0): ?>
+                                                <span style="font-size:10px; color:#d97706; font-weight:700;"><i class="fa-solid fa-calendar-day"></i> Due Today</span>
+                                            <?php else: ?>
+                                                <span style="font-size:10px; color:var(--t-secondary);"><i class="fa-regular fa-clock"></i> In <?= $diffDays ?>d</span>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
                                         <div class="sf-badge badge-<?= $chk->status ?>">
                                             <div class="dot"></div> <?= $chk->status === 'Endorsed' ? 'Endorsed (3rd Party)' : $chk->status ?>
                                         </div>
@@ -445,7 +466,7 @@
                                             <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
                                                 <i class="fa-regular fa-eye"></i>
                                             </button>
-                                            <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, '<?= $typeTag ?>', <?= $chk->customer_id ?: 'null' ?>, <?= $chk->vendor_id ?: 'null' ?>, <?= $chk->service_provider_id ?: 'null' ?>)">
+                                            <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, '<?= $typeTag ?>', <?= $chk->customer_id ?: 'null' ?>, <?= $chk->vendor_id ?: 'null' ?>, <?= $chk->service_provider_id ?: 'null' ?>, <?= $chk->loan_id ?: 'null' ?>)">
                                                 <i class="fa-solid fa-pen"></i>
                                             </button>
                                             <button class="act-btn delete" title="Delete" onclick="openDeleteModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
@@ -574,16 +595,18 @@
                                 <thead>
                                     <tr>
                                         <th style="width: 25%;">Supplier / Payee</th>
-                                        <th style="width: 20%;">Bank details</th>
-                                        <th style="width: 15%;">Cheque Number</th>
+                                        <th style="width: 18%;">Bank details</th>
+                                        <th style="width: 13%;">Cheque Number</th>
+                                        <th style="width: 15%;">Banking Date</th>
                                         <th style="width: 12%;">Status</th>
                                         <th style="width: 15%; text-align: right;">Amount (Rs:)</th>
-                                        <th style="width: 13%; text-align: right;"></th>
+                                        <th style="width: 12%; text-align: right;"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach($cheques as $chk): 
-                                        $displayName = $chk->vendor_name ?: ($chk->service_provider_name ?: ($chk->payee_name ?: '-'));
+                                        $isLoan = !empty($chk->loan_repayment_id) || !empty($chk->loan_id) || !empty($chk->loan_lender_name);
+                                        $displayName = $isLoan ? ($chk->loan_lender_name ?: $chk->payee_name) : ($chk->vendor_name ?: ($chk->service_provider_name ?: ($chk->payee_name ?: '-')));
                                     ?>
                                     <tr>
                                         <td>
@@ -593,12 +616,14 @@
                                                 <?php if(!empty($chk->customer_name)): ?>
                                                     <div style="font-size:11px; color:var(--c-green); font-weight:600; margin-top:2px;"><i class="fa-solid fa-user-check"></i> Rec'd Customer: <?= htmlspecialchars($chk->customer_name) ?></div>
                                                 <?php endif; ?>
+                                            <?php elseif ($isLoan): ?>
+                                                <div style="font-size:11px; color:#2563eb; font-weight:600; margin-top:2px;"><i class="fa-solid fa-landmark"></i> Bank Loan Repayment<?= !empty($chk->loan_number_ref) ? ' (#'.htmlspecialchars($chk->loan_number_ref).')' : '' ?></div>
                                             <?php elseif (!empty($chk->vendor_name)): ?>
                                                 <div style="font-size:11px; color:var(--c-orange); font-weight:600; margin-top:2px;"><i class="fa-solid fa-truck-field"></i> Supplier</div>
                                             <?php elseif (!empty($chk->service_provider_name)): ?>
                                                 <div style="font-size:11px; color:var(--c-purple); font-weight:600; margin-top:2px;"><i class="fa-solid fa-handshake"></i> Service Provider</div>
                                             <?php else: ?>
-                                                <div style="font-size:11px; color:var(--t-secondary); font-weight:600; margin-top:2px;">Custom Payee</div>
+                                                <div style="font-size:11px; color:var(--t-secondary); font-weight:600; margin-top:2px;">Issued Cheque</div>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -613,6 +638,23 @@
                                             <span style="font-family: var(--f-mono); background: var(--c-fill); padding: 4px 8px; border-radius: 6px; font-size: 13px;">
                                                 <?= htmlspecialchars($chk->cheque_number) ?>
                                             </span>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight:600; font-size:13px; color:var(--t-primary);">
+                                                <?= date('d M Y', strtotime($chk->banking_date)) ?>
+                                            </div>
+                                            <?php if ($chk->status === 'Pending'): ?>
+                                                <?php 
+                                                    $diffDays = (int)floor((strtotime($chk->banking_date) - strtotime('today')) / 86400);
+                                                ?>
+                                                <?php if ($diffDays < 0): ?>
+                                                    <span style="font-size:10px; color:#dc2626; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Overdue (<?= abs($diffDays) ?>d)</span>
+                                                <?php elseif ($diffDays === 0): ?>
+                                                    <span style="font-size:10px; color:#d97706; font-weight:700;"><i class="fa-solid fa-calendar-day"></i> Due Today</span>
+                                                <?php else: ?>
+                                                    <span style="font-size:10px; color:var(--t-secondary);"><i class="fa-regular fa-clock"></i> In <?= $diffDays ?>d</span>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <div class="sf-badge badge-<?= $chk->status ?>">
@@ -639,7 +681,7 @@
                                                 <button class="act-btn view" title="View Cheque" onclick="viewCheque('<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->banking_date)) ?>', '<?= htmlspecialchars(addslashes($chk->amount)) ?>', '<?= htmlspecialchars(addslashes($displayName)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
                                                     <i class="fa-regular fa-eye"></i>
                                                 </button>
-                                                <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, 'issued', null, <?= $chk->vendor_id ?: 'null' ?>, <?= $chk->service_provider_id ?: 'null' ?>)">
+                                                <button class="act-btn edit" title="Edit" onclick="openEditModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->payee_name ?: '')) ?>', '<?= htmlspecialchars(addslashes($chk->bank_name)) ?>', '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>', <?= $chk->amount ?>, '<?= $chk->banking_date ?>', '<?= $chk->status ?>', <?= $chk->bank_account_id ?: 'null' ?>, 'issued', null, <?= $chk->vendor_id ?: 'null' ?>, <?= $chk->service_provider_id ?: 'null' ?>, <?= $chk->loan_id ?: 'null' ?>)">
                                                     <i class="fa-solid fa-pen"></i>
                                                 </button>
                                                 <button class="act-btn delete" title="Delete" onclick="openDeleteModal(<?= $chk->id ?>, '<?= htmlspecialchars(addslashes($chk->cheque_number)) ?>')">
@@ -707,6 +749,7 @@
                     <select id="add_issued_category" class="sf-input" onchange="toggleIssuedCategory('add')">
                         <option value="vendor">Supplier / Vendor</option>
                         <option value="service_provider">Service Provider</option>
+                        <option value="loan">Bank Loan</option>
                     </select>
                 </div>
                 <div class="sf-form-group" id="add_vendor_select_group">
@@ -725,6 +768,17 @@
                         <?php foreach($data['service_providers'] as $sp): ?>
                             <option value="<?= $sp->id ?>" data-name="<?= htmlspecialchars($sp->name) ?>"><?= htmlspecialchars($sp->name) ?> (<?= htmlspecialchars($sp->service_category) ?>)</option>
                         <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="sf-form-group" id="add_loan_select_group" style="display:none;">
+                    <label style="color: #2563eb;"><i class="fa-solid fa-landmark"></i> Link to Bank Loan</label>
+                    <select name="loan_id" id="add_loan_id" class="sf-input" onchange="syncAddPayeeName('loan')">
+                        <option value="">-- Select Bank Loan (Optional) --</option>
+                        <?php if (!empty($data['loans'])): ?>
+                            <?php foreach($data['loans'] as $l): ?>
+                                <option value="<?= $l->id ?>" data-name="<?= htmlspecialchars($l->lender_name) ?>" data-bank="<?= htmlspecialchars($l->bank_account_id ?? '') ?>"><?= htmlspecialchars($l->lender_name) ?> (<?= htmlspecialchars($l->loan_type) ?> - <?= htmlspecialchars($l->loan_number ?: 'ID: '.$l->id) ?>)</option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
             </div>
@@ -794,6 +848,7 @@
                     <select id="edit_issued_category" class="sf-input" onchange="toggleIssuedCategory('edit')">
                         <option value="vendor">Supplier / Vendor</option>
                         <option value="service_provider">Service Provider</option>
+                        <option value="loan">Bank Loan</option>
                     </select>
                 </div>
                 <div class="sf-form-group" id="edit_vendor_select_group">
@@ -812,6 +867,17 @@
                         <?php foreach($data['service_providers'] as $sp): ?>
                             <option value="<?= $sp->id ?>" data-name="<?= htmlspecialchars($sp->name) ?>"><?= htmlspecialchars($sp->name) ?> (<?= htmlspecialchars($sp->service_category) ?>)</option>
                         <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="sf-form-group" id="edit_loan_select_group" style="display:none;">
+                    <label style="color: #2563eb;"><i class="fa-solid fa-landmark"></i> Link to Bank Loan</label>
+                    <select name="loan_id" id="edit_loan_id" class="sf-input" onchange="syncEditPayeeName('loan')">
+                        <option value="">-- Select Bank Loan (Optional) --</option>
+                        <?php if (!empty($data['loans'])): ?>
+                            <?php foreach($data['loans'] as $l): ?>
+                                <option value="<?= $l->id ?>" data-name="<?= htmlspecialchars($l->lender_name) ?>" data-bank="<?= htmlspecialchars($l->bank_account_id ?? '') ?>"><?= htmlspecialchars($l->lender_name) ?> (<?= htmlspecialchars($l->loan_type) ?> - <?= htmlspecialchars($l->loan_number ?: 'ID: '.$l->id) ?>)</option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
             </div>
@@ -1068,15 +1134,15 @@
         const cat = document.getElementById(prefix + '_issued_category').value;
         const vGroup = document.getElementById(prefix + '_vendor_select_group');
         const spGroup = document.getElementById(prefix + '_sp_select_group');
-        if (cat === 'service_provider') {
-            vGroup.style.display = 'none';
-            spGroup.style.display = 'block';
-            document.getElementById(prefix + '_vendor_id').value = '';
-        } else {
-            vGroup.style.display = 'block';
-            spGroup.style.display = 'none';
-            document.getElementById(prefix + '_service_provider_id').value = '';
-        }
+        const lGroup = document.getElementById(prefix + '_loan_select_group');
+
+        if (vGroup) vGroup.style.display = (cat === 'vendor') ? 'block' : 'none';
+        if (spGroup) spGroup.style.display = (cat === 'service_provider') ? 'block' : 'none';
+        if (lGroup) lGroup.style.display = (cat === 'loan') ? 'block' : 'none';
+
+        if (cat !== 'vendor' && document.getElementById(prefix + '_vendor_id')) document.getElementById(prefix + '_vendor_id').value = '';
+        if (cat !== 'service_provider' && document.getElementById(prefix + '_service_provider_id')) document.getElementById(prefix + '_service_provider_id').value = '';
+        if (cat !== 'loan' && document.getElementById(prefix + '_loan_id')) document.getElementById(prefix + '_loan_id').value = '';
     }
 
     function syncAddPayeeName(type) {
@@ -1093,6 +1159,14 @@
             const sel = document.getElementById('add_service_provider_id');
             const opt = sel.options[sel.selectedIndex];
             name = opt ? (opt.getAttribute('data-name') || '') : '';
+        } else if (type === 'loan') {
+            const sel = document.getElementById('add_loan_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+            const bankId = opt ? (opt.getAttribute('data-bank') || '') : '';
+            if (bankId && document.getElementById('add_bank_account_id')) {
+                document.getElementById('add_bank_account_id').value = bankId;
+            }
         }
         if (name) {
             document.getElementById('add_payee_name').value = name;
@@ -1113,13 +1187,21 @@
             const sel = document.getElementById('edit_service_provider_id');
             const opt = sel.options[sel.selectedIndex];
             name = opt ? (opt.getAttribute('data-name') || '') : '';
+        } else if (type === 'loan') {
+            const sel = document.getElementById('edit_loan_id');
+            const opt = sel.options[sel.selectedIndex];
+            name = opt ? (opt.getAttribute('data-name') || '') : '';
+            const bankId = opt ? (opt.getAttribute('data-bank') || '') : '';
+            if (bankId && document.getElementById('edit_bank_account_id')) {
+                document.getElementById('edit_bank_account_id').value = bankId;
+            }
         }
         if (name) {
             document.getElementById('edit_payee_name').value = name;
         }
     }
 
-    function openEditModal(id, payee, bank, cnum, amt, date, status, bankAccId, type, customerId, vendorId, spId) {
+    function openEditModal(id, payee, bank, cnum, amt, date, status, bankAccId, type, customerId, vendorId, spId, loanId) {
         document.getElementById('edit_id').value = id;
         document.getElementById('edit_cheque_type').value = type;
         document.getElementById('edit_payee_name').value = payee;
@@ -1133,8 +1215,14 @@
         document.getElementById('edit_customer_id').value = customerId || '';
         document.getElementById('edit_vendor_id').value = vendorId || '';
         document.getElementById('edit_service_provider_id').value = spId || '';
+        if (document.getElementById('edit_loan_id')) {
+            document.getElementById('edit_loan_id').value = loanId || '';
+        }
 
-        if (spId) {
+        if (loanId) {
+            document.getElementById('edit_issued_category').value = 'loan';
+            toggleIssuedCategory('edit');
+        } else if (spId) {
             document.getElementById('edit_issued_category').value = 'service_provider';
             toggleIssuedCategory('edit');
         } else {

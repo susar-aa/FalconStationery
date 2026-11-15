@@ -281,6 +281,12 @@
             </div>
         </div>
 
+        <?php if (($data['entry']->status ?? '') === 'Voided'): ?>
+            <div style="background: #fee2e2; border: 1.5px solid #ef4444; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 0.08em; font-size: 13.5px;">
+                <i class="fa-solid fa-ban" style="margin-right: 8px;"></i> This Journal Voucher Has Been Voided and Reverted
+            </div>
+        <?php endif; ?>
+
         <!-- Metadata -->
         <div class="meta-grid">
             <div class="meta-item">

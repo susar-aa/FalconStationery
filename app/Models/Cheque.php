@@ -24,6 +24,37 @@ class Cheque {
                 $this->db->query("ALTER TABLE cheques ADD INDEX idx_chk_clearance (status, bank_account_id, cleared_date)");
                 $this->db->execute();
             }
+
+            // Loan repayment linking
+            $this->db->query("SHOW COLUMNS FROM cheques LIKE 'loan_repayment_id'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE cheques 
+                                  ADD COLUMN loan_repayment_id INT(11) NULL AFTER supplier_payment_id,
+                                  ADD COLUMN loan_id INT(11) NULL AFTER loan_repayment_id");
+                $this->db->execute();
+            }
+
+            $this->db->query("SHOW INDEX FROM cheques WHERE Key_name = 'idx_chk_loan'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE cheques ADD INDEX idx_chk_loan (loan_repayment_id, loan_id)");
+                $this->db->execute();
+            }
+
+            // Banking date on loan_repayments
+            $this->db->query("SHOW COLUMNS FROM loan_repayments LIKE 'banking_date'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE loan_repayments ADD COLUMN banking_date DATE NULL AFTER cheque_date");
+                $this->db->execute();
+                $this->db->query("ALTER TABLE loan_repayments ADD INDEX idx_lr_banking_date (banking_date)");
+                $this->db->execute();
+            }
+
+            // Fix cheques type for issued cheques
+            $this->db->query("UPDATE cheques 
+                              SET type = 'Issued' 
+                              WHERE type = 'Received' 
+                                AND (vendor_id IS NOT NULL OR service_provider_id IS NOT NULL OR supplier_payment_id IS NOT NULL OR loan_repayment_id IS NOT NULL)");
+            $this->db->execute();
         } catch (Exception $e) {
             error_log("Cheque selfHealSchema Error: " . $e->getMessage());
         }
@@ -36,13 +67,18 @@ class Cheque {
                        c.name as customer_name,
                        v.name as vendor_name,
                        sp.name as service_provider_name,
-                       u.username as cleared_by_name
+                       u.username as cleared_by_name,
+                       l.lender_name as loan_lender_name,
+                       l.loan_number as loan_number_ref,
+                       l.loan_type as loan_type_name
                 FROM cheques ch 
                 LEFT JOIN chart_of_accounts ba ON ch.bank_account_id = ba.id
                 LEFT JOIN customers c ON ch.customer_id = c.id
                 LEFT JOIN vendors v ON ch.vendor_id = v.id
                 LEFT JOIN service_providers sp ON ch.service_provider_id = sp.id
-                LEFT JOIN users u ON ch.cleared_by = u.id";
+                LEFT JOIN users u ON ch.cleared_by = u.id
+                LEFT JOIN loan_repayments lr ON ch.loan_repayment_id = lr.id
+                LEFT JOIN loans l ON (ch.loan_id = l.id OR lr.loan_id = l.id)";
 
         if (!empty($search)) {
             $sql .= " WHERE ch.cheque_number LIKE :search 
@@ -51,7 +87,9 @@ class Cheque {
                        OR v.name LIKE :search
                        OR sp.name LIKE :search
                        OR ba.account_name LIKE :search
-                       OR ch.bank_name LIKE :search";
+                       OR ch.bank_name LIKE :search
+                       OR l.lender_name LIKE :search
+                       OR l.loan_number LIKE :search";
         }
 
         $sql .= " ORDER BY ch.status ASC, ch.banking_date ASC";
@@ -71,14 +109,16 @@ class Cheque {
             $customerId = (!empty($data['customer_id']) && $type === 'Received') ? intval($data['customer_id']) : null;
             $vendorId = (!empty($data['vendor_id']) && $type === 'Issued') ? intval($data['vendor_id']) : null;
             $spId = (!empty($data['service_provider_id']) && $type === 'Issued') ? intval($data['service_provider_id']) : null;
+            $loanId = (!empty($data['loan_id']) && $type === 'Issued') ? intval($data['loan_id']) : null;
 
-            $this->db->query("INSERT INTO cheques (type, payee_name, customer_id, vendor_id, service_provider_id, bank_name, cheque_number, amount, banking_date, created_by, bank_account_id, status) 
-                              VALUES (:type, :payee, :cid, :vid, :spid, :bank, :cnum, :amt, :bdate, :uid, :bank_account_id, 'Pending')");
+            $this->db->query("INSERT INTO cheques (type, payee_name, customer_id, vendor_id, service_provider_id, loan_id, bank_name, cheque_number, amount, banking_date, created_by, bank_account_id, status) 
+                              VALUES (:type, :payee, :cid, :vid, :spid, :lid, :bank, :cnum, :amt, :bdate, :uid, :bank_account_id, 'Pending')");
             $this->db->bind(':type', $type);
             $this->db->bind(':payee', $data['payee_name']);
             $this->db->bind(':cid', $customerId);
             $this->db->bind(':vid', $vendorId);
             $this->db->bind(':spid', $spId);
+            $this->db->bind(':lid', $loanId);
             $this->db->bind(':bank', $data['bank_name']);
             $this->db->bind(':cnum', $data['cheque_number']);
             $this->db->bind(':amt', $data['amount']);
@@ -88,7 +128,7 @@ class Cheque {
             $this->db->execute();
             $chequeId = $this->db->lastInsertId();
             
-            // Post Journal Entry
+            // Post Journal Entry (if not a loan cheque that already has repayment entry)
             $this->postChequeJournalEntry($chequeId, 'Pending', null);
             
             $this->db->commit();
@@ -113,9 +153,10 @@ class Cheque {
             $customerId = (!empty($data['customer_id']) && $type === 'Received') ? intval($data['customer_id']) : null;
             $vendorId = (!empty($data['vendor_id']) && $type === 'Issued') ? intval($data['vendor_id']) : null;
             $spId = (!empty($data['service_provider_id']) && $type === 'Issued') ? intval($data['service_provider_id']) : null;
+            $loanId = (!empty($data['loan_id']) && $type === 'Issued') ? intval($data['loan_id']) : null;
 
             $this->db->query("UPDATE cheques 
-                              SET type = :type, customer_id = :cid, vendor_id = :vid, service_provider_id = :spid,
+                              SET type = :type, customer_id = :cid, vendor_id = :vid, service_provider_id = :spid, loan_id = :lid,
                                   payee_name = :payee, bank_name = :bank, cheque_number = :cnum, 
                                   amount = :amt, banking_date = :bdate, status = :status, bank_account_id = :bank_account_id 
                               WHERE id = :id");
@@ -124,6 +165,7 @@ class Cheque {
             $this->db->bind(':cid', $customerId);
             $this->db->bind(':vid', $vendorId);
             $this->db->bind(':spid', $spId);
+            $this->db->bind(':lid', $loanId);
             $this->db->bind(':payee', $data['payee_name']);
             $this->db->bind(':bank', $data['bank_name']);
             $this->db->bind(':cnum', $data['cheque_number']);
@@ -240,6 +282,39 @@ class Cheque {
                 return ['success' => true, 'message' => "Endorsed 3rd party cheque #{$chequeNum} marked as cleared."];
             }
 
+            // If Cheque is from a Loan Repayment:
+            // The repayment journal entry has already credited the bank account.
+            // Marking as cleared updates the transaction is_cleared status without double-posting.
+            if (!empty($chk->loan_repayment_id)) {
+                $bankAccountId = !empty($bankAccountId) ? intval($bankAccountId) : intval($chk->bank_account_id);
+                $this->db->query("UPDATE cheques 
+                                  SET status = 'Cleared', 
+                                      bank_account_id = :bid,
+                                      cleared_date = :cdate, 
+                                      cleared_by = :uid, 
+                                      clearance_notes = :notes 
+                                  WHERE id = :id");
+                $this->db->bind(':bid', $bankAccountId);
+                $this->db->bind(':cdate', $clearanceDate);
+                $this->db->bind(':uid', intval($userId));
+                $this->db->bind(':notes', !empty($notes) ? $notes : 'Loan Repayment Cheque Cleared');
+                $this->db->bind(':id', intval($chequeId));
+                $this->db->execute();
+
+                $this->db->query("SELECT journal_entry_id FROM loan_repayments WHERE id = :lrid");
+                $this->db->bind(':lrid', intval($chk->loan_repayment_id));
+                $lrRow = $this->db->single();
+                if ($lrRow && !empty($lrRow->journal_entry_id)) {
+                    $this->db->query("UPDATE transactions SET is_cleared = 1 WHERE journal_entry_id = :jid AND account_id = :bid");
+                    $this->db->bind(':jid', intval($lrRow->journal_entry_id));
+                    $this->db->bind(':bid', $bankAccountId);
+                    $this->db->execute();
+                }
+
+                $this->db->commit();
+                return ['success' => true, 'message' => "Loan repayment cheque #{$chequeNum} successfully marked as cleared."];
+            }
+
             // Standard Issued Cheque:
             $bankAccountId = !empty($bankAccountId) ? intval($bankAccountId) : intval($chk->bank_account_id);
             if (!$bankAccountId) {
@@ -351,6 +426,31 @@ class Cheque {
             if (!$chk || $chk->status !== 'Cleared') {
                 $this->db->rollBack();
                 return ['success' => false, 'message' => 'Cheque is not in Cleared status.'];
+            }
+
+            // If Cheque is from a Loan Repayment:
+            if (!empty($chk->loan_repayment_id)) {
+                $this->db->query("UPDATE cheques 
+                                  SET status = 'Pending', 
+                                      cleared_date = NULL, 
+                                      cleared_by = NULL, 
+                                      clearance_notes = NULL 
+                                  WHERE id = :id");
+                $this->db->bind(':id', intval($chequeId));
+                $this->db->execute();
+
+                $this->db->query("SELECT journal_entry_id FROM loan_repayments WHERE id = :lrid");
+                $this->db->bind(':lrid', intval($chk->loan_repayment_id));
+                $lrRow = $this->db->single();
+                if ($lrRow && !empty($lrRow->journal_entry_id)) {
+                    $this->db->query("UPDATE transactions SET is_cleared = 0 WHERE journal_entry_id = :jid AND account_id = :bid");
+                    $this->db->bind(':jid', intval($lrRow->journal_entry_id));
+                    $this->db->bind(':bid', intval($chk->bank_account_id));
+                    $this->db->execute();
+                }
+
+                $this->db->commit();
+                return ['success' => true, 'message' => "Clearance reverted successfully. Loan repayment cheque #{$chk->cheque_number} is now Pending."];
             }
 
             // If it has a clearance journal entry, reverse accounting

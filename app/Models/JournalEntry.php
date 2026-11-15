@@ -461,6 +461,11 @@ class JournalEntry {
                         $this->db->bind(':repid', $repId);
                         $repRow = $this->db->single();
 
+                        // Cancel any linked cheques
+                        $this->db->query("UPDATE cheques SET status = 'Cancelled' WHERE loan_repayment_id = :repid");
+                        $this->db->bind(':repid', $repId);
+                        $this->db->execute();
+
                         $this->db->query("DELETE FROM loan_repayments WHERE id = :repid");
                         $this->db->bind(':repid', $repId);
                         $this->db->execute();

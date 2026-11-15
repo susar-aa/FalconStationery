@@ -31,7 +31,7 @@ class RepTracking {
                 rb.name as binding_name
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             LEFT JOIN route_bindings rb ON r.route_binding_id = rb.id
             LEFT JOIN (
                 SELECT rep_route_id, 
@@ -194,7 +194,7 @@ class RepTracking {
                  FROM invoices WHERE rep_route_id IN ($placeholdersStr) AND status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')) as total_sales
             FROM rep_daily_routes r
             LEFT JOIN users u ON r.user_id = u.id
-            LEFT JOIN employees e ON u.email = e.email
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND u.email = e.email))
             WHERE r.id = :rid
         ");
         $this->db->bind(':rid', $routeId);

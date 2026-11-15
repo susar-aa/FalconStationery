@@ -297,11 +297,19 @@ foreach ($data['transactions'] ?? [] as $t) {
 <div class="cust-root">
     <div class="cust-wrap">
         
+        <?php
+        $isCashAccount = (
+            (isset($data['account']->account_category) && in_array(strtolower($data['account']->account_category), ['cash', 'cash & cash equivalents'])) ||
+            in_array($data['account']->account_code ?? '', ['1000', '1010', '1020', '1030', '1040', '1090', '1100']) ||
+            stripos($data['account']->account_name ?? '', 'cash') !== false
+        );
+        $registerTitle = $isCashAccount ? 'Cash Register' : 'Bank Register';
+        ?>
         <div class="sf-header">
-            <a href="<?= APP_URL ?>/banking" class="sf-breadcrumb"><i class="fa-solid fa-chevron-left"></i> Back to Banking</a>
+            <a href="<?= APP_URL ?>/banking" class="sf-breadcrumb"><i class="fa-solid fa-chevron-left"></i> Back to Banking & Cash</a>
             <div class="sf-title-row">
                 <div class="sf-title-col">
-                    <h1>Bank Register</h1>
+                    <h1><?= $registerTitle ?></h1>
                     <p><?= htmlspecialchars($data['account']->account_code) ?> — <?= htmlspecialchars($data['account']->account_name) ?></p>
                 </div>
                 <div class="sf-actions-col">

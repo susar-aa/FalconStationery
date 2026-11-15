@@ -280,18 +280,20 @@
                     <table class="cust-table">
                         <thead>
                             <tr>
-                                <th style="width: 12%;">Date</th>
-                                <th style="width: 20%;">Reference</th>
-                                <th style="width: 28%;">Description / Memo</th>
-                                <th style="width: 13%; text-align: right;">Debit (Dr)</th>
-                                <th style="width: 13%; text-align: right;">Credit (Cr)</th>
-                                <th style="width: 14%; text-align: right;">Running Balance</th>
+                                <th style="width: 11%;">Date</th>
+                                <th style="width: 17%;">Reference</th>
+                                <th style="width: 25%;">Description / Memo</th>
+                                <th style="width: 10%; text-align: center;">Status</th>
+                                <th style="width: 12%; text-align: right;">Debit (Dr)</th>
+                                <th style="width: 12%; text-align: right;">Credit (Cr)</th>
+                                <th style="width: 13%; text-align: right;">Running Balance</th>
                             </tr>
                         </thead>
                         <tbody>
                             <!-- Prior/Starting Balance Row -->
                             <tr style="background: var(--c-surface2); font-weight: 600;">
                                 <td colspan="3" style="color: var(--t-secondary);">Opening / Prior Cumulative Balance</td>
+                                <td style="text-align: center; color: var(--t-label);">-</td>
                                 <td colspan="2" style="text-align: right; color: var(--t-label);">-</td>
                                 <td style="text-align: right; font-family: var(--f-mono); font-size:14px; color: var(--c-blue); font-weight: 700;">
                                     Rs. <?= number_format($data['prior_balance'], 2) ?>
@@ -303,7 +305,7 @@
                             if(empty($data['transactions'])): 
                             ?>
                                 <tr>
-                                    <td colspan="6" style="text-align: center; color: var(--t-secondary); padding: 30px;">
+                                    <td colspan="7" style="text-align: center; color: var(--t-secondary); padding: 30px;">
                                         <i class="fa-solid fa-receipt" style="font-size: 24px; margin-bottom: 8px; color: var(--t-tertiary);"></i><br>
                                         No transaction ledger entries found matching the filter criteria.
                                     </td>
@@ -311,28 +313,49 @@
                             <?php 
                             else: 
                                 foreach($data['transactions'] as $tx): 
-                                    // Cumulative running balance computation
-                                    if (in_array($acc->account_type, ['Asset', 'Expense'])) {
-                                        $runningBalance += floatval($tx->debit) - floatval($tx->credit);
-                                    } else {
-                                        $runningBalance += floatval($tx->credit) - floatval($tx->debit);
+                                    $st = $tx->entry_status ?? $tx->status ?? 'Posted';
+                                    $isVoided = in_array(strtolower($st), ['voided', 'cancelled']);
+
+                                    // Cumulative running balance computation: ONLY active non-voided transactions
+                                    if (!$isVoided) {
+                                        if (in_array($acc->account_type, ['Asset', 'Expense'])) {
+                                            $runningBalance += floatval($tx->debit) - floatval($tx->credit);
+                                        } else {
+                                            $runningBalance += floatval($tx->credit) - floatval($tx->debit);
+                                        }
                                     }
                             ?>
-                                <tr>
+                                <tr style="<?= $isVoided ? 'background: rgba(255, 59, 48, 0.05); opacity: 0.75;' : '' ?>">
                                     <td style="font-weight: 500;"><?= date('Y-m-d', strtotime($tx->entry_date)) ?></td>
                                     <td>
-                                        <span style="background: var(--c-blue-light); color: var(--c-blue); padding: 2px 6px; border-radius: var(--r-xs); font-weight:700; font-size:11px; font-family: var(--f-mono);"><?= htmlspecialchars($tx->reference) ?></span>
+                                        <span style="background: <?= $isVoided ? 'rgba(255, 59, 48, 0.12)' : 'var(--c-blue-light)' ?>; color: <?= $isVoided ? '#ff3b30' : 'var(--c-blue)' ?>; padding: 2px 6px; border-radius: var(--r-xs); font-weight:700; font-size:11px; font-family: var(--f-mono);"><?= htmlspecialchars($tx->reference) ?></span>
                                         <?php if (!empty($tx->invoice_id)): ?>
                                             <a href="javascript:void(0)" onclick="openInvoiceMiniView(<?= $tx->invoice_id ?>, '<?= htmlspecialchars($tx->invoice_number) ?>')" style="margin-left: 8px; font-size: 11px; color: var(--c-blue); text-decoration: underline; font-weight: 600; white-space: nowrap;" class="mini-view-link">
                                                 <i class="fa-solid fa-window-restore"></i> View
                                             </a>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?= htmlspecialchars(!empty($tx->description) ? $tx->description : $tx->entry_description) ?></td>
-                                    <td style="text-align: right;" class="<?= $tx->debit > 0 ? 'amount-debit' : 'amount-neutral' ?>">
+                                    <td>
+                                        <?= htmlspecialchars(!empty($tx->description) ? $tx->description : $tx->entry_description) ?>
+                                        <?php if ($isVoided): ?>
+                                            <span style="color: #ff3b30; font-weight: 700; font-size: 11px; margin-left: 6px; letter-spacing: 0.02em;">[VOIDED]</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <?php if ($isVoided): ?>
+                                            <span style="background: rgba(255, 59, 48, 0.12); color: #ff3b30; font-weight: 700; font-size: 10.5px; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-ban" style="font-size: 9px;"></i> Voided
+                                            </span>
+                                        <?php else: ?>
+                                            <span style="background: rgba(52, 199, 89, 0.12); color: #28a745; font-weight: 700; font-size: 10.5px; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="fa-solid fa-check" style="font-size: 9px;"></i> Posted
+                                            </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="text-align: right; <?= $isVoided ? 'text-decoration: line-through; opacity: 0.65;' : '' ?>" class="<?= ($tx->debit > 0 && !$isVoided) ? 'amount-debit' : 'amount-neutral' ?>">
                                         <?= $tx->debit > 0 ? 'Rs. ' . number_format($tx->debit, 2) : '-' ?>
                                     </td>
-                                    <td style="text-align: right;" class="<?= $tx->credit > 0 ? 'amount-credit' : 'amount-neutral' ?>">
+                                    <td style="text-align: right; <?= $isVoided ? 'text-decoration: line-through; opacity: 0.65;' : '' ?>" class="<?= ($tx->credit > 0 && !$isVoided) ? 'amount-credit' : 'amount-neutral' ?>">
                                         <?= $tx->credit > 0 ? 'Rs. ' . number_format($tx->credit, 2) : '-' ?>
                                     </td>
                                     <td style="text-align: right; font-family: var(--f-mono); font-weight: 700; font-size:14px; color: var(--t-primary);">

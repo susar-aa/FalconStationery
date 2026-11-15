@@ -155,14 +155,23 @@ class ChartOfAccount {
             error_log("selfHealJournalEntriesStatus Error: " . $e->getMessage());
         }
 
-        $sql = "SELECT t.*, je.entry_date, je.reference, COALESCE(NULLIF(TRIM(t.description), ''), je.description) AS entry_description, inv.id as invoice_id, inv.invoice_number 
+        $sql = "SELECT t.*, 
+                       je.entry_date, 
+                       je.reference, 
+                       COALESCE(NULLIF(TRIM(t.description), ''), je.description) AS entry_description, 
+                       inv.id as invoice_id, 
+                       inv.invoice_number,
+                       COALESCE(
+                           NULLIF(je.status, ''), 
+                           (SELECT CASE WHEN cp.status IN ('Reversed', 'Bounced') THEN 'Voided' ELSE NULL END FROM customer_payments cp WHERE cp.journal_entry_id = je.id LIMIT 1),
+                           (SELECT CASE WHEN sp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM supplier_payments sp WHERE sp.journal_entry_id = je.id LIMIT 1),
+                           'Posted'
+                       ) AS entry_status
                 FROM transactions t 
                 JOIN journal_entries je ON t.journal_entry_id = je.id 
                 LEFT JOIN invoices inv ON je.id = inv.journal_entry_id 
                 WHERE t.account_id = :account_id 
-                  AND (je.status IS NULL OR je.status = '' OR je.status NOT IN ('Voided', 'Draft', 'Cancelled'))
-                  AND NOT EXISTS (SELECT 1 FROM customer_payments cp WHERE cp.journal_entry_id = je.id AND cp.status IN ('Reversed', 'Bounced'))
-                  AND NOT EXISTS (SELECT 1 FROM supplier_payments sp WHERE sp.journal_entry_id = je.id AND sp.status = 'Reversed')";
+                  AND (je.status IS NULL OR je.status = '' OR je.status NOT IN ('Draft', 'Cancelled'))";
         
         $params = [':account_id' => $accountId];
 
@@ -490,10 +499,15 @@ class ChartOfAccount {
         }
     }
 
-    public function getCashAccounts($parentId) {
-        $this->db->query("SELECT * FROM chart_of_accounts WHERE account_type = :type_asset AND (parent_id IS NULL OR parent_id != :pid) AND id != :pid ORDER BY account_code ASC");
+    public function getCashAccounts($parentId = null) {
+        $this->db->query("SELECT * FROM chart_of_accounts 
+                          WHERE account_type = :type_asset 
+                            AND (account_code LIKE '10%' OR id = 8 OR parent_id = 8 OR account_name LIKE '%Cash in Hand%' OR account_name LIKE '%Petty Cash%')
+                            AND (parent_id IS NULL OR parent_id != :pid) 
+                            AND id != :pid 
+                          ORDER BY account_code ASC");
         $this->db->bind(':type_asset', COA_TYPE_ASSET);
-        $this->db->bind(':pid', $parentId);
+        $this->db->bind(':pid', $parentId ?: 0);
         return $this->db->resultSet() ?: [];
     }
 

@@ -15,6 +15,7 @@ class ChequeController extends Controller {
         $this->serviceProviderModel = $this->model('ServiceProvider');
         $this->companyModel = $this->model('Company');
         $this->coaModel = $this->model('ChartOfAccount');
+        $this->loanModel = $this->model('Loan');
     }
 
     public function index() {
@@ -23,6 +24,7 @@ class ChequeController extends Controller {
         $company = $this->companyModel->getSettings();
         $parentId = $this->coaModel->selfHealBankAccounts();
         $bankAccounts = $this->coaModel->getBankAccounts($parentId);
+        $loans = $this->loanModel->getLoans() ?: [];
         
         // Calculate KPIs
         $totalPending = 0;
@@ -40,7 +42,7 @@ class ChequeController extends Controller {
             
             $groupedAllCheques[$dateKey][] = $chk;
 
-            if ($chk->type === 'Issued' || !empty($chk->bank_account_id) || !empty($chk->vendor_id) || !empty($chk->service_provider_id)) {
+            if ($chk->type === 'Issued' || !empty($chk->bank_account_id) || !empty($chk->vendor_id) || !empty($chk->service_provider_id) || !empty($chk->loan_repayment_id) || !empty($chk->loan_id)) {
                 // Payments / Issued cheques
                 $groupedIssuedCheques[$dateKey][] = $chk;
             } else {
@@ -74,6 +76,7 @@ class ChequeController extends Controller {
             'suppliers' => $this->supplierModel->getActiveSuppliers() ?: [],
             'service_providers' => $this->serviceProviderModel->getActiveServiceProviders() ?: [],
             'bank_accounts' => $bankAccounts,
+            'loans' => $loans,
             'company_name' => $company->company_name ?? 'Company',
             'kpi_pending' => $totalPending,
             'kpi_cleared' => $totalCleared,
@@ -93,6 +96,7 @@ class ChequeController extends Controller {
                     'customer_id' => !empty($_POST['customer_id']) ? intval($_POST['customer_id']) : null,
                     'vendor_id' => !empty($_POST['vendor_id']) ? intval($_POST['vendor_id']) : null,
                     'service_provider_id' => !empty($_POST['service_provider_id']) ? intval($_POST['service_provider_id']) : null,
+                    'loan_id' => !empty($_POST['loan_id']) ? intval($_POST['loan_id']) : null,
                     'bank_name' => trim($_POST['bank_name'] ?? ''),
                     'cheque_number' => trim($_POST['cheque_number'] ?? ''),
                     'amount' => floatval($_POST['amount'] ?? 0),
@@ -114,6 +118,7 @@ class ChequeController extends Controller {
                     'customer_id' => !empty($_POST['customer_id']) ? intval($_POST['customer_id']) : null,
                     'vendor_id' => !empty($_POST['vendor_id']) ? intval($_POST['vendor_id']) : null,
                     'service_provider_id' => !empty($_POST['service_provider_id']) ? intval($_POST['service_provider_id']) : null,
+                    'loan_id' => !empty($_POST['loan_id']) ? intval($_POST['loan_id']) : null,
                     'bank_name' => trim($_POST['bank_name'] ?? ''),
                     'cheque_number' => trim($_POST['cheque_number'] ?? ''),
                     'amount' => floatval($_POST['amount'] ?? 0),
