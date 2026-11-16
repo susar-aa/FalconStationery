@@ -162,7 +162,7 @@ $flashError = $_GET['error'] ?? null;
     border-radius: var(--r-md);
     box-shadow: var(--shadow-sm);
     border: 0.5px solid var(--c-separator);
-    overflow: hidden;
+    overflow: visible !important;
 }
 .table-apple { width: 100%; border-collapse: collapse; }
 .table-apple th {
@@ -170,12 +170,19 @@ $flashError = $_GET['error'] ?? null;
     font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--t-label);
     border-bottom: 1px solid var(--c-separator); text-align: left;
 }
+.table-apple th:first-child { border-top-left-radius: var(--r-md); }
+.table-apple th:last-child { border-top-right-radius: var(--r-md); }
 .table-apple td {
     padding: 16px; border-bottom: 0.5px solid var(--c-separator);
     font-size: 13px; color: var(--t-primary); vertical-align: middle;
 }
 .table-apple tr:last-child td { border-bottom: none; }
 .table-apple tr:hover td { background: var(--c-surface2); }
+.table-apple tr:hover,
+.table-apple tr:focus-within {
+    position: relative;
+    z-index: 50;
+}
 
 .badge-apple {
     padding: 4px 10px; border-radius: var(--r-pill); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
@@ -186,14 +193,41 @@ $flashError = $_GET['error'] ?? null;
 .badge-secondary { background: var(--c-fill); color: var(--t-secondary); }
 
 .action-menu { position: relative; display: inline-block; }
-.action-btn { background: none; border: none; color: var(--t-secondary); font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: var(--r-sm); }
+.action-btn { 
+    background: none; 
+    border: none; 
+    color: var(--t-secondary); 
+    font-size: 18px; 
+    cursor: pointer; 
+    padding: 6px 10px; 
+    border-radius: var(--r-sm);
+    transition: background var(--dur-fast), color var(--dur-fast);
+}
 .action-btn:hover { background: var(--c-fill); color: var(--t-primary); }
 .dropdown-content {
-    display: none; position: absolute; right: 0; background-color: var(--c-surface);
-    min-width: 170px; box-shadow: var(--shadow-md); z-index: 10;
-    border-radius: var(--r-sm); border: 0.5px solid var(--c-separator); overflow: hidden;
+    display: none; 
+    position: absolute; 
+    right: 0; 
+    top: 100%;
+    margin-top: 4px;
+    background-color: var(--c-surface);
+    min-width: 195px; 
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08); 
+    z-index: 99999;
+    border-radius: var(--r-md); 
+    border: 0.5px solid var(--c-separator); 
+    overflow: hidden;
+    white-space: nowrap;
 }
-.action-menu:hover .dropdown-content { display: block; }
+.action-menu:hover .dropdown-content,
+.action-menu:focus-within .dropdown-content { display: block; }
+.table-apple tbody tr:last-child .dropdown-content,
+.table-apple tbody tr:nth-last-child(2):not(:first-child) .dropdown-content {
+    top: auto;
+    bottom: 100%;
+    margin-top: 0;
+    margin-bottom: 6px;
+}
 .dropdown-content a, .dropdown-content button {
     color: var(--t-primary); padding: 10px 16px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 13px;
     background: none; border: none; width: 100%; text-align: left; cursor: pointer;

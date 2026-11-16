@@ -75,7 +75,7 @@ $isPending = ($loan && $loan->status === 'Pending');
         <a href="<?= APP_URL ?>/loan/show/<?= $loan->id ?>" class="btn-back"><i class="fa-solid fa-chevron-left"></i> Back to Loan Details</a>
         
         <div class="loan-header">
-            <h1 class="loan-title">Edit Loan: <?= htmlspecialchars($loan->lender_name) ?></h1>
+            <h1 class="loan-title">Edit Loan: <?= htmlspecialchars($loan->lender_name ?? '') ?></h1>
             <p style="color:var(--t-secondary); margin:0;">Update loan details, account mappings, and repayment terms.</p>
         </div>
 
@@ -83,7 +83,7 @@ $isPending = ($loan && $loan->status === 'Pending');
         <div class="sf-alert error"><i class="fa-solid fa-circle-exclamation"></i> Failed to update loan. Please check your inputs.</div>
         <?php endif; ?>
 
-        <?php if (!$isPending && $loan->is_historical_opening == 0): ?>
+        <?php if (!$isPending && ($loan->is_historical_opening ?? 0) == 0): ?>
         <div class="sf-alert" style="background: rgba(255, 149, 0, 0.1); color: var(--c-orange);">
             <i class="fa-solid fa-triangle-exclamation"></i> <strong>Note:</strong> Original principal amount is locked because this loan has already been disbursed. You can still modify installment, account mappings, and schedule dates.
         </div>
@@ -96,11 +96,11 @@ $isPending = ($loan && $loan->status === 'Pending');
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
                     <div class="form-group">
                         <label class="form-label">Lender / Financial Institution <span style="color:var(--c-red)">*</span></label>
-                        <input type="text" name="lender_name" class="form-control" required value="<?= htmlspecialchars($loan->lender_name) ?>">
+                        <input type="text" name="lender_name" class="form-control" required value="<?= htmlspecialchars($loan->lender_name ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Loan / Agreement No.</label>
-                        <input type="text" name="loan_number" class="form-control" value="<?= htmlspecialchars($loan->loan_number) ?>">
+                        <input type="text" name="loan_number" class="form-control" value="<?= htmlspecialchars($loan->loan_number ?? '') ?>">
                     </div>
                 </div>
 
@@ -108,21 +108,21 @@ $isPending = ($loan && $loan->status === 'Pending');
                     <div class="form-group">
                         <label class="form-label">Facility / Loan Type</label>
                         <select name="loan_type" class="form-select">
-                            <option value="Term Loan" <?= ($loan->loan_type == 'Term Loan') ? 'selected' : '' ?>>Term Loan</option>
-                            <option value="Revolving Loan" <?= ($loan->loan_type == 'Revolving Loan') ? 'selected' : '' ?>>Revolving Credit / Loan</option>
-                            <option value="Lease / Hire Purchase" <?= ($loan->loan_type == 'Lease / Hire Purchase') ? 'selected' : '' ?>>Lease / Hire Purchase</option>
-                            <option value="Overdraft Facility" <?= ($loan->loan_type == 'Overdraft Facility') ? 'selected' : '' ?>>Overdraft Facility</option>
-                            <option value="Cheque Discounting" <?= ($loan->loan_type == 'Cheque Discounting') ? 'selected' : '' ?>>Cheque Discounting / Factor</option>
+                            <option value="Term Loan" <?= (($loan->loan_type ?? '') == 'Term Loan') ? 'selected' : '' ?>>Term Loan</option>
+                            <option value="Revolving Loan" <?= (($loan->loan_type ?? '') == 'Revolving Loan') ? 'selected' : '' ?>>Revolving Credit / Loan</option>
+                            <option value="Lease / Hire Purchase" <?= (($loan->loan_type ?? '') == 'Lease / Hire Purchase') ? 'selected' : '' ?>>Lease / Hire Purchase</option>
+                            <option value="Overdraft Facility" <?= (($loan->loan_type ?? '') == 'Overdraft Facility') ? 'selected' : '' ?>>Overdraft Facility</option>
+                            <option value="Cheque Discounting" <?= (($loan->loan_type ?? '') == 'Cheque Discounting') ? 'selected' : '' ?>>Cheque Discounting / Factor</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Repayment Frequency <span style="color:var(--c-red)">*</span></label>
                         <select name="repayment_frequency" class="form-select" required>
-                            <option value="Monthly" <?= $loan->repayment_frequency == 'Monthly' ? 'selected' : '' ?>>Monthly</option>
-                            <option value="Weekly" <?= $loan->repayment_frequency == 'Weekly' ? 'selected' : '' ?>>Weekly</option>
-                            <option value="Quarterly" <?= $loan->repayment_frequency == 'Quarterly' ? 'selected' : '' ?>>Quarterly</option>
-                            <option value="Yearly" <?= $loan->repayment_frequency == 'Yearly' ? 'selected' : '' ?>>Yearly</option>
-                            <option value="One-Time" <?= $loan->repayment_frequency == 'One-Time' ? 'selected' : '' ?>>One-Time (Bullet Payment)</option>
+                            <option value="Monthly" <?= (($loan->repayment_frequency ?? '') == 'Monthly') ? 'selected' : '' ?>>Monthly</option>
+                            <option value="Weekly" <?= (($loan->repayment_frequency ?? '') == 'Weekly') ? 'selected' : '' ?>>Weekly</option>
+                            <option value="Quarterly" <?= (($loan->repayment_frequency ?? '') == 'Quarterly') ? 'selected' : '' ?>>Quarterly</option>
+                            <option value="Yearly" <?= (($loan->repayment_frequency ?? '') == 'Yearly') ? 'selected' : '' ?>>Yearly</option>
+                            <option value="One-Time" <?= (($loan->repayment_frequency ?? '') == 'One-Time') ? 'selected' : '' ?>>One-Time (Bullet Payment)</option>
                         </select>
                     </div>
                 </div>
@@ -138,7 +138,7 @@ $isPending = ($loan && $loan->status === 'Pending');
                         <select name="liability_account_id" class="form-select" required>
                             <option value="">-- Select Liability Account --</option>
                             <?php foreach ($liabilities as $acc): ?>
-                                <option value="<?= $acc->id ?>" <?= $loan->liability_account_id == $acc->id ? 'selected' : '' ?>>
+                                <option value="<?= $acc->id ?>" <?= ($loan->liability_account_id ?? 0) == $acc->id ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($acc->account_code . ' — ' . $acc->account_name) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -151,7 +151,7 @@ $isPending = ($loan && $loan->status === 'Pending');
                             <select name="interest_expense_account_id" class="form-select">
                                 <option value="">-- Auto Resolve / Default (6150 / 6037) --</option>
                                 <?php foreach ($expenses as $acc): ?>
-                                    <option value="<?= $acc->id ?>" <?= $loan->interest_expense_account_id == $acc->id ? 'selected' : '' ?>>
+                                    <option value="<?= $acc->id ?>" <?= ($loan->interest_expense_account_id ?? 0) == $acc->id ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($acc->account_code . ' — ' . $acc->account_name) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -162,7 +162,7 @@ $isPending = ($loan && $loan->status === 'Pending');
                             <select name="bank_charges_account_id" class="form-select">
                                 <option value="">-- Auto Resolve / Default (6100) --</option>
                                 <?php foreach ($expenses as $acc): ?>
-                                    <option value="<?= $acc->id ?>" <?= $loan->bank_charges_account_id == $acc->id ? 'selected' : '' ?>>
+                                    <option value="<?= $acc->id ?>" <?= ($loan->bank_charges_account_id ?? 0) == $acc->id ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($acc->account_code . ' — ' . $acc->account_name) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -174,21 +174,21 @@ $isPending = ($loan && $loan->status === 'Pending');
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                     <div class="form-group">
                         <label class="form-label">Principal Amount (Rs.) <span style="color:var(--c-red)">*</span></label>
-                        <input type="number" step="0.01" name="principal_amount" class="form-control" required value="<?= htmlspecialchars($loan->principal_amount) ?>" <?= (!$isPending && $loan->is_historical_opening == 0) ? 'readonly' : '' ?>>
+                        <input type="number" step="0.01" name="principal_amount" class="form-control" required value="<?= htmlspecialchars((string)($loan->principal_amount ?? '0.00')) ?>" <?= (!$isPending && ($loan->is_historical_opening ?? 0) == 0) ? 'readonly' : '' ?>>
                     </div>
-                    <?php if ($loan->is_historical_opening == 1): ?>
+                    <?php if (($loan->is_historical_opening ?? 0) == 1): ?>
                     <div class="form-group">
                         <label class="form-label">Opening Balance (Rs.)</label>
-                        <input type="number" step="0.01" name="opening_balance" class="form-control" value="<?= htmlspecialchars($loan->opening_balance) ?>">
+                        <input type="number" step="0.01" name="opening_balance" class="form-control" value="<?= htmlspecialchars((string)($loan->opening_balance ?? '0.00')) ?>">
                     </div>
                     <?php endif; ?>
                     <div class="form-group">
                         <label class="form-label">Monthly Installment (EMI)</label>
-                        <input type="number" step="0.01" name="monthly_installment" class="form-control" value="<?= htmlspecialchars($loan->monthly_installment) ?>" placeholder="e.g. 108500.00">
+                        <input type="number" step="0.01" name="monthly_installment" class="form-control" value="<?= htmlspecialchars((string)($loan->monthly_installment ?? '')) ?>" placeholder="e.g. 108500.00">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Annual Interest Rate (%)</label>
-                        <input type="number" step="0.01" name="interest_rate" class="form-control" value="<?= htmlspecialchars($loan->interest_rate) ?>">
+                        <input type="number" step="0.01" name="interest_rate" class="form-control" value="<?= htmlspecialchars((string)($loan->interest_rate ?? '0.00')) ?>">
                     </div>
                 </div>
 
@@ -196,35 +196,35 @@ $isPending = ($loan && $loan->status === 'Pending');
                     <div class="form-group">
                         <label class="form-label">Interest Calculation Type</label>
                         <select name="interest_type" class="form-select">
-                            <option value="Flat Rate" <?= $loan->interest_type == 'Flat Rate' ? 'selected' : '' ?>>Flat Rate</option>
-                            <option value="Reducing Balance" <?= $loan->interest_type == 'Reducing Balance' ? 'selected' : '' ?>>Reducing Balance / Amortized</option>
-                            <option value="Fixed" <?= $loan->interest_type == 'Fixed' ? 'selected' : '' ?>>Fixed Interest Amount</option>
+                            <option value="Flat Rate" <?= (($loan->interest_type ?? '') == 'Flat Rate') ? 'selected' : '' ?>>Flat Rate</option>
+                            <option value="Reducing Balance" <?= (($loan->interest_type ?? '') == 'Reducing Balance') ? 'selected' : '' ?>>Reducing Balance / Amortized</option>
+                            <option value="Fixed" <?= (($loan->interest_type ?? '') == 'Fixed') ? 'selected' : '' ?>>Fixed Interest Amount</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Term (Months)</label>
-                        <input type="number" name="loan_term_months" class="form-control" value="<?= htmlspecialchars($loan->loan_term_months) ?>">
+                        <input type="number" name="loan_term_months" class="form-control" value="<?= htmlspecialchars((string)($loan->loan_term_months ?? '')) ?>">
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                     <div class="form-group">
                         <label class="form-label">Loan Start Date <span style="color:var(--c-red)">*</span></label>
-                        <input type="date" name="loan_start_date" class="form-control" required value="<?= htmlspecialchars($loan->loan_start_date) ?>">
+                        <input type="date" name="loan_start_date" class="form-control" required value="<?= htmlspecialchars((string)($loan->loan_start_date ?? '')) ?>">
                     </div>
                     <div class="form-group">
                         <label class="form-label">First Installment Due Date</label>
-                        <input type="date" name="first_payment_date" class="form-control" value="<?= htmlspecialchars($loan->first_payment_date) ?>">
+                        <input type="date" name="first_payment_date" class="form-control" value="<?= htmlspecialchars((string)($loan->first_payment_date ?? '')) ?>">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Maturity Date</label>
-                        <input type="date" name="maturity_date" class="form-control" value="<?= htmlspecialchars($loan->maturity_date) ?>">
+                        <input type="date" name="maturity_date" class="form-control" value="<?= htmlspecialchars((string)($loan->maturity_date ?? '')) ?>">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Notes & Security Details (Optional)</label>
-                    <textarea name="notes" class="form-control" rows="3" style="resize:vertical;"><?= htmlspecialchars($loan->notes) ?></textarea>
+                    <textarea name="notes" class="form-control" rows="3" style="resize:vertical;"><?= htmlspecialchars((string)($loan->notes ?? '')) ?></textarea>
                 </div>
 
                 <div style="margin-top: 30px;">

@@ -4776,3 +4776,12 @@ error: failed to push some refs to 'https://github.com/susar-aa/FalconStationery
 Deployment Log - Mon 11/16/2026  4:07:43.41 
 =================================================== 
 Adding changes... 
+warning: in the working copy of 'deploy_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'schema_update.sql', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main df325be] Update: schema_update.sql
+ 2 files changed, 18 insertions(+), 14 deletions(-)
+Pushing to GitHub... 
+To https://github.com/susar-aa/FalconStationery.git
+   eb0e75f..df325be  main -> main
+=================================================== 
