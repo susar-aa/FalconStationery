@@ -334,10 +334,28 @@ Test how the system handles each situation and fix genuine problems.
     - Added RBAC permission checks (`checkPermission('customer', 'view' | 'create_edit' | 'delete')`).
     - Fixed delete customer modal IDs and bound it to `submitDeleteCustomer` with CSRF protection and error handling.
     - Provided production composite indexing SQL for `customers`, `invoices`, and `customer_payments`.
-- [ ] **Module 5: Rep Tracking & Route Audits**
-- [ ] **Module 6: Double-Entry Accounting & Banking**
-- [ ] **Module 7: HRM & Payroll**
-- [ ] **Module 8: Reports Engine**
+- [x] **Module 5: Supplier Management & Supply Chain Center** (COMPLETED)
+  - **Issues Found**:
+    - Unlocked viewport layout allowing page-level body scrolling, with oversized pastel stat cards pushing the table out of view.
+    - Filter shelf positioned on the left rather than aligned to the top-right corner above the data table.
+    - Missing CSRF token generation and validation on supplier creation, profile updates, and status changes.
+    - Missing granular RBAC permission checks (`checkPermission('supplier', 'view' | 'create_edit')`) on index, mutations, and CSV export.
+    - Static status text badge with no interactive status toggle for operational statuses.
+    - Lack of alternating zebra striping and sticky headers on modal lists (Activity Ledger, Purchase Orders, Products).
+  - **Fixes & Optimizations**:
+    - Converted to 100vh Viewport-Locked ERP layout (`.sup-erp-workspace`, sticky `thead`, scrollable rows inside `.erp-table-scroll` with `padding-bottom: 54px`, pinned pagination footer).
+    - Replaced oversized cards with a compact KPI Stats Strip (Total Suppliers, Total Payable Outstanding, Accounts to Settle).
+    - Grouped all filters (Ledger Status, Account Status, Reset) aligned to the **top-right corner** directly above the data table (Rule 2).
+    - Added interactive iOS status toggle switches (`.erp-switch`) with CSRF headers, AJAX updates, and state rollback on error (Rule 3.5).
+    - Applied SF Pro Display font suite, monospace formatting for balances and phones, and alternating zebra striping (`tbody tr:nth-child(even)`) on main table and modal tabs (Activity Ledger, POs, Products).
+    - Standardized floating island command bar (320px live search + Export CSV + `+ New Supplier` CTA button).
+    - Added strict CSRF protection (`validateCsrfOrDie()`) across supplier addition, updates, and status toggles.
+    - Enforced RBAC authorization (`checkPermission('supplier', 'view' | 'create_edit')`).
+    - Provided safe production SQL script for `vendors` indexes and schema validation.
+- [ ] **Module 6: Rep Tracking & Route Audits**
+- [ ] **Module 7: Double-Entry Accounting & Banking**
+- [ ] **Module 8: HRM & Payroll**
+- [ ] **Module 9: Reports Engine**
 
 ## 12. Final Deliverables
 

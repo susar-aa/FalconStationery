@@ -163,6 +163,30 @@ class Supplier {
         return $result;
     }
 
+    /**
+     * Explicitly toggle or set active/inactive status for a supplier/vendor.
+     * @param int $id
+     * @param string|null $status
+     * @return string|false
+     */
+    public function toggleStatus($id, $status = null) {
+        $id = intval($id);
+        if ($status !== null) {
+            $newStatus = (strtolower($status) === 'active' || $status === '1' || $status === 1) ? 'Active' : 'Inactive';
+        } else {
+            $current = $this->getSupplierById($id);
+            if (!$current) return false;
+            $newStatus = ($current->status === 'Active') ? 'Inactive' : 'Active';
+        }
+        $this->db->query("UPDATE vendors SET status = :status WHERE id = :id");
+        $this->db->bind(':status', $newStatus);
+        $this->db->bind(':id', $id);
+        if ($this->db->execute()) {
+            return $newStatus;
+        }
+        return false;
+    }
+
     public function syncOpeningBalanceAccounting($supplierId, $amount, $date, $userId) {
         // 1. Find AP Account (2000 Accounts Payable)
         $this->db->query("SELECT * FROM chart_of_accounts WHERE account_code = '2000' OR (account_type = 'Liability' AND account_name LIKE '%Payable%') LIMIT 1");

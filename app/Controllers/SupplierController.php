@@ -13,6 +13,8 @@ class SupplierController extends Controller {
     }
 
     public function index($id = null) {
+        $this->checkPermission('supplier', 'view');
+        $csrfToken = $this->generateCsrfToken();
         $suppliers = $this->supplierModel->getAllSuppliers();
         
         $selectedSupplier = null;
@@ -46,6 +48,7 @@ class SupplierController extends Controller {
         $data = [
             'title' => 'Supplier Center',
             'content_view' => 'suppliers/index',
+            'csrf_token' => $csrfToken,
             'suppliers' => $suppliers,
             'selected_supplier' => $selectedSupplier,
             'stats' => $stats,
@@ -59,6 +62,9 @@ class SupplierController extends Controller {
         ];
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
+            $this->validateCsrfOrDie();
+            $this->checkPermission('supplier', 'create_edit');
+
             if ($_POST['action'] == 'add_supplier') {
                 $supplierData = [
                     'name' => trim($_POST['name'] ?? ''),
@@ -114,9 +120,40 @@ class SupplierController extends Controller {
     }
 
     /**
+     * Explicitly toggle or set active/inactive operational status for a supplier.
+     */
+    public function toggle_status($id) {
+        $this->checkPermission('supplier', 'create_edit');
+        $this->validateCsrfOrDie();
+
+        $id = intval($id);
+        $status = $_POST['status'] ?? null;
+        if (!$status) {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $status = $input['status'] ?? null;
+        }
+
+        $newStatus = $this->supplierModel->toggleStatus($id, $status);
+
+        header('Content-Type: application/json');
+        if ($newStatus !== false) {
+            echo json_encode([
+                'success' => true,
+                'status' => $newStatus,
+                'message' => "Supplier status updated to {$newStatus}."
+            ]);
+        } else {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Failed to update supplier operational status.']);
+        }
+        exit;
+    }
+
+    /**
      * Export all suppliers to a standard CSV file with financial totals.
      */
     public function exportCSV() {
+        $this->checkPermission('supplier', 'view');
         if (ob_get_level()) {
             ob_end_clean();
         }
