@@ -315,10 +315,29 @@ Test how the system handles each situation and fix genuine problems.
     - Enforced SF Pro Display typography, monospace data cells, and alternating zebra striping on all tables.
     - Standardized bottom floating command bar (320px live search + Create action).
     - Replaced raw browser `confirm()` with sleek CSRF-protected ERP modals for Delete and Admin Approval.
-- [ ] **Module 4: Rep Tracking & Route Audits**
-- [ ] **Module 5: Double-Entry Accounting & Banking**
-- [ ] **Module 6: HRM & Payroll**
-- [ ] **Module 7: Reports Engine**
+- [x] **Module 4: Customer Center & CRM (`CustomerController`, `Customer`, `Views/customers/index.php`)**
+  - **Audit Findings**:
+    - Page-level body scrolling was active with oversized consumer pastel cards and a massive pending review table pushing the main customer table off the viewport.
+    - Filters (Route, Ledger) were placed on the left instead of being grouped at the top-right corner above the table.
+    - Missing CSRF validation on all customer mutations (`add_customer`, `update_customer`, `review_customer`, `quick_review`, `api_add_customer`, `importCSV`, `delete`), leaving the platform open to cross-site request forgery.
+    - Missing role-based authorization checks (`checkPermission`) on customer viewing, creation, and CSV import.
+    - Delete customer modal had mismatched element IDs (`delete_customer_id` vs `delete-customer-id`) and lacked the `submitDeleteCustomer` event listener, breaking the AJAX delete workflow.
+    - Filter counter did not account for the Ledger status filter, returning an inaccurate filtered record count.
+  - **Fixes & Optimizations**:
+    - Applied 100vh Viewport-Locked ERP layout (`.cust-erp-workspace`, sticky `thead`, only table rows scroll inside `.erp-table-scroll`, pinned pagination footer).
+    - Grouped all filters (Route, Ledger Status, Operational Status, Reset) aligned to the **top-right corner** directly above the data table (Rule 2).
+    - Replaced the 3 oversized pastel cards with a compact, high-density KPI stat strip (Total Customers, Total Outstanding, Owed Accounts).
+    - Replaced the vertical-bloating pending review table with a sleek, compact alert bar (36px) featuring 1-click Quick Verify and Review actions.
+    - Enforced SF Pro Display typography suite, monospace formatting on customer codes, balances, and phone numbers, and alternating zebra striping (`tbody tr:nth-child(even)`).
+    - Standardized the floating island command bar (320px live search + CSV Export + CSV Import + `+ New Customer`).
+    - Added full CSRF protection and token validation (`validateCsrfOrDie`) across all customer mutating endpoints and modals.
+    - Added RBAC permission checks (`checkPermission('customer', 'view' | 'create_edit' | 'delete')`).
+    - Fixed delete customer modal IDs and bound it to `submitDeleteCustomer` with CSRF protection and error handling.
+    - Provided production composite indexing SQL for `customers`, `invoices`, and `customer_payments`.
+- [ ] **Module 5: Rep Tracking & Route Audits**
+- [ ] **Module 6: Double-Entry Accounting & Banking**
+- [ ] **Module 7: HRM & Payroll**
+- [ ] **Module 8: Reports Engine**
 
 ## 12. Final Deliverables
 

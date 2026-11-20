@@ -77,7 +77,7 @@ class Customer {
         return $this->db->resultSet();
     }
 
-    public function getPaginatedCustomers($start = 0, $length = 25, $search = '', $route = '', $statusFilter = '') {
+    public function getPaginatedCustomers($start = 0, $length = 25, $search = '', $route = '', $statusFilter = '', $accountStatus = '') {
         $where = [];
         $params = [];
 
@@ -92,6 +92,15 @@ class Customer {
             $params[':route'] = strtolower($route);
         }
 
+        if (!empty($accountStatus)) {
+            if ($accountStatus === 'Active' || $accountStatus === 'Inactive') {
+                $where[] = "c.status = :acc_status";
+                $params[':acc_status'] = $accountStatus;
+            } elseif ($accountStatus === 'New') {
+                $where[] = "c.review_status = 'New'";
+            }
+        }
+
         $whereSql = !empty($where) ? ' WHERE ' . implode(' AND ', $where) : '';
 
         // Total records count
@@ -99,12 +108,55 @@ class Customer {
         $totalCount = intval($this->db->single()->cnt);
 
         // Filtered records count
-        $countSql = "SELECT COUNT(*) as cnt FROM customers c LEFT JOIN mca_areas m ON c.mca_id = m.id " . $whereSql;
-        $this->db->query($countSql);
-        foreach ($params as $k => $v) {
-            $this->db->bind($k, $v);
+        if (!empty($statusFilter)) {
+            $countSql = "
+                SELECT COUNT(*) as cnt FROM (
+                    SELECT c.id, (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) as bal
+                    FROM customers c
+                    LEFT JOIN mca_areas m ON c.mca_id = m.id
+                    LEFT JOIN (
+                        SELECT customer_id, 
+                               SUM(total_amount - COALESCE(CASE WHEN global_discount_type = '%' THEN (total_amount * global_discount_val / 100) ELSE global_discount_val END, 0) + COALESCE(tax_amount, 0)) as total_billed
+                        FROM invoices 
+                        WHERE status NOT IN ('Voided', 'Cancelled') AND (delivery_status IS NULL OR delivery_status != 'Cancelled')
+                        GROUP BY customer_id
+                    ) inv ON c.id = inv.customer_id
+                    LEFT JOIN (
+                        SELECT customer_id, SUM(amount) as total_paid
+                        FROM customer_payments 
+                        WHERE status = 'Active'
+                        GROUP BY customer_id
+                    ) pmt ON c.id = pmt.customer_id
+                    LEFT JOIN (
+                        SELECT customer_id, SUM(total_amount) as total_credited
+                        FROM credit_notes
+                        GROUP BY customer_id
+                    ) cn ON c.id = cn.customer_id
+                    LEFT JOIN (
+                        SELECT COALESCE(t.entity_id, je.entity_id) as customer_id, SUM(t.debit) - SUM(t.credit) as total_je_balance
+                        FROM transactions t
+                        JOIN journal_entries je ON t.journal_entry_id = je.id
+                        JOIN chart_of_accounts coa ON t.account_id = coa.id
+                        LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
+                        WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
+                        GROUP BY COALESCE(t.entity_id, je.entity_id)
+                    ) je_b ON c.id = je_b.customer_id
+                    " . $whereSql . "
+                    HAVING " . ($statusFilter === 'owed' ? "bal > 0" : "bal <= 0") . "
+                ) sub";
+            $this->db->query($countSql);
+            foreach ($params as $k => $v) {
+                $this->db->bind($k, $v);
+            }
+            $filteredCount = intval($this->db->single()->cnt ?? 0);
+        } else {
+            $countSql = "SELECT COUNT(*) as cnt FROM customers c LEFT JOIN mca_areas m ON c.mca_id = m.id " . $whereSql;
+            $this->db->query($countSql);
+            foreach ($params as $k => $v) {
+                $this->db->bind($k, $v);
+            }
+            $filteredCount = intval($this->db->single()->cnt);
         }
-        $filteredCount = intval($this->db->single()->cnt);
 
         // Main data query with pagination
         $sql = "

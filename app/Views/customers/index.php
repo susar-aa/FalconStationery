@@ -8,773 +8,795 @@ if ($importResults) {
 $totalCustomers = $data['summary_stats']['total_customers'] ?? count($data['customers'] ?? []);
 $totalOutstanding = $data['summary_stats']['total_outstanding'] ?? 0;
 $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
+$csrfToken = $data['csrf_token'] ?? '';
 ?>
 
-<!-- Inter Font & FontAwesome Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Inter & FontAwesome 6 Icons Guarantee -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
 /* ============================================================
-   SF PRO + APPLE DESIGN LANGUAGE — CUSTOMER CATALOG
+   FALCON STATIONERY ERP: CUSTOMER CENTER ARCHITECTURE
+   SF PRO DISPLAY + VIEWPORT-LOCKED ERP STANDARDS
    ============================================================ */
 
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_regular.ttf') format('truetype');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_medium.ttf') format('truetype');
+    font-weight: 500;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_semibold.ttf') format('truetype');
+    font-weight: 600;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_bold.ttf') format('truetype');
+    font-weight: 700;
+}
+
 :root {
-    --c-bg:           #f2f2f7;
-    --c-surface:      #ffffff;
-    --c-surface2:     #f9f9fb;
-    --c-fill:         rgba(120,120,128,0.12);
-    --c-fill2:        rgba(120,120,128,0.16);
-    --c-separator:    rgba(60,60,67,0.12);
-    --c-separator2:   rgba(60,60,67,0.06);
-
-    --c-blue:         #007aff;
-    --c-blue-light:   #e5f2ff;
-    --c-blue-mid:     #b3d6ff;
-    --c-green:        #34c759;
-    --c-green-light:  #e6f9ec;
-    --c-orange:       #ff9500;
-    --c-orange-light: #fff4e5;
-    --c-red:          #ff3b30;
-    --c-red-light:    #fff0ef;
-
-    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
-
-    --t-primary:   #1c1c1e;
-    --t-secondary: #636366;
-    --t-tertiary:  #aeaeb2;
-    --t-label:     #8e8e93;
-
-    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
-    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
-
-    --r-xs: 6px;
-    --r-sm: 10px;
-    --r-md: 14px;
-    --r-lg: 20px;
-    --r-xl: 26px;
-    --r-pill: 999px;
-
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --ease-ios:    cubic-bezier(0.25, 0.1, 0.25, 1);
-    --dur-fast:    0.18s;
-    --dur-mid:     0.28s;
-    --dur-slow:    0.42s;
+    --erp-bg: #f8fafc;
+    --erp-card: #ffffff;
+    --erp-border: #e2e8f0;
+    --erp-text: #0f172a;
+    --erp-muted: #64748b;
+    --erp-font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --erp-mono: 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --c-bg:           #121212;
-        --c-surface:      #1e1e2e;
-        --c-surface2:     #161622;
-        --c-fill:         rgba(255,255,255,0.08);
-        --c-fill2:        rgba(255,255,255,0.12);
-        --c-separator:    rgba(255,255,255,0.15);
-        --c-separator2:   rgba(255,255,255,0.08);
-        --t-primary:   #f5f5f7;
-        --t-secondary: #a1a1aa;
-        --t-tertiary:  #71717a;
-        --t-label:     #52525b;
-    }
-}
-
-.cust-root {
-    font-family: var(--f-system);
-    font-size: 15px;
-    color: var(--t-primary);
-    background: var(--c-bg);
+html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: var(--erp-bg, #f8fafc);
+    font-family: var(--erp-font, 'SF Pro Display', sans-serif);
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
-.cust-wrap {
-    max-width: 1420px;
-    margin: 0 auto;
-    padding: 16px 24px 100px;
-}
-
-/* ---- Stat Cards ---- */
-.stat-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 24px;
-}
-.stat-card {
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    padding: 16px 20px;
-    box-shadow: var(--shadow-sm);
-    border: 0.5px solid var(--c-separator);
-    transition: transform var(--dur-fast) var(--ease-ios), box-shadow var(--dur-fast) var(--ease-ios);
-    cursor: default;
-    position: relative;
+.cust-erp-workspace {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    flex: 1;
     overflow: hidden;
+    gap: 8px;
+    box-sizing: border-box;
+    position: relative;
+    padding: 0 4px 54px; /* Clearance for pinned floating bottom island */
+}
+
+/* 1. Sleek Compact KPI Stats Strip */
+.erp-stats-strip {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    margin-top: 4px;
 }
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2.5px;
-    border-radius: var(--r-xl) var(--r-xl) 0 0;
+
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #475569;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
-.stat-card.blue::before  { background: var(--c-blue); }
-.stat-card.orange::before { background: var(--c-orange); }
-.stat-card.red::before   { background: var(--c-red); }
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+
+.stat-pill strong {
+    color: #0f172a;
+    font-weight: 700;
+    font-family: var(--erp-mono);
 }
-.stat-icon {
-    width: 46px; height: 46px;
-    border-radius: var(--r-sm);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+
+.badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
     flex-shrink: 0;
 }
-.stat-card.blue  .stat-icon { background: var(--c-blue-light);   color: var(--c-blue); }
-.stat-card.orange .stat-icon { background: var(--c-orange-light); color: var(--c-orange); }
-.stat-card.red   .stat-icon { background: var(--c-red-light);    color: var(--c-red); }
-.stat-info { display: flex; flex-direction: column; justify-content: center; }
-.stat-num {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.04em;
-    color: var(--t-primary);
-    line-height: 1.1;
-    margin-bottom: 2px;
-}
-.stat-lbl {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--t-label);
-}
 
-/* ---- Filter Shelf ---- */
-.filter-shelf {
+/* 2. Review Banner Alert Strip (Compact) */
+.review-banner-strip {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
     align-items: center;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 6px 14px;
+    flex-shrink: 0;
+    font-size: 12.5px;
+    gap: 12px;
 }
-.filter-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--c-surface);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--t-secondary);
-    box-shadow: var(--shadow-xs);
-    transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+
+.review-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
-.filter-chip:focus-within {
-    border-color: var(--c-blue);
-    box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
-}
-.filter-chip-label {
-    font-size: 11px;
+
+.review-banner-title {
     font-weight: 700;
-    letter-spacing: 0.04em;
-    color: var(--t-label);
-    text-transform: uppercase;
+    color: #92400e;
+    flex-shrink: 0;
 }
-.filter-reset {
-    background: transparent;
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 7px 14px;
-    font-size: 13px;
+
+.review-banner-summary {
+    color: #78350f;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.review-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.erp-btn-xs {
+    padding: 3px 8px;
+    font-size: 11px;
     font-weight: 600;
-    color: var(--t-secondary);
+    border-radius: 4px;
+    border: 1px solid transparent;
     cursor: pointer;
-    transition: all var(--dur-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    transition: all 0.12s;
 }
-.filter-reset:hover { background: var(--c-fill); color: var(--t-primary); }
-.filter-count {
-    margin-left: auto;
-    font-size: 13px;
-    color: var(--t-secondary);
+
+.erp-btn-success-xs {
+    background: #16a34a;
+    color: #ffffff;
+}
+.erp-btn-success-xs:hover { background: #15803d; }
+
+.erp-btn-primary-xs {
+    background: #2563eb;
+    color: #ffffff;
+}
+.erp-btn-primary-xs:hover { background: #1d4ed8; }
+
+/* 3. Top-Right Clean Filter Bar Above Table */
+.erp-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.erp-filter-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-results-badge {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
     font-weight: 500;
 }
-.filter-count strong { color: var(--t-primary); font-weight: 700; }
+.erp-results-badge strong {
+    color: #0f172a;
+    font-family: var(--erp-font);
+    font-weight: 700;
+}
 
-/* ---- Custom Dropdown ---- */
-.sf-dropdown { position: relative; outline: none; cursor: pointer; }
-.sf-dropdown-val {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 13.5px; font-weight: 600; color: var(--t-primary);
+.erp-filter-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
 }
-.sf-dropdown-val::after {
-    content: '';
-    display: inline-block; width: 12px; height: 12px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") center/contain no-repeat;
+
+.erp-filter-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
 }
-.sf-dropdown-menu {
-    position: absolute; top: calc(100% + 10px); left: 0; z-index: 200;
-    background: var(--c-surface);
-    border-radius: var(--r-md);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-xl);
-    min-width: 200px;
-    max-height: 280px; overflow-y: auto;
-    opacity: 0; visibility: hidden;
-    transform: translateY(-6px) scale(0.98);
-    transform-origin: top left;
-    transition: opacity var(--dur-mid) var(--ease-ios),
-                transform var(--dur-mid) var(--ease-ios),
-                visibility var(--dur-mid);
-    padding: 6px;
+
+.erp-filter-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
-.sf-dropdown:focus-within .sf-dropdown-menu {
-    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
-}
-.sf-dropdown-item {
-    padding: 9px 12px;
-    font-size: 13.5px;
+
+.erp-select {
+    height: 29px;
+    max-width: 165px;
+    padding: 0 24px 0 10px;
+    font-size: 12px;
     font-weight: 500;
-    color: var(--t-primary);
-    border-radius: var(--r-sm);
-    transition: background var(--dur-fast);
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    font-family: var(--erp-font);
     cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    text-overflow: ellipsis;
 }
-.sf-dropdown-item:hover { background: var(--c-fill); }
-.sf-dropdown-item.active { background: var(--c-blue-light); color: var(--c-blue); font-weight: 600; }
+.erp-select:hover {
+    border-color: #94a3b8;
+}
+.erp-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
 
-/* ---- Table Panel ---- */
-.table-panel {
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-sm);
+.erp-btn-reset {
+    height: 29px;
+    padding: 0 11px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+}
+.erp-btn-reset:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+/* 4. Table Card with Dedicated Independent Scroll */
+.erp-card-table {
+    flex: 1;
+    min-height: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
     position: relative;
 }
-.cust-table { width: 100%; border-collapse: collapse; }
-.cust-table thead th {
-    padding: 13px 18px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--t-label);
-    background: var(--c-surface2);
-    border-bottom: 0.5px solid var(--c-separator);
-    white-space: nowrap;
+
+.erp-table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    position: relative;
+}
+
+.erp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
     text-align: left;
 }
-.cust-table tbody tr {
-    transition: background var(--dur-fast);
-    border-bottom: 0.5px solid var(--c-separator2);
+
+.erp-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.erp-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
     cursor: pointer;
 }
-.cust-table tbody tr:last-child { border-bottom: none; }
-.cust-table tbody tr:hover { background: var(--c-fill2); }
-.cust-table td {
-    padding: 14px 18px;
-    font-size: 14px;
-    color: var(--t-primary);
-    vertical-align: middle;
+.erp-table tbody tr:hover {
+    background: #f8fafc !important;
+}
+/* Alternating Zebra Striping */
+.erp-table tbody tr:nth-child(even) {
+    background: #fbfcfe;
 }
 
-/* ---- Badges & Labels ---- */
-.sf-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 8px; border-radius: var(--r-xs);
-    font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.02em;
+.erp-table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    color: #1e293b;
 }
-.sf-badge.badge-active { background: var(--c-green-light); color: var(--c-green); }
-.sf-badge.badge-owed   { background: var(--c-red-light);   color: var(--c-red); }
-.sf-badge.badge-new    { background: var(--c-orange-light); color: var(--c-orange); }
-.sf-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.font-mono {
+    font-family: var(--erp-mono, 'SF Mono', monospace);
+}
 
 .avatar-circle {
-    width: 36px; height: 36px;
-    background: var(--c-fill);
-    color: var(--t-secondary);
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700;
+    background: #f1f5f9;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
     flex-shrink: 0;
 }
 
-/* ---- Alerts ---- */
-.sf-alert {
-    display: flex; align-items: flex-start; gap: 12px;
-    background: var(--c-surface);
-    border-radius: var(--r-md);
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-xs);
-    border: 0.5px solid var(--c-separator);
-    border-left-width: 3.5px;
-    font-size: 14px;
+/* Badges */
+.sf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
 }
-.sf-alert.success { border-left-color: var(--c-green); }
-.sf-alert.error   { border-left-color: var(--c-red); }
-.sf-alert-icon { font-size: 18px; flex-shrink: 0; padding-top: 1px; }
-.sf-alert.success .sf-alert-icon { color: var(--c-green); }
-.sf-alert.error   .sf-alert-icon { color: var(--c-red); }
-.sf-alert-title { font-weight: 700; color: var(--t-primary); margin-bottom: 2px; }
-.sf-alert-msg   { color: var(--t-secondary); font-size: 13px; }
-.sf-alert-close {
-    margin-left: auto; flex-shrink: 0; background: none; border: none;
-    color: var(--t-tertiary); cursor: pointer; font-size: 15px; padding: 2px;
-}
-.sf-alert-close:hover { color: var(--t-secondary); }
+.sf-badge.badge-active { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.sf-badge.badge-owed   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.sf-badge.badge-new    { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.sf-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
-/* ---- Button Elements ---- */
-.sf-btn {
+/* Action Buttons (Ghost Icon Style) */
+.erp-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+}
+.erp-icon-btn {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 11.5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.12s ease;
+    padding: 0;
+}
+.erp-icon-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+.erp-icon-btn.view { color: #2563eb; }
+.erp-icon-btn.view:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.erp-icon-btn.share { color: #059669; }
+.erp-icon-btn.share:hover { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+
+/* 5. Pinned Pagination Footer */
+.erp-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 8px 14px;
-    border-radius: var(--r-md);
-    font-size: 13px; font-weight: 600;
-    display: inline-flex; align-items: center; gap: 6px;
-    border: 0.5px solid transparent; cursor: pointer;
-    transition: transform var(--dur-fast) var(--ease-spring), filter var(--dur-fast);
-    text-decoration: none;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #64748b;
 }
-.sf-btn:active { transform: scale(0.97); }
-.sf-btn.primary { background: var(--c-blue); color: #fff; }
-.sf-btn.neutral { background: var(--c-surface); border-color: var(--c-separator); color: var(--t-primary); box-shadow: var(--shadow-xs); }
-.sf-btn.neutral:hover { background: var(--c-surface2); }
-.sf-btn.danger { background: var(--c-red); color: #fff; }
-.sf-btn.success { background: var(--c-green); color: #fff; }
-
-.act-btn {
-    width: 28px; height: 28px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    border: none; background: transparent; cursor: pointer;
-    font-size: 13.5px; transition: background var(--dur-fast);
-    text-decoration: none;
+.erp-page-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
-.act-btn.view  { color: var(--c-blue); }
-.act-btn.view:hover { background: var(--c-blue-light); }
-.act-btn.edit  { color: var(--t-secondary); }
-.act-btn.edit:hover { background: var(--c-fill); }
+.erp-page-btn {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.12s;
+}
+.erp-page-btn:hover:not(.disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+.erp-page-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+.erp-page-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
 
-/* ---- Command Bar (Dynamic Island style) ---- */
+/* 6. Floating Bottom Command Island */
 .cmd-bar {
     position: fixed;
-    bottom: 28px; left: 50%;
+    bottom: 22px;
+    left: 50%;
     transform: translateX(-50%);
-    background: rgba(28, 28, 30, 0.92);
-    backdrop-filter: saturate(180%) blur(28px);
-    -webkit-backdrop-filter: saturate(180%) blur(28px);
-    border: 0.5px solid rgba(255,255,255,0.12);
-    border-radius: var(--r-pill);
-    padding: 7px 10px;
-    display: flex; align-items: center; gap: 4px;
-    box-shadow: var(--shadow-xl), 0 0 0 0.5px rgba(0,0,0,0.3);
-    z-index: 100;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    padding: 5px 8px 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    z-index: 50;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .cmd-search {
-    display: flex; align-items: center; gap: 9px;
-    background: rgba(255,255,255,0.1);
-    border-radius: var(--r-pill);
-    padding: 8px 14px;
-    width: 196px;
-    transition: width var(--dur-slow) var(--ease-ios),
-                background var(--dur-mid);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    width: 320px;
 }
-.cmd-search:focus-within {
-    width: 300px;
-    background: rgba(255,255,255,0.18);
+.cmd-search i {
+    color: #94a3b8;
+    font-size: 13px;
+    flex-shrink: 0;
 }
-.cmd-search i { color: rgba(255,255,255,0.55); font-size: 14px; flex-shrink: 0; }
 .cmd-search input {
-    background: transparent; border: none; outline: none;
-    color: #fff; font-size: 14px; font-weight: 500;
-    font-family: var(--f-system); width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 13px;
+    width: 100%;
+    font-family: var(--erp-font);
 }
-.cmd-search input::placeholder { color: rgba(255,255,255,0.45); }
-.cmd-divider { width: 0.5px; height: 22px; background: rgba(255,255,255,0.15); margin: 0 3px; }
+.cmd-search input::placeholder {
+    color: #94a3b8;
+}
+.cmd-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.2);
+}
 .cmd-icon {
-    width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: rgba(255,255,255,0.8); font-size: 15px;
-    background: transparent; border: none; cursor: pointer; text-decoration: none;
-    transition: background var(--dur-fast);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
 }
-.cmd-icon:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.cmd-icon:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+}
 .cmd-cta {
-    display: flex; align-items: center; gap: 7px;
-    background: #fff; color: #1c1c1e;
-    border: none; border-radius: var(--r-pill);
-    padding: 0 18px; height: 38px;
-    font-size: 14px; font-weight: 700;
-    font-family: var(--f-system);
-    cursor: pointer; text-decoration: none;
-    transition: transform var(--dur-fast) var(--ease-spring),
-                background var(--dur-fast);
-    margin-left: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    border: none;
+    border-radius: 9999px;
+    padding: 0 14px;
+    height: 30px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
 }
-.cmd-cta:hover { background: #e5e5ea; transform: scale(0.97); }
-
-/* ---- Pagination styles ---- */
-.sf-pagination {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 20px; background: var(--c-surface2);
-    border-top: 0.5px solid var(--c-separator);
-}
-.pg-info { font-size: 13px; color: var(--t-secondary); }
-.pg-right { display: flex; align-items: center; gap: 20px; }
-.pg-size-wrap { display: flex; align-items: center; gap: 8px; }
-.pg-size-lbl { font-size: 12px; font-weight: 600; color: var(--t-label); text-transform: uppercase; }
-.pg-size-sel {
-    font-family: var(--f-system); font-size: 13px; font-weight: 600;
-    color: var(--t-primary); background: var(--c-fill);
-    border: 0.5px solid var(--c-separator); border-radius: var(--r-sm);
-    padding: 5px 9px; outline: none; cursor: pointer;
-    transition: border-color var(--dur-fast);
-}
-.pg-size-sel:hover { border-color: var(--c-blue); }
-.pg-nav { display: flex; border: 0.5px solid var(--c-separator); border-radius: var(--r-sm); overflow: hidden; }
-.pg-btn {
-    width: 34px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--c-surface); border: none; cursor: pointer;
-    color: var(--t-primary); font-size: 12px;
-    transition: background var(--dur-fast);
-}
-.pg-btn:hover:not(:disabled) { background: var(--c-fill); }
-.pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.pg-btn + .pg-btn { border-left: 0.5px solid var(--c-separator); }
-.pg-current {
-    padding: 0 14px; display: flex; align-items: center;
-    font-size: 13px; font-weight: 600; color: var(--t-primary);
-    background: var(--c-surface);
-    border-left: 0.5px solid var(--c-separator);
-    border-right: 0.5px solid var(--c-separator);
+.cmd-cta:hover {
+    background: #f1f5f9;
 }
 
-/* ---- Modal System ---- */
+/* Modals */
 .modal-veil {
     position: fixed; inset: 0; z-index: 2000;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px);
     display: flex; align-items: center; justify-content: center;
-    transition: opacity var(--dur-mid) var(--ease-ios);
 }
 .modal-veil.hidden { display: none; }
 .sf-modal {
-    background: var(--c-surface);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-xl);
-    box-shadow: var(--shadow-xl);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
     width: 520px; max-width: 95vw;
-    animation: sfModalSlide var(--dur-mid) var(--ease-spring);
     overflow: hidden;
-}
-@keyframes sfModalSlide {
-    from { transform: translateY(20px) scale(0.97); opacity: 0; }
-    to { transform: translateY(0) scale(1); opacity: 1; }
 }
 .modal-head {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 18px 24px; border-bottom: 0.5px solid var(--c-separator);
+    padding: 14px 18px; border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
 }
-.modal-title { font-size: 16px; font-weight: 700; margin: 0; }
+.modal-title { font-size: 15px; font-weight: 700; margin: 0; color: #0f172a; }
 .modal-close {
-    background: var(--c-fill); border: none; width: 26px; height: 26px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    color: var(--t-label); cursor: pointer; font-size: 12px;
+    background: transparent; border: none; width: 26px; height: 26px;
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    color: #64748b; cursor: pointer; font-size: 14px;
 }
-.modal-close:hover { background: var(--c-fill2); color: var(--t-secondary); }
-.modal-body { padding: 24px; }
+.modal-close:hover { background: #e2e8f0; color: #0f172a; }
+.modal-body { padding: 18px; }
 .modal-foot {
-    display: flex; justify-content: flex-end; gap: 10px;
-    padding: 16px 24px; background: var(--c-surface2);
-    border-top: 0.5px solid var(--c-separator);
+    display: flex; justify-content: flex-end; gap: 8px;
+    padding: 12px 18px; background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
 }
 
-/* ---- Input elements ---- */
-.sf-group { margin-bottom: 16px; }
-.sf-group label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--t-secondary); text-transform: uppercase; }
+.sf-btn {
+    padding: 7px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; cursor: pointer;
+}
+.sf-btn.primary { background: #2563eb; color: #fff; }
+.sf-btn.primary:hover { background: #1d4ed8; }
+.sf-btn.neutral { background: #fff; border-color: #d1d5db; color: #334155; }
+.sf-btn.neutral:hover { background: #f8fafc; }
+.sf-btn.danger { background: #dc2626; color: #fff; }
+.sf-btn.danger:hover { background: #b91c1c; }
+.sf-btn.success { background: #16a34a; color: #fff; }
+.sf-btn.success:hover { background: #15803d; }
+
+.sf-group { margin-bottom: 12px; }
+.sf-group label { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.03em; }
 .sf-input {
-    width: 100%; padding: 10px 14px;
-    border-radius: var(--r-sm); border: 0.5px solid var(--c-separator);
-    background: var(--c-surface2); color: var(--t-primary);
-    font-size: 14px; outline: none; transition: border-color var(--dur-fast);
-    box-sizing: border-box;
+    width: 100%; padding: 8px 10px;
+    border-radius: 6px; border: 1px solid #d1d5db;
+    background: #ffffff; color: #0f172a;
+    font-size: 13px; outline: none; box-sizing: border-box; font-family: var(--erp-font);
 }
-.sf-input:focus { border-color: var(--c-blue); background: var(--c-surface); }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sf-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-/* ---- Tabs in Modal ---- */
-.tabs { display: flex; border-bottom: 0.5px solid var(--c-separator); background: var(--c-surface2); padding: 0 24px; }
+/* Tabs inside Profile Modal */
+.tabs { display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; padding: 0 16px; }
 .tab-btn {
-    padding: 12px 18px; border: none; background: transparent; cursor: pointer;
-    font-size: 13px; font-weight: 600; color: var(--t-secondary);
-    border-bottom: 2.5px solid transparent; transition: 0.18s;
+    padding: 10px 14px; border: none; background: transparent; cursor: pointer;
+    font-size: 12.5px; font-weight: 600; color: #64748b;
+    border-bottom: 2px solid transparent; transition: 0.15s;
 }
-.tab-btn:hover { color: var(--c-blue); }
-.tab-btn.active { color: var(--c-blue); border-bottom-color: var(--c-blue); }
+.tab-btn:hover { color: #2563eb; }
+.tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-.data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-.data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 0.5px solid var(--c-separator2); font-size: 13px; }
-.data-table th { color: var(--t-label); font-weight: 600; font-size: 10.5px; text-transform: uppercase; background: var(--c-surface2); }
+.data-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.data-table th, .data-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 12.5px; }
+.data-table th { color: #475569; font-weight: 700; font-size: 10.5px; text-transform: uppercase; background: #f8fafc; }
 .num-col { text-align: right !important; }
 
-.status-badge { padding: 3px 6px; border-radius: var(--r-xs); font-size: 9.5px; font-weight: bold; text-transform: uppercase; }
-.status-Paid, .status-Cleared { background: var(--c-green-light); color: var(--c-green); }
-.status-Unpaid, .status-Pending { background: var(--c-orange-light); color: var(--c-orange); }
-.status-Bounced { background: var(--c-red-light); color: var(--c-red); }
-
-.map-box { width: 100%; height: 230px; border-radius: var(--r-md); border: 0.5px solid var(--c-separator); background: var(--c-surface2); overflow: hidden; margin-top: 8px; }
-
-/* ---- Drop-Zone ---- */
 .drop-zone {
-    border: 1.5px dashed var(--c-separator); padding: 28px; border-radius: var(--r-md);
-    text-align: center; background: var(--c-surface2); position: relative; cursor: pointer;
-    transition: background var(--dur-fast);
+    border: 1.5px dashed #cbd5e1; padding: 24px; border-radius: 8px;
+    text-align: center; background: #f8fafc; position: relative; cursor: pointer;
 }
-.drop-zone:hover { background: var(--c-fill); }
+.drop-zone:hover { background: #f1f5f9; }
 .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.drop-zone-icon { font-size: 28px; margin-bottom: 8px; color: var(--t-tertiary); }
-.drop-zone-title { font-size: 13px; font-weight: 700; color: var(--t-primary); margin-bottom: 2px; }
-.drop-zone-sub { font-size: 11px; color: var(--t-secondary); }
+.drop-zone-icon { font-size: 26px; margin-bottom: 6px; color: #94a3b8; }
+.drop-zone-title { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+.drop-zone-sub { font-size: 11px; color: #64748b; }
 
-/* ---- Spin ---- */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.7s linear infinite; display: inline-block; }
-
 .hidden { display: none !important; }
-.truncate-text { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 </style>
 
-<div class="cust-root">
-    <div class="cust-wrap">
+<div class="cust-erp-workspace">
 
-        <!-- Stat Cards Row -->
-        <div class="stat-row" style="margin-top: 10px;">
-            <div class="stat-card blue">
-                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                <div class="stat-info">
-                    <div class="stat-num" id="stat-total-customers"><?= number_format($totalCustomers) ?></div>
-                    <div class="stat-lbl">Total Customers</div>
-                </div>
+    <!-- Top Compact KPI Stats Strip -->
+    <div class="erp-stats-strip">
+        <div class="stat-pill">
+            <span class="badge-dot" style="background:#2563eb;"></span>
+            Total Customers: <strong id="stat-total-customers"><?= number_format($totalCustomers) ?></strong>
+        </div>
+        <div class="stat-pill">
+            <span class="badge-dot" style="background:#ea580c;"></span>
+            Total Outstanding: <strong id="stat-total-outstanding">Rs. <?= number_format($totalOutstanding, 2) ?></strong>
+        </div>
+        <div class="stat-pill">
+            <span class="badge-dot" style="background:#dc2626;"></span>
+            Owed Accounts: <strong id="stat-owed-count"><?= number_format($owedCustomersCount) ?></strong>
+        </div>
+    </div>
+
+    <!-- Notifications -->
+    <?php if (!empty($data['error'])): ?>
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:8px 12px; font-size:12.5px; color:#991b1b; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span><?= htmlspecialchars($data['error']) ?></span>
             </div>
-            <div class="stat-card orange">
-                <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
-                <div class="stat-info">
-                    <div class="stat-num" id="stat-total-outstanding">Rs. <?= number_format($totalOutstanding, 2) ?></div>
-                    <div class="stat-lbl">Total Outstanding</div>
-                </div>
+            <button type="button" style="background:none; border:none; color:#991b1b; cursor:pointer;" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($data['success'])): ?>
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 12px; font-size:12.5px; color:#166534; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-circle-check"></i>
+                <span><?= htmlspecialchars($data['success']) ?></span>
             </div>
-            <div class="stat-card red">
-                <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="stat-info">
-                    <div class="stat-num" id="stat-owed-count"><?= number_format($owedCustomersCount) ?></div>
-                    <div class="stat-lbl">Owed Accounts</div>
-                </div>
+            <button type="button" style="background:none; border:none; color:#166534; cursor:pointer;" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($importResults): ?>
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:8px 12px; font-size:12px; color:#1e40af; flex-shrink:0;">
+            <strong>CSV Import Completed:</strong> Added <?= intval($importResults['added']) ?> customers, Updated <?= intval($importResults['updated']) ?> customers.
+            <?php if (!empty($importResults['errors'])): ?>
+                <span style="color:#dc2626; margin-left:8px;">(<?= count($importResults['errors']) ?> errors)</span>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Newly Added Customers Pending Review Banner (Compact Strip) -->
+    <?php
+    $pendingReview = [];
+    foreach ($data['customers'] ?? [] as $cust) {
+        if (isset($cust->review_status) && $cust->review_status === 'New') {
+            $pendingReview[] = $cust;
+        }
+    }
+    ?>
+    <?php if (!empty($pendingReview)): ?>
+        <div class="review-banner-strip">
+            <div class="review-banner-left">
+                <i class="fa-solid fa-user-clock" style="color: #ea580c; font-size: 14px;"></i>
+                <span class="review-banner-title">Newly Added Customers Pending Review (<?= count($pendingReview) ?>):</span>
+                <span class="review-banner-summary">
+                    <strong><?= htmlspecialchars($pendingReview[0]->name ?? '') ?></strong> (CODE: CUST-<?= $pendingReview[0]->id ?>) &bull; <?= htmlspecialchars($pendingReview[0]->phone ?? 'No Phone') ?> &bull; Rep: <?= htmlspecialchars($pendingReview[0]->created_by_username ?? 'App Sync') ?>
+                    <?= count($pendingReview) > 1 ? '<em style="color:#64748b;"> +' . (count($pendingReview) - 1) . ' more</em>' : '' ?>
+                </span>
+            </div>
+            <div class="review-banner-actions">
+                <button type="button" class="erp-btn-xs erp-btn-success-xs" onclick="quickVerifyCustomer(<?= $pendingReview[0]->id ?>)" title="Quick Verify">
+                    <i class="fa-solid fa-check"></i> Verify
+                </button>
+                <button type="button" class="erp-btn-xs erp-btn-primary-xs" onclick="showCustomerProfile(<?= $pendingReview[0]->id ?>, 'profile')" title="Review & Correct">
+                    <i class="fa-solid fa-user-pen"></i> Review
+                </button>
             </div>
         </div>
+    <?php endif; ?>
 
-        <!-- Notifications -->
-        <?php if (!empty($data['error'])): ?>
-            <div class="sf-alert error" id="error-alert">
-                <i class="fa-solid fa-circle-exclamation sf-alert-icon"></i>
-                <div>
-                    <div class="sf-alert-title">Error</div>
-                    <div class="sf-alert-msg"><?= htmlspecialchars($data['error']) ?></div>
-                </div>
-                <button type="button" class="sf-alert-close" onclick="document.getElementById('error-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-        <?php endif; ?>
-        
-        <?php if (!empty($data['success'])): ?>
-            <div class="sf-alert success" id="success-alert">
-                <i class="fa-solid fa-circle-check sf-alert-icon"></i>
-                <div>
-                    <div class="sf-alert-title">Success</div>
-                    <div class="sf-alert-msg"><?= htmlspecialchars($data['success']) ?></div>
-                </div>
-                <button type="button" class="sf-alert-close" onclick="document.getElementById('success-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($importResults): ?>
-            <div class="sf-alert success" id="import-alert" style="display:flex; flex-direction:column; gap:12px; border-left-color: var(--c-blue);">
-                <div style="display:flex; align-items:flex-start; gap:12px; width:100%;">
-                    <i class="fa-solid fa-circle-check sf-alert-icon" style="color:var(--c-blue);"></i>
-                    <div style="flex:1;">
-                        <div class="sf-alert-title">CSV Import Completed</div>
-                        <ul style="margin: 4px 0 0 16px; padding: 0; display: flex; gap: 20px; list-style-type: disc; font-size:13px;">
-                            <li>Added: <strong><?= intval($importResults['added']) ?></strong> customers</li>
-                            <li>Updated: <strong><?= intval($importResults['updated']) ?></strong> customers</li>
-                        </ul>
-                    </div>
-                    <button type="button" class="sf-alert-close" onclick="document.getElementById('import-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <?php if (!empty($importResults['success_logs'])): ?>
-                    <div style="background:rgba(0,122,255,0.05); border-radius:var(--r-xs); padding:8px 12px; font-size:11px; max-height:80px; overflow-y:auto; border:0.5px solid rgba(0,122,255,0.1); width:100%;">
-                        <?php foreach ($importResults['success_logs'] as $log): ?>
-                            <div style="margin-bottom:2px; color:#0056b3;">✅ <?= htmlspecialchars($log) ?></div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (!empty($importResults['errors'])): ?>
-                    <div style="background:rgba(255,59,48,0.05); border-radius:var(--r-xs); padding:8px 12px; font-size:11px; max-height:80px; overflow-y:auto; border:0.5px solid rgba(255,59,48,0.1); width:100%;">
-                        <?php foreach ($importResults['errors'] as $err): ?>
-                            <div style="margin-bottom:2px; color:var(--c-red);">❌ <?= htmlspecialchars($err) ?></div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Newly Added Customers Pending Review Section -->
-        <?php
-        $pendingReview = [];
-        foreach ($data['customers'] ?? [] as $cust) {
-            if (isset($cust->review_status) && $cust->review_status === 'New') {
-                $pendingReview[] = $cust;
-            }
-        }
-        ?>
-        <?php if (!empty($pendingReview)): ?>
-            <div class="review-panel" style="background: var(--c-surface); border-radius: var(--r-xl); border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-sm); margin-bottom: 24px; overflow: hidden;">
-                <div style="background: linear-gradient(135deg, rgba(255,149,0,0.1), rgba(255,149,0,0.05)); padding: 14px 20px; border-bottom: 0.5px solid var(--c-separator); display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <i class="fa-solid fa-user-clock" style="color: var(--c-orange); font-size: 18px;"></i>
-                        <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--t-primary);">Newly Added Customers Pending Review (<?= count($pendingReview) ?>)</h4>
-                    </div>
-                    <span style="font-size: 11px; font-weight: 700; background: var(--c-orange); color: #fff; padding: 3px 8px; border-radius: var(--r-pill); text-transform: uppercase; letter-spacing: 0.05em;">Needs Verification</span>
-                </div>
-                
-                <table class="cust-table" style="width: 100%;">
-                    <thead>
-                        <tr style="background: var(--c-surface2);">
-                            <th style="padding: 10px 18px; font-size: 11px;">Customer / Code</th>
-                            <th style="padding: 10px 18px; font-size: 11px;">Contact Number</th>
-                            <th style="padding: 10px 18px; font-size: 11px;">Address</th>
-                            <th style="padding: 10px 18px; font-size: 11px;">Sales Representative</th>
-                            <th style="padding: 10px 18px; font-size: 11px;">Date & Time Created</th>
-                            <th style="padding: 10px 18px; font-size: 11px; width: 180px; text-align: center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($pendingReview as $pc): ?>
-                            <tr class="pending-customer-row" onclick="showCustomerProfile(<?= $pc->id ?>, 'profile')" style="border-bottom: 0.5px solid var(--c-separator2); transition: background 0.2s; cursor: pointer;">
-                                <td style="padding: 10px 18px;">
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div class="avatar-circle" style="width: 30px; height: 30px; font-size: 12px; background: var(--c-orange-light); color: var(--c-orange);">
-                                            <?= strtoupper(substr($pc->name ?? '', 0, 2)) ?>
-                                        </div>
-                                        <div>
-                                            <strong style="font-size: 13.5px; font-weight: 600; color: var(--t-primary);"><?= htmlspecialchars($pc->name ?? '') ?></strong>
-                                            <span style="font-size: 10px; color: var(--t-secondary); display: block; margin-top: 1px;">CODE: CUST-<?= $pc->id ?></span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style="padding: 10px 18px; font-size: 13px;">
-                                    📞 <?= !empty($pc->phone) ? htmlspecialchars($pc->phone) : '<span style="color:var(--c-red); font-weight:600;">Missing</span>' ?>
-                                </td>
-                                <td style="padding: 10px 18px; font-size: 12px; color: var(--t-secondary);">
-                                    <?= !empty($pc->address) ? htmlspecialchars($pc->address) : '<span style="color:var(--c-red); font-weight:600;">Missing Address</span>' ?>
-                                </td>
-                                <td style="padding: 10px 18px; font-size: 13px; font-weight: 500;">
-                                    👤 <?= htmlspecialchars($pc->created_by_username ?? 'Rep App Sync') ?>
-                                </td>
-                                <td style="padding: 10px 18px; font-size: 12px; color: var(--t-secondary);">
-                                    🕒 <?= date('M d, Y h:i A', strtotime($pc->created_at)) ?>
-                                </td>
-                                <td style="padding: 10px 18px;" onclick="event.stopPropagation()">
-                                    <div style="display: flex; gap: 6px; justify-content: center;">
-                                        <button type="button" class="sf-btn success" onclick="quickVerifyCustomer(<?= $pc->id ?>)" style="padding: 5px 10px; font-size: 11px;" title="Quick Verify">
-                                            <i class="fa-solid fa-check"></i> Verify
-                                        </button>
-                                        <button type="button" class="sf-btn primary" onclick="showCustomerProfile(<?= $pc->id ?>, 'profile')" style="padding: 5px 10px; font-size: 11px;" title="Review & Correct">
-                                            <i class="fa-solid fa-user-pen"></i> Review
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php endif; ?>
-
-        <!-- Filters Block -->
-        <div class="filter-shelf">
-            <!-- Filter by Route -->
-            <div class="filter-chip">
-                <span class="filter-chip-label">Route</span>
-                <div class="sf-dropdown" tabindex="0">
-                    <div class="sf-dropdown-val" id="route-dropdown-val">All Routes</div>
-                    <div class="sf-dropdown-menu">
-                        <div class="sf-dropdown-item active" data-val="" onclick="selectRoute('', 'All Routes')">All Routes</div>
-                        <?php 
-                        $routes = [];
-                        if (!empty($data['mca_areas'])) {
-                            foreach($data['mca_areas'] as $area) {
-                                if(!empty($area->name) && !in_array($area->name, $routes)) { $routes[] = $area->name; }
-                            }
+    <!-- Top-Right Clean Filter Toolbar (RULE 2) -->
+    <div class="erp-filter-bar">
+        <div class="erp-filter-left">
+            <span class="erp-results-badge">Showing <strong id="matching-count"><?= $data['records_filtered'] ?? count($data['customers']) ?></strong> customers</span>
+        </div>
+        <div class="erp-filter-right">
+            <!-- Route Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Route:</span>
+                <select id="filterRoute" class="erp-select" onchange="fetchCustomersAJAX(1)">
+                    <option value="">All Routes</option>
+                    <?php 
+                    $routes = [];
+                    if (!empty($data['mca_areas'])) {
+                        foreach($data['mca_areas'] as $area) {
+                            if(!empty($area->name) && !in_array($area->name, $routes)) { $routes[] = $area->name; }
                         }
-                        sort($routes);
-                        foreach($routes as $r): ?>
-                            <div class="sf-dropdown-item" data-val="<?= htmlspecialchars(strtolower($r), ENT_QUOTES, 'UTF-8') ?>" onclick="selectRoute('<?= htmlspecialchars(strtolower($r), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars($r, ENT_QUOTES, 'UTF-8') ?>')"><?= htmlspecialchars($r) ?></div>
-                        <?php endforeach; ?>
-                    </div>
-                    <input type="hidden" id="filterRoute" value="">
-                </div>
+                    }
+                    sort($routes);
+                    foreach($routes as $r): ?>
+                        <option value="<?= htmlspecialchars(strtolower($r), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($r) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
 
-            <!-- Payment Status -->
-            <div class="filter-chip">
-                <span class="filter-chip-label">Ledger</span>
-                <div class="sf-dropdown" tabindex="0">
-                    <div class="sf-dropdown-val" id="status-dropdown-val">All Accounts</div>
-                    <div class="sf-dropdown-menu">
-                        <div class="sf-dropdown-item active" data-val="" onclick="selectStatus('', 'All Accounts')">All Accounts</div>
-                        <div class="sf-dropdown-item" data-val="owed" onclick="selectStatus('owed', 'Has Unpaid Balance')">Has Unpaid Balance</div>
-                        <div class="sf-dropdown-item" data-val="cleared" onclick="selectStatus('cleared', 'Zero Balance')">Zero Balance</div>
-                    </div>
-                    <input type="hidden" id="filterStatus" value="">
-                </div>
+            <!-- Ledger Status Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Ledger:</span>
+                <select id="filterStatus" class="erp-select" onchange="fetchCustomersAJAX(1)">
+                    <option value="">All Accounts</option>
+                    <option value="owed">Has Unpaid Balance</option>
+                    <option value="cleared">Zero Balance</option>
+                </select>
+            </div>
+
+            <!-- Account Operational Status Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Status:</span>
+                <select id="filterAccountStatus" class="erp-select" onchange="fetchCustomersAJAX(1)">
+                    <option value="">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="New">Pending Review</option>
+                </select>
             </div>
 
             <!-- Reset Button -->
-            <button type="button" onclick="clearAllFilters()" class="filter-reset">Reset</button>
-
-            <!-- Counter -->
-            <div class="filter-count">
-                <strong id="matching-count"><?= $data['records_filtered'] ?? count($data['customers']) ?></strong> customers
-            </div>
+            <button type="button" class="erp-btn-reset" onclick="clearAllFilters()">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </button>
         </div>
+    </div>
 
-        <!-- Table View -->
-        <div class="table-panel">
-            <table class="cust-table">
+    <!-- Table Card with Dedicated Independent Scroll (RULE 1 & 3) -->
+    <div class="erp-card-table">
+        <div class="erp-table-scroll">
+            <table class="erp-table">
                 <thead>
                     <tr>
                         <th>Customer / Company</th>
                         <th>Contact Details</th>
-                        <th class="txt-right">Outstanding Balance</th>
+                        <th style="text-align:right;">Outstanding Balance</th>
                         <th>Ledger Status</th>
                         <th>Account Status</th>
-                        <th style="width:120px;" class="txt-center">Actions</th>
+                        <th style="text-align:center; width:90px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="custList">
                     <?php if (empty($data['customers'])): ?>
                         <tr>
-                            <td colspan="6" style="text-align:center; padding:40px; color:var(--t-secondary);">
-                                <i class="fa-solid fa-building" style="font-size:28px; margin-bottom:8px; color:var(--t-tertiary);"></i><br>
+                            <td colspan="6" style="text-align:center; padding:35px; color:#64748b;">
+                                <i class="fa-solid fa-building" style="font-size:24px; margin-bottom:6px; color:#cbd5e1;"></i><br>
                                 No customers registered yet.
                             </td>
                         </tr>
@@ -786,49 +808,38 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                             $badgeTxt = $bal > 0 ? 'Owed' : 'Cleared';
                             $accountStatus = $c->status ?? 'Active';
                             ?>
-                            <tr class="customer-row" 
-                                onclick="showCustomerProfile(<?= $c->id ?>)"
-                                data-id="<?= $c->id ?>"
-                                data-name="<?= htmlspecialchars(strtolower($c->name ?? '')) ?>"
-                                data-phone="<?= htmlspecialchars(strtolower($c->phone ?? '')) ?>"
-                                data-email="<?= htmlspecialchars(strtolower($c->email ?? '')) ?>"
-                                data-route="<?= htmlspecialchars(strtolower($c->mca_name ?? '')) ?>"
-                                data-address="<?= htmlspecialchars(strtolower($c->address ?? '')) ?>"
-                                data-outstanding="<?= $bal ?>">
-                                
+                            <tr class="customer-row" onclick="showCustomerProfile(<?= $c->id ?>)">
                                 <td>
-                                    <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="display:flex; align-items:center; gap:10px;">
                                         <div class="avatar-circle"><?= strtoupper(substr($c->name ?? '', 0, 2)) ?></div>
                                         <div>
-                                            <strong style="font-size:14.5px; font-weight:600; color:var(--t-primary);"><?= htmlspecialchars($c->name ?? '') ?></strong>
-                                            <span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;">
-                                                🏠 <?= !empty($c->address) ? htmlspecialchars($c->address) : '<span style="color:var(--c-red); font-weight:600;">Missing Address</span>' ?>
+                                            <strong style="font-size:13px; font-weight:600; color:#0f172a;"><?= htmlspecialchars($c->name ?? '') ?></strong>
+                                            <span style="font-size:11px; color:#64748b; display:block; margin-top:1px;">
+                                                🏠 <?= !empty($c->address) ? htmlspecialchars($c->address) : '<span style="color:#dc2626; font-weight:600;">Missing Address</span>' ?>
                                             </span>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <span style="font-size:13px; font-weight:500; display:block;">
-                                        📞 <?= !empty($c->phone) ? htmlspecialchars($c->phone) : '<span style="color:var(--c-red); font-weight:600;">Missing Phone</span>' ?>
+                                    <span class="font-mono" style="font-size:12px; font-weight:500; display:block;">
+                                        📞 <?= !empty($c->phone) ? htmlspecialchars($c->phone) : '<span style="color:#dc2626; font-weight:600;">Missing Phone</span>' ?>
                                     </span>
                                     <?php if (!empty($c->email)): ?>
-                                        <span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;">
+                                        <span style="font-size:11px; color:#64748b; display:block; margin-top:1px;">
                                             <?= htmlspecialchars($c->email) ?>
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="txt-right" style="font-weight:700; font-family:var(--f-mono); font-size:14px; color: <?= $bal > 0 ? 'var(--c-red)' : 'var(--c-green)' ?>;">
-                                    Rs: <?= number_format($bal, 2) ?>
+                                <td style="text-align:right; font-weight:700; font-family:var(--erp-mono); font-size:13px; color: <?= $bal > 0 ? '#dc2626' : '#16a34a' ?>;">
+                                    Rs. <?= number_format($bal, 2) ?>
                                 </td>
                                 <td>
-                                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
-                                        <span class="sf-badge <?= $badgeCls ?>">
-                                            <span class="dot"></span><?= $badgeTxt ?>
-                                        </span>
-                                    </div>
+                                    <span class="sf-badge <?= $badgeCls ?>">
+                                        <span class="dot"></span><?= $badgeTxt ?>
+                                    </span>
                                 </td>
                                 <td>
-                                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                                    <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-start;">
                                         <span class="sf-badge <?= $accountStatus === 'Active' ? 'badge-active' : 'badge-owed' ?>">
                                             <span class="dot"></span><?= $accountStatus ?>
                                         </span>
@@ -840,11 +851,11 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                                     </div>
                                 </td>
                                 <td>
-                                    <div style="display:flex; justify-content:center; gap:6px;" onclick="event.stopPropagation()">
-                                        <button type="button" class="act-btn view" onclick="showCustomerProfile(<?= $c->id ?>)" title="View ledger & profile">
+                                    <div class="erp-row-actions" onclick="event.stopPropagation()">
+                                        <button type="button" class="erp-icon-btn view" onclick="showCustomerProfile(<?= $c->id ?>)" title="View Profile & Ledger">
                                             <i class="fa-solid fa-eye"></i>
                                         </button>
-                                        <button type="button" class="act-btn edit" onclick="sharePortal(<?= $c->id ?>, '<?= htmlspecialchars(addslashes($c->phone ?? '')) ?>', '<?= htmlspecialchars(addslashes($c->name ?? '')) ?>')" title="Share B2B Portal Link">
+                                        <button type="button" class="erp-icon-btn share" onclick="sharePortal(<?= $c->id ?>, '<?= htmlspecialchars(addslashes($c->phone ?? '')) ?>', '<?= htmlspecialchars(addslashes($c->name ?? '')) ?>')" title="Share B2B Portal Link">
                                             <i class="fa-solid fa-share-nodes"></i>
                                         </button>
                                     </div>
@@ -854,135 +865,134 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
 
-            <!-- Pagination Block -->
-            <div class="sf-pagination">
-                <div class="pg-info" id="pg-info-text">
-                    Showing <strong>1</strong> – <strong>25</strong> of <strong><?= $data['records_total'] ?? count($data['customers']) ?></strong>
+        <!-- Pinned Pagination Footer (RULE 1) -->
+        <div class="erp-pagination">
+            <div id="pg-info-text">
+                Showing <strong>1</strong> – <strong>25</strong> of <strong><?= $data['records_total'] ?? count($data['customers']) ?></strong>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:11px; font-weight:600; color:#64748b; text-transform:uppercase;">Show:</span>
+                    <select class="erp-select" style="height:25px; max-width:70px; padding:0 18px 0 6px;" onchange="updatePageSize(this.value)">
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
                 </div>
-                <div class="pg-right">
-                    <div class="pg-size-wrap">
-                        <span class="pg-size-lbl">Per page</span>
-                        <select class="pg-size-sel native-select" onchange="updatePageSize(this.value)">
-                            <option value="25" selected>25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                    </div>
-                    <div class="pg-nav" id="pg-nav-container">
-                        <button type="button" class="pg-btn" id="pg-prev-btn" onclick="navigatePage(currentPage - 1)">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <div class="pg-current" id="pg-current-text">1 / 1</div>
-                        <button type="button" class="pg-btn" id="pg-next-btn" onclick="navigatePage(currentPage + 1)">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    </div>
+                <div class="erp-page-controls" id="pg-nav-container">
+                    <button type="button" class="erp-page-btn" id="pg-prev-btn" onclick="navigatePage(currentPage - 1)">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <span id="pg-current-text" style="font-weight:600; padding:0 8px; font-size:12px; color:#0f172a;">1 / 1</span>
+                    <button type="button" class="erp-page-btn" id="pg-next-btn" onclick="navigatePage(currentPage + 1)">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
-
     </div>
+
 </div>
 
 <!-- ============================================================
-     FLOATING COMMAND / SEARCH BAR (DYNAMIC ISLAND)
+     FLOATING BOTTOM ISLAND COMMAND BAR (RULE 3)
      ============================================================ -->
 <div class="cmd-bar">
     <div class="cmd-search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" placeholder="Search customers..." onkeyup="onSearchInput()">
+        <input type="text" id="searchInput" placeholder="Search customer, phone, code, territory..." onkeyup="onSearchInput()">
     </div>
     <div class="cmd-divider"></div>
     <a href="<?= APP_URL ?>/customer/exportCSV" class="cmd-icon" title="Export CSV"><i class="fa-solid fa-download"></i></a>
     <button type="button" class="cmd-icon" onclick="openModal('csvImportModal')" title="Import CSV"><i class="fa-solid fa-upload"></i></button>
-    <button type="button" class="cmd-cta" onclick="openModal('addCustomerModal')"><i class="fa-solid fa-plus" style="font-size:13px;"></i> New</button>
+    <button type="button" class="cmd-cta" onclick="openModal('addCustomerModal')"><i class="fa-solid fa-plus"></i> New Customer</button>
 </div>
 
 <!-- ============================================================
      POPUP MODAL: CUSTOMER PROFILE LEDGER & DETAILS
      ============================================================ -->
 <div id="customerProfileModal" class="modal-veil hidden" onclick="if(event.target === this) closeCustomerProfile()">
-    <div class="sf-modal" style="width: 85%; max-width: 1000px; height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: var(--r-lg);">
+    <div class="sf-modal" style="width: 85%; max-width: 980px; height: 85vh; display: flex; flex-direction: column; padding: 0;">
         
         <!-- Modal Head Container -->
-        <div class="modal-head" id="modal-header-container" style="padding: 18px 24px; border-bottom: 0.5px solid var(--c-separator); background: var(--c-surface2);">
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <div class="avatar-circle" style="width: 40px; height: 40px; font-size: 16px;">C</div>
+        <div class="modal-head" id="modal-header-container">
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="avatar-circle" style="width: 34px; height: 34px; font-size: 13px;">C</div>
                 <div>
-                    <h3 class="modal-title" style="font-size: 18px; font-weight: 700;">Customer Details</h3>
+                    <h3 class="modal-title">Customer Details</h3>
                 </div>
             </div>
-            <button type="button" onclick="closeCustomerProfile()" class="modal-close" style="width:30px; height:30px;"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" onclick="closeCustomerProfile()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         
         <!-- Modal Loader -->
-        <div id="modal-loader" style="display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:12px; background:var(--c-surface);">
-            <i class="fa-solid fa-spinner spin" style="font-size:32px; color:var(--c-blue);"></i>
-            <span style="font-size:14px; color:var(--t-secondary); font-weight:500;">Loading customer profile...</span>
+        <div id="modal-loader" style="display:none; flex:1; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:#fff;">
+            <i class="fa-solid fa-spinner spin" style="font-size:28px; color:#2563eb;"></i>
+            <span style="font-size:13px; color:#64748b; font-weight:500;">Loading customer profile...</span>
         </div>
         
         <!-- Modal Content Container -->
         <div id="modal-profile-content" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-            <!-- Content will load dynamically here -->
+            <!-- Content loads dynamically -->
         </div>
 
     </div>
 </div>
 
 <!-- ============================================================
-     HIDDEN TEMPLATE SOURCES (EXTRACTED VIA DOM PARSER OR DIRECT)
+     HIDDEN TEMPLATE SOURCES
      ============================================================ -->
 <?php if ($data['selected_customer']): ?>
     <?php $c = $data['selected_customer']; $s = $data['stats']; ?>
     
     <div id="modal-header-source" class="hidden">
-        <div style="display: flex; gap: 15px; align-items: center; min-width: 0; flex: 1;">
-            <div class="avatar-circle" style="width: 40px; height: 40px; font-size: 16px; background: var(--c-blue-light); color: var(--c-blue); flex-shrink: 0;">
+        <div style="display: flex; gap: 12px; align-items: center; min-width: 0; flex: 1;">
+            <div class="avatar-circle" style="width: 36px; height: 36px; font-size: 14px; background: #eff6ff; color: #2563eb; flex-shrink: 0;">
                 <?= strtoupper(substr($c->name ?? '', 0, 2)) ?>
             </div>
             <div style="min-width: 0; max-width: 250px;">
-                <h3 class="modal-title" style="font-size: 16.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;" title="<?= htmlspecialchars($c->name ?? '') ?>">
+                <h3 class="modal-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;" title="<?= htmlspecialchars($c->name ?? '') ?>">
                     <?= htmlspecialchars($c->name ?? '') ?>
                 </h3>
-                <div style="font-size: 11px; color: var(--t-secondary); display: flex; gap: 10px; margin-top: 2px; white-space: nowrap; overflow: hidden; align-items: center;">
-                    <span>📞 <?= !empty($c->phone) ? htmlspecialchars($c->phone) : '<span style="color:var(--c-red); font-weight:600;">Missing</span>' ?></span>
-                    <span>✉️ <?= !empty($c->email) ? htmlspecialchars($c->email) : '<span style="color:var(--c-red); font-weight:600;">Missing</span>' ?></span>
-                    <span>📍 <?= !empty($c->mca_name) ? htmlspecialchars($c->mca_name) : '<span style="color:var(--c-red); font-weight:600;">Unassigned</span>' ?></span>
+                <div style="font-size: 11px; color: #64748b; display: flex; gap: 8px; margin-top: 1px; white-space: nowrap; overflow: hidden; align-items: center;">
+                    <span>📞 <?= !empty($c->phone) ? htmlspecialchars($c->phone) : '<span style="color:#dc2626;">Missing</span>' ?></span>
+                    <span>📍 <?= !empty($c->mca_name) ? htmlspecialchars($c->mca_name) : 'Unassigned' ?></span>
                     <?php if (isset($c->review_status) && $c->review_status === 'New'): ?>
-                        <span class="status-badge" style="background:var(--c-orange-light); color:var(--c-orange); padding:2px 6px; font-size:10px; border-radius:4px;">New</span>
+                        <span class="sf-badge badge-new" style="font-size:9.5px; padding:1px 5px;">New</span>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
         
-        <div style="margin-right: 12px; flex-shrink: 0;">
-            <a href="<?= APP_URL ?>/report/viewer/customer_statement?customer=<?= $c->id ?>&start_date=2000-01-01&end_date=2099-12-31" target="_blank" class="sf-btn neutral" style="padding: 6px 12px; font-size: 12px; gap: 5px;" title="Export detailed customer statement">
-                <i class="fa-solid fa-file-export" style="color:var(--c-blue);"></i> Export Statement
+        <div style="margin-right: 10px; flex-shrink: 0;">
+            <a href="<?= APP_URL ?>/report/viewer/customer_statement?customer=<?= $c->id ?>&start_date=2000-01-01&end_date=2099-12-31" target="_blank" class="sf-btn neutral" style="padding: 5px 10px; font-size: 11.5px; gap: 4px;" title="Export statement">
+                <i class="fa-solid fa-file-export" style="color:#2563eb;"></i> Statement
             </a>
         </div>
 
         <!-- Header Statistics Cards -->
-        <div style="display: flex; gap: 8px; margin-right: 18px; flex-shrink: 0; align-items: center;">
-            <div style="background: var(--c-fill); padding: 5px 10px; border-radius: var(--r-sm); text-align: center; min-width: 70px;">
-                <div style="font-size: 8.5px; color: var(--t-label); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Orders</div>
-                <div style="font-size: 13px; font-weight: bold; color: var(--t-primary); margin-top: 1px;"><?= $s->total_orders ?></div>
+        <div style="display: flex; gap: 6px; margin-right: 12px; flex-shrink: 0; align-items: center;">
+            <div style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; text-align: center; min-width: 60px;">
+                <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700;">Orders</div>
+                <div style="font-size: 12px; font-weight: bold; color: #0f172a;"><?= $s->total_orders ?></div>
             </div>
-            <div style="background: var(--c-fill); padding: 5px 10px; border-radius: var(--r-sm); text-align: center; min-width: 100px;">
-                <div style="font-size: 8.5px; color: var(--t-label); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Total Billed</div>
-                <div style="font-size: 13px; font-weight: bold; color: var(--t-primary); margin-top: 1px; font-family: var(--f-mono);">Rs: <?= number_format($s->total_billed, 2) ?></div>
+            <div style="background: #f1f5f9; padding: 4px 8px; border-radius: 6px; text-align: center; min-width: 85px;">
+                <div style="font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700;">Total Billed</div>
+                <div style="font-size: 12px; font-weight: bold; color: #0f172a; font-family: var(--erp-mono);">Rs. <?= number_format($s->total_billed, 2) ?></div>
             </div>
-            <div style="background: var(--c-green-light); padding: 5px 10px; border-radius: var(--r-sm); border: 0.5px solid rgba(52,199,89,0.2); text-align: center; min-width: 100px;">
-                <div style="font-size: 8.5px; color: var(--c-green); text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Total Paid</div>
-                <div style="font-size: 13px; font-weight: bold; color: var(--c-green); margin-top: 1px; font-family: var(--f-mono);">Rs: <?= number_format($s->total_paid, 2) ?></div>
+            <div style="background: #ecfdf5; padding: 4px 8px; border-radius: 6px; border: 1px solid #a7f3d0; text-align: center; min-width: 85px;">
+                <div style="font-size: 8px; color: #065f46; text-transform: uppercase; font-weight: 700;">Total Paid</div>
+                <div style="font-size: 12px; font-weight: bold; color: #065f46; font-family: var(--erp-mono);">Rs. <?= number_format($s->total_paid, 2) ?></div>
             </div>
-            <div style="background: <?= $s->outstanding > 0 ? 'var(--c-red-light)' : 'var(--c-green-light)' ?>; padding: 5px 10px; border-radius: var(--r-sm); border: 0.5px solid <?= $s->outstanding > 0 ? 'rgba(255,59,48,0.2)' : 'rgba(52,199,89,0.2)' ?>; text-align: center; min-width: 100px;">
-                <div style="font-size: 8.5px; color: <?= $s->outstanding > 0 ? 'var(--c-red)' : 'var(--c-green)' ?>; text-transform: uppercase; font-weight: 700; letter-spacing: 0.04em;">Outstanding</div>
-                <div style="font-size: 13px; font-weight: bold; color: <?= $s->outstanding > 0 ? 'var(--c-red)' : 'var(--c-green)' ?>; margin-top: 1px; font-family: var(--f-mono);">Rs: <?= number_format($s->outstanding, 2) ?></div>
+            <div style="background: <?= $s->outstanding > 0 ? '#fef2f2' : '#ecfdf5' ?>; padding: 4px 8px; border-radius: 6px; border: 1px solid <?= $s->outstanding > 0 ? '#fecaca' : '#a7f3d0' ?>; text-align: center; min-width: 85px;">
+                <div style="font-size: 8px; color: <?= $s->outstanding > 0 ? '#991b1b' : '#065f46' ?>; text-transform: uppercase; font-weight: 700;">Outstanding</div>
+                <div style="font-size: 12px; font-weight: bold; color: <?= $s->outstanding > 0 ? '#dc2626' : '#16a34a' ?>; font-family: var(--erp-mono);">Rs. <?= number_format($s->outstanding, 2) ?></div>
             </div>
         </div>
 
-        <button type="button" onclick="closeCustomerProfile()" class="modal-close" style="width:30px; height:30px; flex-shrink: 0;"><i class="fa-solid fa-xmark"></i></button>
+        <button type="button" onclick="closeCustomerProfile()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
     <div id="modal-profile-content-source" class="hidden">
@@ -991,11 +1001,11 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
             <button class="tab-btn active" onclick="switchModalTab('ledger')" id="mbtn_ledger">Activity Ledger</button>
             <button class="tab-btn" onclick="switchModalTab('invoices')" id="mbtn_invoices">Invoices</button>
             <button class="tab-btn" onclick="switchModalTab('cheques')" id="mbtn_cheques">Cheques (PDC)</button>
-            <button class="tab-btn" onclick="switchModalTab('profile')" id="mbtn_profile">Profile</button>
+            <button class="tab-btn" onclick="switchModalTab('profile')" id="mbtn_profile">Profile & Settings</button>
         </div>
 
         <!-- TAB 1: Ledger -->
-        <div id="mtab_ledger" class="tab-content active" style="padding: 22px; overflow-y: auto; flex: 1;">
+        <div id="mtab_ledger" class="tab-content active" style="padding: 16px; overflow-y: auto; flex: 1;">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -1008,43 +1018,43 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                 </thead>
                 <tbody>
                     <?php if(empty($data['ledger'])): ?>
-                        <tr><td colspan="5" style="text-align: center; color: var(--t-secondary); padding: 20px;">No financial activity yet.</td></tr>
+                        <tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">No financial activity yet.</td></tr>
                     <?php else: foreach($data['ledger'] as $l): ?>
                         <tr>
-                            <td style="color:var(--t-secondary); font-size:12px;"><?= date('M d, Y', strtotime($l->date)) ?></td>
+                            <td style="color:#64748b; font-size:12px;"><?= date('M d, Y', strtotime($l->date)) ?></td>
                             <td>
                                 <strong><?= $l->type ?></strong>
                                 <?php if($l->type == 'Invoice'): ?>
-                                    <a href="<?= APP_URL ?>/sales/show/<?= $l->id ?>" target="_blank" style="color:var(--c-blue); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
+                                    <a href="<?= APP_URL ?>/sales/show/<?= $l->id ?>" target="_blank" style="color:#2563eb; font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
                                 <?php elseif($l->type == 'Payment'): ?>
-                                    <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $l->id ?>" target="_blank" style="color:var(--c-green); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;" title="View Payment Receipt">
+                                    <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $l->id ?>" target="_blank" style="color:#16a34a; font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
                                 <?php elseif($l->type == 'Credit Note'): ?>
-                                    <a href="<?= APP_URL ?>/creditnote/show/<?= $l->id ?>" target="_blank" style="color:var(--c-red); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
+                                    <a href="<?= APP_URL ?>/creditnote/show/<?= $l->id ?>" target="_blank" style="color:#dc2626; font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
                                 <?php elseif($l->type == 'Cheque Returned'): ?>
-                                    <a href="<?= APP_URL ?>/cheque?search=<?= urlencode($l->id) ?>" target="_blank" style="color:var(--c-red); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;" title="View Cheque Details">
+                                    <a href="<?= APP_URL ?>/cheque?search=<?= urlencode($l->id) ?>" target="_blank" style="color:#dc2626; font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
                                 <?php elseif($l->type == 'Journal Entry'): ?>
-                                    <a href="<?= APP_URL ?>/accounting/print_journal/<?= $l->id ?>" target="_blank" style="color:var(--c-blue); font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;" title="View Journal Voucher">
+                                    <a href="<?= APP_URL ?>/accounting/print_journal/<?= $l->id ?>" target="_blank" style="color:#2563eb; font-size: 11px; margin-left: 5px; font-weight:bold; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
                                 <?php elseif($l->type == 'Payment Reversal'): ?>
-                                    <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $l->id ?>" target="_blank" style="color: var(--c-orange); font-size: 11px; margin-left: 5px; font-weight:600; background: var(--c-orange-light); padding: 2px 6px; border-radius: 4px; text-decoration:none;" title="View Reversed Receipt">
+                                    <a href="<?= APP_URL ?>/customerpayment/receipt/<?= $l->id ?>" target="_blank" style="color: #ea580c; font-size: 11px; margin-left: 5px; font-weight:600; background: #fffbeb; padding: 2px 6px; border-radius: 4px; text-decoration:none;">
                                         <?= htmlspecialchars($l->ref) ?> ↗
                                     </a>
                                 <?php else: ?>
-                                    <span style="color:var(--t-secondary); font-size: 11px; margin-left: 5px;"><?= htmlspecialchars($l->ref) ?></span>
+                                    <span style="color:#64748b; font-size: 11px; margin-left: 5px;"><?= htmlspecialchars($l->ref) ?></span>
                                 <?php endif; ?>
                             </td>
-                            <td class="num-col" style="color:var(--t-primary); font-weight:500; font-family:var(--f-mono);"><?= $l->debit > 0 ? 'Rs: ' . number_format($l->debit, 2) : '-' ?></td>
-                            <td class="num-col" style="color:var(--c-green); font-weight:500; font-family:var(--f-mono);"><?= $l->credit > 0 ? 'Rs: ' . number_format($l->credit, 2) : '-' ?></td>
-                            <td class="num-col" style="font-weight:bold; font-family:var(--f-mono); color: <?= $l->balance > 0 ? 'var(--c-red)' : 'var(--c-green)' ?>;">Rs: <?= number_format($l->balance, 2) ?></td>
+                            <td class="num-col" style="color:#0f172a; font-weight:500; font-family:var(--erp-mono);"><?= $l->debit > 0 ? 'Rs. ' . number_format($l->debit, 2) : '-' ?></td>
+                            <td class="num-col" style="color:#16a34a; font-weight:500; font-family:var(--erp-mono);"><?= $l->credit > 0 ? 'Rs. ' . number_format($l->credit, 2) : '-' ?></td>
+                            <td class="num-col" style="font-weight:bold; font-family:var(--erp-mono); color: <?= $l->balance > 0 ? '#dc2626' : '#16a34a' ?>;">Rs. <?= number_format($l->balance, 2) ?></td>
                         </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
@@ -1052,7 +1062,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         </div>
 
         <!-- TAB 2: Invoices -->
-        <div id="mtab_invoices" class="tab-content" style="padding: 22px; overflow-y: auto; flex: 1;">
+        <div id="mtab_invoices" class="tab-content" style="padding: 16px; overflow-y: auto; flex: 1;">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -1064,7 +1074,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                 </thead>
                 <tbody>
                     <?php if(empty($data['invoices'])): ?>
-                        <tr><td colspan="4" style="text-align:center; color:var(--t-secondary); padding: 20px;">No invoices found.</td></tr>
+                        <tr><td colspan="4" style="text-align:center; color:#64748b; padding: 20px;">No invoices found.</td></tr>
                     <?php else: foreach($data['invoices'] as $inv): ?>
                         <?php 
                             $trueInvTotal = $inv->total_amount;
@@ -1074,10 +1084,10 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                             $trueInvTotal += $inv->tax_amount;
                         ?>
                         <tr>
-                            <td><a href="<?= APP_URL ?>/sales/show/<?= $inv->id ?>" target="_blank" style="color:var(--c-blue); font-weight:bold; text-decoration:none;"><?= $inv->invoice_number ?></a></td>
-                            <td style="color:var(--t-secondary); font-size:12px;"><?= date('M d, Y', strtotime($inv->invoice_date)) ?></td>
-                            <td class="num-col" style="font-weight:bold; font-family:var(--f-mono);">Rs: <?= number_format($trueInvTotal, 2) ?></td>
-                            <td><span class="status-badge status-<?= $inv->status ?>"><?= $inv->status ?></span></td>
+                            <td><a href="<?= APP_URL ?>/sales/show/<?= $inv->id ?>" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:none;"><?= $inv->invoice_number ?></a></td>
+                            <td style="color:#64748b; font-size:12px;"><?= date('M d, Y', strtotime($inv->invoice_date)) ?></td>
+                            <td class="num-col" style="font-weight:bold; font-family:var(--erp-mono);">Rs. <?= number_format($trueInvTotal, 2) ?></td>
+                            <td><span class="sf-badge badge-active"><?= $inv->status ?></span></td>
                         </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
@@ -1085,7 +1095,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         </div>
 
         <!-- TAB 3: Cheques -->
-        <div id="mtab_cheques" class="tab-content" style="padding: 22px; overflow-y: auto; flex: 1;">
+        <div id="mtab_cheques" class="tab-content" style="padding: 16px; overflow-y: auto; flex: 1;">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -1096,30 +1106,31 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                 </thead>
                 <tbody>
                     <?php if(empty($data['cheques'])): ?>
-                        <tr><td colspan="3" style="text-align:center; color:var(--t-secondary); padding: 20px;">No cheques recorded.</td></tr>
+                        <tr><td colspan="3" style="text-align:center; color:#64748b; padding: 20px;">No cheques recorded.</td></tr>
                     <?php else: foreach($data['cheques'] as $chk): ?>
                         <tr>
                             <td>
                                 <strong><?= htmlspecialchars($chk->bank_name) ?></strong><br>
-                                <span style="font-size:11px; color:var(--t-secondary);"><?= date('M d, Y', strtotime($chk->banking_date)) ?></span>
+                                <span style="font-size:11px; color:#64748b;"><?= date('M d, Y', strtotime($chk->banking_date)) ?></span>
                             </td>
-                            <td class="num-col" style="font-weight:bold; font-family:var(--f-mono);">Rs: <?= number_format($chk->amount, 2) ?></td>
-                            <td><span class="status-badge status-<?= $chk->status ?>"><?= $chk->status ?></span></td>
+                            <td class="num-col" style="font-weight:bold; font-family:var(--erp-mono);">Rs. <?= number_format($chk->amount, 2) ?></td>
+                            <td><span class="sf-badge badge-active"><?= $chk->status ?></span></td>
                         </tr>
                     <?php endforeach; endif; ?>
                 </tbody>
             </table>
         </div>
 
-        <!-- TAB 4: Profile & Map -->
-        <div id="mtab_profile" class="tab-content" style="padding: 22px; overflow-y: auto; flex: 1;">
+        <!-- TAB 4: Profile & Settings -->
+        <div id="mtab_profile" class="tab-content" style="padding: 16px; overflow-y: auto; flex: 1;">
             <div class="grid-2">
                 <div>
-                    <h4 style="margin:0 0 14px 0; border-bottom: 0.5px solid var(--c-separator); padding-bottom: 6px; font-size:14px; font-weight:700; text-transform:uppercase; color:var(--t-secondary);">
+                    <h4 style="margin:0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; font-size:13px; font-weight:700; text-transform:uppercase; color:#475569;">
                         <?= (isset($c->review_status) && $c->review_status === 'New') ? 'Review Customer Profile' : 'Edit Customer Profile' ?>
                     </h4>
                     
                     <form action="<?= APP_URL ?>/customer/index/<?= $c->id ?>" method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
                         <input type="hidden" name="action" value="<?= (isset($c->review_status) && $c->review_status === 'New') ? 'review_customer' : 'update_customer' ?>">
                         <input type="hidden" name="customer_id" value="<?= $c->id ?>">
                         
@@ -1146,7 +1157,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                             </div>
                             <div class="sf-group">
                                 <label>Assigned Route</label>
-                                <select name="mca_id" class="sf-input" style="height:41px;">
+                                <select name="mca_id" class="sf-input" style="height:36px;">
                                     <option value="">Unassigned</option>
                                     <?php foreach($data['mca_areas'] as $route): ?>
                                         <option value="<?= $route->id ?>" <?= $c->mca_id == $route->id ? 'selected' : '' ?>><?= htmlspecialchars($route->name ?? '') ?></option>
@@ -1179,7 +1190,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                         
                         <div class="sf-group">
                             <label>Billing Address</label>
-                            <textarea name="address" class="sf-input" rows="2" style="resize:vertical; min-height:50px;"><?= htmlspecialchars($c->address ?? '') ?></textarea>
+                            <textarea name="address" class="sf-input" rows="2" style="resize:vertical; min-height:45px;"><?= htmlspecialchars($c->address ?? '') ?></textarea>
                         </div>
                         
                         <div class="grid-2">
@@ -1214,9 +1225,9 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                     </form>
 
                     <!-- Workflow Details -->
-                    <div style="margin-top: 20px; background: var(--c-surface2); border: 0.5px solid var(--c-separator); border-radius: var(--r-md); padding: 12px 16px;">
-                        <h5 style="margin: 0 0 10px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--t-secondary);">Workflow Details</h5>
-                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 12.5px; display: flex; flex-direction: column; gap: 6px;">
+                    <div style="margin-top: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px;">
+                        <h5 style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b;">Workflow Details</h5>
+                        <ul style="list-style: none; padding: 0; margin: 0; font-size: 12px; display: flex; flex-direction: column; gap: 4px; color:#334155;">
                             <li><strong>Created By:</strong> <?= htmlspecialchars($c->created_by_username ?? 'System/Office') ?></li>
                             <li><strong>Created Date & Time:</strong> <?= !empty($c->created_at) ? date('M d, Y H:i:s', strtotime($c->created_at)) : 'N/A' ?></li>
                             <?php if (isset($c->review_status) && $c->review_status === 'Reviewed' && !empty($c->reviewed_by_username)): ?>
@@ -1229,44 +1240,41 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 
                 <!-- GPS Map View -->
                 <div>
-                    <h4 style="margin:0 0 14px 0; border-bottom: 0.5px solid var(--c-separator); padding-bottom: 6px; font-size:14px; font-weight:700; text-transform:uppercase; color:var(--t-secondary);">Map Location</h4>
+                    <h4 style="margin:0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; font-size:13px; font-weight:700; text-transform:uppercase; color:#475569;">Map Location</h4>
                     <?php if (!empty($c->latitude) && !empty($c->longitude)): ?>
-                        <div class="map-box">
+                        <div style="width: 100%; height: 230px; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden;">
                             <iframe width="100%" height="100%" frameborder="0" style="border:0;" 
                                     src="https://maps.google.com/maps?q=<?= $c->latitude ?>,<?= $c->longitude ?>&hl=es&z=14&output=embed">
                             </iframe>
                         </div>
-                        <div style="margin-top: 8px; font-size: 12px; color: var(--t-secondary); text-align: center;">
-                            GPS Coordinates: <code><?= htmlspecialchars($c->latitude) ?>, <?= htmlspecialchars($c->longitude) ?></code>
+                        <div style="margin-top: 6px; font-size: 11.5px; color: #64748b; text-align: center;">
+                            GPS Coordinates: <code class="font-mono"><?= htmlspecialchars($c->latitude) ?>, <?= htmlspecialchars($c->longitude) ?></code>
                         </div>
                     <?php else: ?>
-                        <div class="map-box" style="display:flex; align-items:center; justify-content:center; flex-direction:column; color:var(--t-tertiary);">
+                        <div style="width: 100%; height: 230px; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#94a3b8;">
                             <i class="fa-solid fa-map-location-dot" style="font-size:32px; margin-bottom:8px;"></i>
-                            <span style="font-size:13px; font-weight:500;">No GPS Location Captured</span>
+                            <span style="font-size:12.5px; font-weight:500;">No GPS Location Captured</span>
                         </div>
                     <?php endif; ?>
-                </div>
-            </div>
 
-            <!-- Danger Zone: Delete Customer -->
-            <div style="margin-top: 35px; padding-top: 20px; border-top: 1px dashed var(--c-separator);">
-                <div style="background: rgba(255, 59, 48, 0.04); border: 0.5px solid rgba(255, 59, 48, 0.15); border-radius: var(--r-md); padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;">
-                    <div style="min-width: 250px; flex: 1;">
-                        <h4 style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--c-red); display: flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
-                        </h4>
-                        <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--t-secondary); line-height: 1.4;">
-                            Permanently delete this customer record. This action cannot be undone and will fail if they have transaction records.
-                        </p>
-                    </div>
-                    <div>
-                        <button type="button" class="sf-btn danger" onclick="confirmDeleteCustomer(<?= $c->id ?>, '<?= htmlspecialchars(addslashes($c->name ?? '')) ?>')" style="padding: 8px 16px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                            <i class="fa-solid fa-trash-can"></i> Delete Customer
-                        </button>
+                    <!-- Danger Zone: Delete Customer -->
+                    <div style="margin-top: 24px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 14px;">
+                            <div>
+                                <h4 style="margin: 0; font-size: 12.5px; font-weight: 700; color: #dc2626; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Danger Zone
+                                </h4>
+                                <p style="margin: 3px 0 0 0; font-size: 11px; color: #64748b; line-height: 1.3;">
+                                    Delete customer record. Requires manager authorization.
+                                </p>
+                            </div>
+                            <button type="button" class="sf-btn danger" onclick="confirmDeleteCustomer(<?= $c->id ?>, '<?= htmlspecialchars(addslashes($c->name ?? '')) ?>')" style="padding: 6px 12px; font-size: 11.5px;">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 <?php endif; ?>
@@ -1277,29 +1285,28 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 <div class="modal-veil hidden" id="deleteCustomerModal" onclick="if(event.target === this) closeModal('deleteCustomerModal')">
     <div class="sf-modal" style="width: 440px;">
         <div class="modal-head" style="border-bottom: none; padding-bottom: 0;">
-            <h3 class="modal-title" style="color: var(--c-red);"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> Delete Customer</h3>
+            <h3 class="modal-title" style="color: #dc2626;"><i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> Delete Customer</h3>
             <button type="button" class="modal-close" onclick="closeModal('deleteCustomerModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <form action="<?= APP_URL ?>/customer/delete" method="POST">
-            <div class="modal-body" style="padding-top: 12px;">
-                <input type="hidden" name="customer_id" id="delete_customer_id" value="">
-                <p style="font-size: 14px; color: var(--t-primary); margin: 0 0 16px 0;">
-                    Are you sure you want to delete <strong id="delete_customer_name" style="color: var(--t-primary);"></strong>?
+        <form onsubmit="submitDeleteCustomer(event)">
+            <div class="modal-body" style="padding-top: 10px;">
+                <input type="hidden" id="delete-customer-id" value="">
+                <p style="font-size: 13.5px; color: #0f172a; margin: 0 0 12px 0;">
+                    Are you sure you want to delete <strong id="delete-customer-name"></strong>?
                 </p>
-                <div style="background: var(--c-red-light); border-left: 3.5px solid var(--c-red); border-radius: var(--r-sm); padding: 12px; font-size: 12.5px; color: var(--c-red); margin-bottom: 16px;">
+                <div style="background: #fef2f2; border-left: 3px solid #dc2626; border-radius: 4px; padding: 10px; font-size: 11.5px; color: #991b1b; margin-bottom: 12px;">
                     <i class="fa-solid fa-shield-halved" style="margin-right: 4px;"></i>
                     This action will check for linked transactions (Invoices, Payments, Cheques) to prevent database corruption.
                 </div>
                 <div class="sf-group">
-                    <label style="color: var(--c-red); font-weight: 700;">Manager Password Required *</label>
-                    <input type="password" name="password" class="sf-input" style="border-color: var(--c-red);" placeholder="Enter admin/manager password" required>
+                    <label style="color: #dc2626; font-weight: 700;">Manager Password Required *</label>
+                    <input type="password" id="delete-confirm-password" class="sf-input" style="border-color: #fca5a5;" placeholder="Enter admin/manager password" required>
                 </div>
+                <div id="delete-error-msg" style="display:none; color:#dc2626; font-size:12px; margin-top:6px;"></div>
             </div>
-            <div class="modal-foot" style="border-top: none; padding-top: 0; display: flex; justify-content: flex-end; gap: 10px; padding-bottom: 24px; background: transparent;">
+            <div class="modal-foot" style="border-top: none; padding-top: 0; background: transparent;">
                 <button type="button" class="sf-btn neutral" onclick="closeModal('deleteCustomerModal')">Cancel</button>
-                <button type="submit" class="sf-btn danger" id="delete-confirm-btn" style="display: flex; align-items: center; gap: 6px; font-weight: 700;">
-                    Confirm Delete
-                </button>
+                <button type="submit" class="sf-btn danger" id="delete-confirm-btn">Confirm Delete</button>
             </div>
         </form>
     </div>
@@ -1311,15 +1318,16 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 <div class="modal-veil hidden" id="addCustomerModal" onclick="if(event.target === this) closeModal('addCustomerModal')">
     <div class="sf-modal">
         <div class="modal-head">
-            <h3 class="modal-title" style="color:var(--c-blue);"><i class="fa-solid fa-user-plus" style="margin-right:6px;"></i>Add New Customer</h3>
+            <h3 class="modal-title" style="color:#2563eb;"><i class="fa-solid fa-user-plus" style="margin-right:6px;"></i>Add New Customer</h3>
             <button type="button" class="modal-close" onclick="closeModal('addCustomerModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="<?= APP_URL ?>/customer/index" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
             <div class="modal-body">
                 <input type="hidden" name="action" value="add_customer">
                 
                 <div class="sf-group">
-                    <label>Customer/Company Name *</label>
+                    <label>Customer / Company Name *</label>
                     <input type="text" name="name" class="sf-input" placeholder="e.g. Acme Corporation" required>
                 </div>
                 
@@ -1332,7 +1340,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                     <div class="sf-group"><label>WhatsApp Number</label><input type="text" name="whatsapp" class="sf-input" placeholder="e.g. +94771234567"></div>
                     <div class="sf-group">
                         <label>Assign Route</label>
-                        <select name="mca_id" class="sf-input" style="height:41px;">
+                        <select name="mca_id" class="sf-input" style="height:36px;">
                             <option value="">Unassigned</option>
                             <?php foreach($data['mca_areas'] as $route): ?>
                                 <option value="<?= $route->id ?>"><?= htmlspecialchars($route->name ?? '') ?></option>
@@ -1352,22 +1360,23 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                     </div>
                 </div>
                 
-                <div class="sf-group">
-                    <label>Account Status</label>
-                    <select name="status" class="sf-input" style="font-weight:600;">
-                        <option value="Active" selected>Active (Visible everywhere)</option>
-                        <option value="Inactive">Inactive (Hidden from selectors)</option>
-                    </select>
-                </div>
-                
-                <div class="sf-group">
-                    <label>VAT / Tax Number</label>
-                    <input type="text" name="vat_number" class="sf-input" placeholder="e.g. VAT-123456">
+                <div class="grid-2">
+                    <div class="sf-group">
+                        <label>Account Status</label>
+                        <select name="status" class="sf-input" style="font-weight:600; height:36px;">
+                            <option value="Active" selected>Active (Visible everywhere)</option>
+                            <option value="Inactive">Inactive (Hidden from selectors)</option>
+                        </select>
+                    </div>
+                    <div class="sf-group">
+                        <label>VAT / Tax Number</label>
+                        <input type="text" name="vat_number" class="sf-input" placeholder="e.g. VAT-123456">
+                    </div>
                 </div>
                 
                 <div class="sf-group">
                     <label>Billing Address</label>
-                    <textarea name="address" class="sf-input" rows="2" placeholder="e.g. 123 Main Street, Colombo" style="resize:vertical; min-height:50px;"></textarea>
+                    <textarea name="address" class="sf-input" rows="2" placeholder="e.g. 123 Main Street, Colombo" style="resize:vertical; min-height:45px;"></textarea>
                 </div>
                 
                 <div class="grid-2">
@@ -1389,14 +1398,15 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 <div class="modal-veil hidden" id="csvImportModal" onclick="if(event.target === this) closeModal('csvImportModal')">
     <div class="sf-modal" style="width:480px;">
         <div class="modal-head">
-            <h3 class="modal-title" style="color:var(--c-green);"><i class="fa-solid fa-file-csv" style="margin-right:6px;"></i>Import Customers (CSV)</h3>
+            <h3 class="modal-title" style="color:#16a34a;"><i class="fa-solid fa-file-csv" style="margin-right:6px;"></i>Import Customers (CSV)</h3>
             <button type="button" class="modal-close" onclick="closeModal('csvImportModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form action="<?= APP_URL ?>/customer/importCSV" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
             <div class="modal-body">
-                <p style="font-size: 12px; color: var(--t-secondary); margin-top:-10px; margin-bottom: 20px; line-height:1.5;">
+                <p style="font-size: 11.5px; color: #64748b; margin-top:-6px; margin-bottom: 14px; line-height:1.4;">
                     Select a CSV file containing customer details. Required column: <strong>Name</strong>.<br>
-                    Supported columns: <strong>Name, Email, Phone, WhatsApp, Address, Latitude, Longitude, Route/Territory, Opening Balance</strong>.
+                    Supported: <strong>Name, Email, Phone, WhatsApp, Address, Latitude, Longitude, Route, Opening Balance</strong>.
                 </p>
                 <div class="drop-zone">
                     <input type="file" name="csv_file" accept=".csv" required>
@@ -1418,6 +1428,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
     let currentPage = 1;
     let pageSize = 25;
     let searchDebounceTimer = null;
+    const csrfToken = '<?= $csrfToken ?>';
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -1427,41 +1438,6 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
     function escapeJs(str) {
         if (!str) return '';
         return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
-    }
-
-    // --- Custom Dropdown Handlers ---
-    function selectRoute(val, label) {
-        document.getElementById('filterRoute').value = val;
-        document.getElementById('route-dropdown-val').textContent = label;
-        
-        const dropdown = document.getElementById('route-dropdown-val').closest('.sf-dropdown');
-        dropdown.querySelectorAll('.sf-dropdown-item').forEach(item => {
-            if (item.getAttribute('data-val') === val) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-        
-        document.activeElement.blur();
-        fetchCustomersAJAX(1);
-    }
-
-    function selectStatus(val, label) {
-        document.getElementById('filterStatus').value = val;
-        document.getElementById('status-dropdown-val').textContent = label;
-        
-        const dropdown = document.getElementById('status-dropdown-val').closest('.sf-dropdown');
-        dropdown.querySelectorAll('.sf-dropdown-item').forEach(item => {
-            if (item.getAttribute('data-val') === val) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-        
-        document.activeElement.blur();
-        fetchCustomersAJAX(1);
     }
 
     function onSearchInput() {
@@ -1476,12 +1452,13 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         const query = document.getElementById('searchInput').value.trim();
         const routeFilter = document.getElementById('filterRoute').value.trim();
         const statusFilter = document.getElementById('filterStatus').value.trim();
+        const accountStatusFilter = document.getElementById('filterAccountStatus').value.trim();
         
         const start = (currentPage - 1) * pageSize;
 
         const tbody = document.getElementById('custList');
         if (!tbody) return;
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:35px; color:var(--t-secondary);"><i class="fa-solid fa-circle-notch spin" style="font-size:22px; color:var(--c-blue); margin-bottom:8px;"></i><br>Loading customers...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:35px; color:#64748b;"><i class="fa-solid fa-circle-notch spin" style="font-size:20px; color:#2563eb; margin-bottom:8px;"></i><br>Loading customers...</td></tr>`;
 
         const params = new URLSearchParams({
             action: 'api_list',
@@ -1489,21 +1466,21 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
             length: pageSize,
             search: query,
             route: routeFilter,
-            status: statusFilter
+            status: statusFilter,
+            account_status: accountStatusFilter
         });
 
         fetch('<?= APP_URL ?>/customer/index?' + params.toString())
             .then(response => response.json())
             .then(data => {
                 const rows = data.data || [];
-                const recordsTotal = data.recordsTotal || 0;
                 const recordsFiltered = data.recordsFiltered || 0;
 
                 const countEl = document.getElementById('matching-count');
-                if (countEl) countEl.textContent = recordsFiltered;
+                if (countEl) countEl.textContent = recordsFiltered.toLocaleString();
 
                 if (rows.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--t-secondary);"><i class="fa-solid fa-building" style="font-size:28px; margin-bottom:8px; color:var(--t-tertiary);"></i><br>No matching customers found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:35px; color:#64748b;"><i class="fa-solid fa-building" style="font-size:24px; margin-bottom:6px; color:#cbd5e1;"></i><br>No matching customers found.</td></tr>`;
                 } else {
                     let html = '';
                     rows.forEach(c => {
@@ -1513,45 +1490,45 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                         const accountStatus = c.status || 'Active';
                         const name = escapeHtml(c.name || '');
                         const initials = name.substring(0, 2).toUpperCase();
-                        const phone = c.phone ? escapeHtml(c.phone) : '<span style="color:var(--c-red); font-weight:600;">Missing Phone</span>';
-                        const email = c.email ? `<span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;">${escapeHtml(c.email)}</span>` : '';
-                        const address = c.address ? escapeHtml(c.address) : '<span style="color:var(--c-red); font-weight:600;">Missing Address</span>';
+                        const phone = c.phone ? escapeHtml(c.phone) : '<span style="color:#dc2626; font-weight:600;">Missing Phone</span>';
+                        const email = c.email ? `<span style="font-size:11px; color:#64748b; display:block; margin-top:1px;">${escapeHtml(c.email)}</span>` : '';
+                        const address = c.address ? escapeHtml(c.address) : '<span style="color:#dc2626; font-weight:600;">Missing Address</span>';
                         const balFormatted = bal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        const balColor = bal > 0 ? 'var(--c-red)' : 'var(--c-green)';
+                        const balColor = bal > 0 ? '#dc2626' : '#16a34a';
 
                         html += `
                             <tr class="customer-row" onclick="showCustomerProfile(${c.id})">
                                 <td>
-                                    <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="display:flex; align-items:center; gap:10px;">
                                         <div class="avatar-circle">${initials}</div>
                                         <div>
-                                            <strong style="font-size:14.5px; font-weight:600; color:var(--t-primary);">${name}</strong>
-                                            <span style="font-size:11px; color:var(--t-secondary); display:block; margin-top:2px;">
+                                            <strong style="font-size:13px; font-weight:600; color:#0f172a;">${name}</strong>
+                                            <span style="font-size:11px; color:#64748b; display:block; margin-top:1px;">
                                                 🏠 ${address}
                                             </span>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <span style="font-size:13px; font-weight:500; display:block;">📞 ${phone}</span>
+                                    <span class="font-mono" style="font-size:12px; font-weight:500; display:block;">📞 ${phone}</span>
                                     ${email}
                                 </td>
-                                <td class="txt-right" style="font-weight:700; font-family:var(--f-mono); font-size:14px; color: ${balColor};">
-                                    Rs: ${balFormatted}
+                                <td style="text-align:right; font-weight:700; font-family:var(--erp-mono); font-size:13px; color: ${balColor};">
+                                    Rs. ${balFormatted}
                                 </td>
                                 <td>
                                     <span class="sf-badge ${badgeCls}"><span class="dot"></span>${badgeTxt}</span>
                                 </td>
                                 <td>
-                                    <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                                    <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-start;">
                                         <span class="sf-badge ${accountStatus === 'Active' ? 'badge-active' : 'badge-owed'}"><span class="dot"></span>${accountStatus}</span>
                                         ${c.review_status === 'New' ? '<span class="sf-badge badge-new"><span class="dot"></span>New</span>' : ''}
                                     </div>
                                 </td>
                                 <td>
-                                    <div style="display:flex; justify-content:center; gap:6px;" onclick="event.stopPropagation()">
-                                        <button type="button" class="act-btn view" onclick="showCustomerProfile(${c.id})" title="View ledger & profile"><i class="fa-solid fa-eye"></i></button>
-                                        <button type="button" class="act-btn edit" onclick="sharePortal(${c.id}, '${escapeJs(c.phone || '')}', '${escapeJs(c.name || '')}')" title="Share B2B Portal Link"><i class="fa-solid fa-share-nodes"></i></button>
+                                    <div class="erp-row-actions" onclick="event.stopPropagation()">
+                                        <button type="button" class="erp-icon-btn view" onclick="showCustomerProfile(${c.id})" title="View Profile & Ledger"><i class="fa-solid fa-eye"></i></button>
+                                        <button type="button" class="erp-icon-btn share" onclick="sharePortal(${c.id}, '${escapeJs(c.phone || '')}', '${escapeJs(c.name || '')}')" title="Share B2B Portal Link"><i class="fa-solid fa-share-nodes"></i></button>
                                     </div>
                                 </td>
                             </tr>
@@ -1568,30 +1545,21 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                 const pgInfo = document.getElementById('pg-info-text');
                 if (pgInfo) {
                     pgInfo.innerHTML = recordsFiltered > 0 
-                        ? `Showing <strong>${startIndex}</strong> – <strong>${endIndex}</strong> of <strong>${recordsFiltered}</strong>` 
+                        ? `Showing <strong>${startIndex}</strong> – <strong>${endIndex}</strong> of <strong>${recordsFiltered.toLocaleString()}</strong>` 
                         : 'No results';
                 }
 
                 const pgNav = document.getElementById('pg-nav-container');
                 if (pgNav) {
-                    if (totalPages > 1) {
-                        pgNav.classList.remove('hidden');
-                        document.getElementById('pg-current-text').textContent = `${currentPage} / ${totalPages}`;
-                        document.getElementById('pg-prev-btn').disabled = currentPage <= 1;
-                        document.getElementById('pg-next-btn').disabled = currentPage >= totalPages;
-                    } else {
-                        pgNav.classList.add('hidden');
-                    }
+                    document.getElementById('pg-current-text').textContent = `${currentPage} / ${totalPages}`;
+                    document.getElementById('pg-prev-btn').classList.toggle('disabled', currentPage <= 1);
+                    document.getElementById('pg-next-btn').classList.toggle('disabled', currentPage >= totalPages);
                 }
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--c-red);"><i class="fa-solid fa-circle-exclamation" style="font-size:24px; margin-bottom:8px;"></i><br>Error loading customer data.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#dc2626;"><i class="fa-solid fa-circle-exclamation" style="font-size:22px; margin-bottom:6px;"></i><br>Error loading customer data.</td></tr>`;
             });
-    }
-
-    function filterList() {
-        fetchCustomersAJAX(1);
     }
 
     function navigatePage(pageNum) {
@@ -1606,8 +1574,10 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 
     function clearAllFilters() {
         document.getElementById('searchInput').value = '';
-        selectRoute('', 'All Routes');
-        selectStatus('', 'All Accounts');
+        document.getElementById('filterRoute').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterAccountStatus').value = '';
+        fetchCustomersAJAX(1);
     }
 
     // --- Modal Control Helper functions ---
@@ -1624,7 +1594,6 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         if (loader) loader.style.display = 'flex';
         if (content) content.style.display = 'none';
         
-        // Update URL
         let targetUrl = '<?= APP_URL ?>/customer/index/' + id;
         if (tab) {
             targetUrl += '?tab=' + tab;
@@ -1662,8 +1631,8 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
                 console.error(err);
                 if (content) {
                     content.innerHTML = `
-                        <div style="padding:40px; text-align:center; color:var(--c-red);">
-                            <i class="fa-solid fa-triangle-exclamation" style="font-size:32px; margin-bottom:12px;"></i><br>
+                        <div style="padding:40px; text-align:center; color:#dc2626;">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; margin-bottom:8px;"></i><br>
                             Failed to load customer profile details.
                         </div>`;
                     content.style.display = 'block';
@@ -1699,7 +1668,6 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         window.history.pushState({ path: targetUrl }, '', targetUrl);
     }
 
-    // --- Tab Switching inside Profile Modal ---
     function switchModalTab(tabName) {
         const content = document.getElementById('modal-profile-content');
         content.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
@@ -1712,7 +1680,6 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
         if (activeBtn) activeBtn.classList.add('active');
     }
 
-    // --- Share Portal Helper ---
     function sharePortal(id, phone, name) {
         const encodedId = btoa(id);
         const portalLink = "<?= APP_URL ?>/portal/show/" + encodedId;
@@ -1759,6 +1726,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 
         const fd = new FormData();
         fd.append('password', pwdInput.value);
+        fd.append('csrf_token', csrfToken);
 
         fetch('<?= APP_URL ?>/customer/delete/' + activeDeleteCustomerId, {
             method: 'POST',
@@ -1793,6 +1761,12 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
             form.method = 'POST';
             form.action = '<?= APP_URL ?>/customer/index';
             
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+
             const actionInput = document.createElement('input');
             actionInput.type = 'hidden';
             actionInput.name = 'action';

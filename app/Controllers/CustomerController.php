@@ -12,6 +12,7 @@ class CustomerController extends Controller {
     }
 
     public function apiList() {
+        $this->checkPermission('customer', 'view');
         header('Content-Type: application/json');
         $draw = isset($_GET['draw']) ? intval($_GET['draw']) : 1;
         $start = isset($_GET['start']) ? intval($_GET['start']) : 0;
@@ -19,8 +20,9 @@ class CustomerController extends Controller {
         $search = isset($_GET['search']['value']) ? trim($_GET['search']['value']) : (isset($_GET['search']) && is_string($_GET['search']) ? trim($_GET['search']) : '');
         $route = isset($_GET['route']) ? trim($_GET['route']) : '';
         $statusFilter = isset($_GET['status']) ? trim($_GET['status']) : '';
+        $accountStatus = isset($_GET['account_status']) ? trim($_GET['account_status']) : '';
 
-        $res = $this->customerModel->getPaginatedCustomers($start, $length, $search, $route, $statusFilter);
+        $res = $this->customerModel->getPaginatedCustomers($start, $length, $search, $route, $statusFilter, $accountStatus);
 
         echo json_encode([
             'draw' => $draw,
@@ -32,6 +34,7 @@ class CustomerController extends Controller {
     }
 
     public function apiSummaryStats() {
+        $this->checkPermission('customer', 'view');
         header('Content-Type: application/json');
         $summaryStats = $this->customerModel->getCustomerSummaryStats();
         echo json_encode($summaryStats);
@@ -39,6 +42,7 @@ class CustomerController extends Controller {
     }
 
     public function index($id = null) {
+        $this->checkPermission('customer', 'view');
         if (isset($_GET['action']) && $_GET['action'] === 'api_list') {
             $this->apiList();
         }
@@ -46,8 +50,14 @@ class CustomerController extends Controller {
             $this->apiSummaryStats();
         }
 
+        $csrfToken = $this->generateCsrfToken();
+        $routeFilter = isset($_GET['route']) ? trim($_GET['route']) : '';
+        $statusFilter = isset($_GET['status']) ? trim($_GET['status']) : '';
+        $accountStatus = isset($_GET['account_status']) ? trim($_GET['account_status']) : '';
+        $searchFilter = isset($_GET['search']) && is_string($_GET['search']) ? trim($_GET['search']) : '';
+
         // Fast initial slice without blocking heavy summary stats query
-        $initialSlice = $this->customerModel->getPaginatedCustomers(0, 25);
+        $initialSlice = $this->customerModel->getPaginatedCustomers(0, 25, $searchFilter, $routeFilter, $statusFilter, $accountStatus);
         $customers = $initialSlice['rows'];
         $summaryStats = [
             'total_customers' => $initialSlice['total'],
@@ -112,11 +122,14 @@ class CustomerController extends Controller {
             'assets' => $assets,
             'ar_account' => $arAccount,
             'mca_areas' => $mcaAreas,
+            'csrf_token' => $csrfToken,
             'error' => '',
             'success' => ''
         ];
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
+            $this->validateCsrfOrDie();
+            $this->checkPermission('customer', 'create_edit');
             if ($_POST['action'] == 'add_customer') {
                 $mcaId = !empty($_POST['mca_id']) ? intval($_POST['mca_id']) : null;
                 $territoryName = null;
@@ -324,11 +337,13 @@ class CustomerController extends Controller {
     }
 
     public function api_add_customer() {
+        $this->checkPermission('customer', 'create_edit');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Content-Type: application/json');
             echo json_encode(['status' => 'error', 'message' => 'Invalid Request']);
             exit;
         }
+        $this->validateCsrfOrDie();
 
         $name = isset($_POST['name']) ? trim($_POST['name']) : '';
         if (empty($name)) {
@@ -442,10 +457,12 @@ class CustomerController extends Controller {
      * Import customers from standard CSV file with self-healing territory matching.
      */
     public function importCSV() {
+        $this->checkPermission('customer', 'create_edit');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . APP_URL . '/customer/index');
             exit;
         }
+        $this->validateCsrfOrDie();
 
         $addedCount = 0;
         $updatedCount = 0;
@@ -763,6 +780,7 @@ class CustomerController extends Controller {
             echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
             exit;
         }
+        $this->validateCsrfOrDie();
 
         header('Content-Type: application/json');
         
