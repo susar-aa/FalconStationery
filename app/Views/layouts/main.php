@@ -589,6 +589,33 @@ if (!function_exists('hasPermission')) {
             padding-bottom: 80px;
             overflow-y: auto;
         }
+
+        /* --- ERP VIEWPORT-LOCKED MODULE STANDARDS (Zero Page Scroll) --- */
+        body.erp-locked,
+        body:has(.erp-viewport-view) {
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        body.erp-locked .app-container,
+        body:has(.erp-viewport-view) .app-container {
+            margin-top: 70px !important;
+            height: calc(100vh - 70px) !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        body.erp-locked .main-content,
+        body:has(.erp-viewport-view) .main-content {
+            padding: 8px 16px 8px 16px !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+            min-height: 0 !important;
+            flex: 1 !important;
+        }
         
         /* Glass Card Component */
         .glass-card {

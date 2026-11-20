@@ -309,6 +309,43 @@ class Item {
     }
 
     /**
+     * Batch fetch variation options for a list of item IDs in a single query.
+     * Prevents N+1 database queries on product listing pages.
+     */
+    public function getVariationsForItems(array $itemIds) {
+        if (empty($itemIds)) {
+            return [];
+        }
+        $validIds = array_values(array_filter(array_map('intval', $itemIds)));
+        if (empty($validIds)) {
+            return [];
+        }
+        try {
+            $placeholders = implode(',', array_fill(0, count($validIds), '?'));
+            $this->db->query("
+                SELECT ivo.id, ivo.item_id, ivo.sku, ivo.price, ivo.wholesale_price, ivo.cost, ivo.quantity_on_hand,
+                       v.name as attribute_name, vv.value_name as value_name, vv.id as variation_value_id
+                FROM item_variation_options ivo
+                JOIN variations v ON ivo.variation_id = v.id
+                JOIN variation_values vv ON ivo.variation_value_id = vv.id
+                WHERE ivo.item_id IN ($placeholders)
+                ORDER BY v.name ASC, vv.value_name ASC
+            ");
+            foreach ($validIds as $index => $id) {
+                $this->db->bind($index + 1, $id);
+            }
+            $rows = $this->db->resultSet() ?: [];
+            $grouped = [];
+            foreach ($rows as $row) {
+                $grouped[$row->item_id][] = $row;
+            }
+            return $grouped;
+        } catch (Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
      * Retrieve all items inside the local database
      */
     public function getItems() {

@@ -1,15 +1,19 @@
 <?php
 // ==========================================
-// VARIABLE SAFETY & ROBUST FALLBACK ENGINE
+// FALCON STATIONERY ERP — INVENTORY WORKSPACE
+// Professional Viewport-Locked ERP Interface
 // ==========================================
 
 $items = $data['items'] ?? [];
+$variationsByItem = $data['variations_by_item'] ?? [];
 
 $stats = $data['stats'] ?? (object)[
     'total_items' => count($items),
     'low_stock_count' => 0,
     'out_of_stock_count' => 0
 ];
+
+$inStockCount = max(0, (int)$stats->total_items - (int)$stats->low_stock_count - (int)$stats->out_of_stock_count);
 
 $filters = $data['filters'] ?? [];
 $filters['search'] = $filters['search'] ?? '';
@@ -23,7 +27,7 @@ $isCurrentlyAdmin = (strtolower($_SESSION['role'] ?? '') === 'admin');
 
 $pagination = $data['pagination'] ?? [
     'current_page' => 1,
-    'per_page' => 1000,
+    'per_page' => 15,
     'total_items' => count($items),
     'total_pages' => 1
 ];
@@ -44,1648 +48,1471 @@ $importResults = $_SESSION['import_results'] ?? null;
 if ($importResults) unset($_SESSION['import_results']);
 ?>
 
-<!-- Inter Font & FontAwesome Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
 /* ============================================================
-   SF PRO + APPLE DESIGN LANGUAGE — INVENTORY CATALOG
+   ENTERPRISE ERP DESIGN SYSTEM — PROFESSIONAL VIEWPORT LOCKED
    ============================================================ */
 
 :root {
-    /* True iOS system palette */
-    --c-bg:           #f2f2f7;
-    --c-surface:      #ffffff;
-    --c-surface2:     #f9f9fb;
-    --c-fill:         rgba(120,120,128,0.12);
-    --c-fill2:        rgba(120,120,128,0.16);
-    --c-separator:    rgba(60,60,67,0.12);
-    --c-separator2:   rgba(60,60,67,0.06);
+    --erp-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --erp-mono: 'JetBrains Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
 
-    /* iOS system colors */
-    --c-blue:         #007aff;
-    --c-blue-light:   #e5f2ff;
-    --c-blue-mid:     #b3d6ff;
-    --c-green:        #34c759;
-    --c-green-light:  #e6f9ec;
-    --c-orange:       #ff9500;
-    --c-orange-light: #fff4e5;
-    --c-red:          #ff3b30;
-    --c-red-light:    #fff0ef;
-    --c-purple:       #af52de;
-    --c-purple-light: #f5eeff;
-    --c-teal:         #5ac8fa;
-    --c-teal-light:   #eaf8ff;
+    /* Theme Palette */
+    --erp-bg: #f8fafc;
+    --erp-card-bg: #ffffff;
+    --erp-border: #e2e8f0;
+    --erp-border-subtle: #edf2f7;
+    --erp-th-bg: #f1f5f9;
+    --erp-row-hover: #f8fafc;
+    --erp-row-alt: #ffffff;
+    --erp-selected-row: #eff6ff;
 
-    /* Typography */
-    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
+    /* Text */
+    --erp-text-main: #0f172a;
+    --erp-text-muted: #64748b;
+    --erp-text-label: #475569;
 
-    /* Text hierarchy */
-    --t-primary:   #1c1c1e;
-    --t-secondary: #636366;
-    --t-tertiary:  #aeaeb2;
-    --t-label:     #8e8e93;
+    /* Accents */
+    --erp-primary: #1e40af;
+    --erp-primary-hover: #1d4ed8;
+    --erp-primary-light: #dbeafe;
 
-    /* Elevation */
-    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
-    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
+    --erp-success: #059669;
+    --erp-success-bg: #ecfdf5;
+    --erp-success-border: #a7f3d0;
 
-    /* Geometry */
-    --r-xs: 6px;
-    --r-sm: 10px;
-    --r-md: 14px;
-    --r-lg: 20px;
-    --r-xl: 26px;
-    --r-pill: 999px;
+    --erp-warning: #d97706;
+    --erp-warning-bg: #fffbeb;
+    --erp-warning-border: #fde68a;
 
-    /* Motion */
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --ease-ios:    cubic-bezier(0.25, 0.1, 0.25, 1);
-    --dur-fast:    0.18s;
-    --dur-mid:     0.28s;
-    --dur-slow:    0.42s;
+    --erp-danger: #dc2626;
+    --erp-danger-bg: #fef2f2;
+    --erp-danger-border: #fecaca;
 }
 
-/* ---- Reset & Base ---- */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@media (prefers-color-scheme: dark) {
+    :root {
+        --erp-bg: #090d16;
+        --erp-card-bg: #111827;
+        --erp-border: #1f2937;
+        --erp-border-subtle: #172033;
+        --erp-th-bg: #131d2e;
+        --erp-row-hover: #1e293b;
+        --erp-row-alt: #111827;
+        --erp-selected-row: #172554;
 
-.inv-root {
-    font-family: var(--f-system);
-    font-size: 15px;
-    color: var(--t-primary);
-    background: var(--c-bg);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+        --erp-text-main: #f8fafc;
+        --erp-text-muted: #94a3b8;
+        --erp-text-label: #cbd5e1;
+
+        --erp-primary: #3b82f6;
+        --erp-primary-hover: #60a5fa;
+        --erp-primary-light: #1e3a8a;
+    }
 }
 
-/* ---- Layout ---- */
-.inv-wrap {
-    max-width: 1420px;
-    margin: 0 auto;
-    padding: 0px 24px 160px;
+/* Force body viewport lock */
+html, body {
+    height: 100vh !important;
+    overflow: hidden !important;
+    margin: 0;
+    padding: 0;
 }
-.inv-split {
+
+/* Base ERP Workspace Container */
+.erp-viewport-view.inv-erp-workspace {
     display: flex;
-    gap: 18px;
-    align-items: flex-start;
-}
-.inv-main { flex: 1; min-width: 0; }
-
-/* ---- Page Header ---- */
-.inv-header {
-    margin-bottom: 28px;
-}
-.inv-eyebrow {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--c-blue);
-    margin-bottom: 6px;
-}
-.inv-title {
-    font-size: 32px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    color: var(--t-primary);
-    margin-bottom: 24px;
-}
-
-/* ---- Stat Cards (SF Widgets style) ---- */
-.stat-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 28px;
-}
-.stat-card {
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    padding: 16px 20px;
-    box-shadow: var(--shadow-sm);
-    border: 0.5px solid var(--c-separator);
-    transition: transform var(--dur-fast) var(--ease-ios),
-                box-shadow var(--dur-fast) var(--ease-ios);
-    cursor: default;
-    position: relative;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    border-radius: var(--r-xl) var(--r-xl) 0 0;
-}
-.stat-card.blue::before  { background: var(--c-blue); }
-.stat-card.orange::before { background: var(--c-orange); }
-.stat-card.red::before   { background: var(--c-red); }
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-.stat-icon {
-    width: 48px; height: 48px;
-    border-radius: var(--r-sm);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-}
-.stat-card.blue  .stat-icon { background: var(--c-blue-light);   color: var(--c-blue); }
-.stat-card.orange .stat-icon { background: var(--c-orange-light); color: var(--c-orange); }
-.stat-card.red   .stat-icon { background: var(--c-red-light);    color: var(--c-red); }
-.stat-info {
-    display: flex; flex-direction: column; justify-content: center;
-}
-.stat-num {
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -0.04em;
-    font-family: var(--f-mono);
-    line-height: 1;
-    margin-bottom: 2px;
-}
-.stat-card.blue   .stat-num { color: var(--t-primary); }
-.stat-card.orange .stat-num { color: var(--c-orange); }
-.stat-card.red    .stat-num { color: var(--c-red); }
-.stat-lbl {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--t-label);
-}
-
-/* ---- Alerts ---- */
-.sf-alert {
-    display: flex; align-items: flex-start; gap: 12px;
-    background: var(--c-surface);
-    border-radius: var(--r-md);
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-xs);
-    border: 0.5px solid var(--c-separator);
-    border-left-width: 3px;
-    font-size: 14px;
-}
-.sf-alert.success { border-left-color: var(--c-green); }
-.sf-alert.error   { border-left-color: var(--c-red); }
-.sf-alert-icon { font-size: 18px; flex-shrink: 0; padding-top: 1px; }
-.sf-alert.success .sf-alert-icon { color: var(--c-green); }
-.sf-alert.error   .sf-alert-icon { color: var(--c-red); }
-.sf-alert-title { font-weight: 600; color: var(--t-primary); margin-bottom: 2px; }
-.sf-alert-msg   { color: var(--t-secondary); font-size: 13px; }
-.sf-alert-close {
-    margin-left: auto; flex-shrink: 0; background: none; border: none;
-    color: var(--t-tertiary); cursor: pointer; font-size: 15px; padding: 2px;
-    transition: color var(--dur-fast);
-}
-.sf-alert-close:hover { color: var(--t-secondary); }
-
-/* ---- Filter Shelf ---- */
-.filter-shelf {
-    display: flex;
-    flex-wrap: wrap;
     gap: 8px;
-    align-items: center;
-    margin-bottom: 18px;
-}
-.filter-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--c-surface);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--t-secondary);
-    box-shadow: var(--shadow-xs);
-    transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
-}
-.filter-chip:focus-within {
-    border-color: var(--c-blue);
-    box-shadow: 0 0 0 3px rgba(0,122,255,0.12);
-}
-.filter-chip-label {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--t-label);
-    text-transform: uppercase;
-}
-.filter-chip input[type="number"] {
-    border: none; outline: none; background: transparent;
-    font-size: 14px; font-weight: 600; font-family: var(--f-system);
-    color: var(--t-primary); width: 72px; padding: 0;
-}
-.filter-chip input[type="number"]::-webkit-inner-spin-button,
-.filter-chip input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-.filter-reset {
-    background: transparent;
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--t-secondary);
-    cursor: pointer;
-    transition: all var(--dur-fast);
-}
-.filter-reset:hover { background: var(--c-fill); color: var(--t-primary); }
-.filter-count {
-    margin-left: auto;
-    font-size: 13px;
-    color: var(--t-secondary);
-    font-weight: 500;
-}
-.filter-count strong { color: var(--t-primary); font-weight: 700; }
-
-/* ---- Custom Dropdown ---- */
-.sf-dropdown { position: relative; outline: none; cursor: pointer; }
-.sf-dropdown-val {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 14px; font-weight: 600; color: var(--t-primary);
-}
-.sf-dropdown-val::after {
-    content: '';
-    display: inline-block; width: 12px; height: 12px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") center/contain no-repeat;
-}
-.sf-dropdown-menu {
-    position: absolute; top: calc(100% + 10px); left: 0; z-index: 200;
-    background: var(--c-surface);
-    border-radius: var(--r-md);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-xl);
-    min-width: 196px;
-    max-height: 280px; overflow-y: auto;
-    opacity: 0; visibility: hidden;
-    transform: translateY(-6px) scale(0.98);
-    transform-origin: top left;
-    transition: opacity var(--dur-mid) var(--ease-ios),
-                transform var(--dur-mid) var(--ease-ios),
-                visibility var(--dur-mid);
-    padding: 6px;
-}
-.sf-dropdown:focus-within .sf-dropdown-menu {
-    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
-}
-.sf-dropdown-item {
-    padding: 9px 12px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--t-primary);
-    border-radius: var(--r-sm);
-    transition: background var(--dur-fast);
-    cursor: pointer;
-}
-.sf-dropdown-item:hover { background: var(--c-fill); }
-.sf-dropdown-item.active { background: var(--c-blue-light); color: var(--c-blue); font-weight: 600; }
-
-/* ---- Table Panel ---- */
-.table-panel {
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-    position: relative;
-}
-#table-loader {
-    position: absolute; inset: 0; z-index: 10;
-    background: rgba(255,255,255,0.75);
-    backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity var(--dur-mid);
-}
-#table-loader.active { opacity: 1; pointer-events: auto; }
-
-.inv-table { width: 100%; border-collapse: collapse; }
-.inv-table thead th {
-    padding: 13px 18px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--t-label);
-    background: var(--c-surface2);
-    border-bottom: 0.5px solid var(--c-separator);
-    white-space: nowrap;
-}
-.inv-table thead th:first-child { border-radius: var(--r-xl) 0 0 0; }
-.inv-table thead th:last-child  { border-radius: 0 var(--r-xl) 0 0; }
-.inv-table tbody tr {
-    transition: background var(--dur-fast);
-    border-bottom: 0.5px solid var(--c-separator2);
-}
-.inv-table tbody tr:last-child { border-bottom: none; }
-.inv-table tbody tr:hover { background: var(--c-fill2); }
-.inv-table td {
-    padding: 14px 18px;
-    font-size: 14px;
-    color: var(--t-primary);
-    vertical-align: middle;
-}
-
-/* ---- iOS Checkbox ---- */
-.sf-check {
-    appearance: none;
-    width: 21px; height: 21px;
-    border-radius: 50%;
-    border: 1.5px solid var(--c-separator);
-    background: var(--c-fill);
-    cursor: pointer;
-    position: relative;
-    flex-shrink: 0;
-    transition: all var(--dur-fast) var(--ease-spring);
-    display: block;
-}
-.sf-check:checked {
-    background: var(--c-blue);
-    border-color: var(--c-blue);
-    box-shadow: 0 2px 8px rgba(0,122,255,0.35);
-}
-.sf-check:checked::after {
-    content: '';
-    position: absolute;
-    left: 6px; top: 4px;
-    width: 5px; height: 9px;
-    border: 2px solid #fff; border-top: none; border-left: none;
-    transform: rotate(45deg);
-}
-
-/* ---- Product Cell ---- */
-.prod-thumb {
-    width: 42px; height: 42px;
-    border-radius: var(--r-sm);
-    object-fit: cover;
-    background: var(--c-fill);
-    border: 0.5px solid var(--c-separator);
-    flex-shrink: 0;
-}
-.prod-name {
-    font-size: 14px; font-weight: 600; color: var(--t-primary);
-    margin-bottom: 2px; line-height: 1.3;
-}
-.prod-meta {
-    font-size: 11px; font-weight: 500;
-    color: var(--t-tertiary);
-    font-family: var(--f-mono);
-    letter-spacing: 0.02em;
-}
-.d-flex-row { display: flex; align-items: center; gap: 10px; }
-
-/* ---- Numbers ---- */
-.num { font-family: var(--f-mono); font-size: 13px; font-weight: 600; }
-.num-muted { color: var(--t-label); }
-
-/* ---- Status Badges ---- */
-.sf-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 10px;
-    border-radius: var(--r-pill);
-    font-size: 12px; font-weight: 700;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-}
-.sf-badge .dot {
-    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
-}
-.badge-active  { background: var(--c-green-light);  color: #1a7f3c; }
-.badge-active  .dot { background: var(--c-green); }
-.badge-low     { background: var(--c-orange-light); color: #c05d00; }
-.badge-low     .dot { background: var(--c-orange); }
-.badge-out     { background: var(--c-red-light);    color: #c0291f; }
-.badge-out     .dot { background: var(--c-red); }
-
-/* ---- Row Actions ---- */
-.row-acts { display: flex; gap: 6px; justify-content: flex-end; }
-.act-btn {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--c-fill);
-    color: var(--t-label);
-    border: none; cursor: pointer; text-decoration: none;
-    font-size: 13px;
-    transition: all var(--dur-fast) var(--ease-spring);
-}
-.act-btn:hover { transform: scale(1.12); }
-.act-btn.view:hover   { background: var(--c-blue-light);   color: var(--c-blue); }
-.act-btn.edit:hover   { background: var(--c-purple-light); color: var(--c-purple); }
-.act-btn.trash:hover  { background: var(--c-red-light);    color: var(--c-red); }
-
-/* ---- Pagination ---- */
-.sf-pagination {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 18px;
-    background: var(--c-surface2);
-    border-top: 0.5px solid var(--c-separator);
-}
-.pg-info { font-size: 13px; color: var(--t-secondary); font-weight: 500; }
-.pg-info strong { color: var(--t-primary); font-weight: 700; }
-.pg-right { display: flex; align-items: center; gap: 14px; }
-.pg-size-wrap { display: flex; align-items: center; gap: 7px; }
-.pg-size-lbl { font-size: 12px; color: var(--t-label); font-weight: 500; }
-.pg-size-sel {
-    font-family: var(--f-system); font-size: 13px; font-weight: 600;
-    color: var(--t-primary);
-    background: var(--c-fill);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-sm);
-    padding: 5px 9px;
-    outline: none; cursor: pointer;
-    transition: border-color var(--dur-fast);
-}
-.pg-size-sel:hover { border-color: var(--c-blue); }
-.pg-nav { display: flex; border: 0.5px solid var(--c-separator); border-radius: var(--r-sm); overflow: hidden; }
-.pg-btn {
-    width: 34px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--c-surface);
-    border: none; cursor: pointer; color: var(--t-primary); font-size: 12px;
-    transition: background var(--dur-fast);
-}
-.pg-btn:hover:not(:disabled) { background: var(--c-fill); }
-.pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.pg-btn + .pg-btn { border-left: 0.5px solid var(--c-separator); }
-.pg-current {
-    padding: 0 14px;
-    display: flex; align-items: center;
-    font-size: 13px; font-weight: 600; color: var(--t-primary);
-    background: var(--c-surface);
-    border-left: 0.5px solid var(--c-separator);
-    border-right: 0.5px solid var(--c-separator);
-}
-
-/* ---- Command Bar (Dynamic Island style) ---- */
-.cmd-bar {
-    position: fixed;
-    bottom: 28px; left: 50%;
-    transform: translateX(-50%);
-    background: rgba(28, 28, 30, 0.92);
-    backdrop-filter: saturate(180%) blur(28px);
-    -webkit-backdrop-filter: saturate(180%) blur(28px);
-    border: 0.5px solid rgba(255,255,255,0.12);
-    border-radius: var(--r-pill);
-    padding: 7px 10px;
-    display: flex; align-items: center; gap: 4px;
-    box-shadow: var(--shadow-xl), 0 0 0 0.5px rgba(0,0,0,0.3);
-    z-index: 100;
-}
-.cmd-search {
-    display: flex; align-items: center; gap: 9px;
-    background: rgba(255,255,255,0.1);
-    border-radius: var(--r-pill);
-    padding: 8px 14px;
-    width: 196px;
-    transition: width var(--dur-slow) var(--ease-ios),
-                background var(--dur-mid);
-}
-.cmd-search:focus-within {
-    width: 300px;
-    background: rgba(255,255,255,0.18);
-}
-.cmd-search i { color: rgba(255,255,255,0.55); font-size: 14px; flex-shrink: 0; }
-.cmd-search input {
-    background: transparent; border: none; outline: none;
-    color: #fff; font-size: 14px; font-weight: 500;
-    font-family: var(--f-system); width: 100%;
-}
-.cmd-search input::placeholder { color: rgba(255,255,255,0.45); }
-.cmd-divider { width: 0.5px; height: 22px; background: rgba(255,255,255,0.15); margin: 0 3px; }
-.cmd-icon {
-    width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: rgba(255,255,255,0.8); font-size: 15px;
-    background: transparent; border: none; cursor: pointer; text-decoration: none;
-    transition: background var(--dur-fast);
-}
-.cmd-icon:hover { background: rgba(255,255,255,0.12); color: #fff; }
-.cmd-cta {
-    display: flex; align-items: center; gap: 7px;
-    background: #fff; color: #1c1c1e;
-    border: none; border-radius: var(--r-pill);
-    padding: 0 18px; height: 38px;
-    font-size: 14px; font-weight: 700;
-    font-family: var(--f-system);
-    cursor: pointer; text-decoration: none;
-    transition: transform var(--dur-fast) var(--ease-spring),
-                background var(--dur-fast);
-    margin-left: 2px;
-}
-.cmd-cta:hover { background: #e5e5ea; transform: scale(0.97); }
-
-/* ---- Bulk Toolbar ---- */
-.bulk-bar {
-    position: fixed;
-    bottom: 100px; left: 50%;
-    transform: translateX(-50%) translateY(12px);
-    background: var(--c-blue);
-    border-radius: var(--r-pill);
-    padding: 10px 22px;
-    display: flex; align-items: center; gap: 16px;
-    box-shadow: var(--shadow-xl), 0 4px 16px rgba(0,122,255,0.35);
-    z-index: 90;
-    opacity: 0; pointer-events: none;
-    transition: opacity var(--dur-mid) var(--ease-ios),
-                transform var(--dur-mid) var(--ease-ios);
-}
-.bulk-bar:not(.hidden) {
-    opacity: 1; pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
-}
-.bulk-count {
-    background: rgba(255,255,255,0.22);
-    color: #fff; font-size: 13px; font-weight: 700;
-    padding: 3px 10px; border-radius: var(--r-pill);
-}
-.bulk-lbl { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
-.bulk-divider { width: 0.5px; height: 20px; background: rgba(255,255,255,0.25); }
-.bulk-action {
-    background: rgba(255,255,255,0.2);
-    color: #fff; border: none; border-radius: var(--r-pill);
-    padding: 7px 16px; font-size: 13px; font-weight: 700;
-    font-family: var(--f-system); cursor: pointer;
-    display: flex; align-items: center; gap: 6px;
-    transition: background var(--dur-fast);
-}
-.bulk-action:hover { background: rgba(255,255,255,0.3); }
-.bulk-cancel {
-    background: transparent; border: none; color: rgba(255,255,255,0.65);
-    font-size: 13px; font-weight: 600; font-family: var(--f-system);
-    cursor: pointer; padding: 6px;
-    transition: color var(--dur-fast);
-}
-.bulk-cancel:hover { color: #fff; }
-
-/* ---- Modals ---- */
-.modal-veil {
-    position: fixed; inset: 0; z-index: 500;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: saturate(180%) blur(14px);
-    -webkit-backdrop-filter: saturate(180%) blur(14px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-    opacity: 0; pointer-events: none;
-    transition: opacity var(--dur-mid) var(--ease-ios);
-}
-.modal-veil:not(.hidden) { opacity: 1; pointer-events: auto; }
-.sf-modal {
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-xl);
-    width: 100%; max-width: 420px;
-    overflow: hidden;
-    transform: translateY(16px) scale(0.97);
-    transition: transform var(--dur-slow) var(--ease-spring);
-}
-.modal-veil:not(.hidden) .sf-modal { transform: translateY(0) scale(1); }
-.modal-head {
-    padding: 20px 22px 18px;
-    text-align: center;
-    border-bottom: 0.5px solid var(--c-separator);
-    position: relative;
-}
-.modal-title { font-size: 17px; font-weight: 700; color: var(--t-primary); }
-.modal-close {
-    position: absolute; right: 14px; top: 14px;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: var(--c-fill); border: none; cursor: pointer;
-    color: var(--t-label); font-size: 13px;
-    display: flex; align-items: center; justify-content: center;
-    transition: background var(--dur-fast);
-}
-.modal-close:hover { background: var(--c-fill2); }
-.modal-body { padding: 22px; max-height: 60vh; overflow-y: auto; }
-.modal-foot {
-    padding: 14px 22px;
-    background: var(--c-surface2);
-    border-top: 0.5px solid var(--c-separator);
-    display: flex; gap: 10px;
-}
-.sf-btn {
-    flex: 1; padding: 12px;
-    border-radius: var(--r-md);
-    font-size: 15px; font-weight: 700;
-    font-family: var(--f-system); text-align: center;
-    cursor: pointer; border: none;
-    transition: transform var(--dur-fast) var(--ease-spring), filter var(--dur-fast);
-    text-decoration: none; display: flex; align-items: center; justify-content: center;
-}
-.sf-btn:hover { filter: brightness(0.94); }
-.sf-btn:active { transform: scale(0.97); }
-.sf-btn.neutral { background: var(--c-fill); color: var(--t-primary); }
-.sf-btn.primary { background: var(--t-primary); color: #fff; }
-.sf-btn.danger  { background: var(--c-red);    color: #fff; }
-
-/* ---- Inputs ---- */
-.sf-input {
-    width: 100%; padding: 12px 14px;
-    background: var(--c-fill);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-md);
-    font-size: 15px; font-weight: 500; font-family: var(--f-system);
-    color: var(--t-primary); outline: none;
-    transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast);
+    font-family: var(--erp-font);
+    color: var(--erp-text-main);
     box-sizing: border-box;
 }
-.sf-input:focus {
-    background: var(--c-surface);
-    border-color: var(--c-blue);
-    box-shadow: 0 0 0 3.5px rgba(0,122,255,0.14);
-}
-.sf-input:disabled { opacity: 0.45; cursor: not-allowed; }
-.sf-input-group { display: flex; flex-direction: column; gap: 14px; }
 
-/* ---- Bulk section ---- */
-.bulk-field {
-    background: var(--c-fill);
-    border-radius: var(--r-md);
-    padding: 14px 16px;
-}
-.bulk-field-head {
-    display: flex; align-items: center; gap: 10px;
-    cursor: pointer; margin-bottom: 10px;
-}
-.bulk-field-label { font-size: 14px; font-weight: 600; color: var(--t-primary); }
-.bulk-row { display: flex; gap: 8px; }
-
-/* ---- Modal error ---- */
-.modal-err {
-    padding: 11px 14px;
-    background: var(--c-red-light);
-    border-radius: var(--r-md);
-    font-size: 13px; font-weight: 600;
-    color: #c0291f; text-align: center;
-    margin-bottom: 18px;
-}
-
-/* ---- CSV drop zone ---- */
-.drop-zone {
-    border: 1.5px dashed var(--c-separator);
-    border-radius: var(--r-lg);
-    padding: 32px 20px;
-    text-align: center;
-    background: var(--c-fill);
-    cursor: pointer; position: relative;
-    margin-bottom: 18px;
-    transition: border-color var(--dur-fast), background var(--dur-fast);
-}
-.drop-zone:hover { border-color: var(--c-blue); background: var(--c-blue-light); }
-.drop-zone input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer;
-}
-.drop-zone-icon { font-size: 30px; color: var(--c-blue); margin-bottom: 10px; }
-.drop-zone-title { font-size: 15px; font-weight: 600; color: var(--t-primary); }
-.drop-zone-sub   { font-size: 13px; color: var(--t-secondary); margin-top: 4px; }
-
-/* ---- Import hint ---- */
-.import-hint {
-    background: var(--c-surface2);
-    border-radius: var(--r-md);
-    padding: 14px 16px;
-    border: 0.5px solid var(--c-separator);
-    display: flex; align-items: flex-start; gap: 10px;
-}
-.import-hint-title { font-size: 13px; font-weight: 700; color: var(--t-primary); margin-bottom: 4px; display: flex; gap: 6px; align-items: center; }
-.import-hint-body  { font-size: 12px; color: var(--t-secondary); line-height: 1.5; }
-
-/* ---- Quick View Panel ---- */
-.qv-panel {
-    width: 0; opacity: 0; overflow: hidden;
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-md);
-    flex-shrink: 0;
-    position: sticky; top: 20px;
-    height: fit-content;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-    transition: width var(--dur-slow) var(--ease-ios),
-                opacity var(--dur-slow) var(--ease-ios);
-}
-.qv-panel.open { width: 320px; opacity: 1; overflow-y: auto; }
-.qv-inner { padding: 22px; min-width: 320px; }
-.qv-close {
-    position: absolute; top: 14px; right: 14px;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: var(--c-fill); border: none; cursor: pointer;
-    color: var(--t-label); font-size: 13px;
-    display: flex; align-items: center; justify-content: center;
-    transition: background var(--dur-fast);
-}
-.qv-close:hover { background: var(--c-fill2); }
-.qv-carousel-container {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: var(--r-lg);
-    overflow: hidden;
-    margin-bottom: 14px;
-    border: 0.5px solid var(--c-separator);
-    background: var(--c-surface2);
-}
-.qv-carousel-track {
+/* Form tag wrapping full workspace */
+#filterForm {
     display: flex;
-    width: 100%;
+    flex-direction: column;
     height: 100%;
-    transition: transform var(--dur-mid) var(--ease-ios);
+    min-height: 0;
+    overflow: hidden;
+    gap: 8px;
+    margin: 0;
 }
-.qv-carousel-slide {
-    width: 100%;
-    height: 100%;
+
+/* 1. Header Toolbar */
+.erp-top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--erp-card-bg);
+    border: 1px solid var(--erp-border);
+    border-radius: 6px;
+    padding: 8px 16px;
     flex-shrink: 0;
+    gap: 16px;
+}
+
+.erp-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-module-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--erp-primary-light);
+    color: var(--erp-primary);
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
 }
-.qv-carousel-slide img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+
+.erp-module-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--erp-text-main);
+    line-height: 1.2;
 }
-.qv-carousel-dot {
-    width: 6px;
-    height: 6px;
+
+.erp-module-subtitle {
+    font-size: 11.5px;
+    color: var(--erp-text-muted);
+}
+
+/* Compact KPI Strip */
+.erp-kpi-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--erp-th-bg);
+    border: 1px solid var(--erp-border);
+    border-radius: 6px;
+    padding: 3px 8px;
+}
+
+.erp-kpi-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    font-size: 12px;
+    border-right: 1px solid var(--erp-border);
+}
+
+.erp-kpi-item:last-child {
+    border-right: none;
+}
+
+.erp-kpi-label {
+    color: var(--erp-text-muted);
+    font-weight: 500;
+}
+
+.erp-kpi-value {
+    font-family: var(--erp-mono);
+    font-weight: 700;
+    font-size: 12.5px;
+}
+
+.erp-kpi-dot {
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.2);
-    border: none;
-    padding: 0;
-    transition: background var(--dur-fast), transform var(--dur-fast);
+    display: inline-block;
+}
+.dot-blue { background: #3b82f6; }
+.dot-green { background: #10b981; }
+.dot-amber { background: #f59e0b; }
+.dot-red { background: #ef4444; }
+
+/* Top Action Toolbar */
+.erp-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.erp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px;
+    border: 1px solid transparent;
     cursor: pointer;
-}
-.qv-carousel-dot.active {
-    background: var(--c-blue);
-    transform: scale(1.2);
-}
-.qv-name { font-size: 17px; font-weight: 700; color: var(--t-primary); text-align: center; margin-bottom: 3px; }
-.qv-sku  { font-size: 11px; font-family: var(--f-mono); color: var(--t-label); text-align: center; margin-bottom: 8px; }
-.qv-tags { display: flex; justify-content: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-.qv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-.qv-tile {
-    background: var(--c-fill);
-    border-radius: var(--r-md);
-    padding: 14px;
-    text-align: center;
-}
-.qv-tile-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t-label); margin-bottom: 6px; }
-.qv-tile-val { font-size: 22px; font-weight: 700; font-family: var(--f-mono); color: var(--t-primary); }
-.qv-prices {
-    background: var(--c-fill);
-    border-radius: var(--r-md);
-    padding: 14px 16px;
-    margin-bottom: 12px;
-}
-.qv-price-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 7px 0;
-    border-bottom: 0.5px solid var(--c-separator2);
-}
-.qv-price-row:last-child { border-bottom: none; padding-bottom: 0; }
-.qv-price-lbl { font-size: 13px; color: var(--t-secondary); font-weight: 500; }
-.qv-price-val { font-size: 14px; font-weight: 700; font-family: var(--f-mono); color: var(--t-primary); }
-.qv-desc {
-    font-size: 13px; color: var(--t-secondary); line-height: 1.55;
-    margin-bottom: 18px;
-    max-height: 80px; overflow-y: auto;
-}
-.qv-actions { display: flex; gap: 8px; }
-.qv-btn {
-    flex: 1; padding: 10px 14px;
-    border-radius: var(--r-md);
-    font-size: 13px; font-weight: 700;
-    font-family: var(--f-system);
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    text-decoration: none; border: none; cursor: pointer;
-    transition: transform var(--dur-fast) var(--ease-spring), filter var(--dur-fast);
-}
-.qv-btn:hover { filter: brightness(0.92); }
-.qv-btn:active { transform: scale(0.97); }
-.qv-btn.primary { background: var(--t-primary); color: #fff; }
-.qv-btn.muted   { background: var(--c-fill); color: var(--t-primary); }
-
-/* ---- Empty state ---- */
-.tbl-empty { text-align: center; padding: 64px 20px; }
-.tbl-empty-icon { font-size: 36px; color: var(--t-tertiary); margin-bottom: 12px; }
-.tbl-empty-title { font-size: 16px; font-weight: 600; color: var(--t-secondary); margin-bottom: 6px; }
-.tbl-empty-sub   { font-size: 13px; color: var(--t-tertiary); }
-
-/* ---- Spinner ---- */
-@keyframes spin { to { transform: rotate(360deg); } }
-.spin { animation: spin 0.7s linear infinite; display: inline-block; }
-
-/* ---- Helpers ---- */
-.hidden { display: none !important; }
-.txt-right { text-align: right; }
-.txt-center { text-align: center; }
-.gap-2 { gap: 8px; }
-
-/* ---- Custom Heading Styles matching Category Page ---- */
-.inv-header {
-    padding-top: 16px !important;
-    margin-bottom: 28px !important;
-}
-.inv-header-title {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 30px !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.025em !important;
-    color: #0f172a !important;
-    margin: 0 0 4px 0 !important;
-    line-height: 2.25rem !important;
-}
-.inv-header-desc {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 14px !important;
-    color: #64748b !important;
-    margin: 4px 0 24px 0 !important;
-    line-height: 1.25rem !important;
-    font-weight: 400 !important;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    height: 30px;
+    box-sizing: border-box;
 }
 
-/* ---- Variations Expandable Styles ---- */
-.variation-item-row.hidden {
+.erp-btn-primary {
+    background: var(--erp-primary);
+    color: #ffffff !important;
+    border-color: var(--erp-primary);
+}
+.erp-btn-primary:hover {
+    background: var(--erp-primary-hover);
+}
+
+.erp-btn-outline {
+    background: var(--erp-card-bg);
+    color: var(--erp-text-main) !important;
+    border-color: var(--erp-border);
+}
+.erp-btn-outline:hover {
+    background: var(--erp-th-bg);
+    border-color: #cbd5e1;
+}
+
+.erp-btn-danger-outline {
+    background: var(--erp-card-bg);
+    color: var(--erp-danger) !important;
+    border-color: var(--erp-danger-border);
+}
+.erp-btn-danger-outline:hover {
+    background: var(--erp-danger-bg);
+}
+
+/* 2. Rule 2: Filters Bar Above Table (Right Corner Placed) */
+.erp-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--erp-card-bg);
+    border: 1px solid var(--erp-border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.erp-filter-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    max-width: 420px;
+}
+
+.erp-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.erp-search-icon {
+    position: absolute;
+    left: 9px;
+    color: var(--erp-text-muted);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.erp-search-input {
+    width: 100%;
+    height: 30px;
+    padding: 4px 28px 4px 28px;
+    font-size: 12px;
+    border: 1px solid var(--erp-border);
+    border-radius: 4px;
+    background: var(--erp-card-bg);
+    color: var(--erp-text-main);
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: var(--erp-font);
+}
+.erp-search-input:focus {
+    border-color: var(--erp-primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.erp-search-clear {
+    position: absolute;
+    right: 8px;
+    color: var(--erp-text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    display: none;
+}
+
+.erp-results-badge {
+    font-size: 11.5px;
+    color: var(--erp-text-muted);
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+/* Rule 2: Filters on Right Corner */
+.erp-filter-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+
+.erp-filter-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--erp-text-label);
+}
+
+.erp-filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--erp-text-muted);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.erp-select {
+    height: 30px;
+    padding: 2px 24px 2px 8px;
+    font-size: 12px;
+    border: 1px solid var(--erp-border);
+    border-radius: 4px;
+    background: var(--erp-card-bg);
+    color: var(--erp-text-main);
+    outline: none;
+    font-family: var(--erp-font);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 12px;
+}
+.erp-select:focus {
+    border-color: var(--erp-primary);
+}
+
+.erp-input-sm {
+    height: 30px;
+    width: 78px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-family: var(--erp-mono);
+    border: 1px solid var(--erp-border);
+    border-radius: 4px;
+    background: var(--erp-card-bg);
+    color: var(--erp-text-main);
+    outline: none;
+}
+.erp-input-sm:focus {
+    border-color: var(--erp-primary);
+}
+
+.erp-btn-reset {
+    height: 30px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--erp-text-muted);
+    background: transparent;
+    border: 1px solid var(--erp-border);
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+}
+.erp-btn-reset:hover {
+    background: var(--erp-th-bg);
+    color: var(--erp-danger);
+    border-color: var(--erp-danger-border);
+}
+
+/* Bulk Selection Toolbar Strip */
+.erp-bulk-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e293b;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+}
+
+.erp-bulk-strip.hidden {
     display: none !important;
 }
-.toggle-var-btn {
+
+.erp-bulk-btn {
+    background: #334155;
+    color: #ffffff;
     border: none;
-    background: transparent;
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
-    color: var(--t-secondary);
-    width: 24px;
-    height: 24px;
-    border-radius: var(--r-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.erp-bulk-btn:hover {
+    background: #475569;
+}
+.erp-bulk-btn.danger {
+    background: #dc2626;
+}
+.erp-bulk-btn.danger:hover {
+    background: #b91c1c;
+}
+
+/* 3. Rule 1: Table Card & Scrollable Table Body Only */
+.erp-table-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--erp-card-bg);
+    border: 1px solid var(--erp-border);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+/* Dedicated Scrollable Table Wrapper */
+.erp-table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    position: relative;
+}
+
+/* Sticky Header */
+.erp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    text-align: left;
+}
+
+.erp-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--erp-th-bg);
+    color: var(--erp-text-label);
+    font-weight: 600;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--erp-border);
+    white-space: nowrap;
+}
+
+.erp-table tbody tr {
+    border-bottom: 1px solid var(--erp-border-subtle);
+    background: var(--erp-card-bg);
+    transition: background 0.1s ease;
+}
+
+.erp-table tbody tr:hover {
+    background: var(--erp-row-hover);
+}
+
+.erp-table tbody tr.row-selected {
+    background: var(--erp-selected-row) !important;
+}
+
+.erp-table td {
+    padding: 7px 12px;
+    vertical-align: middle;
+    color: var(--erp-text-main);
+}
+
+/* Cell Alignments */
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
+.font-mono { font-family: var(--erp-mono) !important; }
+
+/* Product Info Cell */
+.erp-prod-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.erp-prod-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: cover;
+    border: 1px solid var(--erp-border);
+    background: #f1f5f9;
+    flex-shrink: 0;
+}
+
+.erp-prod-title {
+    font-weight: 600;
+    color: var(--erp-text-main);
+    line-height: 1.25;
+}
+
+.erp-prod-meta {
+    font-size: 11px;
+    color: var(--erp-text-muted);
+    font-family: var(--erp-mono);
+    margin-top: 1px;
+}
+
+.erp-tag-cat {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: var(--erp-th-bg);
+    color: var(--erp-text-muted);
+    font-size: 10.5px;
+    font-weight: 500;
+    border: 1px solid var(--erp-border);
+}
+
+/* Variations Expansion Row */
+.erp-var-btn {
+    background: transparent;
+    border: none;
+    color: var(--erp-primary);
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 11px;
+    border-radius: 3px;
+}
+.erp-var-btn:hover {
+    background: var(--erp-primary-light);
+}
+
+.variation-subrow {
+    background: #f8fafc !important;
+}
+@media (prefers-color-scheme: dark) {
+    .variation-subrow { background: #0d131f !important; }
+}
+
+.variation-subrow td {
+    padding: 5px 12px 5px 44px;
+    font-size: 11.5px;
+    border-bottom: 1px dashed var(--erp-border);
+}
+
+.variation-tree-line {
+    color: #94a3b8;
+    margin-right: 6px;
+    font-family: var(--erp-mono);
+}
+
+/* Status Badges */
+.erp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-instock {
+    background: var(--erp-success-bg);
+    color: var(--erp-success);
+    border: 1px solid var(--erp-success-border);
+}
+
+.badge-lowstock {
+    background: var(--erp-warning-bg);
+    color: var(--erp-warning);
+    border: 1px solid var(--erp-warning-border);
+}
+
+.badge-outstock {
+    background: var(--erp-danger-bg);
+    color: var(--erp-danger);
+    border: 1px solid var(--erp-danger-border);
+}
+
+.badge-inactive {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
+/* Row Actions */
+.erp-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.erp-icon-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    border: 1px solid var(--erp-border);
+    background: var(--erp-card-bg);
+    color: var(--erp-text-muted);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background var(--dur-fast), color var(--dur-fast);
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
 }
-.toggle-var-btn:hover {
-    background: var(--c-fill2);
-    color: var(--t-primary);
+.erp-icon-btn:hover {
+    color: var(--erp-primary);
+    border-color: var(--erp-primary);
+    background: var(--erp-primary-light);
 }
-.has-variations-parent td {
-    background-color: rgba(0, 122, 255, 0.07) !important;
+.erp-icon-btn.danger:hover {
+    color: var(--erp-danger);
+    border-color: var(--erp-danger);
+    background: var(--erp-danger-bg);
 }
-.has-variations-parent td:first-child {
-    border-left: 4px solid var(--c-blue) !important;
+
+/* 4. Pinned Pagination Footer */
+.erp-pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: var(--erp-th-bg);
+    border-top: 1px solid var(--erp-border);
+    flex-shrink: 0;
+    font-size: 12px;
 }
-.variation-item-row td {
-    background-color: rgba(0, 122, 255, 0.02) !important;
+
+.erp-pg-info {
+    color: var(--erp-text-muted);
 }
-.variation-item-row td:first-child {
-    border-left: 4px solid var(--c-blue) !important;
+.erp-pg-info strong {
+    color: var(--erp-text-main);
+    font-family: var(--erp-mono);
+}
+
+.erp-pg-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-pg-size-select {
+    height: 26px;
+    padding: 0 4px;
+    font-size: 11.5px;
+    border: 1px solid var(--erp-border);
+    border-radius: 4px;
+    background: var(--erp-card-bg);
+    color: var(--erp-text-main);
+    outline: none;
+}
+
+.erp-pg-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.erp-pg-btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--erp-border);
+    border-radius: 4px;
+    background: var(--erp-card-bg);
+    color: var(--erp-text-main);
+    font-size: 11px;
+    cursor: pointer;
+}
+.erp-pg-btn:hover:not(:disabled) {
+    background: var(--erp-th-bg);
+    border-color: #cbd5e1;
+}
+.erp-pg-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.erp-pg-page-indicator {
+    font-family: var(--erp-mono);
+    font-weight: 600;
+    padding: 0 6px;
+    font-size: 11.5px;
+}
+
+/* Split View with Slide-Over Quick View */
+.erp-content-split {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Slide-Over Quick View Drawer */
+.erp-drawer {
+    position: absolute;
+    top: 0;
+    right: -420px;
+    width: 380px;
+    height: 100%;
+    background: var(--erp-card-bg);
+    border-left: 1px solid var(--erp-border);
+    box-shadow: -4px 0 16px rgba(0,0,0,0.08);
+    transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+}
+
+.erp-drawer.open {
+    right: 0;
+}
+
+.erp-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--erp-border);
+    background: var(--erp-th-bg);
+}
+
+.erp-drawer-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--erp-text-main);
+}
+
+.erp-drawer-close {
+    background: transparent;
+    border: none;
+    color: var(--erp-text-muted);
+    cursor: pointer;
+    font-size: 14px;
+}
+.erp-drawer-close:hover {
+    color: var(--erp-danger);
+}
+
+.erp-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.erp-drawer-img-box {
+    width: 100%;
+    height: 180px;
+    border: 1px solid var(--erp-border);
+    border-radius: 6px;
+    background: #f8fafc;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.erp-drawer-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.erp-drawer-tile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.erp-drawer-tile {
+    background: var(--erp-th-bg);
+    border: 1px solid var(--erp-border);
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.erp-drawer-tile-lbl {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    color: var(--erp-text-muted);
+    font-weight: 600;
+}
+
+.erp-drawer-tile-val {
+    font-family: var(--erp-mono);
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+/* Loading Overlay */
+#table-loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+}
+#table-loader.active {
+    display: flex;
+}
+@media (prefers-color-scheme: dark) {
+    #table-loader { background: rgba(17, 24, 39, 0.7); }
+}
+
+/* Modals */
+.erp-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.erp-modal-backdrop.hidden {
+    display: none !important;
+}
+
+.erp-modal-box {
+    background: var(--erp-card-bg);
+    border: 1px solid var(--erp-border);
+    border-radius: 6px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    width: 90%;
+    max-width: 480px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.erp-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--erp-border);
+    background: var(--erp-th-bg);
+}
+
+.erp-modal-head h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--erp-text-main);
+}
+
+.erp-modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 70vh;
+}
+
+.erp-modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--erp-border);
+    background: var(--erp-th-bg);
+}
+
+/* Alerts */
+.erp-alert {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.erp-alert.success {
+    background: var(--erp-success-bg);
+    color: var(--erp-success);
+    border: 1px solid var(--erp-success-border);
+}
+.erp-alert.error {
+    background: var(--erp-danger-bg);
+    color: var(--erp-danger);
+    border: 1px solid var(--erp-danger-border);
+}
+.erp-alert-close {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 12px;
 }
 </style>
 
-<div class="inv-root">
+<div class="erp-viewport-view inv-erp-workspace">
 <form id="filterForm" action="<?= APP_URL ?>/inventory" method="GET" onsubmit="event.preventDefault(); applyAjaxFilters();">
     <input type="hidden" name="page" id="currentPageInput" value="<?= $currentPage ?>">
     <input type="hidden" name="per_page" id="perPageInput" value="<?= $perPage ?>">
 
-    <div class="inv-wrap">
-
-        <!-- Header -->
-        <div class="inv-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <div>
-                    <h1 class="inv-header-title">Inventory Catalog</h1>
-                    <div class="inv-header-desc">Manage products, stock levels, wholesale prices, and variations.</div>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <a href="<?= APP_URL ?>/inventory/deleted" class="filter-reset" style="background: var(--c-surface); color: var(--c-red); border-color: rgba(255,59,48,0.3); padding: 8px 16px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-trash-arrow-up"></i> Deleted Products
-                    </a>
-                </div>
+    <!-- 1. Top ERP Header with Compact Stats and Action Toolbar -->
+    <div class="erp-top-header">
+        <div class="erp-title-group">
+            <div class="erp-module-icon">
+                <i class="fa-solid fa-boxes-stacked"></i>
             </div>
-
-            <!-- Stat Cards -->
-            <div class="stat-row">
-                <div class="stat-card blue">
-                    <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-num" id="stat-total-items"><?= number_format($stats->total_items) ?></div>
-                        <div class="stat-lbl">Total Items</div>
-                    </div>
-                </div>
-                <div class="stat-card orange">
-                    <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-num" id="stat-low-stock"><?= number_format($stats->low_stock_count) ?></div>
-                        <div class="stat-lbl">Low Stock</div>
-                    </div>
-                </div>
-                <div class="stat-card red">
-                    <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-num" id="stat-out-of-stock"><?= number_format($stats->out_of_stock_count) ?></div>
-                        <div class="stat-lbl">Out of Stock</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Alerts -->
-        <?php if ($flashSuccess || isset($_GET['flash_success'])): ?>
-        <div id="flash-success-alert" class="sf-alert success">
-            <i class="fa-solid fa-circle-check sf-alert-icon"></i>
             <div>
-                <div class="sf-alert-title">Success</div>
-                <div class="sf-alert-msg"><?= htmlspecialchars($flashSuccess ?? $_GET['flash_success'] ?? '') ?></div>
+                <div class="erp-module-title">Inventory Catalog</div>
+                <div class="erp-module-subtitle">Manage products, stock levels, wholesale rates & variations</div>
             </div>
-            <button type="button" class="sf-alert-close" onclick="document.getElementById('flash-success-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <?php endif; ?>
 
-        <?php if ($flashError): ?>
-        <div id="flash-error-alert" class="sf-alert error">
-            <i class="fa-solid fa-circle-exclamation sf-alert-icon"></i>
-            <div>
-                <div class="sf-alert-title">Error</div>
-                <div class="sf-alert-msg"><?= htmlspecialchars($flashError) ?></div>
+        <!-- Compact KPI Strip -->
+        <div class="erp-kpi-strip">
+            <div class="erp-kpi-item">
+                <span class="erp-kpi-dot dot-blue"></span>
+                <span class="erp-kpi-label">Total:</span>
+                <span class="erp-kpi-value" id="stat-total-items"><?= number_format($stats->total_items) ?></span>
             </div>
-            <button type="button" class="sf-alert-close" onclick="document.getElementById('flash-error-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+            <div class="erp-kpi-item">
+                <span class="erp-kpi-dot dot-green"></span>
+                <span class="erp-kpi-label">In Stock:</span>
+                <span class="erp-kpi-value"><?= number_format($inStockCount) ?></span>
+            </div>
+            <div class="erp-kpi-item">
+                <span class="erp-kpi-dot dot-amber"></span>
+                <span class="erp-kpi-label">Low Stock:</span>
+                <span class="erp-kpi-value" id="stat-low-stock"><?= number_format($stats->low_stock_count) ?></span>
+            </div>
+            <div class="erp-kpi-item">
+                <span class="erp-kpi-dot dot-red"></span>
+                <span class="erp-kpi-label">Out of Stock:</span>
+                <span class="erp-kpi-value" id="stat-out-of-stock"><?= number_format($stats->out_of_stock_count) ?></span>
+            </div>
         </div>
-        <?php endif; ?>
 
-        <?php if ($importResults): ?>
-        <div id="import-results-alert" class="sf-alert" style="border-left-color: var(--c-blue); display: flex; flex-direction: column; gap: 12px; width: 100%;">
-            <div style="display: flex; align-items: flex-start; gap: 12px; width: 100%;">
-                <i class="fa-solid fa-wand-magic-sparkles sf-alert-icon" style="color: var(--c-blue);"></i>
-                <div style="flex: 1;">
-                    <div class="sf-alert-title">CSV Import Completed</div>
-                    <div class="sf-alert-msg">
-                        <ul style="margin: 6px 0 0 16px; padding: 0; display: flex; gap: 20px; list-style-type: disc;">
-                            <li>Added: <strong style="color: var(--c-green); font-family: var(--f-mono);"><?= intval($importResults['added']) ?></strong> new products</li>
-                            <li>Updated: <strong style="color: var(--c-blue); font-family: var(--f-mono);"><?= intval($importResults['updated']) ?></strong> existing products</li>
-                        </ul>
-                    </div>
-                </div>
-                <button type="button" class="sf-alert-close" onclick="document.getElementById('import-results-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+        <!-- Action Toolbar -->
+        <div class="erp-actions-group">
+            <a href="<?= APP_URL ?>/inventory/add" class="erp-btn erp-btn-primary">
+                <i class="fa-solid fa-plus"></i> New Product
+            </a>
+            <button type="button" onclick="openCsvModal()" class="erp-btn erp-btn-outline" title="Import CSV">
+                <i class="fa-solid fa-file-arrow-up"></i> Import
+            </button>
+            <a href="<?= APP_URL ?>/inventory/exportCSV" class="erp-btn erp-btn-outline" title="Export CSV">
+                <i class="fa-solid fa-file-arrow-down"></i> Export
+            </a>
+            <a href="<?= APP_URL ?>/inventory/reserved" class="erp-btn erp-btn-outline" title="Stock Reservations">
+                <i class="fa-solid fa-boxes-packing"></i> Reservations
+            </a>
+            <a href="<?= APP_URL ?>/inventory/deleted" class="erp-btn erp-btn-danger-outline" title="Trash / Deleted Products">
+                <i class="fa-solid fa-trash-arrow-up"></i> Trash
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts Strip (if any) -->
+    <?php if ($flashSuccess || isset($_GET['flash_success'])): ?>
+    <div id="flash-success-alert" class="erp-alert success">
+        <div><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i> <?= htmlspecialchars($flashSuccess ?? $_GET['flash_success'] ?? '') ?></div>
+        <button type="button" class="erp-alert-close" onclick="document.getElementById('flash-success-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($flashError): ?>
+    <div id="flash-error-alert" class="erp-alert error">
+        <div><i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i> <?= htmlspecialchars($flashError) ?></div>
+        <button type="button" class="erp-alert-close" onclick="document.getElementById('flash-error-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <?php endif; ?>
+
+    <!-- 2. RULE 2: Filters Bar Above Table with Right-Corner Filter Alignment -->
+    <div class="erp-filter-bar">
+        <!-- Left: Search and Selection Indicators -->
+        <div class="erp-filter-left">
+            <div class="erp-search-box">
+                <i class="fa-solid fa-magnifying-glass erp-search-icon"></i>
+                <input type="text" name="search" id="searchInput"
+                       class="erp-search-input"
+                       value="<?= htmlspecialchars($filters['search']) ?>"
+                       oninput="triggerSearchDelay()"
+                       placeholder="Search SKU, name, barcode, sample code…">
+                <i class="fa-solid fa-xmark erp-search-clear" id="searchClearBtn" onclick="clearSearchInput()"></i>
             </div>
             
-            <?php if (!empty($importResults['success_logs'])): ?>
-            <div style="display: flex; flex-direction: column; gap: 4px; background: rgba(0, 122, 255, 0.05); border-radius: var(--r-sm); padding: 10px 14px; max-height: 100px; overflow-y: auto; width: 100%; border: 0.5px solid rgba(0, 122, 255, 0.1);">
-                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-blue); margin-bottom: 2px;">Action Log</div>
-                <?php foreach ($importResults['success_logs'] as $log): ?>
-                    <div style="font-size: 11px; color: #0056b3; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-circle-check" style="font-size: 8px;"></i>
-                        <span><?= htmlspecialchars($log) ?></span>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
+            <span class="erp-results-badge">
+                <strong id="matching-count"><?= number_format($totalItems) ?></strong> items
+            </span>
 
-            <?php if (!empty($importResults['errors'])): ?>
-            <div style="display: flex; flex-direction: column; gap: 4px; background: rgba(255, 59, 48, 0.05); border-radius: var(--r-sm); padding: 10px 14px; max-height: 150px; overflow-y: auto; width: 100%; border: 0.5px solid rgba(255, 59, 48, 0.1);">
-                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--c-red); margin-bottom: 2px;">Errors / Warnings</div>
-                <?php foreach ($importResults['errors'] as $err): ?>
-                    <div style="font-size: 11px; color: var(--c-red); display: flex; align-items: flex-start; gap: 6px; line-height: 1.4;">
-                        <i class="fa-solid fa-circle-exclamation" style="font-size: 8px; margin-top: 3px; flex-shrink: 0;"></i>
-                        <span style="font-family: var(--f-mono);">
-                            <?php if (is_array($err)): ?>
-                                Row <?= $err['row'] ?> (SKU: <?= htmlspecialchars($err['sku']) ?>): <?= htmlspecialchars(implode(', ', $err['messages'])) ?>
-                            <?php else: ?>
-                                <?= htmlspecialchars($err) ?>
-                            <?php endif; ?>
-                        </span>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <?php endif; ?>
-        </div>
-        <?php endif; ?>
-
-        <!-- Filters -->
-        <div class="filter-shelf">
-            <!-- Category -->
-            <div class="filter-chip">
-                <span class="filter-chip-label">Category</span>
-                <div class="sf-dropdown" tabindex="0">
-                    <?php
-                    $selectedCatName = 'All';
-                    foreach ($categories as $cat) {
-                        if ((string)$filters['category_id'] === (string)$cat->id) $selectedCatName = $cat->name;
-                    }
-                    ?>
-                    <div class="sf-dropdown-val" id="cat-dropdown-val"><?= htmlspecialchars($selectedCatName) ?></div>
-                    <div class="sf-dropdown-menu">
-                        <div class="sf-dropdown-item <?= $filters['category_id'] === '' ? 'active' : '' ?>" onclick="selectCategory('', 'All')">All Categories</div>
-                        <?php foreach ($categories as $cat): ?>
-                        <div class="sf-dropdown-item <?= (string)$filters['category_id'] === (string)$cat->id ? 'active' : '' ?>" onclick="selectCategory('<?= $cat->id ?>', '<?= htmlspecialchars(addslashes($cat->name)) ?>')"><?= htmlspecialchars($cat->name) ?></div>
-                        <?php endforeach; ?>
-                    </div>
-                    <input type="hidden" name="category_id" id="categoryInput" value="<?= htmlspecialchars($filters['category_id']) ?>">
-                </div>
-            </div>
-
-            <!-- Stock Status -->
-            <div class="filter-chip">
-                <span class="filter-chip-label">Stock Status</span>
-                <div class="sf-dropdown" tabindex="0">
-                    <?php
-                    $statusNames = ['' => 'All', 'instock' => 'In Stock', 'lowstock' => 'Low Stock', 'outstock' => 'Out of Stock'];
-                    $selectedStatusName = $statusNames[$filters['stock_status']] ?? 'All';
-                    ?>
-                    <div class="sf-dropdown-val" id="status-dropdown-val"><?= $selectedStatusName ?></div>
-                    <div class="sf-dropdown-menu">
-                        <div class="sf-dropdown-item <?= $filters['stock_status'] === '' ? 'active' : '' ?>" onclick="selectStatus('', 'All')">All Statuses</div>
-                        <div class="sf-dropdown-item <?= $filters['stock_status'] === 'instock' ? 'active' : '' ?>" onclick="selectStatus('instock', 'In Stock')">In Stock</div>
-                        <div class="sf-dropdown-item <?= $filters['stock_status'] === 'lowstock' ? 'active' : '' ?>" onclick="selectStatus('lowstock', 'Low Stock')">Low Stock</div>
-                        <div class="sf-dropdown-item <?= $filters['stock_status'] === 'outstock' ? 'active' : '' ?>" onclick="selectStatus('outstock', 'Out of Stock')">Out of Stock</div>
-                    </div>
-                    <input type="hidden" name="stock_status" id="stockStatusInput" value="<?= htmlspecialchars($filters['stock_status']) ?>">
-                </div>
-            </div>
-
-            <!-- Operational Status (Active/Inactive) -->
-            <div class="filter-chip">
-                <span class="filter-chip-label">Status</span>
-                <div class="sf-dropdown" tabindex="0">
-                    <?php
-                    $itemStatuses = ['' => 'All', 'active' => 'Active', 'inactive' => 'Inactive'];
-                    $selectedItemStatusName = $itemStatuses[$filters['status'] ?? ''] ?? 'All';
-                    ?>
-                    <div class="sf-dropdown-val" id="item-status-dropdown-val"><?= htmlspecialchars($selectedItemStatusName) ?></div>
-                    <div class="sf-dropdown-menu">
-                        <div class="sf-dropdown-item <?= ($filters['status'] ?? '') === '' ? 'active' : '' ?>" onclick="selectItemStatus('', 'All')">All</div>
-                        <div class="sf-dropdown-item <?= ($filters['status'] ?? '') === 'active' ? 'active' : '' ?>" onclick="selectItemStatus('active', 'Active')">Active</div>
-                        <div class="sf-dropdown-item <?= ($filters['status'] ?? '') === 'inactive' ? 'active' : '' ?>" onclick="selectItemStatus('inactive', 'Inactive')">Inactive</div>
-                    </div>
-                    <input type="hidden" name="status" id="itemStatusInput" value="<?= htmlspecialchars($filters['status'] ?? '') ?>">
-                </div>
-            </div>
-
-            <div class="filter-chip">
-                <span class="filter-chip-label">Min Rs</span>
-                <input type="number" step="0.01" name="min_price" id="minPriceInput" value="<?= htmlspecialchars($filters['min_price']) ?>" oninput="triggerSearchDelay()" placeholder="0.00">
-            </div>
-            <div class="filter-chip">
-                <span class="filter-chip-label">Max Rs</span>
-                <input type="number" step="0.01" name="max_price" id="maxPriceInput" value="<?= htmlspecialchars($filters['max_price']) ?>" oninput="triggerSearchDelay()" placeholder="0.00">
-            </div>
-
-            <button type="button" onclick="clearAllFilters()" class="filter-reset">Reset</button>
-
-            <div class="filter-count">
-                <strong id="matching-count"><?= $totalItems ?></strong> items
+            <!-- Bulk Selection Strip (Shown only when rows are selected) -->
+            <div id="bulkEditToolbar" class="erp-bulk-strip hidden">
+                <span><strong id="selectedCountBadge">0</strong> selected</span>
+                <button type="button" onclick="openBulkEditModal()" class="erp-bulk-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button type="button" onclick="confirmBulkDelete()" class="erp-bulk-btn danger"><i class="fa-solid fa-trash-can"></i> Delete</button>
+                <button type="button" onclick="clearSelection()" class="erp-bulk-btn"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
 
-        <!-- Split Layout -->
-        <div class="inv-split">
+        <!-- Right: All Filtering Options Placed at Right Corner -->
+        <div class="erp-filter-right">
+            <!-- Category Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Cat:</span>
+                <select name="category_id" id="categoryInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="">All Categories</option>
+                    <?php foreach ($categories as $cat): ?>
+                    <option value="<?= $cat->id ?>" <?= (string)$filters['category_id'] === (string)$cat->id ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($cat->name) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
-            <!-- Main Table -->
-            <div class="inv-main">
-                <div class="table-panel">
-                    <div id="table-loader">
-                        <i class="fa-solid fa-spinner spin" style="font-size:22px; color: var(--c-blue);"></i>
-                    </div>
+            <!-- Stock Status Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Stock:</span>
+                <select name="stock_status" id="stockStatusInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="" <?= $filters['stock_status'] === '' ? 'selected' : '' ?>>All Stock</option>
+                    <option value="instock" <?= $filters['stock_status'] === 'instock' ? 'selected' : '' ?>>In Stock (&gt;5)</option>
+                    <option value="lowstock" <?= $filters['stock_status'] === 'lowstock' ? 'selected' : '' ?>>Low Stock (1-5)</option>
+                    <option value="outstock" <?= $filters['stock_status'] === 'outstock' ? 'selected' : '' ?>>Out of Stock (0)</option>
+                </select>
+            </div>
 
-                    <div id="table-container">
-                        <table class="inv-table">
-                            <thead>
-                                <tr>
-                                    <th style="width:42px;" class="txt-center">
-                                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="sf-check">
-                                    </th>
-                                    <th>Product</th>
-                                    <th class="txt-right">Retail</th>
-                                    <th class="txt-right">B2B</th>
-                                    <th class="txt-center">Qty</th>
-                                    <th>Status</th>
-                                    <th class="txt-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($items)): ?>
-                                <tr>
-                                    <td colspan="7">
-                                        <div class="tbl-empty">
-                                            <div class="tbl-empty-icon"><i class="fa-solid fa-cube"></i></div>
-                                            <div class="tbl-empty-title">No products found</div>
-                                            <div class="tbl-empty-sub">Try adjusting your filters or add a new product</div>
+            <!-- Status Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Status:</span>
+                <select name="status" id="itemStatusInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="" <?= ($filters['status'] ?? '') === '' ? 'selected' : '' ?>>All Statuses</option>
+                    <option value="active" <?= ($filters['status'] ?? '') === 'active' ? 'selected' : '' ?>>Active</option>
+                    <option value="inactive" <?= ($filters['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                </select>
+            </div>
+
+            <!-- Price Range (Min/Max) -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Rs:</span>
+                <input type="number" step="0.01" name="min_price" id="minPriceInput" class="erp-input-sm"
+                       value="<?= htmlspecialchars($filters['min_price']) ?>" oninput="triggerSearchDelay()" placeholder="Min">
+                <span>-</span>
+                <input type="number" step="0.01" name="max_price" id="maxPriceInput" class="erp-input-sm"
+                       value="<?= htmlspecialchars($filters['max_price']) ?>" oninput="triggerSearchDelay()" placeholder="Max">
+            </div>
+
+            <!-- Reset Filters -->
+            <button type="button" onclick="clearAllFilters()" class="erp-btn-reset" title="Reset all filters">
+                <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. RULE 1: Table Card (Full Height & Scrollable Table Rows Only) -->
+    <div class="erp-content-split">
+        <div class="erp-table-card">
+            <div id="table-loader">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; color: var(--erp-primary);"></i>
+            </div>
+
+            <div id="table-container" class="erp-table-scroll">
+                <table class="erp-table">
+                    <thead>
+                        <tr>
+                            <th style="width:36px;" class="text-center">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
+                            </th>
+                            <th>Product Details</th>
+                            <th>Category</th>
+                            <th class="text-right" style="width:110px;">Retail (LKR)</th>
+                            <th class="text-right" style="width:110px;">B2B / W/S</th>
+                            <th class="text-center" style="width:80px;">Qty</th>
+                            <th class="text-center" style="width:110px;">Status</th>
+                            <th class="text-right" style="width:120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($items)): ?>
+                        <tr>
+                            <td colspan="8" class="text-center" style="padding: 40px 16px; color: var(--erp-text-muted);">
+                                <i class="fa-solid fa-box-open" style="font-size: 28px; margin-bottom: 8px; display: block; opacity: 0.5;"></i>
+                                <strong style="font-size: 14px; color: var(--erp-text-main);">No products found</strong>
+                                <div style="font-size: 12px; margin-top: 4px;">Try clearing filters or search criteria.</div>
+                            </td>
+                        </tr>
+                        <?php else: ?>
+                            <?php foreach ($items as $item): ?>
+                                <?php
+                                    $price = (float)($item->selling_price ?? $item->price ?? 0);
+                                    $wholesalePrice = (float)($item->wholesale_price ?? 0);
+                                    $qty = (int)($item->qty ?? $item->quantity_on_hand ?? 0);
+                                    $sku = $item->item_code ?? $item->sku ?? 'NO-SKU';
+                                    $itemStatus = strtolower($item->status ?? 'active');
+
+                                    // Resolve variations from batch preloaded data to avoid N+1 queries
+                                    $variations = $variationsByItem[$item->id] ?? [];
+                                    if (empty($variations) && !empty($item->variations_json)) {
+                                        $decoded = json_decode(html_entity_decode($item->variations_json, ENT_QUOTES, 'UTF-8'));
+                                        if (is_array($decoded)) {
+                                            foreach ($decoded as $v) {
+                                                $vObj = new stdClass();
+                                                $vObj->id = $v->id ?? 0;
+                                                $vObj->attribute_name = 'Option';
+                                                $vObj->value_name = $v->attribute ?? $v->value ?? $v->value_name ?? '';
+                                                $vObj->sku = $v->sku ?? '';
+                                                $vObj->quantity_on_hand = $v->qty ?? $v->quantity_on_hand ?? $qty;
+                                                $vObj->price = $v->price ?? $v->selling_price ?? $price;
+                                                $vObj->wholesale_price = $v->wholesale_price ?? $wholesalePrice;
+                                                $variations[] = $vObj;
+                                            }
+                                        }
+                                    }
+
+                                    // Image
+                                    $img_src = APP_URL . '/public/assets/no-image.png';
+                                    if (!empty($item->image_path)) {
+                                        $img_src = APP_URL . '/uploads/products/' . basename($item->image_path);
+                                    }
+
+                                    // Quick View Data JSON
+                                    $qvData = [
+                                        'id' => $item->id,
+                                        'name' => $item->name,
+                                        'sku' => $sku,
+                                        'code' => $item->sample_code ?? '',
+                                        'price' => number_format($price, 2),
+                                        'b2b' => number_format($wholesalePrice, 2),
+                                        'qty' => $qty,
+                                        'desc' => $item->description ?? '',
+                                        'category' => $item->category_name ?? 'Uncategorized',
+                                        'brand' => $item->brand ?? 'N/A',
+                                        'status' => $itemStatus,
+                                        'img' => $img_src
+                                    ];
+                                ?>
+                                <tr id="row_item_<?= $item->id ?>">
+                                    <td class="text-center">
+                                        <input type="checkbox" name="selected_items[]" value="<?= $item->id ?>" class="item-select-checkbox" onchange="updateSelection()">
+                                    </td>
+                                    <td>
+                                        <div class="erp-prod-cell">
+                                            <?php if (!empty($variations)): ?>
+                                                <button type="button" class="erp-var-btn" onclick="toggleVariationsRow(<?= $item->id ?>, this)" title="Show/Hide Variations">
+                                                    <i class="fa-solid fa-chevron-right"></i>
+                                                </button>
+                                            <?php else: ?>
+                                                <span style="width: 14px; display: inline-block;"></span>
+                                            <?php endif; ?>
+                                            
+                                            <img src="<?= $img_src ?>" class="erp-prod-thumb" alt="" onerror="this.src='https://placehold.co/64x64/e2e8f0/64748b?text=P'">
+                                            
+                                            <div>
+                                                <div class="erp-prod-title">
+                                                    <?= htmlspecialchars($item->name ?? 'Unnamed Product') ?>
+                                                    <?php if (!empty($variations)): ?>
+                                                        <span style="font-size: 10px; font-weight: 700; background: var(--erp-primary-light); color: var(--erp-primary); padding: 1px 5px; border-radius: 3px; margin-left: 4px;">
+                                                            <?= count($variations) ?> vars
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="erp-prod-meta">
+                                                    SKU: <?= htmlspecialchars($sku) ?>
+                                                    <?= !empty($item->sample_code) ? ' · Code: ' . htmlspecialchars($item->sample_code) : '' ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="erp-tag-cat"><?= htmlspecialchars($item->category_name ?? 'Uncategorized') ?></span>
+                                    </td>
+                                    <td class="text-right font-mono">
+                                        <?= number_format($price, 2) ?>
+                                    </td>
+                                    <td class="text-right font-mono" style="color: var(--erp-text-muted);">
+                                        <?= number_format($wholesalePrice, 2) ?>
+                                    </td>
+                                    <td class="text-center font-mono">
+                                        <?php if ($qty <= 0): ?>
+                                            <span style="color: var(--erp-danger); font-weight: 700;"><?= $qty ?></span>
+                                        <?php elseif ($qty <= 5): ?>
+                                            <span style="color: var(--erp-warning); font-weight: 700;"><?= $qty ?></span>
+                                        <?php else: ?>
+                                            <span style="color: var(--erp-text-main); font-weight: 600;"><?= $qty ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php if ($itemStatus === 'inactive'): ?>
+                                            <span class="erp-badge badge-inactive">Inactive</span>
+                                        <?php elseif ($qty <= 0): ?>
+                                            <span class="erp-badge badge-outstock">Out of Stock</span>
+                                        <?php elseif ($qty <= 5): ?>
+                                            <span class="erp-badge badge-lowstock">Low (<?= $qty ?>)</span>
+                                        <?php else: ?>
+                                            <span class="erp-badge badge-instock">In Stock</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="erp-row-actions">
+                                            <button type="button" class="erp-icon-btn" onclick='openQuickView(<?= json_encode($qvData) ?>)' title="Quick View">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                            <a href="<?= APP_URL ?>/inventory/edit/<?= $item->id ?>" class="erp-icon-btn" title="Edit Product">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
+                                            <button type="button" class="erp-icon-btn" onclick="toggleProductStatus(<?= $item->id ?>, '<?= $itemStatus === 'active' ? 'inactive' : 'active' ?>')" title="Toggle Active/Inactive">
+                                                <i class="fa-solid fa-power-off" style="color: <?= $itemStatus === 'active' ? '#10b981' : '#94a3b8' ?>;"></i>
+                                            </button>
+                                            <button type="button" class="erp-icon-btn danger" onclick="confirmDelete(<?= $item->id ?>, '<?= htmlspecialchars(addslashes($item->name)) ?>')" title="Delete">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
-                                <?php else: ?>
-                                    <?php foreach ($items as $item):
-                                        $qty     = intval($item->qty ?? 0);
-                                        $price   = floatval($item->selling_price ?? $item->price ?? 0);
-                                        $b2b     = floatval($item->wholesale_price ?? 0);
-                                        $sku     = !empty($item->item_code) ? $item->item_code : ($item->sku ?? '-');
-                                        $image   = $item->image_path ?? '';
-                                        $img_src = empty($image) ? 'https://placehold.co/100x100/f2f2f7/8e8e93?text=' . urlencode(substr($item->name ?? 'P', 0, 1)) : APP_URL . '/uploads/products/' . basename($image);
 
-                                        $itemStatus = $item->status ?? 'active';
-                                        if ($itemStatus === 'inactive') {
-                                            $badgeCls = 'badge-out';
-                                            $badgeTxt = 'Inactive';
-                                        } elseif ($qty <= 0) {
-                                            $badgeCls = 'badge-out';
-                                            $badgeTxt = 'Out of stock';
-                                        } elseif ($qty <= 5) {
-                                            $badgeCls = 'badge-low';
-                                            $badgeTxt = 'Low stock';
-                                        } else {
-                                            $badgeCls = 'badge-active';
-                                            $badgeTxt = 'Active';
-                                        }
-
-                                        // Build all images gallery array for quick view slider
-                                        $all_imgs = [];
-                                        if (!empty($image)) {
-                                            $all_imgs[] = APP_URL . '/uploads/products/' . basename($image);
-                                        } else {
-                                            $all_imgs[] = 'https://placehold.co/300x300/f2f2f7/8e8e93?text=' . urlencode(substr($item->name ?? 'P', 0, 1));
-                                        }
-
-                                        if (!empty($item->additional_images)) {
-                                            $decoded = json_decode($item->additional_images, true);
-                                            if (is_array($decoded)) {
-                                                foreach ($decoded as $add_img) {
-                                                    $all_imgs[] = APP_URL . '/uploads/products/' . basename($add_img);
-                                                }
-                                            }
-                                        }
-
-                                        if (!empty($item->variations_json)) {
-                                            $vars = json_decode(html_entity_decode($item->variations_json, ENT_QUOTES, 'UTF-8'), true);
-                                            if (is_array($vars)) {
-                                                foreach ($vars as $v) {
-                                                    if (!empty($v['image_path'])) {
-                                                        $all_imgs[] = APP_URL . '/uploads/products/' . basename($v['image_path']);
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        $all_imgs = array_values(array_unique($all_imgs));
-                                        $all_imgs_json = json_encode($all_imgs);
-
-                                        // Load item variations (database relational or variations_json fallback)
-                                        $dbObj = new Database();
-                                        $dbObj->query("
-                                            SELECT ivo.id, ivo.sku, ivo.price, ivo.wholesale_price, ivo.cost, ivo.quantity_on_hand,
-                                                   v.name as attribute_name, vv.value_name as value_name, vv.id as variation_value_id
-                                            FROM item_variation_options ivo
-                                            JOIN variations v ON ivo.variation_id = v.id
-                                            JOIN variation_values vv ON ivo.variation_value_id = vv.id
-                                            WHERE ivo.item_id = :item_id
-                                            ORDER BY v.name ASC, vv.value_name ASC
-                                        ");
-                                        $dbObj->bind(':item_id', $item->id);
-                                        $variations = $dbObj->resultSet() ?: [];
-
-                                        if (empty($variations) && !empty($item->variations_json)) {
-                                            $decoded = json_decode(html_entity_decode($item->variations_json, ENT_QUOTES, 'UTF-8'));
-                                            if (is_array($decoded)) {
-                                                foreach ($decoded as $v) {
-                                                    $vObj = new stdClass();
-                                                    $vObj->id = $v->id ?? 0;
-                                                    $vObj->variation_name = 'Option';
-                                                    $vObj->value_name = $v->attribute ?? $v->value ?? $v->value_name ?? '';
-                                                    $vObj->sku = $v->sku ?? '';
-                                                    $vObj->quantity_on_hand = $v->qty ?? $v->quantity_on_hand ?? $item->qty ?? 0;
-                                                    $vObj->price = $v->price ?? $v->selling_price ?? $item->selling_price ?? 0.00;
-                                                    $vObj->wholesale_price = $v->wholesale_price ?? 0.00;
-                                                    $vObj->cost = $v->cost ?? $v->cost_price ?? $item->cost_price ?? 0.00;
-                                                    $vObj->image_path = $v->image_path ?? $v->image ?? '';
-                                                    $variations[] = $vObj;
-                                                }
-                                            }
-                                        }
-
-                                        $varSummary = '';
-                                        if (!empty($variations)) {
-                                            $varValues = [];
-                                            foreach ($variations as $var) {
-                                                if (!empty($var->value_name)) {
-                                                    $varValues[] = $var->value_name;
-                                                }
-                                            }
-                                            if (!empty($varValues)) {
-                                                $varSummary = implode(', ', array_unique($varValues));
-                                            }
-                                        }
-                                    ?>
-                                    <tr <?= !empty($variations) ? 'class="has-variations-parent"' : '' ?>>
-                                        <td class="txt-center">
-                                            <input type="checkbox" name="selected_items[]" value="<?= $item->id ?>" class="item-select-checkbox sf-check" onchange="updateSelection()">
-                                        </td>
+                                <?php if (!empty($variations)): ?>
+                                    <?php foreach ($variations as $var): ?>
+                                    <tr class="variation-subrow variations_row_<?= $item->id ?>" style="display:none;">
+                                        <td></td>
                                         <td>
-                                            <div class="d-flex-row" style="align-items: center; gap: 8px;">
-                                                <?php if (!empty($variations)): ?>
-                                                    <button type="button" class="toggle-var-btn" onclick="toggleVariationsRow(<?= $item->id ?>, this)" title="Show Variations">
-                                                        <i class="fa-solid fa-chevron-down"></i>
-                                                    </button>
-                                                <?php else: ?>
-                                                    <span style="width: 24px; display: inline-block; flex-shrink: 0;"></span>
-                                                <?php endif; ?>
-                                                <img src="<?= $img_src ?>" class="prod-thumb" alt="" onerror="this.src='https://placehold.co/100x100/f2f2f7/8e8e93?text=?'">
-                                                <div>
-                                                    <div class="prod-name">
-                                                        <?= htmlspecialchars($item->name ?? 'Unnamed Item') ?>
-                                                        <?php if (!empty($variations)): ?>
-                                                            <span style="font-size: 10px; font-weight: 700; background: var(--c-blue-light); color: var(--c-blue); padding: 2px 6px; border-radius: var(--r-pill); margin-left: 6px;">
-                                                                <?= count($variations) ?> Variations
-                                                            </span>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <div class="prod-meta"><?= htmlspecialchars($sku) ?><?= !empty($item->sample_code) ? ' · ' . htmlspecialchars($item->sample_code) : '' ?></div>
-                                                    <?php if (!empty($varSummary)): ?>
-                                                        <div class="prod-vars" style="font-size: 11px; color: var(--c-blue); margin-top: 3px; font-weight: 600;">
-                                                            <i class="fa-solid fa-circle-nodes" style="font-size: 9px; margin-right: 4px;"></i><?= htmlspecialchars($varSummary) ?>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </div>
+                                            <span class="variation-tree-line">└─</span>
+                                            <strong style="color: var(--erp-text-main);"><?= htmlspecialchars($var->value_name ?? 'Option') ?></strong>
+                                            <span class="erp-prod-meta" style="margin-left:8px;">SKU: <?= htmlspecialchars($var->sku ?? '') ?></span>
                                         </td>
-                                        <td class="txt-right">
-                                            <?php if (empty($variations)): ?>
-                                                <span class="num"><?= number_format($price, 2) ?></span>
+                                        <td><span class="erp-tag-cat">Variation</span></td>
+                                        <td class="text-right font-mono"><?= number_format($var->price ?? $price, 2) ?></td>
+                                        <td class="text-right font-mono" style="color: var(--erp-text-muted);"><?= number_format($var->wholesale_price ?? $wholesalePrice, 2) ?></td>
+                                        <td class="text-center font-mono">
+                                            <strong><?= (int)($var->quantity_on_hand ?? 0) ?></strong>
+                                        </td>
+                                        <td class="text-center">
+                                            <?php $varQty = (int)($var->quantity_on_hand ?? 0); ?>
+                                            <?php if ($varQty <= 0): ?>
+                                                <span class="erp-badge badge-outstock">Out</span>
+                                            <?php elseif ($varQty <= 5): ?>
+                                                <span class="erp-badge badge-lowstock">Low</span>
                                             <?php else: ?>
-                                                <span class="num-muted">-</span>
+                                                <span class="erp-badge badge-instock">Available</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="txt-right">
-                                            <?php if (empty($variations)): ?>
-                                                <span class="num num-muted"><?= number_format($b2b, 2) ?></span>
-                                            <?php else: ?>
-                                                <span class="num-muted">-</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="txt-center">
-                                            <?php if (empty($variations)): ?>
-                                                <span class="num" style="color: <?= $qty <= 0 ? 'var(--c-red)' : ($qty <= 5 ? 'var(--c-orange)' : 'var(--t-primary)') ?>; font-weight: 700;"><?= $qty ?></span>
-                                            <?php else: ?>
-                                                <span class="num-muted">-</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if (empty($variations)): ?>
-                                                <span class="sf-badge <?= $badgeCls ?>">
-                                                    <span class="dot"></span><?= $badgeTxt ?>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="num-muted">-</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <div class="row-acts">
-                                                <button type="button" class="act-btn view"
-                                                    onclick="openQuickView(this)"
-                                                    data-id="<?= $item->id ?>"
-                                                    data-name="<?= htmlspecialchars($item->name ?? 'Unnamed') ?>"
-                                                    data-sku="<?= htmlspecialchars($sku) ?>"
-                                                    data-code="<?= htmlspecialchars($item->sample_code ?? '') ?>"
-                                                    data-price="<?= number_format($price, 2) ?>"
-                                                    data-b2b="<?= number_format($b2b, 2) ?>"
-                                                    data-qty="<?= $qty ?>"
-                                                    data-status="<?= htmlspecialchars($itemStatus) ?>"
-                                                    data-img="<?= $img_src ?>"
-                                                    data-images='<?= htmlspecialchars($all_imgs_json, ENT_QUOTES, 'UTF-8') ?>'
-                                                    data-desc="<?= htmlspecialchars($item->description ?? '') ?>"
-                                                    data-category="<?= htmlspecialchars($item->category_name ?? 'Uncategorized') ?>"
-                                                    data-brand="<?= htmlspecialchars($item->brand ?? '') ?>"
-                                                    title="Quick view">
-                                                    <i class="fa-solid fa-eye"></i>
-                                                </button>
-                                                <a href="<?= APP_URL ?>/inventory/edit/<?= $item->id ?>" class="act-btn edit" title="Edit">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
-                                                </a>
-                                                <button type="button" class="act-btn toggle-status" onclick="toggleProductStatus(<?= $item->id ?>, '<?= $itemStatus === 'active' ? 'inactive' : 'active' ?>')" title="<?= $itemStatus === 'active' ? 'Mark Inactive' : 'Mark Active' ?>" style="color: <?= $itemStatus === 'active' ? 'var(--c-orange)' : 'var(--c-green)' ?>;">
-                                                    <i class="fa-solid <?= $itemStatus === 'active' ? 'fa-toggle-on' : 'fa-toggle-off' ?>"></i>
-                                                </button>
-                                                <button type="button" class="act-btn trash" onclick="confirmDelete(<?= $item->id ?>, '<?= htmlspecialchars(addslashes($item->name)) ?>')" title="Delete Product">
-                                                    <i class="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            </div>
+                                        <td class="text-right">
+                                            <a href="<?= APP_URL ?>/inventory/edit/<?= $item->id ?>" class="erp-icon-btn" title="Edit variation">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
                                         </td>
                                     </tr>
-                                    <?php if (!empty($variations)): ?>
-                                        <?php foreach ($variations as $var):
-                                            $vQty = intval($var->quantity_on_hand);
-                                            $vPrice = floatval($var->price ?? $price);
-                                            $vB2b = floatval($var->wholesale_price ?? $b2b);
-                                            $vSku = !empty($var->sku) ? $var->sku : $sku;
-
-                                            if ($itemStatus === 'inactive') {
-                                                $vBadgeCls = 'badge-out';
-                                                $vBadgeTxt = 'Inactive';
-                                            } elseif ($vQty <= 0) {
-                                                $vBadgeCls = 'badge-out';
-                                                $vBadgeTxt = 'Out of stock';
-                                            } elseif ($vQty <= 5) {
-                                                $vBadgeCls = 'badge-low';
-                                                $vBadgeTxt = 'Low stock';
-                                            } else {
-                                                $vBadgeCls = 'badge-active';
-                                                $vBadgeTxt = 'Active';
-                                            }
-
-                                            // Resolve variation image
-                                            $vImgPath = $var->image_path ?? '';
-                                            if (empty($vImgPath) && !empty($var->variation_value_id)) {
-                                                $dbObj->query("
-                                                    SELECT image_path 
-                                                    FROM item_images 
-                                                    WHERE item_id = :item_id AND variation_value_id = :variation_value_id 
-                                                    ORDER BY is_primary DESC, id ASC 
-                                                    LIMIT 1
-                                                ");
-                                                $dbObj->bind(':item_id', $item->id);
-                                                $dbObj->bind(':variation_value_id', $var->variation_value_id);
-                                                $imgRow = $dbObj->single();
-                                                if ($imgRow && !empty($imgRow->image_path)) {
-                                                    $vImgPath = $imgRow->image_path;
-                                                }
-                                            }
-
-                                            if (empty($vImgPath) && !empty($item->variations_json)) {
-                                                $decodedJson = json_decode(html_entity_decode($item->variations_json, ENT_QUOTES, 'UTF-8'), true);
-                                                if (is_array($decodedJson)) {
-                                                    foreach ($decodedJson as $jsonVar) {
-                                                        $jsonSku = $jsonVar['sku'] ?? '';
-                                                        $jsonAttr = $jsonVar['attribute'] ?? $jsonVar['value'] ?? $jsonVar['value_name'] ?? '';
-                                                        if ((!empty($jsonSku) && $jsonSku === $vSku) || 
-                                                            (!empty($jsonAttr) && strtolower($jsonAttr) === strtolower($var->value_name))) {
-                                                            if (!empty($jsonVar['image_path'])) {
-                                                                $vImgPath = $jsonVar['image_path'];
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            if (empty($vImgPath)) {
-                                                $vImgSrc = $img_src;
-                                            } else {
-                                                if (strpos($vImgPath, 'http') === 0) {
-                                                    $vImgSrc = $vImgPath;
-                                                } else {
-                                                    $vImgSrc = APP_URL . '/uploads/products/' . basename($vImgPath);
-                                                }
-                                            }
-                                        ?>
-                                        <tr class="variation-item-row variations_row_<?= $item->id ?> hidden">
-                                            <td class="txt-center">
-                                                <i class="fa-solid fa-arrow-turn-up-right" style="transform: rotate(90deg); color: var(--c-blue); opacity: 0.5;"></i>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex-row" style="align-items: center; gap: 8px; padding-left: 12px;">
-                                                    <img src="<?= $vImgSrc ?>" class="prod-thumb" style="width: 28px; height: 28px; border-radius: var(--r-sm);" alt="" onerror="this.src='https://placehold.co/100x100/f2f2f7/8e8e93?text=?'">
-                                                    <div>
-                                                        <div class="prod-name" style="font-weight: 600; color: var(--t-primary);"><?= htmlspecialchars($var->value_name) ?></div>
-                                                        <div class="prod-meta"><?= htmlspecialchars($vSku) ?></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="txt-right"><span class="num"><?= number_format($vPrice, 2) ?></span></td>
-                                            <td class="txt-right"><span class="num num-muted"><?= number_format($vB2b, 2) ?></span></td>
-                                            <td class="txt-center">
-                                                <span class="num" style="color: <?= $vQty <= 0 ? 'var(--c-red)' : ($vQty <= 5 ? 'var(--c-orange)' : 'var(--t-primary)') ?>; font-weight: 700;"><?= $vQty ?></span>
-                                            </td>
-                                            <td>
-                                                <span class="sf-badge <?= $vBadgeCls ?>">
-                                                    <span class="dot"></span><?= $vBadgeTxt ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="row-acts">
-                                                    <a href="<?= APP_URL ?>/inventory/edit/<?= $item->id ?>" class="act-btn edit" title="Edit Parent Product" style="opacity: 0.6;">
-                                                        <i class="fa-solid fa-pen-to-square"></i>
-                                                    </a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    <?php endif; ?>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
-                            </tbody>
-                        </table>
 
-                        <!-- Pagination -->
-                        <div class="sf-pagination">
-                            <div class="pg-info">
-                                <?= $totalItems > 0 ? "Showing <strong>$startIndex</strong> – <strong>$endIndex</strong> of <strong>$totalItems</strong>" : 'No results' ?>
-                            </div>
-                            <div class="pg-right">
-                                <div class="pg-size-wrap">
-                                    <span class="pg-size-lbl">Per page</span>
-                                    <select class="pg-size-sel native-select" data-search="false" onchange="updatePageSize(this.value)">
-                                        <option value="15"   <?= $perPage === 15   ? 'selected' : '' ?>>15</option>
-                                        <option value="50"   <?= $perPage === 50   ? 'selected' : '' ?>>50</option>
-                                        <option value="100"  <?= $perPage === 100  ? 'selected' : '' ?>>100</option>
-                                        <option value="1000" <?= $perPage === 1000 ? 'selected' : '' ?>>All</option>
-                                    </select>
-                                </div>
-                                <?php if ($totalPages > 1): ?>
-                                <div class="pg-nav">
-                                    <button type="button" class="pg-btn" onclick="navigatePage(<?= max(1, $currentPage - 1) ?>)" <?= $currentPage <= 1 ? 'disabled' : '' ?>>
-                                        <i class="fa-solid fa-chevron-left"></i>
-                                    </button>
-                                    <div class="pg-current"><?= $currentPage ?> / <?= $totalPages ?></div>
-                                    <button type="button" class="pg-btn" onclick="navigatePage(<?= min($totalPages, $currentPage + 1) ?>)" <?= $currentPage >= $totalPages ? 'disabled' : '' ?>>
-                                        <i class="fa-solid fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div><!-- /main -->
-
-            <!-- Quick View Panel -->
-            <div class="qv-panel" id="quickViewPanel">
-                <div class="qv-inner" style="position:relative;">
-                    <button type="button" class="qv-close" onclick="closeQuickView()"><i class="fa-solid fa-xmark"></i></button>
-                    <!-- Modern Image Carousel -->
-                    <div class="qv-carousel-container">
-                        <div id="qv-carousel-track" class="qv-carousel-track">
-                            <!-- Images will be dynamically inserted here -->
-                        </div>
-                        <!-- Navigation Arrows -->
-                        <button type="button" onclick="prevQvImage()" class="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/95 hover:bg-white text-slate-800 border border-slate-200 shadow flex items-center justify-center transition-all cursor-pointer text-[10px]" style="z-index:20; position: absolute; border: 0.5px solid var(--c-separator);"><i class="fa-solid fa-chevron-left"></i></button>
-                        <button type="button" onclick="nextQvImage()" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white/95 hover:bg-white text-slate-800 border border-slate-200 shadow flex items-center justify-center transition-all cursor-pointer text-[10px]" style="z-index:20; position: absolute; border: 0.5px solid var(--c-separator);"><i class="fa-solid fa-chevron-right"></i></button>
-                        <!-- Indicators dots -->
-                        <div id="qv-carousel-dots" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-25" style="position: absolute;">
-                            <!-- Dots will be dynamically inserted here -->
-                        </div>
-                    </div>
-                    <div id="qv-name" class="qv-name"></div>
-                    <div id="qv-sku"  class="qv-sku"></div>
-                    <div class="qv-tags">
-                        <span id="qv-category" class="sf-badge" style="background: var(--c-fill); color: var(--t-secondary);"><i class="fa-solid fa-tag"></i> Category</span>
-                        <span id="qv-brand" class="sf-badge" style="background: var(--c-fill); color: var(--t-secondary);"><i class="fa-solid fa-building"></i> Brand</span>
-                    </div>
-
-                    <div class="qv-grid">
-                        <div class="qv-tile">
-                            <div class="qv-tile-lbl">Stock</div>
-                            <div id="qv-qty" class="qv-tile-val"></div>
-                        </div>
-                        <div class="qv-tile" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                            <div class="qv-tile-lbl">Status</div>
-                            <div id="qv-status" style="margin-top:4px;"></div>
-                        </div>
-                    </div>
-
-                    <div class="qv-prices">
-                        <div class="qv-price-row">
-                            <span class="qv-price-lbl">Retail price</span>
-                            <span id="qv-price" class="qv-price-val"></span>
-                        </div>
-                        <div class="qv-price-row">
-                            <span class="qv-price-lbl">B2B price</span>
-                            <span id="qv-b2b" class="qv-price-val" style="color:var(--t-secondary);"></span>
-                        </div>
-                    </div>
-
-                    <div id="qv-desc" class="qv-desc"></div>
-
-                    <div class="qv-actions">
-                        <a id="qv-edit-link" href="#" class="qv-btn primary"><i class="fa-solid fa-pen"></i> Edit</a>
-                        <a id="qv-ledger-link" href="#" class="qv-btn muted"><i class="fa-solid fa-chart-line"></i> Ledger</a>
-                    </div>
-                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
 
-        </div><!-- /split -->
-    </div><!-- /wrap -->
+            <!-- 4. Pinned Pagination Footer (Always visible at bottom of table card) -->
+            <div class="erp-pagination-bar">
+                <div class="erp-pg-info">
+                    <?= $totalItems > 0 ? "Showing <strong>$startIndex</strong> – <strong>$endIndex</strong> of <strong>$totalItems</strong> products" : 'No results found' ?>
+                </div>
+                <div class="erp-pg-controls">
+                    <label style="display:flex; align-items:center; gap:4px; font-size:11.5px; color:var(--erp-text-muted);">
+                        <span>Per page:</span>
+                        <select class="erp-pg-size-select" onchange="updatePageSize(this.value)">
+                            <option value="15"   <?= $perPage === 15   ? 'selected' : '' ?>>15</option>
+                            <option value="50"   <?= $perPage === 50   ? 'selected' : '' ?>>50</option>
+                            <option value="100"  <?= $perPage === 100  ? 'selected' : '' ?>>100</option>
+                            <option value="1000" <?= $perPage === 1000 ? 'selected' : '' ?>>All</option>
+                        </select>
+                    </label>
 
-    <!-- Command Bar -->
-    <div class="cmd-bar">
-        <div class="cmd-search">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" name="search" id="searchInput"
-                   value="<?= htmlspecialchars($filters['search']) ?>"
-                   oninput="triggerSearchDelay()"
-                   placeholder="Search catalog…">
+                    <?php if ($totalPages > 1): ?>
+                    <div class="erp-pg-nav">
+                        <button type="button" class="erp-pg-btn" onclick="navigatePage(<?= max(1, $currentPage - 1) ?>)" <?= $currentPage <= 1 ? 'disabled' : '' ?> title="Previous Page">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span class="erp-pg-page-indicator"><?= $currentPage ?> / <?= $totalPages ?></span>
+                        <button type="button" class="erp-pg-btn" onclick="navigatePage(<?= min($totalPages, $currentPage + 1) ?>)" <?= $currentPage >= $totalPages ? 'disabled' : '' ?> title="Next Page">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
-        <div class="cmd-divider"></div>
-        <a href="<?= APP_URL ?>/inventory/exportCSV" class="cmd-icon" title="Export CSV"><i class="fa-solid fa-download"></i></a>
-        <button type="button" onclick="openCsvModal()" class="cmd-icon" title="Import CSV"><i class="fa-solid fa-upload"></i></button>
-        <a href="<?= APP_URL ?>/inventory/add" class="cmd-cta"><i class="fa-solid fa-plus" style="font-size:13px;"></i> New</a>
+
+        <!-- Slide-over Quick View Drawer -->
+        <div id="quickViewDrawer" class="erp-drawer">
+            <div class="erp-drawer-header">
+                <div class="erp-drawer-title"><i class="fa-solid fa-circle-info" style="margin-right:6px; color:var(--erp-primary);"></i> Product Details</div>
+                <button type="button" class="erp-drawer-close" onclick="closeQuickView()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="erp-drawer-body">
+                <div class="erp-drawer-img-box">
+                    <img id="qv-img" src="" class="erp-drawer-img" alt="">
+                </div>
+                <div>
+                    <h4 id="qv-name" style="margin:0 0 4px 0; font-size:14px; font-weight:700; color:var(--erp-text-main);"></h4>
+                    <div id="qv-sku" style="font-size:11.5px; font-family:var(--erp-mono); color:var(--erp-text-muted);"></div>
+                </div>
+
+                <div class="erp-drawer-tile-grid">
+                    <div class="erp-drawer-tile">
+                        <div class="erp-drawer-tile-lbl">Retail Price</div>
+                        <div id="qv-price" class="erp-drawer-tile-val" style="color:var(--erp-primary);"></div>
+                    </div>
+                    <div class="erp-drawer-tile">
+                        <div class="erp-drawer-tile-lbl">B2B / Wholesale</div>
+                        <div id="qv-b2b" class="erp-drawer-tile-val"></div>
+                    </div>
+                    <div class="erp-drawer-tile">
+                        <div class="erp-drawer-tile-lbl">Stock on Hand</div>
+                        <div id="qv-qty" class="erp-drawer-tile-val"></div>
+                    </div>
+                    <div class="erp-drawer-tile">
+                        <div class="erp-drawer-tile-lbl">Status</div>
+                        <div id="qv-status" style="margin-top:2px;"></div>
+                    </div>
+                </div>
+
+                <div class="erp-drawer-tile">
+                    <div class="erp-drawer-tile-lbl">Category & Brand</div>
+                    <div style="font-size:12px; margin-top:2px;">
+                        <span id="qv-category"></span> · <span id="qv-brand"></span>
+                    </div>
+                </div>
+
+                <div class="erp-drawer-tile">
+                    <div class="erp-drawer-tile-lbl">Description</div>
+                    <div id="qv-desc" style="font-size:11.5px; color:var(--erp-text-muted); margin-top:2px; max-height:80px; overflow-y:auto;"></div>
+                </div>
+
+                <div style="display:flex; gap:8px; margin-top:auto;">
+                    <a id="qv-edit-link" href="#" class="erp-btn erp-btn-primary" style="flex:1; justify-content:center;">
+                        <i class="fa-solid fa-pen"></i> Edit Product
+                    </a>
+                    <a id="qv-ledger-link" href="#" class="erp-btn erp-btn-outline" style="flex:1; justify-content:center;">
+                        <i class="fa-solid fa-chart-line"></i> Stock Ledger
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </form>
-
-<!-- Bulk Toolbar -->
-<div id="bulkEditToolbar" class="bulk-bar hidden">
-    <span id="selectedCountBadge" class="bulk-count">0</span>
-    <span class="bulk-lbl">selected</span>
-    <div class="bulk-divider"></div>
-    <button type="button" onclick="clearSelection()" class="bulk-cancel">Cancel</button>
-    <button type="button" onclick="openBulkEditModal()" class="bulk-action"><i class="fa-solid fa-pen"></i> Edit</button>
-    <button type="button" onclick="confirmBulkDelete()" class="bulk-action" style="background: rgba(255, 59, 48, 0.35); color: #fff;"><i class="fa-solid fa-trash-can"></i> Delete</button>
 </div>
 
-
 <!-- ============================================================
-     MODALS
+     MODALS: CSV IMPORT, DELETE, BULK EDIT
      ============================================================ -->
 
-<!-- CSV Import -->
-<div id="csvImportModal" class="modal-veil hidden">
-    <div class="sf-modal">
-        <div class="modal-head">
-            <h3 class="modal-title">Import CSV</h3>
-            <button type="button" onclick="closeCsvModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+<!-- CSV Import Modal -->
+<div id="csvImportModal" class="erp-modal-backdrop hidden">
+    <div class="erp-modal-box">
+        <div class="erp-modal-head">
+            <h3><i class="fa-solid fa-file-csv" style="color:var(--erp-primary); margin-right:6px;"></i> Import Products via CSV</h3>
+            <button type="button" onclick="closeCsvModal()" class="erp-drawer-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="modal-body">
-            <form id="csvImportForm" action="<?= APP_URL ?>/inventory/importERPCSV" method="POST" enctype="multipart/form-data" onsubmit="return handleCsvImportSubmit(event)">
-                <div class="drop-zone">
+        <form id="csvImportForm" action="<?= APP_URL ?>/inventory/importERPCSV" method="POST" enctype="multipart/form-data" onsubmit="return handleCsvImportSubmit(event)">
+            <div class="erp-modal-body">
+                <div style="border: 2px dashed var(--erp-border); border-radius:6px; padding:24px; text-align:center; background:var(--erp-th-bg);">
                     <input type="file" name="csv_file" id="csvFileInput" accept=".csv" required onchange="logFileSelection(this)">
-                    <div class="drop-zone-icon"><i class="fa-solid fa-file-csv"></i></div>
-                    <div class="drop-zone-title">Drop your file here</div>
-                    <div class="drop-zone-sub">.csv format · click to browse</div>
+                    <div style="font-size:12px; color:var(--erp-text-muted); margin-top:8px;">Upload .csv file with columns: Item Code, Name, Selling Price, Cost, Qty, Category</div>
                 </div>
-                <div id="importDebugInfo" style="display:none; background: #f5f5f7; border-radius: 8px; padding: 12px; margin-bottom: 12px; font-size: 12px; font-family: monospace; color: #666; max-height: 100px; overflow-y: auto;">
-                    <strong>File Info:</strong> <span id="fileInfoText"></span>
+                <div id="importDebugInfo" style="display:none; background:#f1f5f9; padding:8px; margin-top:8px; border-radius:4px; font-size:11px; font-family:monospace;">
+                    <strong>File:</strong> <span id="fileInfoText"></span>
                 </div>
-                <div class="import-hint">
-                    <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--c-blue); font-size:16px; flex-shrink:0; margin-top:2px;"></i>
-                    <div>
-                        <div class="import-hint-title">Auto Mapping</div>
-                        <div class="import-hint-body">Categories, warehouses, and relations are resolved automatically based on SKUs.</div>
-                    </div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button type="button" onclick="closeCsvModal()" class="sf-btn neutral">Cancel</button>
-                    <button type="submit" id="csvImportBtn" class="sf-btn primary">Import</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="erp-modal-foot">
+                <button type="button" onclick="closeCsvModal()" class="erp-btn erp-btn-outline">Cancel</button>
+                <button type="submit" id="csvImportBtn" class="erp-btn erp-btn-primary"><i class="fa-solid fa-upload"></i> Upload & Import</button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Delete Confirm -->
-<div id="deleteProductModal" class="modal-veil hidden">
-    <div class="sf-modal">
-        <div class="modal-head">
-            <h3 class="modal-title" style="color:var(--c-red);">Delete Product</h3>
-            <button type="button" onclick="closeDeleteModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+<!-- Delete Confirmation Modal -->
+<div id="deleteProductModal" class="erp-modal-backdrop hidden">
+    <div class="erp-modal-box">
+        <div class="erp-modal-head">
+            <h3 style="color:var(--erp-danger);"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i> Delete Product</h3>
+            <button type="button" onclick="closeDeleteModal()" class="erp-drawer-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="deleteProductForm" onsubmit="submitDeleteProduct(event)">
-            <div class="modal-body">
+            <div class="erp-modal-body">
                 <input type="hidden" id="deleteItemId" name="item_id">
-                <p style="font-size:15px; line-height:1.5; text-align:center; color:var(--t-primary); margin-bottom:20px;">
-                    Permanently delete <strong id="deleteItemName"></strong>?<br>
-                    <span style="font-size:13px; color:var(--t-secondary);">This cannot be undone.</span>
+                <p style="font-size:13px; margin:0 0 12px 0;">
+                    Are you sure you want to delete <strong id="deleteItemName" style="color:var(--erp-text-main);"></strong>?
                 </p>
-                <div id="deleteErrorContainer" class="modal-err hidden"></div>
-                <div class="sf-group">
-                    <label style="font-size: 12px; font-weight: 600; color: var(--t-label); display: block; margin-bottom: 6px;">Your Account Password *</label>
-                    <input type="password" name="password" id="deleteAdminPassword" class="sf-input" placeholder="Enter your password" required autocomplete="current-password">
-                </div>
+                <div id="deleteErrorContainer" class="erp-alert error" style="display:none; margin-bottom:10px;"></div>
+                <label style="font-size:11.5px; font-weight:600; display:block; margin-bottom:4px;">Confirm with Account Password:</label>
+                <input type="password" name="password" id="deleteAdminPassword" class="erp-search-input" placeholder="Enter password" required autocomplete="current-password">
             </div>
-            <div class="modal-foot">
-                <button type="button" onclick="closeDeleteModal()" class="sf-btn neutral">Cancel</button>
-                <button type="submit" id="deleteSubmitBtn" class="sf-btn danger">
-                    <i id="deleteBtnSpinner" class="fa-solid fa-spinner spin hidden" style="margin-right:6px;"></i>Delete
+            <div class="erp-modal-foot">
+                <button type="button" onclick="closeDeleteModal()" class="erp-btn erp-btn-outline">Cancel</button>
+                <button type="submit" id="deleteSubmitBtn" class="erp-btn erp-btn-primary" style="background:var(--erp-danger); border-color:var(--erp-danger);">
+                    <i id="deleteBtnSpinner" class="fa-solid fa-spinner fa-spin" style="display:none; margin-right:4px;"></i> Delete
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Bulk Edit -->
-<div id="bulkEditModal" class="modal-veil hidden">
-    <div class="sf-modal">
-        <div class="modal-head">
-            <h3 class="modal-title">Bulk Edit</h3>
-            <button type="button" onclick="closeBulkEditModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+<!-- Bulk Edit Modal -->
+<div id="bulkEditModal" class="erp-modal-backdrop hidden">
+    <div class="erp-modal-box">
+        <div class="erp-modal-head">
+            <h3><i class="fa-solid fa-layer-group" style="margin-right:6px; color:var(--erp-primary);"></i> Bulk Edit Products</h3>
+            <button type="button" onclick="closeBulkEditModal()" class="erp-drawer-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="bulkEditForm" onsubmit="submitBulkEdit(event)">
-            <div class="modal-body">
-                <p style="font-size:14px; color:var(--t-secondary); text-align:center; margin-bottom:20px;">
-                    Editing <strong id="bulkSelectedCount" style="color:var(--t-primary);">0</strong> products
-                </p>
-                <div id="bulkEditErrorContainer" class="modal-err hidden"></div>
-                <div class="sf-input-group">
+            <div class="erp-modal-body">
+                <div style="font-size:12px; color:var(--erp-text-muted); margin-bottom:12px;">
+                    Updating <strong id="bulkSelectedCount" style="color:var(--erp-text-main);">0</strong> selected products:
+                </div>
+                <div id="bulkEditErrorContainer" class="erp-alert error" style="display:none; margin-bottom:10px;"></div>
 
+                <div style="display:flex; flex-direction:column; gap:10px;">
                     <!-- Category -->
-                    <div class="bulk-field">
-                        <label class="bulk-field-head">
-                            <input type="checkbox" name="update_category" value="1" id="bulkUpdateCategory" onchange="toggleBulkField('category')" class="sf-check">
-                            <span class="bulk-field-label">Category</span>
+                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                            <input type="checkbox" name="update_category" value="1" id="bulkUpdateCategory" onchange="toggleBulkField('category')"> Update Category
                         </label>
-                        <select name="category_id" id="bulkCategorySelect" class="sf-input native-select" data-search="false" style="pointer-events:none; opacity:0.45;">
+                        <select name="category_id" id="bulkCategorySelect" class="erp-select" style="width:100%; margin-top:6px; pointer-events:none; opacity:0.4;">
                             <option value="">No Category</option>
                             <?php foreach ($categories as $cat): ?>
                             <option value="<?= $cat->id ?>"><?= htmlspecialchars($cat->name) ?></option>
@@ -1694,259 +1521,109 @@ if ($importResults) unset($_SESSION['import_results']);
                     </div>
 
                     <!-- Retail Price -->
-                    <div class="bulk-field">
-                        <label class="bulk-field-head">
-                            <input type="checkbox" name="update_selling_price" value="1" id="bulkUpdateSellingPrice" onchange="toggleBulkField('selling_price')" class="sf-check">
-                            <span class="bulk-field-label">Retail Price</span>
+                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                            <input type="checkbox" name="update_selling_price" value="1" id="bulkUpdateSellingPrice" onchange="toggleBulkField('selling_price')"> Update Retail Price
                         </label>
-                        <div class="bulk-row">
-                            <select name="selling_price_type" id="bulkSellingPriceType" class="sf-input native-select" data-search="false" style="width:40%; padding:10px 8px; pointer-events:none; opacity:0.45;">
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            <select name="selling_price_type" id="bulkSellingPriceType" class="erp-select" style="width:90px; pointer-events:none; opacity:0.4;">
                                 <option value="flat">Flat</option>
                                 <option value="pct_inc">+ %</option>
                                 <option value="pct_dec">− %</option>
                             </select>
-                            <input type="number" step="0.01" name="selling_price_val" id="bulkSellingPriceVal" class="sf-input" style="pointer-events:none; opacity:0.45;" placeholder="0.00">
+                            <input type="number" step="0.01" name="selling_price_val" id="bulkSellingPriceVal" class="erp-search-input" style="pointer-events:none; opacity:0.4;" placeholder="0.00">
                         </div>
                     </div>
 
                     <!-- B2B Price -->
-                    <div class="bulk-field">
-                        <label class="bulk-field-head">
-                            <input type="checkbox" name="update_wholesale_price" value="1" id="bulkUpdateWholesalePrice" onchange="toggleBulkField('wholesale_price')" class="sf-check">
-                            <span class="bulk-field-label">B2B Price</span>
+                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                            <input type="checkbox" name="update_wholesale_price" value="1" id="bulkUpdateWholesalePrice" onchange="toggleBulkField('wholesale_price')"> Update B2B Price
                         </label>
-                        <div class="bulk-row">
-                            <select name="wholesale_price_type" id="bulkWholesalePriceType" class="sf-input native-select" data-search="false" style="width:40%; padding:10px 8px; pointer-events:none; opacity:0.45;">
+                        <div style="display:flex; gap:6px; margin-top:6px;">
+                            <select name="wholesale_price_type" id="bulkWholesalePriceType" class="erp-select" style="width:90px; pointer-events:none; opacity:0.4;">
                                 <option value="flat">Flat</option>
                                 <option value="pct_inc">+ %</option>
                                 <option value="pct_dec">− %</option>
                             </select>
-                            <input type="number" step="0.01" name="wholesale_price_val" id="bulkWholesalePriceVal" class="sf-input" style="pointer-events:none; opacity:0.45;" placeholder="0.00">
+                            <input type="number" step="0.01" name="wholesale_price_val" id="bulkWholesalePriceVal" class="erp-search-input" style="pointer-events:none; opacity:0.4;" placeholder="0.00">
                         </div>
                     </div>
 
                     <!-- Status -->
-                    <div class="bulk-field">
-                        <label class="bulk-field-head">
-                            <input type="checkbox" name="update_status" value="1" id="bulkUpdateStatus" onchange="toggleBulkField('status')" class="sf-check">
-                            <span class="bulk-field-label">Status</span>
+                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
+                            <input type="checkbox" name="update_status" value="1" id="bulkUpdateStatus" onchange="toggleBulkField('status')"> Update Status
                         </label>
-                        <select name="status" id="bulkStatusSelect" class="sf-input native-select" data-search="false" style="pointer-events:none; opacity:0.45;">
+                        <select name="status" id="bulkStatusSelect" class="erp-select" style="width:100%; margin-top:6px; pointer-events:none; opacity:0.4;">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
                     </div>
-
                 </div>
             </div>
-            <div class="modal-foot">
-                <button type="button" onclick="closeBulkEditModal()" class="sf-btn neutral">Cancel</button>
-                <button type="submit" id="bulkSubmitBtn" class="sf-btn primary">
-                    <i id="bulkBtnSpinner" class="fa-solid fa-spinner spin hidden" style="margin-right:6px;"></i>Apply
+            <div class="erp-modal-foot">
+                <button type="button" onclick="closeBulkEditModal()" class="erp-btn erp-btn-outline">Cancel</button>
+                <button type="submit" id="bulkSubmitBtn" class="erp-btn erp-btn-primary">
+                    <i id="bulkBtnSpinner" class="fa-solid fa-spinner fa-spin" style="display:none; margin-right:4px;"></i> Apply Changes
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-</div><!-- /inv-root -->
-
+<!-- ============================================================
+     JAVASCRIPT LOGIC
+     ============================================================ -->
 <script>
-window.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (!urlParams.has('per_page') && document.getElementById('perPageInput').value != '1000') {
-        document.getElementById('perPageInput').value = '1000';
-        applyAjaxFilters();
-    }
-});
+let searchTimer = null;
+let activeDeleteId = null;
 
-let qvImages = [];
-let qvCurrentIndex = 0;
-let qvAutoRotateInterval = null;
-
-function renderQvCarousel() {
-    const track = document.getElementById('qv-carousel-track');
-    const dotsContainer = document.getElementById('qv-carousel-dots');
-    if (!track || !dotsContainer) return;
-
-    track.innerHTML = '';
-    dotsContainer.innerHTML = '';
-
-    if (!qvImages || qvImages.length === 0) {
-        track.innerHTML = `<div class="qv-carousel-slide"><img src="https://placehold.co/300x300/f2f2f7/8e8e93?text=No+Img" alt=""></div>`;
-        return;
-    }
-
-    qvImages.forEach((imgSrc, idx) => {
-        const slide = document.createElement('div');
-        slide.className = 'qv-carousel-slide';
-        slide.innerHTML = `<img src="${imgSrc}" alt="" onerror="this.src='https://placehold.co/300x300/f2f2f7/8e8e93?text=Err'">`;
-        track.appendChild(slide);
-
-        const dot = document.createElement('button');
-        dot.type = 'button';
-        dot.className = `qv-carousel-dot ${idx === 0 ? 'active' : ''}`;
-        dot.onclick = () => goToQvImage(idx);
-        dotsContainer.appendChild(dot);
-    });
-
-    qvCurrentIndex = 0;
-    updateQvCarouselPosition();
-    startQvAutoRotate();
-}
-
-function updateQvCarouselPosition() {
-    const track = document.getElementById('qv-carousel-track');
-    if (!track) return;
-    track.style.transform = `translateX(-${qvCurrentIndex * 100}%)`;
-
-    const dots = document.querySelectorAll('.qv-carousel-dot');
-    dots.forEach((dot, idx) => {
-        if (idx === qvCurrentIndex) {
-            dot.classList.add('active');
-        } else {
-            dot.classList.remove('active');
-        }
-    });
-}
-
-function goToQvImage(index) {
-    if (index < 0) {
-        qvCurrentIndex = qvImages.length - 1;
-    } else if (index >= qvImages.length) {
-        qvCurrentIndex = 0;
-    } else {
-        qvCurrentIndex = index;
-    }
-    updateQvCarouselPosition();
-    resetQvAutoRotate();
-}
-
-function prevQvImage() {
-    if (!qvImages || qvImages.length <= 1) return;
-    goToQvImage(qvCurrentIndex - 1);
-}
-
-function nextQvImage() {
-    if (!qvImages || qvImages.length <= 1) return;
-    goToQvImage(qvCurrentIndex + 1);
-}
-
-function startQvAutoRotate() {
-    stopQvAutoRotate();
-    if (qvImages && qvImages.length > 1) {
-        qvAutoRotateInterval = setInterval(() => {
-            qvCurrentIndex = (qvCurrentIndex + 1) % qvImages.length;
-            updateQvCarouselPosition();
-        }, 3000);
-    }
-}
-
-function stopQvAutoRotate() {
-    if (qvAutoRotateInterval) {
-        clearInterval(qvAutoRotateInterval);
-        qvAutoRotateInterval = null;
-    }
-}
-
-function resetQvAutoRotate() {
-    startQvAutoRotate();
-}
-
-function openQuickView(btn) {
-    const id    = btn.dataset.id;
-    const name  = btn.dataset.name;
-    const sku   = btn.dataset.sku;
-    const code  = btn.dataset.code;
-    const price = btn.dataset.price;
-    const b2b   = btn.dataset.b2b;
-    const qty   = parseInt(btn.dataset.qty, 10);
-    const desc  = btn.dataset.desc;
-    const category = btn.dataset.category;
-    const brand = btn.dataset.brand;
-    const status = btn.dataset.status || 'active';
-
-    try {
-        qvImages = JSON.parse(btn.dataset.images || '[]');
-    } catch (e) {
-        qvImages = [btn.dataset.img || ''];
-    }
-    if ((!qvImages || qvImages.length === 0) && btn.dataset.img) {
-        qvImages = [btn.dataset.img];
-    }
-
-    document.getElementById('qv-name').textContent  = name;
-    document.getElementById('qv-sku').textContent   = 'SKU: ' + sku + (code ? ' · ' + code : '');
-    document.getElementById('qv-price').textContent = 'LKR ' + price;
-    document.getElementById('qv-b2b').textContent   = 'LKR ' + b2b;
-    document.getElementById('qv-category').innerHTML = '<i class="fa-solid fa-tag"></i> ' + (category || 'Uncategorized');
-    document.getElementById('qv-brand').innerHTML = '<i class="fa-solid fa-building"></i> ' + (brand || 'N/A');
-
-    const qvQty = document.getElementById('qv-qty');
-    qvQty.textContent = qty;
-
-    let badge = '';
-    if (status === 'inactive') {
-        badge = '<span class="sf-badge badge-out"><span class="dot"></span>Inactive</span>';
-        qvQty.style.color = 'var(--t-secondary)';
-    } else if (qty <= 0)     { badge = '<span class="sf-badge badge-out"><span class="dot"></span>Out of stock</span>';  qvQty.style.color = 'var(--c-red)'; }
-    else if (qty <= 5){ badge = '<span class="sf-badge badge-low"><span class="dot"></span>Low stock</span>';    qvQty.style.color = 'var(--c-orange)'; }
-    else              { badge = '<span class="sf-badge badge-active"><span class="dot"></span>Active</span>';   qvQty.style.color = 'var(--t-primary)'; }
-    document.getElementById('qv-status').innerHTML = badge;
-
-    document.getElementById('qv-desc').textContent = desc || 'No description available.';
-    document.getElementById('qv-edit-link').href   = '<?= APP_URL ?>/inventory/edit/' + id;
-    document.getElementById('qv-ledger-link').href = '<?= APP_URL ?>/stockledger/product/' + id;
-
-    renderQvCarousel();
-
-    document.getElementById('quickViewPanel').classList.add('open');
-}
-
-function closeQuickView() {
-    document.getElementById('quickViewPanel').classList.remove('open');
-    stopQvAutoRotate();
-}
-
-function selectCategory(val, name) {
-    document.getElementById('categoryInput').value    = val;
-    document.getElementById('cat-dropdown-val').textContent = name || 'All';
-    document.activeElement.blur();
-    document.getElementById('currentPageInput').value = '1';
-    applyAjaxFilters();
-}
-
-function selectStatus(val, name) {
-    document.getElementById('stockStatusInput').value       = val;
-    document.getElementById('status-dropdown-val').textContent = name || 'All';
-    document.activeElement.blur();
-    document.getElementById('currentPageInput').value = '1';
-    applyAjaxFilters();
-}
-
-function selectItemStatus(val, name) {
-    document.getElementById('itemStatusInput').value       = val;
-    document.getElementById('item-status-dropdown-val').textContent = name || 'All';
-    document.activeElement.blur();
-    document.getElementById('currentPageInput').value = '1';
-    applyAjaxFilters();
-}
-
-let searchTimeout = null;
+// Search with Debounce
 function triggerSearchDelay() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-        document.getElementById('currentPageInput').value = '1';
+    clearTimeout(searchTimer);
+    const searchVal = document.getElementById('searchInput').value;
+    const clearBtn = document.getElementById('searchClearBtn');
+    if (clearBtn) {
+        clearBtn.style.display = searchVal.length > 0 ? 'block' : 'none';
+    }
+    searchTimer = setTimeout(() => {
+        document.getElementById('currentPageInput').value = 1;
         applyAjaxFilters();
-    }, 350);
+    }, 280);
 }
 
+function clearSearchInput() {
+    const sInput = document.getElementById('searchInput');
+    if (sInput) {
+        sInput.value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        document.getElementById('currentPageInput').value = 1;
+        applyAjaxFilters();
+    }
+}
+
+// Reset All Filters
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('categoryInput').value = '';
+    document.getElementById('stockStatusInput').value = '';
+    document.getElementById('itemStatusInput').value = '';
+    document.getElementById('minPriceInput').value = '';
+    document.getElementById('maxPriceInput').value = '';
+    document.getElementById('currentPageInput').value = 1;
+    const clearBtn = document.getElementById('searchClearBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    applyAjaxFilters();
+}
+
+// AJAX Filter Fetching
 function applyAjaxFilters() {
-    const form   = document.getElementById('filterForm');
+    const form = document.getElementById('filterForm');
     const loader = document.getElementById('table-loader');
     if (loader) loader.classList.add('active');
 
-    const formData     = new FormData(form);
+    const formData = new FormData(form);
     const paramsToKeep = new FormData();
     for (let [key, value] of formData.entries()) {
         if (!['selected_items[]','update_category','update_selling_price','update_wholesale_price','update_status'].includes(key)) {
@@ -1955,16 +1632,26 @@ function applyAjaxFilters() {
     }
 
     const queryParams = new URLSearchParams(paramsToKeep).toString();
-    const requestUrl  = form.getAttribute('action') + '?' + queryParams;
+    const requestUrl = form.getAttribute('action') + '?' + queryParams;
 
     fetch(requestUrl)
         .then(r => { if (!r.ok) throw new Error('Network error'); return r.text(); })
         .then(html => {
-            const doc      = new DOMParser().parseFromString(html, 'text/html');
+            const doc = new DOMParser().parseFromString(html, 'text/html');
             const newTable = doc.getElementById('table-container');
             const oldTable = document.getElementById('table-container');
-            if (newTable && oldTable) oldTable.innerHTML = newTable.innerHTML;
+            if (newTable && oldTable) {
+                oldTable.innerHTML = newTable.innerHTML;
+            }
 
+            // Update pagination bar
+            const newPg = doc.querySelector('.erp-pagination-bar');
+            const oldPg = document.querySelector('.erp-pagination-bar');
+            if (newPg && oldPg) {
+                oldPg.innerHTML = newPg.innerHTML;
+            }
+
+            // Update KPI stats & item counts
             ['stat-total-items','stat-low-stock','stat-out-of-stock','matching-count'].forEach(id => {
                 const n = doc.getElementById(id), o = document.getElementById(id);
                 if (n && o) o.innerHTML = n.innerHTML;
@@ -1973,278 +1660,95 @@ function applyAjaxFilters() {
             window.history.pushState({ path: requestUrl }, '', requestUrl);
             clearSelection();
         })
-        .catch(err => console.error('Filter error:', err))
-        .finally(() => { if (loader) loader.classList.remove('active'); });
+        .catch(err => console.error('Filter Error:', err))
+        .finally(() => {
+            if (loader) loader.classList.remove('active');
+        });
 }
 
+// Variation Rows Toggle
 function toggleVariationsRow(itemId, btn) {
     const rows = document.querySelectorAll('.variations_row_' + itemId);
     if (!rows.length) return;
-    
-    const isHidden = rows[0].classList.contains('hidden');
-    rows.forEach(row => {
-        if (isHidden) {
-            row.classList.remove('hidden');
-        } else {
-            row.classList.add('hidden');
-        }
-    });
-    
-    if (isHidden) {
-        btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
-        btn.setAttribute('title', 'Hide Variations');
-    } else {
-        btn.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
-        btn.setAttribute('title', 'Show Variations');
+    const isHidden = rows[0].style.display === 'none';
+    rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
+    const icon = btn.querySelector('i');
+    if (icon) {
+        icon.className = isHidden ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right';
     }
 }
 
-function navigatePage(n) {
-    document.getElementById('currentPageInput').value = n;
+// Pagination Navigation
+function navigatePage(pageNum) {
+    document.getElementById('currentPageInput').value = pageNum;
     applyAjaxFilters();
 }
 
 function updatePageSize(size) {
-    document.getElementById('perPageInput').value    = size;
-    document.getElementById('currentPageInput').value = '1';
+    document.getElementById('perPageInput').value = size;
+    document.getElementById('currentPageInput').value = 1;
     applyAjaxFilters();
 }
 
-function clearAllFilters() {
-    document.getElementById('searchInput').value   = '';
-    document.getElementById('minPriceInput').value = '';
-    document.getElementById('maxPriceInput').value = '';
-    selectStatus('', 'All');
-    selectItemStatus('', 'All');
-    selectCategory('', 'All');
-}
-
-function openCsvModal()  { 
-    console.log('[CSV Import] Modal opened');
-    document.getElementById('csvImportModal').classList.remove('hidden'); 
-}
-function closeCsvModal() { document.getElementById('csvImportModal').classList.add('hidden'); }
-
-// CSV Import Debug Functions
-function logFileSelection(input) {
-    console.log('[CSV Import] File selected:', input.files[0]);
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const fileInfo = {
-            name: file.name,
-            size: file.size + ' bytes',
-            type: file.type,
-            lastModified: new Date(file.lastModified).toLocaleString()
-        };
-        console.log('[CSV Import] File details:', fileInfo);
-        
-        const debugInfo = document.getElementById('importDebugInfo');
-        const fileInfoText = document.getElementById('fileInfoText');
-        if (debugInfo && fileInfoText) {
-            fileInfoText.textContent = JSON.stringify(fileInfo, null, 2);
-            debugInfo.style.display = 'block';
-        }
+// Quick View Drawer
+function openQuickView(data) {
+    if (!data) return;
+    document.getElementById('qv-name').textContent = data.name || 'Product Details';
+    document.getElementById('qv-sku').textContent = 'SKU: ' + (data.sku || '') + (data.code ? ' · Code: ' + data.code : '');
+    document.getElementById('qv-price').textContent = 'LKR ' + (data.price || '0.00');
+    document.getElementById('qv-b2b').textContent = 'LKR ' + (data.b2b || '0.00');
+    document.getElementById('qv-qty').textContent = data.qty || '0';
+    document.getElementById('qv-category').textContent = data.category || 'Uncategorized';
+    document.getElementById('qv-brand').textContent = data.brand || 'N/A';
+    document.getElementById('qv-desc').textContent = data.desc || 'No description provided.';
+    document.getElementById('qv-img').src = data.img || 'https://placehold.co/180x180/e2e8f0/64748b?text=P';
+    
+    let badgeHtml = '';
+    if (data.status === 'inactive') {
+        badgeHtml = '<span class="erp-badge badge-inactive">Inactive</span>';
+    } else if (parseInt(data.qty) <= 0) {
+        badgeHtml = '<span class="erp-badge badge-outstock">Out of Stock</span>';
+    } else if (parseInt(data.qty) <= 5) {
+        badgeHtml = '<span class="erp-badge badge-lowstock">Low Stock</span>';
+    } else {
+        badgeHtml = '<span class="erp-badge badge-instock">In Stock</span>';
     }
+    document.getElementById('qv-status').innerHTML = badgeHtml;
+
+    document.getElementById('qv-edit-link').href = '<?= APP_URL ?>/inventory/edit/' + data.id;
+    document.getElementById('qv-ledger-link').href = '<?= APP_URL ?>/stockledger/product/' + data.id;
+
+    document.getElementById('quickViewDrawer').classList.add('open');
 }
 
-function handleCsvImportSubmit(event) {
-    event.preventDefault();
-    
-    const fileInput = document.getElementById('csvFileInput');
-    const importBtn = document.getElementById('csvImportBtn');
-    
-    console.log('[CSV Import] Form submit triggered');
-    console.log('[CSV Import] File input:', fileInput);
-    console.log('[CSV Import] File selected:', fileInput.files.length > 0 ? fileInput.files[0].name : 'No file');
-    
-    if (!fileInput.files || fileInput.files.length === 0) {
-        console.error('[CSV Import] ERROR: No file selected!');
-        alert('Please select a CSV file first.');
-        return false;
-    }
-    
-    const form = document.getElementById('csvImportForm');
-    const formData = new FormData(form);
-    
-    console.log('[CSV Import] FormData entries:');
-    for (let [key, value] of formData.entries()) {
-        if (value instanceof File) {
-            console.log('  ' + key + ':', value.name, '(' + value.size + ' bytes)');
-        } else {
-            console.log('  ' + key + ':', value);
-        }
-    }
-    
-    // Disable button and show loading state
-    importBtn.disabled = true;
-    importBtn.innerHTML = '<i class="fa-solid fa-spinner spin"></i> Importing...';
-    
-    console.log('[CSV Import] Sending POST request to:', form.action);
-    
-    // Submit the form
-    fetch(form.action + '?ajax=1', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => {
-        console.log('[CSV Import] Response status:', response.status);
-        console.log('[CSV Import] Response ok:', response.ok);
-        
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-            return response.json().then(data => {
-                console.log('[CSV Import] JSON Response data:', data);
-                if (response.ok) {
-                    console.log('[CSV Import] Import completed successfully, reloading...');
-                    window.location.reload();
-                } else {
-                    const errMsgs = data.errors ? data.errors.join('\n') : 'Unknown error';
-                    throw new Error(errMsgs);
-                }
-            });
-        } else {
-            return response.text().then(text => {
-                console.error('[CSV Import] Non-JSON Server response:', text);
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    throw new Error('Server returned ' + response.status + ': ' + text.substring(0, 200));
-                }
-            });
-        }
-    })
-    .catch(error => {
-        console.error('[CSV Import] Fetch error:', error);
-        alert('Import failed:\n' + error.message);
-        importBtn.disabled = false;
-        importBtn.innerHTML = 'Import';
-    });
-    
-    return false; // Prevent default form submission
+function closeQuickView() {
+    document.getElementById('quickViewDrawer').classList.remove('open');
 }
 
-let activeDeleteId = null;
-
-function confirmDelete(id, name) {
-    activeDeleteId = id;
-    document.getElementById('deleteItemId').value    = id;
-    document.getElementById('deleteItemName').textContent = name;
-    const err = document.getElementById('deleteErrorContainer');
-    if (err) { err.classList.add('hidden'); err.textContent = ''; }
-    const pw = document.getElementById('deleteAdminPassword');
-    if (pw) pw.value = '';
-    document.getElementById('deleteProductModal').classList.remove('hidden');
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteProductModal').classList.add('hidden');
-    activeDeleteId = null;
-}
-
-function submitDeleteProduct(e) {
-    e.preventDefault();
-    if (!activeDeleteId) return;
-
-    const form    = document.getElementById('deleteProductForm');
-    const btn     = document.getElementById('deleteSubmitBtn');
-    const spinner = document.getElementById('deleteBtnSpinner');
-    const err     = document.getElementById('deleteErrorContainer');
-
-    if (btn)     btn.disabled = true;
-    if (spinner) spinner.classList.remove('hidden');
-    if (err)     { err.classList.add('hidden'); err.textContent = ''; }
-
-    fetch('<?php echo APP_URL; ?>/inventory/delete/' + activeDeleteId, { method: 'POST', body: new FormData(form) })
-        .then(r => { if (!r.ok) throw new Error('Failed'); return r.json(); })
-        .then(data => {
-            if (data.success) { 
-                closeDeleteModal(); 
-                if (data.message) {
-                    alert(data.message);
-                }
-                applyAjaxFilters(); 
-            }
-            else if (err) { err.textContent = data.error || data.message || 'Authorization failed.'; err.classList.remove('hidden'); }
-        })
-        .catch(ex => { if (err) { err.textContent = ex.message; err.classList.remove('hidden'); } })
-        .finally(() => { if (btn) btn.disabled = false; if (spinner) spinner.classList.add('hidden'); });
-}
-
-function toggleProductStatus(id, targetStatus) {
-    const formData = new FormData();
-    formData.append('status', targetStatus);
-
-    fetch('<?php echo APP_URL; ?>/inventory/toggle_status/' + id, {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            applyAjaxFilters();
-        } else {
-            alert(data.message || 'Failed to toggle status.');
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert('Error toggling status.');
-    });
-}
-
-function confirmBulkDelete() {
-    const checkboxes = document.querySelectorAll('.item-select-checkbox');
-    const selected = [...checkboxes].filter(c => c.checked);
-    if (selected.length === 0) return;
-
-    if (!confirm(`Are you sure you want to delete ${selected.length} selected products?\n\nProducts with historical transaction records will be safely moved to 'Deleted Products', while unused products will be permanently deleted.`)) {
-        return;
-    }
-
-    const formData = new FormData();
-    selected.forEach(cb => {
-        formData.append('item_ids[]', cb.value);
-    });
-
-    fetch('<?php echo APP_URL; ?>/inventory/bulk_delete', {
-        method: 'POST',
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            clearSelection();
-            if (data.message) {
-                alert(data.message);
-            }
-            applyAjaxFilters();
-        } else {
-            alert(data.error || data.message || 'Bulk delete failed.');
-        }
-    })
-    .catch(err => {
-        console.error(err);
-        alert('An error occurred during bulk deletion.');
-    });
-}
-
+// Selection & Bulk Actions
 function toggleSelectAll(cb) {
-    document.querySelectorAll('.item-select-checkbox').forEach(c => c.checked = cb.checked);
+    document.querySelectorAll('.item-select-checkbox').forEach(c => {
+        c.checked = cb.checked;
+        const tr = c.closest('tr');
+        if (tr) tr.classList.toggle('row-selected', cb.checked);
+    });
     updateSelection();
 }
 
 function updateSelection() {
-    const checkboxes  = document.querySelectorAll('.item-select-checkbox');
-    const selected    = [...checkboxes].filter(c => c.checked);
-    const toolbar     = document.getElementById('bulkEditToolbar');
-    const badge       = document.getElementById('selectedCountBadge');
+    const checkboxes = document.querySelectorAll('.item-select-checkbox');
+    const selected = [...checkboxes].filter(c => c.checked);
+    const toolbar = document.getElementById('bulkEditToolbar');
+    const badge = document.getElementById('selectedCountBadge');
     const selectAllCb = document.getElementById('selectAllCheckbox');
 
+    checkboxes.forEach(c => {
+        const tr = c.closest('tr');
+        if (tr) tr.classList.toggle('row-selected', c.checked);
+    });
+
     if (selected.length > 0) {
-        if (badge)   badge.textContent  = selected.length;
+        if (badge) badge.textContent = selected.length;
         if (toolbar) toolbar.classList.remove('hidden');
         if (selectAllCb) selectAllCb.checked = (selected.length === checkboxes.length);
     } else {
@@ -2254,12 +1758,17 @@ function updateSelection() {
 }
 
 function clearSelection() {
-    document.querySelectorAll('.item-select-checkbox').forEach(c => c.checked = false);
+    document.querySelectorAll('.item-select-checkbox').forEach(c => {
+        c.checked = false;
+        const tr = c.closest('tr');
+        if (tr) tr.classList.remove('row-selected');
+    });
     const cb = document.getElementById('selectAllCheckbox');
     if (cb) cb.checked = false;
     updateSelection();
 }
 
+// Bulk Edit Modal
 function openBulkEditModal() {
     const form = document.getElementById('bulkEditForm');
     form.querySelectorAll('input[name="item_ids[]"]').forEach(i => i.remove());
@@ -2277,10 +1786,10 @@ function openBulkEditModal() {
 
     ['category','selling_price','wholesale_price','status'].forEach(f => {
         const ids = {
-            category:       'bulkUpdateCategory',
-            selling_price:  'bulkUpdateSellingPrice',
-            wholesale_price:'bulkUpdateWholesalePrice',
-            status:         'bulkUpdateStatus',
+            category: 'bulkUpdateCategory',
+            selling_price: 'bulkUpdateSellingPrice',
+            wholesale_price: 'bulkUpdateWholesalePrice',
+            status: 'bulkUpdateStatus'
         };
         const cb = document.getElementById(ids[f]);
         if (cb) cb.checked = false;
@@ -2288,7 +1797,7 @@ function openBulkEditModal() {
     });
 
     const err = document.getElementById('bulkEditErrorContainer');
-    if (err) { err.classList.add('hidden'); err.textContent = ''; }
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
     document.getElementById('bulkEditModal').classList.remove('hidden');
 }
 
@@ -2298,39 +1807,182 @@ function closeBulkEditModal() {
 
 function toggleBulkField(field) {
     const map = {
-        category:       { cb: 'bulkUpdateCategory',      els: ['bulkCategorySelect'] },
-        selling_price:  { cb: 'bulkUpdateSellingPrice',  els: ['bulkSellingPriceType','bulkSellingPriceVal'] },
-        wholesale_price:{ cb: 'bulkUpdateWholesalePrice',els: ['bulkWholesalePriceType','bulkWholesalePriceVal'] },
-        status:         { cb: 'bulkUpdateStatus',        els: ['bulkStatusSelect'] },
+        category: { cb: 'bulkUpdateCategory', els: ['bulkCategorySelect'] },
+        selling_price: { cb: 'bulkUpdateSellingPrice', els: ['bulkSellingPriceType','bulkSellingPriceVal'] },
+        wholesale_price: { cb: 'bulkUpdateWholesalePrice', els: ['bulkWholesalePriceType','bulkWholesalePriceVal'] },
+        status: { cb: 'bulkUpdateStatus', els: ['bulkStatusSelect'] }
     };
     const cfg = map[field];
     if (!cfg) return;
     const isOn = document.getElementById(cfg.cb)?.checked;
     cfg.els.forEach(id => {
         const el = document.getElementById(id);
-        if (el) { el.style.pointerEvents = isOn ? 'auto' : 'none'; el.style.opacity = isOn ? '1' : '0.45'; }
+        if (el) {
+            el.style.pointerEvents = isOn ? 'auto' : 'none';
+            el.style.opacity = isOn ? '1' : '0.4';
+        }
     });
 }
 
 function submitBulkEdit(e) {
     e.preventDefault();
-
-    const form    = document.getElementById('bulkEditForm');
-    const btn     = document.getElementById('bulkSubmitBtn');
+    const form = document.getElementById('bulkEditForm');
+    const btn = document.getElementById('bulkSubmitBtn');
     const spinner = document.getElementById('bulkBtnSpinner');
-    const err     = document.getElementById('bulkEditErrorContainer');
+    const err = document.getElementById('bulkEditErrorContainer');
 
-    if (btn)     btn.disabled = true;
-    if (spinner) spinner.classList.remove('hidden');
-    if (err)     { err.classList.add('hidden'); err.textContent = ''; }
+    if (btn) btn.disabled = true;
+    if (spinner) spinner.style.display = 'inline-block';
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
 
-    fetch('<?php echo APP_URL; ?>/inventory/bulkUpdate', { method: 'POST', body: new FormData(form) })
+    fetch('<?= APP_URL ?>/inventory/bulkUpdate', { method: 'POST', body: new FormData(form) })
         .then(r => { if (!r.ok) throw new Error('Bulk update failed'); return r.json(); })
         .then(data => {
-            if (data.success) { closeBulkEditModal(); clearSelection(); applyAjaxFilters(); }
-            else if (err) { err.textContent = data.error || 'Update failed.'; err.classList.remove('hidden'); }
+            if (data.success) {
+                closeBulkEditModal();
+                clearSelection();
+                applyAjaxFilters();
+            } else if (err) {
+                err.textContent = data.error || 'Update failed.';
+                err.style.display = 'block';
+            }
         })
-        .catch(ex => { if (err) { err.textContent = ex.message; err.classList.remove('hidden'); } })
-        .finally(() => { if (btn) btn.disabled = false; if (spinner) spinner.classList.add('hidden'); });
+        .catch(ex => {
+            if (err) { err.textContent = ex.message; err.style.display = 'block'; }
+        })
+        .finally(() => {
+            if (btn) btn.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+        });
 }
+
+function confirmBulkDelete() {
+    const checkboxes = document.querySelectorAll('.item-select-checkbox');
+    const selected = [...checkboxes].filter(c => c.checked);
+    if (selected.length === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selected.length} selected product(s)?`)) {
+        return;
+    }
+
+    const formData = new FormData();
+    selected.forEach(cb => formData.append('item_ids[]', cb.value));
+
+    fetch('<?= APP_URL ?>/inventory/bulk_delete', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                clearSelection();
+                applyAjaxFilters();
+            } else {
+                alert(data.error || data.message || 'Bulk delete failed.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('An error occurred during bulk deletion.');
+        });
+}
+
+// Single Product Status Toggle
+function toggleProductStatus(id, targetStatus) {
+    const formData = new FormData();
+    formData.append('status', targetStatus);
+
+    fetch('<?= APP_URL ?>/inventory/toggle_status/' + id, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                applyAjaxFilters();
+            } else {
+                alert(data.message || 'Failed to toggle status.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error toggling status.');
+        });
+}
+
+// Single Product Delete
+function confirmDelete(id, name) {
+    activeDeleteId = id;
+    document.getElementById('deleteItemId').value = id;
+    document.getElementById('deleteItemName').textContent = name;
+    const err = document.getElementById('deleteErrorContainer');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+    const pw = document.getElementById('deleteAdminPassword');
+    if (pw) pw.value = '';
+    document.getElementById('deleteProductModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteProductModal').classList.add('hidden');
+    activeDeleteId = null;
+}
+
+function submitDeleteProduct(e) {
+    e.preventDefault();
+    if (!activeDeleteId) return;
+
+    const form = document.getElementById('deleteProductForm');
+    const btn = document.getElementById('deleteSubmitBtn');
+    const spinner = document.getElementById('deleteBtnSpinner');
+    const err = document.getElementById('deleteErrorContainer');
+
+    if (btn) btn.disabled = true;
+    if (spinner) spinner.style.display = 'inline-block';
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+
+    fetch('<?= APP_URL ?>/inventory/delete/' + activeDeleteId, { method: 'POST', body: new FormData(form) })
+        .then(r => { if (!r.ok) throw new Error('Delete failed'); return r.json(); })
+        .then(data => {
+            if (data.success) {
+                closeDeleteModal();
+                applyAjaxFilters();
+            } else if (err) {
+                err.textContent = data.message || 'Failed to delete product.';
+                err.style.display = 'block';
+            }
+        })
+        .catch(ex => {
+            if (err) { err.textContent = ex.message; err.style.display = 'block'; }
+        })
+        .finally(() => {
+            if (btn) btn.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+        });
+}
+
+// CSV Modal
+function openCsvModal() {
+    document.getElementById('csvImportModal').classList.remove('hidden');
+}
+function closeCsvModal() {
+    document.getElementById('csvImportModal').classList.add('hidden');
+}
+function logFileSelection(input) {
+    if (input.files && input.files[0]) {
+        document.getElementById('fileInfoText').textContent = input.files[0].name + ' (' + (input.files[0].size / 1024).toFixed(1) + ' KB)';
+        document.getElementById('importDebugInfo').style.display = 'block';
+    }
+}
+function handleCsvImportSubmit(e) {
+    const btn = document.getElementById('csvImportBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importing...';
+    }
+    return true;
+}
+
+// ESC Key closes modals & drawer
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeQuickView();
+        closeCsvModal();
+        closeDeleteModal();
+        closeBulkEditModal();
+    }
+});
 </script>

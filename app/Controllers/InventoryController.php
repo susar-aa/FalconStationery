@@ -118,8 +118,12 @@ class InventoryController extends Controller {
         $stats = $this->itemModel->getStockStats();
         $categories = $this->categoryModel->getCategories();
 
+        $itemIds = array_map(function($i) { return (int)$i->id; }, $items);
+        $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
+
         $data = [
             'items' => $items,
+            'variations_by_item' => $variationsByItem,
             'stats' => $stats,
             'filters' => $filters,
             'categories' => $categories,
