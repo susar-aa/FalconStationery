@@ -17,14 +17,28 @@ html, body {
 }
 
 .po-erp-workspace {
-    height: calc(100vh - 48px);
     display: flex;
     flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    flex: 1;
     overflow: hidden;
-    padding: 12px 18px;
+    gap: 8px;
     box-sizing: border-box;
-    gap: 10px;
     position: relative;
+    padding: 0 4px 54px; /* Clearance for pinned floating bottom island */
+}
+
+#filterForm {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+    gap: 8px;
+    margin: 0;
 }
 
 
@@ -177,7 +191,7 @@ html, body {
     min-height: 0;
     overflow-y: auto;
     overflow-x: auto;
-    padding-bottom: 54px; /* Clearance for floating bottom island */
+    position: relative;
 }
 
 .erp-table {
