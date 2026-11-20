@@ -180,12 +180,18 @@ class SalesController extends Controller {
      * to keep existing UI scripts fully functional without any changes.
      */
     public function create() {
+        $this->checkPermission('sales', 'create_edit');
+        $csrfToken = $this->generateCsrfToken();
+
         // Fetch all items from local ERP Database
         $items = $this->itemModel->getAllItems();
+        $itemIds = array_map(function($i) { return (int)$i->id; }, $items);
+        $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
 
         // Backend intercept: Ensure all possible price properties are completely populated
         // This solves empty price display issues if the UI refers to alternative property keys.
         foreach ($items as $key => $item) {
+            $item->variations = $variationsByItem[$item->id] ?? [];
             $billingPrice = 0.00;
 
             if (is_object($item)) {
@@ -326,7 +332,8 @@ class SalesController extends Controller {
             'editing_invoice' => $editingInvoice,
             'editing_items' => $editingItems,
             'from_sales_order_id' => $fromSalesOrderId,
-            'from_so_route_id' => $fromSoRouteId
+            'from_so_route_id' => $fromSoRouteId,
+            'csrf_token' => $csrfToken
         ];
         $this->view('sales/index', $data);
     }
@@ -335,7 +342,11 @@ class SalesController extends Controller {
      * Process and store invoices or sales orders
      */
     public function store() {
+        $this->checkPermission('sales', 'create_edit');
+
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->validateCsrfOrDie();
+
             // Check for max_input_vars truncation safety gate
             $maxInputVars = intval(ini_get('max_input_vars'));
             $postCount = count($_POST, COUNT_RECURSIVE);

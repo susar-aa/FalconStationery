@@ -332,7 +332,7 @@ class Item {
             $placeholders = implode(',', array_fill(0, count($validIds), '?'));
             $this->db->query("
                 SELECT ivo.id, ivo.item_id, ivo.sku, ivo.price, ivo.wholesale_price, ivo.cost, ivo.quantity_on_hand,
-                       v.name as attribute_name, vv.value_name as value_name, vv.id as variation_value_id
+                       v.name as attribute_name, v.name as variation_name, vv.value_name as value_name, vv.id as variation_value_id
                 FROM item_variation_options ivo
                 JOIN variations v ON ivo.variation_id = v.id
                 JOIN variation_values vv ON ivo.variation_value_id = vv.id

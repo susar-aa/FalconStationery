@@ -287,7 +287,19 @@ Test how the system handles each situation and fix genuine problems.
   - Replaced oversized consumer pastel cards with compact, high-density KPI status badges.
   - Fixed N+1 query bottleneck by introducing batch variation preloading `Item::getVariationsForItems()`.
   - Added project rules in `AGENTS.md` and `.agents/rules/erp-ui-standards.md`.
-- [ ] **Module 2: Sales & Billing**
+- [x] **Module 2: Sales & Billing (`SalesController`, `Invoice`, `Views/sales/index.php`)**
+  - **Audit Findings**:
+    - Discovered an extreme N+1 query loop in `create()` where variations were not preloaded in the controller, causing `sales/index.php` to query variations in a loop for all 1,050+ catalog items on every single invoice page load (>1,050 individual SQL queries).
+    - Customer outstanding balance calculations ran 3 correlated subqueries (`invoices`, `customer_payments`, `credit_notes`) across all active customers without composite index optimization.
+    - Missing CSRF token in `<form id="invoiceForm">` and missing CSRF validation in `SalesController::store()`.
+    - No double-submission protection on submit buttons (`Save & Close`, `Save & New`, `Save & Print`, `Save & WhatsApp`), creating risks of duplicate invoices and double ledger postings.
+  - **Fixes & Optimizations**:
+    - Batch preloaded variations in `SalesController::create()` in 1 single database query using `Item::getVariationsForItems()`, and guarded view against redundant per-item variation queries.
+    - Added CSRF token protection to the main invoice form and enforced `$this->validateCsrfOrDie()` in `SalesController::store()`.
+    - Added RBAC permission enforcement (`$this->checkPermission('sales', 'create_edit')`).
+    - Added double-submission lock (`isInvoiceSubmitting`) and active button disabling to prevent concurrent duplicate invoice creation.
+    - Preserved 100% of the existing invoice creation UI layout, styles, and workflows per user instructions ("do not redesign it").
+    - Provided production composite indexing SQL for `invoices`, `invoice_items`, `sales_orders`, and `customer_payments`.
 - [x] **Module 3: Purchases & GRN (`PurchaseController`, `GRNController`, `PurchaseOrder`, `GRN`, `Views/purchases/`, `Views/grns/`)**
   - **Audit Findings**:
     - Discovered missing CSRF tokens on Delete PO, Delete GRN, and Admin Approval POST forms, causing security risks and potential CSRF exploits.

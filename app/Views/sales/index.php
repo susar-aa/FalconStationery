@@ -37,7 +37,7 @@ foreach ($catalog_items as $key => $item) {
         $item->regular_price = $billingPrice;
         $item->wholesale_price = $billingPrice;
 
-        if (!isset($item->variations) || empty($item->variations)) {
+        if (!isset($item->variations)) {
             $db->query("SELECT ivo.*, v.name as variation_name, vv.value_name 
                         FROM item_variation_options ivo
                         JOIN variations v ON ivo.variation_id = v.id
@@ -71,18 +71,20 @@ foreach ($catalog_items as $key => $item) {
                         $item->variations[] = $vObj;
                     }
                 }
-            } else if (!empty($item->variations)) {
-                foreach ($item->variations as $var) {
-                    $varPrice = 0.00;
-                    if (isset($var->wholesale_price) && floatval($var->wholesale_price) > 0) {
-                        $varPrice = floatval($var->wholesale_price);
-                    } elseif (isset($var->price) && floatval($var->price) > 0) {
-                        $varPrice = floatval($var->price);
-                    } else {
-                        $varPrice = $billingPrice;
-                    }
-                    $var->price = $varPrice;
+            }
+        }
+
+        if (!empty($item->variations)) {
+            foreach ($item->variations as $var) {
+                $varPrice = 0.00;
+                if (isset($var->wholesale_price) && floatval($var->wholesale_price) > 0) {
+                    $varPrice = floatval($var->wholesale_price);
+                } elseif (isset($var->price) && floatval($var->price) > 0) {
+                    $varPrice = floatval($var->price);
+                } else {
+                    $varPrice = $billingPrice;
                 }
+                $var->price = $varPrice;
             }
         }
     } elseif (is_array($item)) {
@@ -1217,6 +1219,8 @@ if ($inv && isset($inv->id)) {
 
     <div class="qb-container">
         <form action="<?= APP_URL ?>/sales/store" method="POST" id="invoiceForm">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($data['csrf_token'] ?? $_SESSION['csrf_token'] ?? '') ?>">
+            <input type="hidden" name="save_action" id="saveActionInput" value="close">
             <input type="hidden" name="type" value="<?= htmlspecialchars((string)($data['type'] ?? 'invoice')) ?>">
             <input type="hidden" name="rep_route_id" value="<?= htmlspecialchars((string)$rep_route_id) ?>">
             <input type="hidden" name="from_sales_order_id" value="<?= htmlspecialchars((string)($data['from_sales_order_id'] ?? '0')) ?>">
@@ -1262,16 +1266,16 @@ if ($inv && isset($inv->id)) {
 
                     <div style="width: 1px; height: 20px; background: var(--slate-200); margin: 0 4px;"></div>
 
-                    <button type="submit" name="save_action" value="close" class="btn btn-sm btn-primary">
+                    <button type="submit" name="save_action" value="close" onclick="document.getElementById('saveActionInput').value='close'" class="btn btn-sm btn-primary">
                         <i class="ph ph-floppy-disk"></i> Save &amp; Close
                     </button>
-                    <button type="submit" name="save_action" value="new" class="btn btn-sm">
+                    <button type="submit" name="save_action" value="new" onclick="document.getElementById('saveActionInput').value='new'" class="btn btn-sm">
                         <i class="ph ph-plus"></i> Save &amp; New
                     </button>
-                    <button type="submit" name="save_action" value="print" class="btn btn-sm">
+                    <button type="submit" name="save_action" value="print" onclick="document.getElementById('saveActionInput').value='print'" class="btn btn-sm">
                         <i class="ph ph-printer"></i> Save &amp; Print
                     </button>
-                    <button type="submit" name="save_action" value="whatsapp" class="btn btn-sm btn-wa">
+                    <button type="submit" name="save_action" value="whatsapp" onclick="document.getElementById('saveActionInput').value='whatsapp'" class="btn btn-sm btn-wa">
                         <i class="ph ph-whatsapp-logo"></i> Save &amp; WhatsApp
                     </button>
                     <?php if ($inv): ?>
@@ -2548,9 +2552,15 @@ if ($inv && isset($inv->id)) {
             console.error("========================");
         }
 
+        let isInvoiceSubmitting = false;
         const invForm = document.getElementById('invoiceForm');
         if (invForm) {
             invForm.addEventListener('submit', function(e) {
+                if (isInvoiceSubmitting) {
+                    e.preventDefault();
+                    return false;
+                }
+
                 const formType = document.querySelector('input[name="type"]')?.value;
                 if (formType === 'sales_order') {
                     const repRouteId   = document.querySelector('input[name="rep_route_id"]')?.value;
@@ -2585,6 +2595,14 @@ if ($inv && isset($inv->id)) {
                         }
                     }
                 }
+
+                // Prevent double submission
+                isInvoiceSubmitting = true;
+                const submitButtons = invForm.querySelectorAll('button[type="submit"]');
+                submitButtons.forEach(btn => {
+                    btn.style.opacity = '0.6';
+                    btn.style.pointerEvents = 'none';
+                });
             });
         }
     });
