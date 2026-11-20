@@ -4,7 +4,7 @@
 <style>
 /* ============================================================
    FALCON STATIONERY ERP: PROCUREMENT & PURCHASE ORDERS (PO)
-   STRICT VIEWPORT-LOCKED ARCHITECTURE & ERP SYSTEM STANDARDS
+   CLEAN & PROFESSIONAL ERP VIEWPORT ARCHITECTURE
    ============================================================ */
 
 html, body {
@@ -21,13 +21,13 @@ html, body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 10px 16px;
+    padding: 12px 18px;
     box-sizing: border-box;
-    gap: 8px;
+    gap: 10px;
     position: relative;
 }
 
-/* 1. Slim Top Action & KPI Bar (Zero Redundant Headlines) */
+/* 1. Slim Top Action & KPI Bar */
 .erp-top-header {
     display: flex;
     align-items: center;
@@ -41,43 +41,40 @@ html, body {
     align-items: center;
     gap: 8px;
     flex-wrap: nowrap;
-    overflow-x: auto;
 }
 
 .erp-kpi-item {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--erp-card-bg, #ffffff);
-    border: 1px solid var(--erp-border, #e2e8f0);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
     padding: 4px 10px;
     font-size: 12px;
     white-space: nowrap;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 
 .erp-kpi-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
 }
 .dot-blue   { background: #2563eb; }
-.dot-amber  { background: #f59e0b; }
-.dot-purple { background: #8b5cf6; }
-.dot-green  { background: #10b981; }
 .dot-slate  { background: #64748b; }
+.dot-amber  { background: #f59e0b; }
+.dot-green  { background: #10b981; }
 
 .erp-kpi-label {
-    color: var(--erp-text-muted, #64748b);
+    color: #64748b;
     font-weight: 500;
 }
 
 .erp-kpi-value {
     font-weight: 700;
-    color: var(--erp-text-main, #0f172a);
-    font-family: var(--erp-mono, ui-monospace, 'SF Mono', monospace);
+    color: #0f172a;
+    font-family: var(--erp-mono, ui-monospace, monospace);
 }
 
 .erp-actions-group {
@@ -101,24 +98,17 @@ html, body {
     border: 1px solid transparent;
 }
 .erp-btn-outline {
-    background: var(--erp-card-bg, #ffffff);
-    color: var(--erp-text-main, #334155);
-    border-color: var(--erp-border, #cbd5e1);
+    background: #ffffff;
+    color: #334155;
+    border-color: #cbd5e1;
 }
 .erp-btn-outline:hover {
     background: #f1f5f9;
     border-color: #94a3b8;
     color: #0f172a;
 }
-.erp-btn-primary {
-    background: #2563eb;
-    color: #ffffff !important;
-}
-.erp-btn-primary:hover {
-    background: #1d4ed8;
-}
 
-/* 2. Top-Right Filter Bar */
+/* 2. Top-Right Clean Filter Bar */
 .erp-filter-bar {
     display: flex;
     align-items: center;
@@ -129,7 +119,6 @@ html, body {
     padding: 6px 14px;
     flex-shrink: 0;
     gap: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .erp-filter-left {
@@ -166,7 +155,7 @@ html, body {
 }
 
 .erp-filter-label {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     color: #475569;
     white-space: nowrap;
@@ -176,7 +165,7 @@ html, body {
 
 .erp-select {
     height: 29px;
-    max-width: 150px;
+    max-width: 155px;
     padding: 0 24px 0 10px;
     font-size: 12px;
     font-weight: 500;
@@ -193,7 +182,6 @@ html, body {
     background-repeat: no-repeat;
     background-position: right 7px center;
     background-size: 10px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     transition: border-color 0.15s, box-shadow 0.15s;
     text-overflow: ellipsis;
 }
@@ -201,24 +189,6 @@ html, body {
     border-color: #94a3b8;
 }
 .erp-select:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
-}
-
-.erp-input-date {
-    height: 29px;
-    padding: 0 8px;
-    font-size: 11.5px;
-    font-family: var(--erp-font);
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #1e293b;
-    outline: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-    transition: border-color 0.15s;
-}
-.erp-input-date:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
 }
@@ -236,7 +206,6 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     transition: all 0.15s;
 }
 .erp-btn-reset:hover {
@@ -249,14 +218,13 @@ html, body {
 .erp-card-table {
     flex: 1;
     min-height: 0;
-    background: var(--erp-card-bg, #ffffff);
-    border: 1px solid var(--erp-border, #e2e8f0);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
 .erp-table-scroll {
@@ -284,7 +252,7 @@ html, body {
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 9px 12px;
+    padding: 9px 14px;
     border-bottom: 1px solid #e2e8f0;
     white-space: nowrap;
 }
@@ -294,7 +262,7 @@ html, body {
     transition: background 0.1s;
 }
 .erp-table tbody tr:hover {
-    background: #f1f5f9 !important;
+    background: #f8fafc !important;
 }
 /* Alternating Zebra Striping */
 .erp-table tbody tr:nth-child(even) {
@@ -302,7 +270,7 @@ html, body {
 }
 
 .erp-table td {
-    padding: 8px 12px;
+    padding: 10px 14px;
     vertical-align: middle;
     color: #1e293b;
 }
@@ -361,77 +329,47 @@ html, body {
     margin-left: 6px;
 }
 
-/* Actions in Row */
-.erp-row-acts {
+/* Quiet, Sleek ERP Row Actions */
+.erp-row-actions {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     justify-content: flex-end;
 }
 
 .erp-icon-btn {
-    width: 29px;
-    height: 29px;
+    width: 26px;
+    height: 26px;
     border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #475569;
+    font-size: 11.5px;
     cursor: pointer;
     text-decoration: none;
-    font-size: 13px;
     transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 .erp-icon-btn i {
-    font-size: 13px;
+    font-size: 11.5px;
     line-height: 1;
 }
 .erp-icon-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-}
-.erp-icon-btn.view {
-    color: #475569;
-    background: #f8fafc;
-    border-color: #cbd5e1;
-}
-.erp-icon-btn.view:hover {
-    color: #0f172a;
-    background: #f1f5f9;
-    border-color: #94a3b8;
-}
-.erp-icon-btn.primary {
     color: #2563eb;
+    border-color: #2563eb;
     background: #eff6ff;
-    border-color: #bfdbfe;
-}
-.erp-icon-btn.primary:hover {
-    color: #1d4ed8;
-    background: #dbeafe;
-    border-color: #93c5fd;
-}
-.erp-icon-btn.success {
-    color: #059669;
-    background: #ecfdf5;
-    border-color: #a7f3d0;
 }
 .erp-icon-btn.success:hover {
-    color: #047857;
-    background: #d1fae5;
-    border-color: #6ee7b7;
-}
-.erp-icon-btn.danger {
-    color: #dc2626;
-    background: #fef2f2;
-    border-color: #fecaca;
+    color: #059669;
+    border-color: #059669;
+    background: #ecfdf5;
 }
 .erp-icon-btn.danger:hover {
-    color: #b91c1c;
-    background: #fee2e2;
-    border-color: #fca5a5;
+    color: #dc2626;
+    border-color: #dc2626;
+    background: #fef2f2;
 }
 
 /* 4. Pinned Pagination Bar */
@@ -440,7 +378,7 @@ html, body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 44px;
+    height: 42px;
     background: #ffffff;
     border-top: 1px solid #e2e8f0;
     display: flex;
@@ -469,7 +407,7 @@ html, body {
     height: 28px;
     padding: 0 6px;
     border-radius: 5px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #d1d5db;
     background: #ffffff;
     color: #334155;
     font-size: 12px;
@@ -480,7 +418,6 @@ html, body {
     justify-content: center;
     text-decoration: none;
     transition: all 0.15s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 .erp-pg-btn i {
     font-size: 11px;
@@ -685,7 +622,7 @@ html, body {
         <div class="erp-kpi-strip">
             <div class="erp-kpi-item">
                 <span class="erp-kpi-dot dot-blue"></span>
-                <span class="erp-kpi-label">Total POs:</span>
+                <span class="erp-kpi-label">Total:</span>
                 <span class="erp-kpi-value" id="stat-total-pos"><?= number_format($data['stats']->total_pos ?? 0) ?></span>
             </div>
             <div class="erp-kpi-item">
@@ -703,23 +640,15 @@ html, body {
                 <span class="erp-kpi-label">Received:</span>
                 <span class="erp-kpi-value" id="stat-received"><?= number_format($data['stats']->received_count ?? 0) ?></span>
             </div>
-            <div class="erp-kpi-item">
-                <span class="erp-kpi-dot dot-purple"></span>
-                <span class="erp-kpi-label">Total Value:</span>
-                <span class="erp-kpi-value" id="stat-value">Rs. <?= number_format($data['stats']->total_value ?? 0, 2) ?></span>
-            </div>
         </div>
 
-        <!-- Top Action Toolbar -->
+        <!-- Top Action Toolbar (Secondary Tools only, New PO is in floating bar) -->
         <div class="erp-actions-group">
             <a href="<?= APP_URL ?>/purchase/wizard" class="erp-btn erp-btn-outline" title="PO Auto-Reorder Wizard">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> AI Reorder Wizard
             </a>
             <a href="<?= APP_URL ?>/grn" class="erp-btn erp-btn-outline" title="View Goods Receipts (GRN)">
                 <i class="fa-solid fa-boxes-packing"></i> Goods Receipts (GRN)
-            </a>
-            <a href="<?= APP_URL ?>/purchase/create" class="erp-btn erp-btn-primary" title="Create Purchase Order">
-                <i class="fa-solid fa-plus"></i> New PO
             </a>
         </div>
     </div>
@@ -739,7 +668,7 @@ html, body {
     </div>
     <?php endif; ?>
 
-    <!-- 2. Filters Bar Above Table with Top-Right Alignment -->
+    <!-- 2. Clean Filters Bar Above Table with Top-Right Alignment -->
     <div class="erp-filter-bar">
         <!-- Left: Count -->
         <div class="erp-filter-left">
@@ -776,14 +705,17 @@ html, body {
                 </select>
             </div>
 
-            <!-- Date Range Filter -->
+            <!-- Period Filter (Clean & Compact) -->
             <div class="erp-filter-control">
-                <span class="erp-filter-label">Date:</span>
-                <input type="date" name="start_date" id="startDateInput" class="erp-input-date"
-                       value="<?= htmlspecialchars($data['filters']['start_date'] ?? '') ?>" onchange="applyAjaxFilters()">
-                <span style="color: #94a3b8; font-weight: 500;">–</span>
-                <input type="date" name="end_date" id="endDateInput" class="erp-input-date"
-                       value="<?= htmlspecialchars($data['filters']['end_date'] ?? '') ?>" onchange="applyAjaxFilters()">
+                <span class="erp-filter-label">Period:</span>
+                <select name="period" id="periodInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="" <?= empty($data['filters']['period']) ? 'selected' : '' ?>>All Time</option>
+                    <option value="today" <?= ($data['filters']['period'] ?? '') === 'today' ? 'selected' : '' ?>>Today</option>
+                    <option value="this_week" <?= ($data['filters']['period'] ?? '') === 'this_week' ? 'selected' : '' ?>>This Week</option>
+                    <option value="this_month" <?= ($data['filters']['period'] ?? '') === 'this_month' ? 'selected' : '' ?>>This Month</option>
+                    <option value="last_30" <?= ($data['filters']['period'] ?? '') === 'last_30' ? 'selected' : '' ?>>Last 30 Days</option>
+                    <option value="this_year" <?= ($data['filters']['period'] ?? '') === 'this_year' ? 'selected' : '' ?>>This Year</option>
+                </select>
             </div>
 
             <!-- Reset Filters -->
@@ -807,14 +739,14 @@ html, body {
             <table class="erp-table">
                 <thead>
                     <tr>
-                        <th style="width: 170px;">PO Number</th>
+                        <th style="width: 130px;">PO Number</th>
                         <th>Supplier / Vendor Details</th>
-                        <th style="width: 130px;">PO Date</th>
-                        <th style="width: 130px;">Expected Date</th>
-                        <th class="text-center" style="width: 80px; text-align:center;">Items</th>
-                        <th class="text-right" style="width: 140px; text-align:right;">Total Amount</th>
-                        <th class="text-center" style="width: 110px; text-align:center;">Status</th>
-                        <th class="text-right" style="width: 150px; text-align:right;">Actions</th>
+                        <th style="width: 120px;">PO Date</th>
+                        <th style="width: 120px;">Expected Date</th>
+                        <th class="text-center" style="width: 75px; text-align:center;">Items</th>
+                        <th class="text-right" style="width: 130px; text-align:right;">Amount (LKR)</th>
+                        <th class="text-center" style="width: 105px; text-align:center;">Status</th>
+                        <th class="text-right" style="width: 140px; text-align:right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -838,7 +770,7 @@ html, body {
                                 </span>
                             <?php endif; ?>
                             <div style="font-size: 10.5px; color: #94a3b8; margin-top: 2px;">
-                                Created by <?= htmlspecialchars($po->creator_name ?? 'System') ?>
+                                <?= htmlspecialchars($po->creator_name ?? 'System') ?>
                             </div>
                         </td>
                         <td>
@@ -866,7 +798,7 @@ html, body {
                             </span>
                         </td>
                         <td class="font-mono" style="text-align: right; font-weight: 700; color: #0f172a; font-size: 13px;">
-                            Rs. <?= number_format($po->total_amount, 2) ?>
+                            <?= number_format($po->total_amount, 2) ?>
                         </td>
                         <td style="text-align: center;">
                             <?php if ($po->status === 'Received'): ?>
@@ -878,15 +810,15 @@ html, body {
                             <?php endif; ?>
                         </td>
                         <td style="text-align: right;">
-                            <div class="erp-row-acts">
+                            <div class="erp-row-actions">
                                 <!-- Print / Show View -->
-                                <a href="<?= APP_URL ?>/purchase/show/<?= $po->id ?>" target="_blank" class="erp-icon-btn view" title="Print / PDF View">
+                                <a href="<?= APP_URL ?>/purchase/show/<?= $po->id ?>" target="_blank" class="erp-icon-btn" title="Print / PDF View">
                                     <i class="fa-solid fa-print"></i>
                                 </a>
 
                                 <?php if ($po->status !== 'Received'): ?>
                                     <!-- Edit PO -->
-                                    <a href="<?= APP_URL ?>/purchase/edit/<?= $po->id ?>" class="erp-icon-btn primary" title="Edit Purchase Order">
+                                    <a href="<?= APP_URL ?>/purchase/edit/<?= $po->id ?>" class="erp-icon-btn" title="Edit Purchase Order">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
 
@@ -903,7 +835,7 @@ html, body {
 
                                     <!-- Email Dispatch Modal Opener -->
                                     <?php if (!empty($po->email)): ?>
-                                        <button type="button" class="erp-icon-btn primary" 
+                                        <button type="button" class="erp-icon-btn" 
                                                 onclick="openEmailModal(<?= $po->id ?>, '<?= htmlspecialchars(addslashes($po->po_number)) ?>', '<?= htmlspecialchars(addslashes($po->vendor_name)) ?>', '<?= htmlspecialchars(addslashes($po->email)) ?>')" 
                                                 title="Dispatch PO via Email to <?= htmlspecialchars($po->email) ?>">
                                             <i class="fa-solid fa-paper-plane"></i>
@@ -1037,7 +969,7 @@ html, body {
             </div>
             <div class="erp-modal-footer">
                 <button type="button" onclick="closeEmailModal()" class="erp-btn erp-btn-outline">Cancel</button>
-                <button type="submit" id="emailSubmitBtn" class="erp-btn erp-btn-primary">
+                <button type="submit" id="emailSubmitBtn" class="erp-btn" style="background:#2563eb; color:#fff;">
                     <i class="fa-solid fa-paper-plane"></i> Send Email
                 </button>
             </div>
@@ -1085,8 +1017,7 @@ function clearAllFilters() {
     if (searchClearBtn) searchClearBtn.style.display = 'none';
     document.getElementById('vendorInput').value = '';
     document.getElementById('statusInput').value = '';
-    document.getElementById('startDateInput').value = '';
-    document.getElementById('endDateInput').value = '';
+    document.getElementById('periodInput').value = '';
     document.getElementById('currentPageInput').value = 1;
     applyAjaxFilters();
 }
@@ -1147,7 +1078,7 @@ function applyAjaxFilters() {
         if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
 
         // Update KPI Strip
-        ['stat-total-pos', 'stat-draft', 'stat-sent', 'stat-received', 'stat-value'].forEach(id => {
+        ['stat-total-pos', 'stat-draft', 'stat-sent', 'stat-received'].forEach(id => {
             const n = doc.getElementById(id), o = document.getElementById(id);
             if (n && o) o.innerHTML = n.innerHTML;
         });

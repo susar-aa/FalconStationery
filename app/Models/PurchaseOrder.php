@@ -26,6 +26,20 @@ class PurchaseOrder {
             $params[':status'] = $filters['status'];
         }
 
+        if (!empty($filters['period'])) {
+            if ($filters['period'] === 'today') {
+                $whereClauses[] = "p.po_date = CURDATE()";
+            } elseif ($filters['period'] === 'this_week') {
+                $whereClauses[] = "p.po_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)";
+            } elseif ($filters['period'] === 'this_month') {
+                $whereClauses[] = "p.po_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')";
+            } elseif ($filters['period'] === 'last_30') {
+                $whereClauses[] = "p.po_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+            } elseif ($filters['period'] === 'this_year') {
+                $whereClauses[] = "p.po_date >= DATE_FORMAT(CURDATE(), '%Y-01-01')";
+            }
+        }
+
         if (!empty($filters['start_date'])) {
             $whereClauses[] = "p.po_date >= :start_date";
             $params[':start_date'] = $filters['start_date'];
@@ -75,6 +89,20 @@ class PurchaseOrder {
         if (!empty($filters['status'])) {
             $whereClauses[] = "p.status = :status";
             $params[':status'] = $filters['status'];
+        }
+
+        if (!empty($filters['period'])) {
+            if ($filters['period'] === 'today') {
+                $whereClauses[] = "p.po_date = CURDATE()";
+            } elseif ($filters['period'] === 'this_week') {
+                $whereClauses[] = "p.po_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)";
+            } elseif ($filters['period'] === 'this_month') {
+                $whereClauses[] = "p.po_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')";
+            } elseif ($filters['period'] === 'last_30') {
+                $whereClauses[] = "p.po_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+            } elseif ($filters['period'] === 'this_year') {
+                $whereClauses[] = "p.po_date >= DATE_FORMAT(CURDATE(), '%Y-01-01')";
+            }
         }
 
         if (!empty($filters['start_date'])) {

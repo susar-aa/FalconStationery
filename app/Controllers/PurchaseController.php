@@ -25,6 +25,7 @@ class PurchaseController extends Controller {
         $filters = [
             'vendor_id' => $_GET['vendor_id'] ?? '',
             'status' => $_GET['status'] ?? '',
+            'period' => $_GET['period'] ?? '',
             'start_date' => $_GET['start_date'] ?? '',
             'end_date' => $_GET['end_date'] ?? ''
         ];
