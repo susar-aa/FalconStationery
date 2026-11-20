@@ -27,62 +27,7 @@ html, body {
     position: relative;
 }
 
-/* 1. Slim Top Action & KPI Bar */
-.erp-top-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    gap: 12px;
-}
 
-.erp-kpi-strip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-}
-
-.erp-kpi-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-.erp-kpi-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-.dot-blue   { background: #2563eb; }
-.dot-slate  { background: #64748b; }
-.dot-amber  { background: #f59e0b; }
-.dot-green  { background: #10b981; }
-
-.erp-kpi-label {
-    color: #64748b;
-    font-weight: 500;
-}
-
-.erp-kpi-value {
-    font-weight: 700;
-    color: #0f172a;
-    font-family: var(--erp-mono, ui-monospace, monospace);
-}
-
-.erp-actions-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-}
 
 .erp-btn {
     display: inline-flex;
@@ -618,33 +563,6 @@ html, body {
     <input type="hidden" name="page" id="currentPageInput" value="<?= $data['page'] ?? 1 ?>">
     <input type="hidden" name="per_page" id="perPageInput" value="<?= $data['per_page'] ?? 15 ?>">
 
-    <!-- 1. Top Action & KPI Bar (No Redundant Headlines) -->
-    <div class="erp-top-header">
-        <!-- Compact KPI Strip -->
-        <div class="erp-kpi-strip">
-            <div class="erp-kpi-item">
-                <span class="erp-kpi-dot dot-blue"></span>
-                <span class="erp-kpi-label">Total:</span>
-                <span class="erp-kpi-value" id="stat-total-pos"><?= number_format($data['stats']->total_pos ?? 0) ?></span>
-            </div>
-            <div class="erp-kpi-item">
-                <span class="erp-kpi-dot dot-slate"></span>
-                <span class="erp-kpi-label">Draft:</span>
-                <span class="erp-kpi-value" id="stat-draft"><?= number_format($data['stats']->draft_count ?? 0) ?></span>
-            </div>
-            <div class="erp-kpi-item">
-                <span class="erp-kpi-dot dot-amber"></span>
-                <span class="erp-kpi-label">Sent:</span>
-                <span class="erp-kpi-value" id="stat-sent"><?= number_format($data['stats']->sent_count ?? 0) ?></span>
-            </div>
-            <div class="erp-kpi-item">
-                <span class="erp-kpi-dot dot-green"></span>
-                <span class="erp-kpi-label">Received:</span>
-                <span class="erp-kpi-value" id="stat-received"><?= number_format($data['stats']->received_count ?? 0) ?></span>
-            </div>
-        </div>
-    </div>
-
     <!-- Alert Strip (if any) -->
     <?php if (!empty($data['success']) || isset($_GET['success'])): ?>
     <div id="flash-success-alert" class="erp-alert success">
@@ -1068,12 +986,6 @@ function applyAjaxFilters() {
         const newCount = doc.getElementById('matching-count');
         const oldCount = document.getElementById('matching-count');
         if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
-
-        // Update KPI Strip
-        ['stat-total-pos', 'stat-draft', 'stat-sent', 'stat-received'].forEach(id => {
-            const n = doc.getElementById(id), o = document.getElementById(id);
-            if (n && o) o.innerHTML = n.innerHTML;
-        });
 
         window.history.pushState({}, '', targetUrl);
     })
