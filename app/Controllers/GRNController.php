@@ -16,13 +16,25 @@ class GRNController extends Controller {
     }
 
     public function index() {
-        $search = $_GET['search'] ?? '';
-        $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
-        $limit = 10;
-        $offset = ($page - 1) * $limit;
-        $filters = ['vendor_id' => $_GET['vendor_id'] ?? ''];
+        $this->checkPermission('grn', 'view');
+        $csrfToken = $this->generateCsrfToken();
 
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'delete_grn') {
+        $search = trim($_GET['search'] ?? '');
+        $page = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['per_page']) && in_array((int)$_GET['per_page'], [15, 25, 50, 100]) ? (int)$_GET['per_page'] : 15;
+        $offset = ($page - 1) * $limit;
+
+        $filters = [
+            'vendor_id' => $_GET['vendor_id'] ?? '',
+            'status'    => $_GET['status'] ?? '',
+            'period'    => $_GET['period'] ?? ''
+        ];
+
+        // Handle Delete GRN
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_grn') {
+            $this->validateCsrfOrDie();
+            $this->checkPermission('grn', 'delete');
+
             $grnId = intval($_POST['grn_id']);
             $grn = $this->grnModel->getGRNById($grnId);
             $grnItems = $this->grnModel->getGRNItems($grnId);
@@ -30,10 +42,39 @@ class GRNController extends Controller {
                 'grn' => $grn,
                 'items' => $grnItems
             ];
-            if ($this->grnModel->deleteGRN($grnId)) {
-                $grnNum = $grn ? $grn->grn_number : $grnId;
-                $this->logActivity('GRN Deleted', 'Inventory', "GRN draft '{$grnNum}' deleted.", $grnId, $oldValues, null);
-                header("Location: " . APP_URL . "/grn?success=" . urlencode("GRN draft deleted successfully.")); exit;
+
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                      (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+            try {
+                if ($this->grnModel->deleteGRN($grnId)) {
+                    $grnNum = $grn ? $grn->grn_number : $grnId;
+                    $this->logActivity('GRN Deleted', 'Inventory', "GRN draft '{$grnNum}' deleted.", $grnId, $oldValues, null);
+
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => true, 'message' => "GRN draft '{$grnNum}' deleted successfully."]);
+                        exit;
+                    }
+                    header("Location: " . APP_URL . "/grn?success=" . urlencode("GRN draft deleted successfully."));
+                    exit;
+                } else {
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'message' => 'Failed to delete GRN draft.']);
+                        exit;
+                    }
+                    header("Location: " . APP_URL . "/grn?error=" . urlencode("Failed to delete GRN draft."));
+                    exit;
+                }
+            } catch (Exception $e) {
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                    exit;
+                }
+                header("Location: " . APP_URL . "/grn?error=" . urlencode($e->getMessage()));
+                exit;
             }
         }
 
@@ -47,7 +88,10 @@ class GRNController extends Controller {
             'search' => $search,
             'filters' => $filters,
             'page' => $page,
+            'per_page' => $limit,
+            'total_items' => $totalGRNs,
             'total_pages' => ceil($totalGRNs / $limit),
+            'csrf_token' => $csrfToken,
             'error' => '',
             'success' => $_GET['success'] ?? ''
         ];
@@ -68,6 +112,9 @@ class GRNController extends Controller {
     }
 
     public function create() {
+        $this->checkPermission('grn', 'create_edit');
+        $csrfToken = $this->generateCsrfToken();
+
         $poId = $_GET['po_id'] ?? null;
         $prefilledVendor = '';
         $prefilledItems = [];
@@ -80,8 +127,10 @@ class GRNController extends Controller {
         }
 
         $catalogItems = $this->itemModel->getAllItems();
+        $itemIds = array_map(function($i) { return (int)$i->id; }, $catalogItems);
+        $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
         foreach($catalogItems as $item) {
-            $item->variations = $this->itemModel->getItemVariations($item->id);
+            $item->variations = $variationsByItem[$item->id] ?? [];
         }
 
         $db = new Database();
@@ -101,6 +150,7 @@ class GRNController extends Controller {
             'prefilled_vendor' => $prefilledVendor,
             'linked_po' => $linkedPO,
             'prefilled_items' => $prefilledItems,
+            'csrf_token' => $csrfToken,
             'error' => ''
         ];
 
@@ -174,6 +224,9 @@ class GRNController extends Controller {
     }
 
     public function edit($id = null) {
+        $this->checkPermission('grn', 'create_edit');
+        $csrfToken = $this->generateCsrfToken();
+
         if (!$id) { header('Location: ' . APP_URL . '/grn'); exit; }
         $grn = $this->grnModel->getGRNById($id);
         if (!$grn) { die("GRN not found."); }
@@ -183,8 +236,10 @@ class GRNController extends Controller {
         }
 
         $catalogItems = $this->itemModel->getAllItems();
+        $itemIds = array_map(function($i) { return (int)$i->id; }, $catalogItems);
+        $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
         foreach($catalogItems as $item) {
-            $item->variations = $this->itemModel->getItemVariations($item->id);
+            $item->variations = $variationsByItem[$item->id] ?? [];
         }
         $itemSupplierMappings = $this->itemModel->getAllItemSupplierMappings();
 
@@ -198,6 +253,7 @@ class GRNController extends Controller {
             'prefilled_vendor' => $grn->vendor_id,
             'prefilled_items' => $this->grnModel->getGRNItems($id),
             'linked_po' => $grn->po_id ? $this->poModel->getPOById($grn->po_id) : null,
+            'csrf_token' => $csrfToken,
             'error' => '',
             'success' => ''
         ];
@@ -274,6 +330,8 @@ class GRNController extends Controller {
     public function approve($id = null) {
         if (!$id) { header('Location: ' . APP_URL . '/grn'); exit; }
         
+        $this->validateCsrfOrDie();
+
         $role = strtolower($_SESSION['role'] ?? '');
         if ($role !== 'admin') {
             header('Location: ' . APP_URL . '/grn?error=Unauthorized: Only administrators can approve GRNs.');

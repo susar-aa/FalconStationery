@@ -288,20 +288,21 @@ Test how the system handles each situation and fix genuine problems.
   - Fixed N+1 query bottleneck by introducing batch variation preloading `Item::getVariationsForItems()`.
   - Added project rules in `AGENTS.md` and `.agents/rules/erp-ui-standards.md`.
 - [ ] **Module 2: Sales & Billing**
-- [x] **Module 3: Purchases & GRN (`PurchaseController`, `PurchaseOrder`, `Views/purchases/index.php`)**
+- [x] **Module 3: Purchases & GRN (`PurchaseController`, `GRNController`, `PurchaseOrder`, `GRN`, `Views/purchases/`, `Views/grns/`)**
   - **Audit Findings**:
-    - Discovered missing CSRF tokens on Delete PO and Email Dispatch POST forms, which caused 403 firewall blocks.
-    - Discovered severe N+1 query loops in `index()` (`hasMixItems` called in a loop), `create()`, and `edit()` (`getItemVariations` called for every catalog product in a loop).
-    - Unprotected DELETE on POs allowed potential deletion of received POs that already had GRN and stock movements, and did not transactionally cascade delete child items.
+    - Discovered missing CSRF tokens on Delete PO, Delete GRN, and Admin Approval POST forms, causing security risks and potential CSRF exploits.
+    - Discovered severe N+1 query loops in PO `index()` (`hasMixItems` in loop), PO `create()` / `edit()`, and GRN `create()` / `edit()` (`getItemVariations` called for 1,050+ items in a loop).
+    - GRN index was missing pagination controls in the UI, locking users to 10 records.
+    - Unprotected DELETE on POs allowed potential deletion of received POs that already had GRN and stock movements.
   - **Fixes & Optimizations**:
-    - Eliminated N+1 bottlenecks by prefetching `has_mix` and `items_count` in the main SQL query, and batch-preloading catalog variations using `Item::getVariationsForItems()`.
+    - Eliminated all N+1 bottlenecks by prefetching `has_mix` and `items_count` in the main SQL queries, and batch-preloading catalog variations using `Item::getVariationsForItems()`.
     - Protected referential integrity in `PurchaseOrder::deletePO()` with atomic database transaction and blocked deletion of received POs.
-    - Added RBAC permission checks (`checkPermission('purchase', ...)`) and CSRF tokens across all actions.
-    - Added database-level KPI calculation in `PurchaseOrder::getPOStats()`.
-    - Applied 100vh Viewport-Locked ERP layout (`.erp-viewport-view`, sticky `thead`, scrollable table rows only).
-    - Positioned all filters (Supplier, Status, Date Range, Reset) at the top-right corner above the table.
-    - Enforced SF Pro Display typography, monospace data cells, and alternating zebra striping.
-    - Standardized bottom floating command bar (320px live search + New PO action).
+    - Added RBAC permission checks (`checkPermission('purchase', ...)`, `checkPermission('grn', ...)`) and CSRF tokens across all actions.
+    - Applied 100vh Viewport-Locked ERP layout (`.erp-viewport-view`, sticky `thead`, scrollable table rows only, pinned pagination footer) across both Purchase Orders and GRN.
+    - Grouped all filters (Supplier, Status, Period, Reset) to the top-right corner above the table.
+    - Enforced SF Pro Display typography, monospace data cells, and alternating zebra striping on all tables.
+    - Standardized bottom floating command bar (320px live search + Create action).
+    - Replaced raw browser `confirm()` with sleek CSRF-protected ERP modals for Delete and Admin Approval.
 - [ ] **Module 4: Rep Tracking & Route Audits**
 - [ ] **Module 5: Double-Entry Accounting & Banking**
 - [ ] **Module 6: HRM & Payroll**

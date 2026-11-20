@@ -1,613 +1,1074 @@
-<!-- Inter Font & FontAwesome Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- FontAwesome 6 Icons Guarantee -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
 /* ============================================================
-   SF PRO + APPLE DESIGN LANGUAGE — GOODS RECEIPT NOTES
+   FALCON STATIONERY ERP: GOODS RECEIPT NOTES (GRN)
+   CLEAN & PROFESSIONAL ERP VIEWPORT ARCHITECTURE
    ============================================================ */
 
-:root {
-    --c-bg:           #f2f2f7;
-    --c-surface:      #ffffff;
-    --c-surface2:     #f9f9fb;
-    --c-fill:         rgba(120,120,128,0.12);
-    --c-fill2:        rgba(120,120,128,0.16);
-    --c-separator:    rgba(60,60,67,0.12);
-    --c-separator2:   rgba(60,60,67,0.06);
-
-    --c-blue:         #007aff;
-    --c-blue-light:   #e5f2ff;
-    --c-blue-mid:     #b3d6ff;
-    --c-green:        #34c759;
-    --c-green-light:  #e6f9ec;
-    --c-orange:       #ff9500;
-    --c-orange-light: #fff4e5;
-    --c-red:          #ff3b30;
-    --c-red-light:    #fff0ef;
-    --c-purple:       #af52de;
-    --c-purple-light: #f5eeff;
-
-    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
-
-    --t-primary:   #1c1c1e;
-    --t-secondary: #636366;
-    --t-tertiary:  #aeaeb2;
-    --t-label:     #8e8e93;
-
-    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
-    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
-
-    --r-xs: 6px;
-    --r-sm: 10px;
-    --r-md: 14px;
-    --r-lg: 20px;
-    --r-xl: 26px;
-    --r-pill: 999px;
-
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --ease-ios:    cubic-bezier(0.25, 0.1, 0.25, 1);
-    --dur-fast:    0.18s;
-    --dur-mid:     0.28s;
-    --dur-slow:    0.42s;
+html, body {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: var(--erp-bg, #f8fafc);
+    font-family: var(--erp-font, 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif);
 }
 
-.inv-wrap {
-    max-width: 1420px;
-    margin: 0 auto;
-    padding: 0px 24px 140px;
-    font-family: var(--f-system);
-    color: var(--t-primary);
-}
-
-/* ---- Page Header ---- */
-.inv-header {
-    margin-bottom: 28px;
-}
-.inv-eyebrow {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--c-blue);
-    margin-bottom: 6px;
-}
-.inv-title {
-    font-size: 32px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-    color: var(--t-primary);
-}
-
-/* ---- Quick Links ---- */
-.quick-links {
+.grn-erp-workspace {
+    height: calc(100vh - 48px);
     display: flex;
-    gap: 8px;
-    margin-bottom: 28px;
-    align-items: center;
-    background: var(--c-surface);
-    padding: 8px 12px;
-    border-radius: var(--r-md);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-sm);
-    flex-wrap: wrap;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 12px 18px;
+    box-sizing: border-box;
+    gap: 10px;
+    position: relative;
 }
-.quick-links-label {
-    font-size: 11px;
-    color: var(--t-label);
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-right: 8px;
-}
-.btn-quick {
+
+.erp-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--c-surface);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--t-secondary);
-    text-decoration: none;
-    transition: all var(--dur-fast);
-}
-.btn-quick:hover {
-    background: var(--c-fill);
-    color: var(--t-primary);
-}
-.btn-quick.active {
-    background: var(--c-blue-light);
-    color: var(--c-blue);
-    border-color: var(--c-blue-mid);
-}
-
-/* ---- Alerts ---- */
-.sf-alert {
-    display: flex; align-items: flex-start; gap: 12px;
-    background: var(--c-surface);
-    border-radius: var(--r-md);
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-xs);
-    border: 0.5px solid var(--c-separator);
-    border-left-width: 3px;
-    font-size: 14px;
-}
-.sf-alert.success { border-left-color: var(--c-green); }
-.sf-alert.error   { border-left-color: var(--c-red); }
-.sf-alert-icon { font-size: 18px; flex-shrink: 0; padding-top: 1px; }
-.sf-alert.success .sf-alert-icon { color: var(--c-green); }
-.sf-alert.error   .sf-alert-icon { color: var(--c-red); }
-.sf-alert-title { font-weight: 600; color: var(--t-primary); margin-bottom: 2px; }
-.sf-alert-msg   { color: var(--t-secondary); font-size: 13px; }
-
-/* ---- Filter Shelf ---- */
-.filter-shelf {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 18px;
-}
-.filter-chip {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: var(--c-surface);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--t-secondary);
-    box-shadow: var(--shadow-xs);
-}
-.filter-chip-label {
     font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--t-label);
-    text-transform: uppercase;
-}
-.pg-size-sel {
-    font-family: var(--f-system); font-size: 13px; font-weight: 600;
-    color: var(--t-primary);
-    background: var(--c-fill);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-sm);
-    padding: 5px 9px;
-    outline: none; cursor: pointer;
-    transition: border-color var(--dur-fast);
-}
-.pg-size-sel:hover { border-color: var(--c-blue); }
-.filter-reset {
-    background: transparent;
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--t-secondary);
+    padding: 5px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all var(--dur-fast);
+    text-decoration: none;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
 }
-.filter-reset:hover { background: var(--c-fill); color: var(--t-primary); }
-.filter-count {
-    margin-left: auto;
-    font-size: 13px;
-    color: var(--t-secondary);
+.erp-btn-outline {
+    background: #ffffff;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+.erp-btn-outline:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+/* 1. Top-Right Clean Filter Bar Above Table */
+.erp-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.erp-filter-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-results-badge {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
     font-weight: 500;
 }
-.filter-count strong { color: var(--t-primary); font-weight: 700; }
-
-/* ---- Table Panel ---- */
-.table-panel {
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
-}
-.inv-table { width: 100%; border-collapse: collapse; }
-.inv-table thead th {
-    padding: 13px 18px;
-    font-size: 11px;
+.erp-results-badge strong {
+    color: #0f172a;
+    font-family: var(--erp-font, 'SF Pro Display', sans-serif);
     font-weight: 700;
-    letter-spacing: 0.06em;
+}
+
+.erp-filter-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+
+.erp-filter-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.erp-filter-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
     text-transform: uppercase;
-    color: var(--t-label);
-    background: var(--c-surface2);
-    border-bottom: 0.5px solid var(--c-separator);
-    white-space: nowrap;
-}
-.inv-table tbody tr {
-    transition: background var(--dur-fast);
-    border-bottom: 0.5px solid var(--c-separator2);
-}
-.inv-table tbody tr:last-child { border-bottom: none; }
-.inv-table tbody tr:hover { background: var(--c-fill2); }
-.inv-table td {
-    padding: 14px 18px;
-    font-size: 14px;
-    color: var(--t-primary);
-    vertical-align: middle;
+    letter-spacing: 0.04em;
 }
 
-/* ---- Badges ---- */
-.sf-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 10px;
-    border-radius: var(--r-pill);
-    font-size: 12px; font-weight: 700;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
+.erp-select {
+    height: 29px;
+    max-width: 155px;
+    padding: 0 24px 0 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    font-family: var(--erp-font, 'SF Pro Display', sans-serif);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    text-overflow: ellipsis;
 }
-.sf-badge .dot {
-    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+.erp-select:hover {
+    border-color: #94a3b8;
 }
-.badge-active  { background: var(--c-green-light);  color: #1a7f3c; }
-.badge-active  .dot { background: var(--c-green); }
-.badge-low     { background: var(--c-orange-light); color: #c05d00; }
-.badge-low     .dot { background: var(--c-orange); }
+.erp-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
 
-/* ---- Row Actions ---- */
-.row-acts { display: flex; gap: 6px; justify-content: flex-end; }
-.act-btn {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--c-fill);
-    color: var(--t-label);
-    border: none; cursor: pointer; text-decoration: none;
-    font-size: 13px;
-    transition: all var(--dur-fast) var(--ease-spring);
+.erp-btn-reset {
+    height: 29px;
+    padding: 0 11px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
 }
-.act-btn:hover { transform: scale(1.12); }
-.act-btn.view:hover   { background: var(--c-blue-light);   color: var(--c-blue); }
-.act-btn.edit:hover   { background: var(--c-purple-light); color: var(--c-purple); }
-.act-btn.trash:hover  { background: var(--c-red-light);    color: var(--c-red); }
+.erp-btn-reset:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
 
-/* ---- Command Bar (Dynamic Island style) ---- */
-.cmd-bar {
-    position: fixed;
-    bottom: 28px; left: 50%;
-    transform: translateX(-50%);
-    background: rgba(28, 28, 30, 0.92);
-    backdrop-filter: saturate(180%) blur(28px);
-    -webkit-backdrop-filter: saturate(180%) blur(28px);
-    border: 0.5px solid rgba(255,255,255,0.12);
-    border-radius: var(--r-pill);
-    padding: 7px 10px;
-    display: flex; align-items: center; gap: 4px;
-    box-shadow: var(--shadow-xl), 0 0 0 0.5px rgba(0,0,0,0.3);
-    z-index: 1000;
-}
-.cmd-search {
-    display: flex; align-items: center; gap: 9px;
-    background: rgba(255,255,255,0.1);
-    border-radius: var(--r-pill);
-    padding: 8px 14px;
-    width: 250px;
-    transition: width var(--dur-slow) var(--ease-ios),
-                background var(--dur-mid);
-}
-.cmd-search:focus-within {
-    width: 380px;
-    background: rgba(255,255,255,0.18);
-}
-.cmd-search i { color: rgba(255,255,255,0.55); font-size: 14px; flex-shrink: 0; }
-.cmd-search input {
-    background: transparent; border: none; outline: none;
-    color: #fff; font-size: 14px; font-weight: 500;
-    font-family: var(--f-system); width: 100%;
-}
-.cmd-search input::placeholder { color: rgba(255,255,255,0.45); }
-.cmd-divider { width: 0.5px; height: 22px; background: rgba(255,255,255,0.15); margin: 0 3px; }
-.cmd-cta {
-    display: flex; align-items: center; gap: 7px;
-    background: #fff; color: #1c1c1e;
-    border: none; border-radius: var(--r-pill);
-    padding: 0 18px; height: 38px;
-    font-size: 14px; font-weight: 700;
-    font-family: var(--f-system);
-    cursor: pointer; text-decoration: none;
-    transition: transform var(--dur-fast) var(--ease-spring),
-                background var(--dur-fast);
-    margin-left: 2px;
-}
-.cmd-cta:hover { background: #e5e5ea; transform: scale(0.97); }
-
-/* ---- Modals ---- */
-.modal-veil {
-    position: fixed; inset: 0; z-index: 2000;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: saturate(180%) blur(14px);
-    -webkit-backdrop-filter: saturate(180%) blur(14px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-    opacity: 0; pointer-events: none;
-    transition: opacity var(--dur-mid) var(--ease-ios);
-}
-.modal-veil:not(.hidden) { opacity: 1; pointer-events: auto; }
-.sf-modal {
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-xl);
-    width: 100%; max-width: 420px;
+/* 2. Table Card with Dedicated Independent Scroll */
+.erp-card-table {
+    flex: 1;
+    min-height: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    transform: translateY(16px) scale(0.97);
-    transition: transform var(--dur-slow) var(--ease-spring);
-}
-.modal-veil:not(.hidden) .sf-modal { transform: translateY(0) scale(1); }
-.modal-head {
-    padding: 20px 22px 18px;
-    text-align: center;
-    border-bottom: 0.5px solid var(--c-separator);
     position: relative;
 }
-.modal-title { font-size: 17px; font-weight: 700; color: var(--t-primary); }
-.modal-close {
-    position: absolute; right: 14px; top: 14px;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: var(--c-fill); border: none; cursor: pointer;
-    color: var(--t-label); font-size: 18px;
-    display: flex; align-items: center; justify-content: center;
-    transition: background var(--dur-fast);
-}
-.modal-close:hover { background: var(--c-fill2); }
-.modal-body { padding: 22px; }
-.modal-foot {
-    padding: 14px 22px;
-    background: var(--c-surface2);
-    border-top: 0.5px solid var(--c-separator);
-    display: flex; gap: 10px;
-}
-.sf-btn {
-    flex: 1; padding: 12px;
-    border-radius: var(--r-md);
-    font-size: 15px; font-weight: 700;
-    font-family: var(--f-system); text-align: center;
-    cursor: pointer; border: none;
-    transition: transform var(--dur-fast) var(--ease-spring), filter var(--dur-fast);
-    text-decoration: none; display: flex; align-items: center; justify-content: center;
-}
-.sf-btn:hover { filter: brightness(0.94); }
-.sf-btn:active { transform: scale(0.97); }
-.sf-btn.neutral { background: var(--c-fill); color: var(--t-primary); }
-.sf-btn.primary { background: var(--t-primary); color: #fff; }
 
-.sf-input {
-    width: 100%; padding: 12px 14px;
-    background: var(--c-fill);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-md);
-    font-size: 15px; font-weight: 500; font-family: var(--f-system);
-    color: var(--t-primary); outline: none;
-    transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background var(--dur-fast);
-    box-sizing: border-box;
+.erp-table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding-bottom: 54px; /* Clearance for floating bottom island */
 }
-.sf-input:focus {
-    background: var(--c-surface);
-    border-color: var(--c-blue);
-    box-shadow: 0 0 0 3.5px rgba(0,122,255,0.14);
+
+.erp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    text-align: left;
+}
+
+.erp-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.erp-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s;
+}
+.erp-table tbody tr:hover {
+    background: #f8fafc !important;
+}
+/* Alternating Zebra Striping */
+.erp-table tbody tr:nth-child(even) {
+    background: #fbfcfe;
+}
+
+.erp-table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+    color: #1e293b;
+}
+
+.font-mono {
+    font-family: var(--erp-mono, 'SF Mono', ui-monospace, monospace);
+}
+
+/* Badges */
+.erp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+.badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.badge-approved {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+.badge-approved .badge-dot {
+    background: #10b981;
+}
+.badge-pending {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.badge-pending .badge-dot {
+    background: #f59e0b;
+}
+
+/* 3. Action Buttons (Ghost Icon Style) */
+.erp-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: flex-end;
+}
+.erp-icon-btn {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 11.5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.12s ease;
+    padding: 0;
+}
+.erp-icon-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+.erp-icon-btn.approve {
+    color: #16a34a;
+}
+.erp-icon-btn.approve:hover {
+    background: #ecfdf5;
+    border-color: #86efac;
+    color: #15803d;
+}
+.erp-icon-btn.delete {
+    color: #dc2626;
+}
+.erp-icon-btn.delete:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+/* 4. Pinned Pagination Footer */
+.erp-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #64748b;
+}
+.erp-page-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.erp-page-btn {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.12s;
+}
+.erp-page-btn:hover:not(.disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+.erp-page-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+.erp-page-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* 5. Floating Bottom Command Island */
+.cmd-bar {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    padding: 5px 8px 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+    z-index: 50;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cmd-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    width: 320px;
+}
+.cmd-search i {
+    color: #94a3b8;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.cmd-search input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f8fafc;
+    font-size: 13px;
+    font-family: var(--erp-font, 'SF Pro Display', sans-serif);
+    padding: 4px 22px 4px 0;
+}
+.cmd-search input::placeholder {
+    color: #64748b;
+}
+.cmd-clear-btn {
+    position: absolute;
+    right: 4px;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 12px;
+    display: none;
+}
+.cmd-clear-btn:hover {
+    color: #f8fafc;
+}
+.cmd-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.18);
+    flex-shrink: 0;
+}
+.cmd-cta {
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.15s, background 0.15s;
+}
+.cmd-cta:hover {
+    background: #f1f5f9;
+    transform: scale(1.02);
+}
+
+/* Alerts */
+.erp-alert {
+    padding: 7px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+.erp-alert.success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+.erp-alert.error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+.erp-alert-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font-size: 13px;
+    padding: 0;
+}
+
+/* Modals */
+.erp-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+}
+.erp-modal-overlay.hidden {
+    display: none !important;
+}
+.erp-modal-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 440px;
+    overflow: hidden;
+    animation: erpModalIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes erpModalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.erp-modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.erp-modal-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.erp-modal-body {
+    padding: 16px 18px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+}
+.erp-modal-footer {
+    padding: 12px 18px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.erp-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #0f172a;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+.erp-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* AJAX Spinner */
+.erp-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+}
+.erp-loading-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.erp-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: erpSpin 0.6s linear infinite;
+}
+@keyframes erpSpin {
+    to { transform: rotate(360deg); }
 }
 </style>
 
-<div class="inv-wrap">
+<div class="erp-viewport-view grn-erp-workspace">
+<form id="filterForm" action="<?= APP_URL ?>/grn" method="GET" onsubmit="event.preventDefault(); applyAjaxFilters();">
+    <input type="hidden" name="page" id="currentPageInput" value="<?= $data['page'] ?? 1 ?>">
+    <input type="hidden" name="per_page" id="perPageInput" value="<?= $data['per_page'] ?? 15 ?>">
 
-    <!-- Alert Messaging -->
-    <?php if(!empty($data['error'])): ?>
-    <div class="sf-alert error">
-        <i class="fa-solid fa-triangle-exclamation sf-alert-icon"></i>
-        <div style="flex:1;">
-            <div class="sf-alert-title">Operation Error</div>
-            <div class="sf-alert-msg"><?= htmlspecialchars($data['error']) ?></div>
-        </div>
+    <!-- Alert Strip (if any) -->
+    <?php if (!empty($data['success']) || isset($_GET['success'])): ?>
+    <div id="flash-success-alert" class="erp-alert success">
+        <div><i class="fa-solid fa-circle-check" style="margin-right:6px;"></i> <?= htmlspecialchars($data['success'] ?? $_GET['success'] ?? '') ?></div>
+        <button type="button" class="erp-alert-close" onclick="document.getElementById('flash-success-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <?php endif; ?>
 
-    <?php if(!empty($data['success'])): ?>
-    <div class="sf-alert success">
-        <i class="fa-solid fa-circle-check sf-alert-icon"></i>
-        <div style="flex:1;">
-            <div class="sf-alert-title">Success</div>
-            <div class="sf-alert-msg"><?= htmlspecialchars($data['success']) ?></div>
-        </div>
+    <?php if (!empty($data['error']) || isset($_GET['error'])): ?>
+    <div id="flash-error-alert" class="erp-alert error">
+        <div><i class="fa-solid fa-circle-exclamation" style="margin-right:6px;"></i> <?= htmlspecialchars($data['error'] ?? $_GET['error'] ?? '') ?></div>
+        <button type="button" class="erp-alert-close" onclick="document.getElementById('flash-error-alert').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <?php endif; ?>
 
-    <!-- Filter Shelf -->
-    <div class="filter-shelf">
-        <div class="filter-chip">
-            <span class="filter-chip-label">Supplier:</span>
-            <select id="filterVendor" class="pg-size-sel" onchange="triggerSearch()" style="border:none; background:transparent; font-weight:600; padding:0; outline:none; font-size:13px; color:var(--t-primary); cursor:pointer;">
-                <option value="">All Suppliers</option>
-                <?php foreach($data['vendors'] as $ven): ?>
-                    <option value="<?= $ven->id ?>" <?= ($data['filters']['vendor_id'] == $ven->id) ? 'selected' : '' ?>><?= htmlspecialchars($ven->name) ?></option>
-                <?php endforeach; ?>
-            </select>
+    <!-- 1. Dedicated Filters Bar Above Table with Top-Right Alignment -->
+    <div class="erp-filter-bar">
+        <!-- Left: Count -->
+        <div class="erp-filter-left">
+            <span class="erp-results-badge">
+                Showing <strong id="matching-count"><?= number_format($data['total_items'] ?? count($data['grns'])) ?></strong> GRN records
+            </span>
         </div>
-        
-        <button class="filter-reset" onclick="clearFilters()">Clear Filters</button>
-        
-        <div class="filter-count">
-            Showing <strong><?= count($data['grns']) ?></strong> GRN records
+
+        <!-- Right: Filter Controls -->
+        <div class="erp-filter-right">
+            <!-- Supplier Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Supplier:</span>
+                <select name="vendor_id" id="vendorInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="">All Suppliers</option>
+                    <?php if (!empty($data['vendors'])): ?>
+                        <?php foreach ($data['vendors'] as $ven): ?>
+                            <option value="<?= $ven->id ?>" <?= (($data['filters']['vendor_id'] ?? '') == $ven->id) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($ven->name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Status:</span>
+                <select name="status" id="statusInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="" <?= ($data['filters']['status'] ?? '') === '' ? 'selected' : '' ?>>All Statuses</option>
+                    <option value="pending" <?= ($data['filters']['status'] ?? '') === 'pending' ? 'selected' : '' ?>>Pending Approval</option>
+                    <option value="approved" <?= ($data['filters']['status'] ?? '') === 'approved' ? 'selected' : '' ?>>Approved</option>
+                </select>
+            </div>
+
+            <!-- Period Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Period:</span>
+                <select name="period" id="periodInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="" <?= empty($data['filters']['period']) ? 'selected' : '' ?>>All Time</option>
+                    <option value="today" <?= ($data['filters']['period'] ?? '') === 'today' ? 'selected' : '' ?>>Today</option>
+                    <option value="this_week" <?= ($data['filters']['period'] ?? '') === 'this_week' ? 'selected' : '' ?>>This Week</option>
+                    <option value="this_month" <?= ($data['filters']['period'] ?? '') === 'this_month' ? 'selected' : '' ?>>This Month</option>
+                    <option value="last_30" <?= ($data['filters']['period'] ?? '') === 'last_30' ? 'selected' : '' ?>>Last 30 Days</option>
+                    <option value="this_year" <?= ($data['filters']['period'] ?? '') === 'this_year' ? 'selected' : '' ?>>This Year</option>
+                </select>
+            </div>
+
+            <!-- Reset Filters -->
+            <button type="button" class="erp-btn-reset" onclick="resetFilters()" title="Reset all filters">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+                <span>Reset</span>
+            </button>
         </div>
     </div>
 
-    <!-- Table Container -->
-    <div class="table-panel">
-        <table class="inv-table">
-            <thead>
-                <tr>
-                    <th style="width: 25%;">GRN Number & Date</th>
-                    <th style="width: 30%;">Supplier / Vendor</th>
-                    <th style="width: 15%;">Linked PO</th>
-                    <th style="text-align: right; width: 15%;">Total Amount</th>
-                    <th style="text-align: center; width: 15%;">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <?php if(empty($data['grns'])): ?>
-                <tr>
-                    <td colspan="5" style="text-align: center; color: var(--t-label); padding: 32px; font-style: italic;">
-                        No Goods Receipt Notes found.
-                    </td>
-                </tr>
-                <?php else: foreach($data['grns'] as $grn): ?>
-                <tr>
-                    <td>
-                        <strong style="font-family: var(--f-mono); font-size:14px;"><?= htmlspecialchars($grn->grn_number) ?></strong><br>
-                        <span style="font-size: 11px; color: var(--t-secondary); margin-top: 2px; display:inline-block;">
-                            Rcvd: <?= date('M d, Y', strtotime($grn->grn_date)) ?>
-                        </span>
-                        <?php if(!empty($grn->receipt_number)): ?>
-                            <br><span style="font-size: 11px; color: var(--c-green); font-weight: 500;">Inv: <?= htmlspecialchars($grn->receipt_number) ?></span>
-                        <?php endif; ?>
-                        <br>
-                        <?php if($grn->is_approved): ?>
-                            <span class="sf-badge badge-active" style="margin-top: 6px;"><span class="dot"></span>Approved</span>
-                            <?php if($grn->approver_name): ?>
-                                <br><span style="font-size: 10px; color: var(--t-label); margin-top:2px; display:inline-block;">by: <?= htmlspecialchars($grn->approver_name) ?></span>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            <span class="sf-badge badge-low" style="margin-top: 6px;"><span class="dot"></span>Pending</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <span style="color: var(--c-blue); font-weight: 700;"><?= htmlspecialchars($grn->vendor_name) ?></span><br>
-                        <span style="font-size: 11px; color: var(--t-secondary); margin-top: 3px; display:inline-block;">Created by: <?= htmlspecialchars($grn->creator_name) ?></span>
-                    </td>
-                    <td>
-                        <?php if($grn->po_number): ?>
-                            <span style="background: var(--c-fill); padding: 4px 10px; border-radius: var(--r-xs); font-size: 12px; font-weight: 700; font-family: var(--f-mono); color: var(--t-primary);">
-                                🔗 <?= htmlspecialchars($grn->po_number) ?>
-                            </span>
-                        <?php else: ?>
-                            <span style="color: var(--t-tertiary); font-style: italic; font-size: 12px;">Manual GRN</span>
-                        <?php endif; ?>
-                    </td>
-                    <td style="text-align: right; font-weight: 700; font-family: var(--f-mono); font-size: 14px;">
-                        Rs: <?= number_format($grn->total_amount, 2) ?>
-                    </td>
-                    <td style="text-align: center;">
-                        <div class="row-acts" style="justify-content: center;">
-                            <a href="<?= APP_URL ?>/grn/show/<?= $grn->id ?>" class="act-btn view" title="Print/PDF" target="_blank">
-                                <i class="fa-solid fa-print"></i>
+    <!-- 2. Table Card (Rows Scroll Only, Header Sticky, Pinned Pagination) -->
+    <div class="erp-card-table">
+        <div class="erp-loading-overlay" id="tableLoadingOverlay">
+            <div class="erp-spinner"></div>
+        </div>
+
+        <div class="erp-table-scroll" id="tableScrollContainer">
+            <table class="erp-table">
+                <thead>
+                    <tr>
+                        <th style="width: 140px;">GRN Number</th>
+                        <th style="width: 105px;">Received Date</th>
+                        <th style="min-width: 220px;">Supplier / Vendor</th>
+                        <th style="width: 120px;">Linked PO</th>
+                        <th style="width: 80px; text-align: center;">Items</th>
+                        <th style="width: 130px; text-align: right;">Total Amount</th>
+                        <th style="width: 135px; text-align: center;">Status</th>
+                        <th style="width: 120px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <?php if (empty($data['grns'])): ?>
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 48px 16px; color: #94a3b8; font-style: italic;">
+                            <i class="fa-solid fa-tray" style="font-size: 28px; display: block; margin-bottom: 8px; color: #cbd5e1;"></i>
+                            No Goods Receipt Notes matching your filters.
+                        </td>
+                    </tr>
+                    <?php else: ?>
+                    <?php foreach ($data['grns'] as $grn): ?>
+                    <tr>
+                        <!-- GRN Number -->
+                        <td class="font-mono" style="font-weight: 700; color: #2563eb;">
+                            <a href="<?= APP_URL ?>/grn/show/<?= $grn->id ?>" target="_blank" style="color: inherit; text-decoration: none;" title="Open Details / Print">
+                                <?= htmlspecialchars($grn->grn_number) ?>
                             </a>
-                            <?php if(!$grn->is_approved): ?>
-                                <a href="<?= APP_URL ?>/grn/edit/<?= $grn->id ?>" class="act-btn edit" title="Edit GRN">
-                                    <i class="fa-solid fa-pen"></i>
+                            <?php if (!empty($grn->receipt_number)): ?>
+                                <div style="font-size: 10.5px; color: #16a34a; font-weight: 500; margin-top: 1px;" title="Supplier Invoice / DC #">
+                                    <i class="fa-solid fa-receipt" style="font-size: 9.5px;"></i> <?= htmlspecialchars($grn->receipt_number) ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+
+                        <!-- Received Date -->
+                        <td class="font-mono" style="color: #475569; font-size: 12px; white-space: nowrap;">
+                            <?= date('Y-m-d', strtotime($grn->grn_date)) ?>
+                        </td>
+
+                        <!-- Supplier / Vendor -->
+                        <td>
+                            <div style="font-weight: 600; color: #0f172a;"><?= htmlspecialchars($grn->vendor_name) ?></div>
+                            <div style="font-size: 11px; color: #64748b; margin-top: 1px;">
+                                By <?= htmlspecialchars($grn->creator_name ?? 'System') ?>
+                            </div>
+                        </td>
+
+                        <!-- Linked PO -->
+                        <td>
+                            <?php if (!empty($grn->po_number)): ?>
+                                <a href="<?= APP_URL ?>/purchase/show/<?= $grn->po_id ?>" target="_blank" class="font-mono" style="display:inline-flex; align-items:center; gap:4px; font-size: 11.5px; font-weight: 600; color: #475569; text-decoration:none; background:#f1f5f9; padding: 2px 7px; border-radius: 4px; border:1px solid #e2e8f0;" title="View Purchase Order">
+                                    <i class="fa-solid fa-link" style="font-size: 9.5px; color:#94a3b8;"></i>
+                                    <?= htmlspecialchars($grn->po_number) ?>
                                 </a>
-                                <form action="<?= APP_URL ?>/grn" method="POST" style="display:inline;" id="del-form-<?= $grn->id ?>">
-                                    <input type="hidden" name="action" value="delete_grn">
-                                    <input type="hidden" name="grn_id" value="<?= $grn->id ?>">
-                                    <button type="button" class="act-btn trash" title="Delete GRN" onclick="if(confirm('Delete this pending GRN?')) document.getElementById('del-form-<?= $grn->id ?>').submit();">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
-                                <?php if(strtolower($_SESSION['role'] ?? '') === 'admin'): ?>
-                                    <button class="act-btn view" style="background:var(--c-green-light); color:var(--c-green);" title="Approve GRN" onclick="showApprovalModal(<?= $grn->id ?>, '<?= htmlspecialchars($grn->grn_number) ?>')">
-                                        <i class="fa-solid fa-check"></i>
+                            <?php else: ?>
+                                <span style="font-size: 11px; color: #94a3b8; font-style: italic;">Manual</span>
+                            <?php endif; ?>
+                        </td>
+
+                        <!-- Items Count -->
+                        <td class="font-mono" style="text-align: center; font-weight: 600; color: #334155;">
+                            <?= number_format($grn->items_count ?? 0) ?>
+                        </td>
+
+                        <!-- Total Amount -->
+                        <td class="font-mono" style="text-align: right; font-weight: 700; color: #0f172a; font-size: 13px;">
+                            <?= number_format($grn->total_amount, 2) ?>
+                        </td>
+
+                        <!-- Status -->
+                        <td style="text-align: center;">
+                            <?php if ($grn->is_approved): ?>
+                                <span class="erp-badge badge-approved" title="Approved by <?= htmlspecialchars($grn->approver_name ?? 'Admin') ?>">
+                                    <span class="badge-dot"></span>Approved
+                                </span>
+                                <?php if (!empty($grn->approver_name)): ?>
+                                    <div style="font-size: 10px; color: #94a3b8; margin-top: 1px;">
+                                        by <?= htmlspecialchars($grn->approver_name) ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="erp-badge badge-pending">
+                                    <span class="badge-dot"></span>Pending
+                                </span>
+                            <?php endif; ?>
+                        </td>
+
+                        <!-- Actions -->
+                        <td style="text-align: right;">
+                            <div class="erp-row-actions">
+                                <!-- Print / Show View -->
+                                <a href="<?= APP_URL ?>/grn/show/<?= $grn->id ?>" target="_blank" class="erp-icon-btn" title="Print / PDF View">
+                                    <i class="fa-solid fa-print"></i>
+                                </a>
+
+                                <?php if (!$grn->is_approved): ?>
+                                    <!-- Edit Draft -->
+                                    <a href="<?= APP_URL ?>/grn/edit/<?= $grn->id ?>" class="erp-icon-btn" title="Edit GRN Draft">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+
+                                    <!-- Authorize & Approve (Admin Only) -->
+                                    <?php if (strtolower($_SESSION['role'] ?? '') === 'admin'): ?>
+                                        <button type="button" class="erp-icon-btn approve" title="Authorize & Approve GRN" onclick="openApprovalModal(<?= $grn->id ?>, '<?= htmlspecialchars($grn->grn_number, ENT_QUOTES) ?>')">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                        </button>
+                                    <?php endif; ?>
+
+                                    <!-- Delete Pending Draft -->
+                                    <button type="button" class="erp-icon-btn delete" title="Delete Draft" onclick="openDeleteModal(<?= $grn->id ?>, '<?= htmlspecialchars($grn->grn_number, ENT_QUOTES) ?>', '<?= htmlspecialchars($grn->vendor_name, ENT_QUOTES) ?>')">
+                                        <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-                    </td>
-                </tr>
-                <?php endforeach; endif; ?>
-            </tbody>
-        </table>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pinned Pagination Footer -->
+        <div class="erp-pagination" id="pagination-footer">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span>Page <?= (int)($data['page'] ?? 1) ?> of <?= max(1, (int)($data['total_pages'] ?? 1)) ?></span>
+                <span style="color: #cbd5e1;">|</span>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #64748b;">
+                    Show:
+                    <select id="perPageSelect" class="erp-select" style="height: 25px; padding: 0 18px 0 6px; max-width: 65px; font-size: 11.5px;" onchange="changePerPage(this.value)">
+                        <option value="15" <?= ($data['per_page'] ?? 15) == 15 ? 'selected' : '' ?>>15</option>
+                        <option value="25" <?= ($data['per_page'] ?? 15) == 25 ? 'selected' : '' ?>>25</option>
+                        <option value="50" <?= ($data['per_page'] ?? 15) == 50 ? 'selected' : '' ?>>50</option>
+                        <option value="100" <?= ($data['per_page'] ?? 15) == 100 ? 'selected' : '' ?>>100</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="erp-page-controls">
+                <?php
+                    $currentPage = (int)($data['page'] ?? 1);
+                    $totalPages = max(1, (int)($data['total_pages'] ?? 1));
+                ?>
+                <!-- First Page -->
+                <button type="button" class="erp-page-btn <?= ($currentPage <= 1) ? 'disabled' : '' ?>" onclick="goToPage(1)" title="First Page">
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+                <!-- Prev Page -->
+                <button type="button" class="erp-page-btn <?= ($currentPage <= 1) ? 'disabled' : '' ?>" onclick="goToPage(<?= max(1, $currentPage - 1) ?>)" title="Previous Page">
+                    <i class="fa-solid fa-angle-left"></i>
+                </button>
+
+                <!-- Page Number Buttons (Window of 5) -->
+                <?php
+                    $startP = max(1, $currentPage - 2);
+                    $endP = min($totalPages, $startP + 4);
+                    if ($endP - $startP < 4) {
+                        $startP = max(1, $endP - 4);
+                    }
+                    for ($p = $startP; $p <= $endP; $p++):
+                ?>
+                    <button type="button" class="erp-page-btn <?= ($p === $currentPage) ? 'active' : '' ?>" onclick="goToPage(<?= $p ?>)">
+                        <?= $p ?>
+                    </button>
+                <?php endfor; ?>
+
+                <!-- Next Page -->
+                <button type="button" class="erp-page-btn <?= ($currentPage >= $totalPages) ? 'disabled' : '' ?>" onclick="goToPage(<?= min($totalPages, $currentPage + 1) ?>)" title="Next Page">
+                    <i class="fa-solid fa-angle-right"></i>
+                </button>
+                <!-- Last Page -->
+                <button type="button" class="erp-page-btn <?= ($currentPage >= $totalPages) ? 'disabled' : '' ?>" onclick="goToPage(<?= $totalPages ?>)" title="Last Page">
+                    <i class="fa-solid fa-angles-right"></i>
+                </button>
+            </div>
+        </div>
     </div>
+</form>
 </div>
 
-<!-- Command Bar (Dynamic Island style) -->
+<!-- Floating Bottom Island (Search + Primary Create CTA) -->
 <div class="cmd-bar">
     <div class="cmd-search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" placeholder="Search GRN, PO, Supplier..." value="<?= htmlspecialchars($data['search']) ?>">
+        <input type="text" id="searchInput" placeholder="Search GRN, PO, Supplier..." value="<?= htmlspecialchars($data['search'] ?? '') ?>" autocomplete="off">
+        <i class="fa-solid fa-xmark cmd-clear-btn" id="searchClearBtn" onclick="clearSearchInput()" title="Clear search"></i>
     </div>
     <div class="cmd-divider"></div>
-    <a href="<?= APP_URL ?>/grn/create" class="cmd-cta">
-        <i class="fa-solid fa-plus"></i> Create Manual GRN
+    <a href="<?= APP_URL ?>/grn/create" class="cmd-cta" title="Create Goods Receipt Note">
+        <i class="fa-solid fa-plus"></i>
+        <span>+ New GRN</span>
     </a>
 </div>
 
-<!-- Approval Password Modal -->
-<div id="approvalModal" class="modal-veil hidden" style="display:none;">
-    <div class="sf-modal" style="border-top: 4px solid var(--c-green);">
-        <div class="modal-head">
-            <h3 class="modal-title" id="approvalTitle">Approve GRN</h3>
-            <button class="modal-close" onclick="closeApprovalModal()">&times;</button>
+<!-- Modal: Delete GRN Confirmation -->
+<div id="deleteModal" class="erp-modal-overlay hidden">
+    <div class="erp-modal-card">
+        <div class="erp-modal-header">
+            <div class="erp-modal-title" style="color: #dc2626;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Delete GRN Draft
+            </div>
+            <button type="button" onclick="closeDeleteModal()" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:16px;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <div class="modal-body">
-            <p style="font-size:13px; color:var(--t-secondary); margin-bottom:20px; line-height: 1.45;">
-                For security verification, please enter your administrator password to authorize this Goods Receipt Note and update inventory levels.
-            </p>
-            
-            <form id="approvalForm" method="POST" action="">
-                <input type="hidden" name="action" value="approve_grn">
-                <div style="display: flex; flex-direction: column; gap: 14px;">
-                    <div>
-                        <label style="display:block; margin-bottom:8px; font-size:11px; font-weight:600; color:var(--t-label); text-transform: uppercase;">Admin Password</label>
-                        <input type="password" name="password" id="approvalPassword" class="sf-input" required placeholder="••••••••">
-                    </div>
+        <form id="deleteForm" method="POST" action="<?= APP_URL ?>/grn">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($data['csrf_token'] ?? '') ?>">
+            <input type="hidden" name="action" value="delete_grn">
+            <input type="hidden" name="grn_id" id="deleteGrnId" value="">
+
+            <div class="erp-modal-body">
+                <p style="margin: 0 0 10px;">Are you sure you want to permanently delete this pending GRN draft?</p>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px;">
+                    <div><strong>GRN Number:</strong> <span class="font-mono" id="deleteGrnNumText" style="color:#2563eb;"></span></div>
+                    <div style="margin-top: 4px;"><strong>Supplier:</strong> <span id="deleteGrnVendorText"></span></div>
                 </div>
-            </form>
+                <p style="color: #64748b; font-size: 11.5px; margin: 10px 0 0;">
+                    Note: Only unapproved drafts can be deleted. This action cannot be reversed.
+                </p>
+            </div>
+            <div class="erp-modal-footer">
+                <button type="button" onclick="closeDeleteModal()" class="erp-btn erp-btn-outline">Cancel</button>
+                <button type="submit" class="erp-btn" style="background:#dc2626; color:#ffffff;">
+                    <i class="fa-solid fa-trash-can"></i> Delete Permanently
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Admin Approval Password -->
+<div id="approvalModal" class="erp-modal-overlay hidden">
+    <div class="erp-modal-card">
+        <div class="erp-modal-header">
+            <div class="erp-modal-title" style="color: #16a34a;">
+                <i class="fa-solid fa-circle-check"></i> Authorize & Approve GRN
+            </div>
+            <button type="button" onclick="closeApprovalModal()" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:16px;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
-        <div class="modal-foot">
-            <button type="button" class="sf-btn neutral" onclick="closeApprovalModal()">Cancel</button>
-            <button type="submit" form="approvalForm" class="sf-btn primary" style="background:var(--c-green);">Confirm & Approve</button>
-        </div>
+        <form id="approvalForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($data['csrf_token'] ?? '') ?>">
+            <input type="hidden" name="action" value="approve_grn">
+
+            <div class="erp-modal-body">
+                <p style="margin: 0 0 10px; color: #334155;">
+                    Authorizing GRN <strong class="font-mono" id="approvalGrnNumText" style="color:#16a34a;"></strong> will immediately:
+                </p>
+                <ul style="margin: 0 0 14px 18px; padding: 0; font-size: 12px; color: #475569; line-height: 1.6;">
+                    <li>Increment warehouse stock levels for all received line items.</li>
+                    <li>Update item FIFO batch tracking records.</li>
+                    <li>Post journal entries to the financial ledger (Accounts Payable & Inventory).</li>
+                </ul>
+
+                <div>
+                    <label style="display:block; margin-bottom:6px; font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.04em;">
+                        Administrator Password *
+                    </label>
+                    <input type="password" name="password" id="approvalPassword" class="erp-input" required placeholder="Enter your admin account password" autocomplete="current-password">
+                </div>
+            </div>
+            <div class="erp-modal-footer">
+                <button type="button" onclick="closeApprovalModal()" class="erp-btn erp-btn-outline">Cancel</button>
+                <button type="submit" class="erp-btn" style="background:#16a34a; color:#ffffff;">
+                    <i class="fa-solid fa-check"></i> Confirm & Authorize
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
-    let searchTimeout = null;
-    document.getElementById('searchInput').addEventListener('input', triggerSearchDelay);
-    function triggerSearchDelay() { clearTimeout(searchTimeout); searchTimeout = setTimeout(triggerSearch, 400); }
+// Live Search Debounce
+let searchTimer = null;
+const searchInput = document.getElementById('searchInput');
+const searchClearBtn = document.getElementById('searchClearBtn');
 
-    function triggerSearch() {
-        const query = encodeURIComponent(document.getElementById('searchInput').value);
-        const venId = encodeURIComponent(document.getElementById('filterVendor').value);
-        const url = `?search=${query}&vendor_id=${venId}&page=1`;
-        
-        fetch(url).then(response => response.text()).then(html => {
-            const parser = new DOMParser(); const doc = parser.parseFromString(html, 'text/html');
-            document.getElementById('tableBody').innerHTML = doc.getElementById('tableBody').innerHTML;
-            window.history.pushState({}, '', url);
-        });
+function toggleClearBtn() {
+    if (searchInput.value.trim().length > 0) {
+        searchClearBtn.style.display = 'block';
+    } else {
+        searchClearBtn.style.display = 'none';
+    }
+}
+toggleClearBtn();
+
+searchInput.addEventListener('input', function() {
+    toggleClearBtn();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        document.getElementById('currentPageInput').value = 1;
+        applyAjaxFilters();
+    }, 300);
+});
+
+function clearSearchInput() {
+    searchInput.value = '';
+    toggleClearBtn();
+    document.getElementById('currentPageInput').value = 1;
+    applyAjaxFilters();
+    searchInput.focus();
+}
+
+function resetFilters() {
+    document.getElementById('vendorInput').value = '';
+    document.getElementById('statusInput').value = '';
+    document.getElementById('periodInput').value = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('currentPageInput').value = 1;
+    toggleClearBtn();
+    applyAjaxFilters();
+}
+
+function goToPage(page) {
+    document.getElementById('currentPageInput').value = page;
+    applyAjaxFilters();
+}
+
+function changePerPage(val) {
+    document.getElementById('perPageInput').value = val;
+    document.getElementById('currentPageInput').value = 1;
+    applyAjaxFilters();
+}
+
+// AJAX Filter Dispatcher
+function applyAjaxFilters() {
+    const loader = document.getElementById('tableLoadingOverlay');
+    if (loader) loader.classList.add('active');
+
+    const form = document.getElementById('filterForm');
+    const params = new URLSearchParams(new FormData(form));
+
+    const query = searchInput.value.trim();
+    if (query) {
+        params.set('search', query);
+    } else {
+        params.delete('search');
     }
 
-    function clearFilters() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('filterVendor').value = '';
-        triggerSearch();
-    }
+    const targetUrl = '<?= APP_URL ?>/grn?' + params.toString();
 
-    function showApprovalModal(grnId, grnNumber) {
-        const modal = document.getElementById('approvalModal');
-        const form = document.getElementById('approvalForm');
-        const title = document.getElementById('approvalTitle');
-        const passwordInput = document.getElementById('approvalPassword');
-        
-        title.innerText = `Approve GRN: ${grnNumber}`;
-        form.action = `<?= APP_URL ?>/grn/approve/${grnId}`;
-        passwordInput.value = '';
-        modal.style.display = 'flex';
-        modal.classList.remove('hidden');
-        setTimeout(() => passwordInput.focus(), 50);
-    }
+    fetch(targetUrl, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(res => res.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
 
-    function closeApprovalModal() {
-        const modal = document.getElementById('approvalModal');
-        modal.style.display = 'none';
-        modal.classList.add('hidden');
+        // Update Table Body
+        const newBody = doc.getElementById('tableBody');
+        const oldBody = document.getElementById('tableBody');
+        if (newBody && oldBody) oldBody.innerHTML = newBody.innerHTML;
+
+        // Update Pagination Footer
+        const newPagination = doc.getElementById('pagination-footer');
+        const oldPagination = document.getElementById('pagination-footer');
+        if (newPagination && oldPagination) oldPagination.innerHTML = newPagination.innerHTML;
+
+        // Update Results Count
+        const newCount = doc.getElementById('matching-count');
+        const oldCount = document.getElementById('matching-count');
+        if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+
+        window.history.pushState({}, '', targetUrl);
+    })
+    .catch(err => {
+        console.error('GRN Filter Error:', err);
+    })
+    .finally(() => {
+        if (loader) loader.classList.remove('active');
+    });
+}
+
+// Modal Handlers: Delete GRN
+function openDeleteModal(grnId, grnNum, vendor) {
+    document.getElementById('deleteGrnId').value = grnId;
+    document.getElementById('deleteGrnNumText').textContent = grnNum;
+    document.getElementById('deleteGrnVendorText').textContent = vendor;
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+// Modal Handlers: Admin Approval
+function openApprovalModal(grnId, grnNum) {
+    const modal = document.getElementById('approvalModal');
+    const form = document.getElementById('approvalForm');
+    const numText = document.getElementById('approvalGrnNumText');
+    const pwdInput = document.getElementById('approvalPassword');
+
+    form.action = `<?= APP_URL ?>/grn/approve/${grnId}`;
+    numText.textContent = grnNum;
+    pwdInput.value = '';
+    modal.classList.remove('hidden');
+    setTimeout(() => pwdInput.focus(), 80);
+}
+
+function closeApprovalModal() {
+    document.getElementById('approvalModal').classList.add('hidden');
+}
+
+// ESC closes modals
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+        closeApprovalModal();
     }
+});
 </script>

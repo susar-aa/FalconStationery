@@ -6,38 +6,122 @@ class GRN {
         $this->db = new Database();
     }
 
-    public function getGRNsPaginated($search = '', $limit = 10, $offset = 0, $filters = []) {
+    public function getGRNsPaginated($search = '', $limit = 15, $offset = 0, $filters = []) {
+        $params = [];
+        $whereClauses = [];
+
+        if (!empty($search)) {
+            $whereClauses[] = "(g.grn_number LIKE :search OR g.receipt_number LIKE :search_r OR v.name LIKE :search_v OR p.po_number LIKE :search_p)";
+            $params[':search'] = "%$search%";
+            $params[':search_r'] = "%$search%";
+            $params[':search_v'] = "%$search%";
+            $params[':search_p'] = "%$search%";
+        }
+
+        if (!empty($filters['vendor_id'])) {
+            $whereClauses[] = "g.vendor_id = :vid";
+            $params[':vid'] = (int)$filters['vendor_id'];
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            if ($filters['status'] === 'approved' || $filters['status'] === '1') {
+                $whereClauses[] = "g.is_approved = 1";
+            } elseif ($filters['status'] === 'pending' || $filters['status'] === '0') {
+                $whereClauses[] = "g.is_approved = 0";
+            }
+        }
+
+        if (!empty($filters['period'])) {
+            if ($filters['period'] === 'today') {
+                $whereClauses[] = "g.grn_date = CURDATE()";
+            } elseif ($filters['period'] === 'this_week') {
+                $whereClauses[] = "g.grn_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)";
+            } elseif ($filters['period'] === 'this_month') {
+                $whereClauses[] = "g.grn_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')";
+            } elseif ($filters['period'] === 'last_30') {
+                $whereClauses[] = "g.grn_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+            } elseif ($filters['period'] === 'this_year') {
+                $whereClauses[] = "g.grn_date >= DATE_FORMAT(CURDATE(), '%Y-01-01')";
+            }
+        }
+
+        $whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
+
         $sql = "SELECT g.*, v.name as vendor_name, u.username as creator_name, p.po_number,
                        u2.username as approver_name,
-                       COALESCE((SELECT SUM(total) FROM grn_items WHERE grn_id = g.id), 0) as total_amount
+                       COALESCE(NULLIF(g.total_amount, 0), (SELECT SUM(total) FROM grn_items WHERE grn_id = g.id), 0) as total_amount,
+                       (SELECT COUNT(*) FROM grn_items WHERE grn_id = g.id) as items_count
                 FROM goods_receipt_notes g 
                 JOIN vendors v ON g.vendor_id = v.id 
                 LEFT JOIN users u ON g.created_by = u.id
                 LEFT JOIN users u2 ON g.approved_by = u2.id
                 LEFT JOIN purchase_orders p ON g.po_id = p.id
-                WHERE (g.grn_number LIKE :search OR g.receipt_number LIKE :search OR v.name LIKE :search OR p.po_number LIKE :search)";
-        
-        if (!empty($filters['vendor_id'])) { $sql .= " AND g.vendor_id = :vid"; }
-        
-        $sql .= " ORDER BY g.created_at DESC LIMIT :limit OFFSET :offset";
-        
+                $whereSql
+                ORDER BY g.created_at DESC, g.id DESC
+                LIMIT :limit OFFSET :offset";
+
         $this->db->query($sql);
-        $this->db->bind(':search', "%$search%");
-        if (!empty($filters['vendor_id'])) { $this->db->bind(':vid', $filters['vendor_id']); }
-        $this->db->bind(':limit', $limit, PDO::PARAM_INT);
-        $this->db->bind(':offset', $offset, PDO::PARAM_INT);
+        foreach ($params as $key => $val) {
+            $this->db->bind($key, $val);
+        }
+        $this->db->bind(':limit', (int)$limit, PDO::PARAM_INT);
+        $this->db->bind(':offset', (int)$offset, PDO::PARAM_INT);
         return $this->db->resultSet();
     }
 
     public function getTotalGRNs($search = '', $filters = []) {
-        $sql = "SELECT COUNT(*) as total FROM goods_receipt_notes g JOIN vendors v ON g.vendor_id = v.id LEFT JOIN purchase_orders p ON g.po_id = p.id WHERE (g.grn_number LIKE :search OR g.receipt_number LIKE :search OR v.name LIKE :search OR p.po_number LIKE :search)";
-        if (!empty($filters['vendor_id'])) { $sql .= " AND g.vendor_id = :vid"; }
-        
+        $params = [];
+        $whereClauses = [];
+
+        if (!empty($search)) {
+            $whereClauses[] = "(g.grn_number LIKE :search OR g.receipt_number LIKE :search_r OR v.name LIKE :search_v OR p.po_number LIKE :search_p)";
+            $params[':search'] = "%$search%";
+            $params[':search_r'] = "%$search%";
+            $params[':search_v'] = "%$search%";
+            $params[':search_p'] = "%$search%";
+        }
+
+        if (!empty($filters['vendor_id'])) {
+            $whereClauses[] = "g.vendor_id = :vid";
+            $params[':vid'] = (int)$filters['vendor_id'];
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            if ($filters['status'] === 'approved' || $filters['status'] === '1') {
+                $whereClauses[] = "g.is_approved = 1";
+            } elseif ($filters['status'] === 'pending' || $filters['status'] === '0') {
+                $whereClauses[] = "g.is_approved = 0";
+            }
+        }
+
+        if (!empty($filters['period'])) {
+            if ($filters['period'] === 'today') {
+                $whereClauses[] = "g.grn_date = CURDATE()";
+            } elseif ($filters['period'] === 'this_week') {
+                $whereClauses[] = "g.grn_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)";
+            } elseif ($filters['period'] === 'this_month') {
+                $whereClauses[] = "g.grn_date >= DATE_FORMAT(CURDATE(), '%Y-%m-01')";
+            } elseif ($filters['period'] === 'last_30') {
+                $whereClauses[] = "g.grn_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+            } elseif ($filters['period'] === 'this_year') {
+                $whereClauses[] = "g.grn_date >= DATE_FORMAT(CURDATE(), '%Y-01-01')";
+            }
+        }
+
+        $whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
+
+        $sql = "SELECT COUNT(*) as total 
+                FROM goods_receipt_notes g 
+                JOIN vendors v ON g.vendor_id = v.id 
+                LEFT JOIN purchase_orders p ON g.po_id = p.id
+                $whereSql";
+
         $this->db->query($sql);
-        $this->db->bind(':search', "%$search%");
-        if (!empty($filters['vendor_id'])) { $this->db->bind(':vid', $filters['vendor_id']); }
+        foreach ($params as $key => $val) {
+            $this->db->bind($key, $val);
+        }
         $row = $this->db->single();
-        return $row->total ?? 0;
+        return (int)($row->total ?? 0);
     }
 
     public function getGRNById($id) {
