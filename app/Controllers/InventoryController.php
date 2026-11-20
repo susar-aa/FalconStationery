@@ -105,7 +105,9 @@ class InventoryController extends Controller {
             'stock_status' => isset($_GET['stock_status']) ? trim($_GET['stock_status']) : '',
             'category_id' => isset($_GET['category_id']) && $_GET['category_id'] !== '' ? intval($_GET['category_id']) : '',
             'supplier_id' => isset($_GET['supplier_id']) && $_GET['supplier_id'] !== '' ? intval($_GET['supplier_id']) : '',
-            'status' => isset($_GET['status']) ? trim($_GET['status']) : ''
+            'status' => isset($_GET['status']) ? trim($_GET['status']) : '',
+            'sort' => isset($_GET['sort']) ? trim($_GET['sort']) : 'name_asc',
+            'warehouse_id' => isset($_GET['warehouse_id']) && $_GET['warehouse_id'] !== '' ? intval($_GET['warehouse_id']) : ''
         ];
 
         $totalItems = $this->itemModel->countItems($filters);
@@ -120,13 +122,23 @@ class InventoryController extends Controller {
         $categories = $this->categoryModel->getCategories();
         $vendors = $this->getVendorsDropdown();
 
+        $warehouseModel = $this->model('Warehouse');
+        $warehouses = $warehouseModel->getAllWarehouses();
+        $stockValuation = $this->itemModel->getStockValuation();
+        $deletedCount = $this->itemModel->getDeletedCount();
+
         $itemIds = array_map(function($i) { return (int)$i->id; }, $items);
         $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
+        $batchesByItem = $this->itemModel->getBatchesForItems($itemIds);
 
         $data = [
             'items' => $items,
             'variations_by_item' => $variationsByItem,
+            'batches_by_item' => $batchesByItem,
             'stats' => $stats,
+            'stock_valuation' => $stockValuation,
+            'deleted_count' => $deletedCount,
+            'warehouses' => $warehouses,
             'filters' => $filters,
             'categories' => $categories,
             'vendors' => $vendors,
