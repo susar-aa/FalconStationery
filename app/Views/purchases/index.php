@@ -1,3 +1,6 @@
+<!-- FontAwesome 6 Icons Guarantee -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
 <style>
 /* ============================================================
    FALCON STATIONERY ERP: PROCUREMENT & PURCHASE ORDERS (PO)
@@ -362,45 +365,73 @@ html, body {
 .erp-row-acts {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     justify-content: flex-end;
 }
 
 .erp-icon-btn {
-    width: 28px;
-    height: 28px;
+    width: 29px;
+    height: 29px;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #cbd5e1;
     background: #ffffff;
-    color: #64748b;
+    color: #475569;
     cursor: pointer;
     text-decoration: none;
-    font-size: 12px;
-    transition: all 0.15s;
+    font-size: 13px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.erp-icon-btn i {
+    font-size: 13px;
+    line-height: 1;
 }
 .erp-icon-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+.erp-icon-btn.view {
+    color: #475569;
     background: #f8fafc;
     border-color: #cbd5e1;
+}
+.erp-icon-btn.view:hover {
     color: #0f172a;
-    transform: translateY(-1px);
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+.erp-icon-btn.primary {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #bfdbfe;
 }
 .erp-icon-btn.primary:hover {
-    color: #2563eb;
-    border-color: #bfdbfe;
-    background: #eff6ff;
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+.erp-icon-btn.success {
+    color: #059669;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
 }
 .erp-icon-btn.success:hover {
-    color: #059669;
-    border-color: #a7f3d0;
-    background: #ecfdf5;
+    color: #047857;
+    background: #d1fae5;
+    border-color: #6ee7b7;
+}
+.erp-icon-btn.danger {
+    color: #dc2626;
+    background: #fef2f2;
+    border-color: #fecaca;
 }
 .erp-icon-btn.danger:hover {
-    color: #dc2626;
-    border-color: #fecaca;
-    background: #fef2f2;
+    color: #b91c1c;
+    background: #fee2e2;
+    border-color: #fca5a5;
 }
 
 /* 4. Pinned Pagination Bar */
@@ -438,10 +469,10 @@ html, body {
     height: 28px;
     padding: 0 6px;
     border-radius: 5px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #cbd5e1;
     background: #ffffff;
-    color: #475569;
-    font-size: 11.5px;
+    color: #334155;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     display: inline-flex;
@@ -449,11 +480,17 @@ html, body {
     justify-content: center;
     text-decoration: none;
     transition: all 0.15s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.erp-pg-btn i {
+    font-size: 11px;
+    color: #475569;
+    line-height: 1;
 }
 .erp-pg-btn:hover:not(:disabled) {
     background: #f1f5f9;
     color: #0f172a;
-    border-color: #cbd5e1;
+    border-color: #94a3b8;
 }
 .erp-pg-btn.active {
     background: #2563eb;
@@ -461,8 +498,10 @@ html, body {
     border-color: #2563eb;
 }
 .erp-pg-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
+    background: #f8fafc;
+    border-color: #e2e8f0;
 }
 
 /* 5. Standard Floating Bottom Command Bar */
@@ -841,7 +880,7 @@ html, body {
                         <td style="text-align: right;">
                             <div class="erp-row-acts">
                                 <!-- Print / Show View -->
-                                <a href="<?= APP_URL ?>/purchase/show/<?= $po->id ?>" target="_blank" class="erp-icon-btn" title="Print / PDF View">
+                                <a href="<?= APP_URL ?>/purchase/show/<?= $po->id ?>" target="_blank" class="erp-icon-btn view" title="Print / PDF View">
                                     <i class="fa-solid fa-print"></i>
                                 </a>
 

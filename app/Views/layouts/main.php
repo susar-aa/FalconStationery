@@ -57,8 +57,9 @@ if (!function_exists('hasPermission')) {
         }
     </script>
     
-    <!-- Phosphor Icons for a clean, modern look (replacing emojis) -->
+    <!-- Phosphor Icons & FontAwesome 6 for System-Wide ERP Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
         /* ============================================================
