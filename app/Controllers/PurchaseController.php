@@ -7,6 +7,7 @@ class PurchaseController extends Controller {
 
     public function __construct() {
         if (!isset($_SESSION['user_id'])) { header('Location: ' . APP_URL . '/auth/login'); exit; }
+        $this->generateCsrfToken();
         $this->vendorModel = $this->model('Supplier');
         $this->poModel = $this->model('PurchaseOrder');
         $this->itemModel = $this->model('Item');
@@ -14,42 +15,72 @@ class PurchaseController extends Controller {
     }
 
     public function index() {
-        $search = $_GET['search'] ?? '';
-        $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
-        $limit = 10;
-        $offset = ($page - 1) * $limit;
+        $this->checkPermission('purchase', 'view');
+
+        $search = trim($_GET['search'] ?? '');
+        $page = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = isset($_GET['per_page']) && is_numeric($_GET['per_page']) ? max(5, min(100, (int)$_GET['per_page'])) : 15;
+        $offset = ($page - 1) * $perPage;
 
         $filters = [
             'vendor_id' => $_GET['vendor_id'] ?? '',
-            'status' => $_GET['status'] ?? ''
+            'status' => $_GET['status'] ?? '',
+            'start_date' => $_GET['start_date'] ?? '',
+            'end_date' => $_GET['end_date'] ?? ''
         ];
 
         // Handle Actions
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
-            if ($_POST['action'] == 'delete_po') {
-                if ($this->poModel->deletePO($_POST['po_id'])) {
-                    header("Location: " . APP_URL . "/purchase?success=PO deleted successfully"); exit;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+            if ($_POST['action'] === 'delete_po') {
+                $this->checkPermission('purchase', 'delete');
+                $poId = (int)($_POST['po_id'] ?? 0);
+                $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                          (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+                if ($poId > 0 && $this->poModel->deletePO($poId)) {
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => true, 'message' => 'Purchase Order deleted successfully.']);
+                        exit;
+                    }
+                    header("Location: " . APP_URL . "/purchase?success=" . urlencode("PO deleted successfully."));
+                    exit;
+                } else {
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        http_response_code(400);
+                        echo json_encode(['success' => false, 'message' => 'Cannot delete this PO or it has already been received.']);
+                        exit;
+                    }
+                    header("Location: " . APP_URL . "/purchase?error=" . urlencode("Cannot delete this PO or it has already been received."));
+                    exit;
                 }
             }
         }
 
         $totalPOs = $this->poModel->getTotalPOs($search, $filters);
-        $pos = $this->poModel->getPOsPaginated($search, $limit, $offset, $filters);
-        
-        // Check if any POs contain unresolved MIX items
-        foreach($pos as $po) {
-            $po->has_mix = $this->poModel->hasMixItems($po->id);
+        $totalPages = max(1, ceil($totalPOs / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $offset = ($page - 1) * $perPage;
         }
-        
+
+        $pos = $this->poModel->getPOsPaginated($search, $perPage, $offset, $filters);
+        $stats = $this->poModel->getPOStats();
+        $vendors = $this->vendorModel->getActiveVendors();
+
         $data = [
-            'title' => 'Procurement Dashboard',
+            'title' => 'Purchase Orders',
             'content_view' => 'purchases/index',
             'pos' => $pos,
-            'vendors' => $this->vendorModel->getActiveVendors(),
+            'stats' => $stats,
+            'vendors' => $vendors,
             'search' => $search,
             'filters' => $filters,
             'page' => $page,
-            'total_pages' => ceil($totalPOs / $limit),
+            'per_page' => $perPage,
+            'total_items' => $totalPOs,
+            'total_pages' => $totalPages,
             'error' => $_GET['error'] ?? '',
             'success' => $_GET['success'] ?? '',
             'debug' => $_GET['debug'] ?? ''
@@ -175,12 +206,15 @@ class PurchaseController extends Controller {
     }
 
     public function create() {
+        $this->checkPermission('purchase', 'create_edit');
         $prefilledVendor = $_GET['vendor_id'] ?? ($_POST['vendor_id'] ?? '');
         $prefilledItems = [];
         
         $catalogItems = $this->itemModel->getAllItems();
+        $itemIds = array_map(function($i) { return (int)$i->id; }, $catalogItems);
+        $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
         foreach($catalogItems as $item) {
-            $item->variations = $this->itemModel->getItemVariations($item->id);
+            $item->variations = $variationsByItem[$item->id] ?? [];
         }
         
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'from_suggest') {
@@ -249,14 +283,17 @@ class PurchaseController extends Controller {
     }
 
     public function edit($id = null) {
+        $this->checkPermission('purchase', 'create_edit');
         if (!$id) { header('Location: ' . APP_URL . '/purchase'); exit; }
         $po = $this->poModel->getPOById($id);
         if (!$po) { die("PO not found."); }
         if ($po->status === 'Received') { die("Cannot edit a PO that has already been converted to a GRN."); }
 
         $catalogItems = $this->itemModel->getAllItems();
+        $itemIds = array_map(function($i) { return (int)$i->id; }, $catalogItems);
+        $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
         foreach($catalogItems as $item) {
-            $item->variations = $this->itemModel->getItemVariations($item->id);
+            $item->variations = $variationsByItem[$item->id] ?? [];
         }
 
         $itemSupplierMappings = $this->itemModel->getAllItemSupplierMappings();
@@ -302,12 +339,22 @@ class PurchaseController extends Controller {
 
     // --- NEW: Email PO Engine ---
     public function email_po() {
+        $this->checkPermission('purchase', 'create_edit');
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['po_id'])) {
-            $poId = $_POST['po_id'];
+            $poId = (int)$_POST['po_id'];
             $po = $this->poModel->getPOById($poId);
+            $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                      (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
             
             if (!$po || empty($po->email)) {
-                header('Location: ' . APP_URL . '/purchase?error=Vendor does not have a valid email address on file.');
+                $err = 'Vendor does not have a valid email address on file.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => $err]);
+                    exit;
+                }
+                header('Location: ' . APP_URL . '/purchase?error=' . urlencode($err));
                 exit;
             }
 
@@ -345,7 +392,7 @@ class PurchaseController extends Controller {
                 $htmlContent,
                 $attachmentHtml,
                 "{$po->po_number}.html",
-                $company->company_name // <-- Passes dynamic Company Name to the Mailer
+                $company->company_name
             );
 
             if ($response['success']) {
@@ -354,10 +401,21 @@ class PurchaseController extends Controller {
                 $db->bind(':id', $poId);
                 $db->execute();
 
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'message' => 'Purchase Order dispatched to ' . $po->vendor_name . ' (' . $po->email . ')']);
+                    exit;
+                }
                 header('Location: ' . APP_URL . '/purchase?success=Purchase Order emailed successfully to ' . urlencode($po->vendor_name));
             } else {
-                $debugMsg = urlencode($response['error']);
-                header('Location: ' . APP_URL . '/purchase?error=Failed to send email via Brevo. Check console for details.&debug=' . $debugMsg);
+                $debugMsg = $response['error'] ?? 'Unknown error';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Failed to send email via Brevo: ' . $debugMsg]);
+                    exit;
+                }
+                header('Location: ' . APP_URL . '/purchase?error=Failed to send email via Brevo.&debug=' . urlencode($debugMsg));
             }
             exit;
         }

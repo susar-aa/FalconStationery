@@ -214,6 +214,12 @@ class Item {
             $params[':category_id'] = intval($filters['category_id']);
         }
 
+        if (!empty($filters['supplier_id'])) {
+            $whereClauses[] = "(i.vendor_id = :supplier_id OR EXISTS (SELECT 1 FROM item_suppliers isup_filter WHERE isup_filter.item_id = i.id AND isup_filter.supplier_id = :supplier_id_sub))";
+            $params[':supplier_id'] = intval($filters['supplier_id']);
+            $params[':supplier_id_sub'] = intval($filters['supplier_id']);
+        }
+
         if (isset($filters['status']) && $filters['status'] !== '') {
             $whereClauses[] = "i.status = :status";
             $params[':status'] = $filters['status'];

@@ -6,38 +6,129 @@ class PurchaseOrder {
         $this->db = new Database();
     }
 
-    public function getPOsPaginated($search = '', $limit = 10, $offset = 0, $filters = []) {
-        $sql = "SELECT p.*, v.name as vendor_name, v.email, u.username as creator_name 
+    public function getPOsPaginated($search = '', $limit = 15, $offset = 0, $filters = []) {
+        $params = [];
+        $whereClauses = [];
+
+        if (!empty($search)) {
+            $whereClauses[] = "(p.po_number LIKE :search OR v.name LIKE :search_v)";
+            $params[':search'] = "%$search%";
+            $params[':search_v'] = "%$search%";
+        }
+
+        if (!empty($filters['vendor_id'])) {
+            $whereClauses[] = "p.vendor_id = :vid";
+            $params[':vid'] = (int)$filters['vendor_id'];
+        }
+
+        if (!empty($filters['status'])) {
+            $whereClauses[] = "p.status = :status";
+            $params[':status'] = $filters['status'];
+        }
+
+        if (!empty($filters['start_date'])) {
+            $whereClauses[] = "p.po_date >= :start_date";
+            $params[':start_date'] = $filters['start_date'];
+        }
+
+        if (!empty($filters['end_date'])) {
+            $whereClauses[] = "p.po_date <= :end_date";
+            $params[':end_date'] = $filters['end_date'];
+        }
+
+        $whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
+
+        $sql = "SELECT p.*, v.name as vendor_name, v.email, v.phone, u.username as creator_name,
+                       COALESCE((SELECT 1 FROM purchase_order_items poi WHERE poi.po_id = p.id AND poi.is_mix = 1 LIMIT 1), 0) AS has_mix,
+                       COALESCE((SELECT COUNT(*) FROM purchase_order_items poi_cnt WHERE poi_cnt.po_id = p.id), 0) AS items_count
                 FROM purchase_orders p 
                 JOIN vendors v ON p.vendor_id = v.id 
                 LEFT JOIN users u ON p.created_by = u.id
-                WHERE (p.po_number LIKE :search OR v.name LIKE :search)";
-        
-        if (!empty($filters['vendor_id'])) { $sql .= " AND p.vendor_id = :vid"; }
-        if (!empty($filters['status'])) { $sql .= " AND p.status = :status"; }
-        
-        $sql .= " ORDER BY p.created_at DESC LIMIT :limit OFFSET :offset";
+                $whereSql 
+                ORDER BY p.created_at DESC 
+                LIMIT :limit OFFSET :offset";
         
         $this->db->query($sql);
-        $this->db->bind(':search', "%$search%");
-        if (!empty($filters['vendor_id'])) { $this->db->bind(':vid', $filters['vendor_id']); }
-        if (!empty($filters['status'])) { $this->db->bind(':status', $filters['status']); }
-        $this->db->bind(':limit', $limit, PDO::PARAM_INT);
-        $this->db->bind(':offset', $offset, PDO::PARAM_INT);
-        return $this->db->resultSet();
+        $this->db->bind(':limit', (int)$limit, PDO::PARAM_INT);
+        $this->db->bind(':offset', (int)$offset, PDO::PARAM_INT);
+        foreach ($params as $k => $v) {
+            $this->db->bind($k, $v);
+        }
+        return $this->db->resultSet() ?: [];
     }
 
     public function getTotalPOs($search = '', $filters = []) {
-        $sql = "SELECT COUNT(*) as total FROM purchase_orders p JOIN vendors v ON p.vendor_id = v.id WHERE (p.po_number LIKE :search OR v.name LIKE :search)";
-        if (!empty($filters['vendor_id'])) { $sql .= " AND p.vendor_id = :vid"; }
-        if (!empty($filters['status'])) { $sql .= " AND p.status = :status"; }
+        $params = [];
+        $whereClauses = [];
+
+        if (!empty($search)) {
+            $whereClauses[] = "(p.po_number LIKE :search OR v.name LIKE :search_v)";
+            $params[':search'] = "%$search%";
+            $params[':search_v'] = "%$search%";
+        }
+
+        if (!empty($filters['vendor_id'])) {
+            $whereClauses[] = "p.vendor_id = :vid";
+            $params[':vid'] = (int)$filters['vendor_id'];
+        }
+
+        if (!empty($filters['status'])) {
+            $whereClauses[] = "p.status = :status";
+            $params[':status'] = $filters['status'];
+        }
+
+        if (!empty($filters['start_date'])) {
+            $whereClauses[] = "p.po_date >= :start_date";
+            $params[':start_date'] = $filters['start_date'];
+        }
+
+        if (!empty($filters['end_date'])) {
+            $whereClauses[] = "p.po_date <= :end_date";
+            $params[':end_date'] = $filters['end_date'];
+        }
+
+        $whereSql = !empty($whereClauses) ? "WHERE " . implode(" AND ", $whereClauses) : "";
+
+        $sql = "SELECT COUNT(*) as total 
+                FROM purchase_orders p 
+                JOIN vendors v ON p.vendor_id = v.id 
+                $whereSql";
         
         $this->db->query($sql);
-        $this->db->bind(':search', "%$search%");
-        if (!empty($filters['vendor_id'])) { $this->db->bind(':vid', $filters['vendor_id']); }
-        if (!empty($filters['status'])) { $this->db->bind(':status', $filters['status']); }
+        foreach ($params as $k => $v) {
+            $this->db->bind($k, $v);
+        }
         $row = $this->db->single();
-        return $row->total ?? 0;
+        return (int)($row->total ?? 0);
+    }
+
+    public function getPOStats() {
+        try {
+            $this->db->query("
+                SELECT 
+                    COUNT(*) AS total_pos,
+                    SUM(CASE WHEN status = 'Draft' THEN 1 ELSE 0 END) AS draft_count,
+                    SUM(CASE WHEN status = 'Sent' THEN 1 ELSE 0 END) AS sent_count,
+                    SUM(CASE WHEN status = 'Received' THEN 1 ELSE 0 END) AS received_count,
+                    COALESCE(SUM(total_amount), 0) AS total_value
+                FROM purchase_orders
+            ");
+            return $this->db->single() ?: (object)[
+                'total_pos' => 0,
+                'draft_count' => 0,
+                'sent_count' => 0,
+                'received_count' => 0,
+                'total_value' => 0
+            ];
+        } catch (Exception $e) {
+            return (object)[
+                'total_pos' => 0,
+                'draft_count' => 0,
+                'sent_count' => 0,
+                'received_count' => 0,
+                'total_value' => 0
+            ];
+        }
     }
 
     public function getPOById($id) {
@@ -158,9 +249,28 @@ class PurchaseOrder {
     }
 
     public function deletePO($id) {
-        $this->db->query("DELETE FROM purchase_orders WHERE id = :id");
-        $this->db->bind(':id', $id);
-        try { return $this->db->execute(); } catch (PDOException $e) { return false; }
+        $po = $this->getPOById($id);
+        if (!$po || $po->status === 'Received') {
+            return false;
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            $this->db->query("DELETE FROM purchase_order_items WHERE po_id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            $this->db->query("DELETE FROM purchase_orders WHERE id = :id");
+            $this->db->bind(':id', $id);
+            $this->db->execute();
+
+            $this->db->commit();
+            return true;
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            return false;
+        }
     }
 
     // Advanced 1-Tap Transfer to GRN Engine

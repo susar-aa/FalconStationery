@@ -104,6 +104,7 @@ class InventoryController extends Controller {
             'max_price' => isset($_GET['max_price']) && $_GET['max_price'] !== '' ? floatval($_GET['max_price']) : '',
             'stock_status' => isset($_GET['stock_status']) ? trim($_GET['stock_status']) : '',
             'category_id' => isset($_GET['category_id']) && $_GET['category_id'] !== '' ? intval($_GET['category_id']) : '',
+            'supplier_id' => isset($_GET['supplier_id']) && $_GET['supplier_id'] !== '' ? intval($_GET['supplier_id']) : '',
             'status' => isset($_GET['status']) ? trim($_GET['status']) : ''
         ];
 
@@ -117,6 +118,7 @@ class InventoryController extends Controller {
         $items = $this->itemModel->getItemsPaged($perPage, $offset, $filters);
         $stats = $this->itemModel->getStockStats();
         $categories = $this->categoryModel->getCategories();
+        $vendors = $this->getVendorsDropdown();
 
         $itemIds = array_map(function($i) { return (int)$i->id; }, $items);
         $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
@@ -127,6 +129,7 @@ class InventoryController extends Controller {
             'stats' => $stats,
             'filters' => $filters,
             'categories' => $categories,
+            'vendors' => $vendors,
             'pagination' => [
                 'current_page' => $page,
                 'per_page' => $perPage,

@@ -267,12 +267,13 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--erp-card-bg);
-    border: 1px solid var(--erp-border);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 6px 12px;
+    padding: 6px 14px;
     flex-shrink: 0;
     gap: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .erp-filter-left {
@@ -283,20 +284,21 @@ html, body {
 
 .erp-results-badge {
     font-size: 12px;
-    color: var(--erp-text-muted);
+    color: #64748b;
     white-space: nowrap;
     font-weight: 500;
 }
 .erp-results-badge strong {
-    color: var(--erp-text-main);
-    font-family: var(--erp-mono);
+    color: #0f172a;
+    font-family: var(--erp-font);
+    font-weight: 700;
 }
 
 /* Rule: Filters on Right Corner */
 .erp-filter-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: nowrap;
     justify-content: flex-end;
 }
@@ -304,28 +306,29 @@ html, body {
 .erp-filter-control {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     font-size: 12px;
-    color: var(--erp-text-label);
 }
 
 .erp-filter-label {
     font-size: 11px;
-    font-weight: 600;
-    color: var(--erp-text-muted);
+    font-weight: 700;
+    color: #475569;
     white-space: nowrap;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
 }
 
 .erp-select {
-    height: 28px;
-    padding: 2px 22px 2px 8px;
+    height: 29px;
+    max-width: 140px;
+    padding: 0 24px 0 10px;
     font-size: 12px;
-    border: 1px solid var(--erp-border);
+    font-weight: 500;
+    border: 1px solid #d1d5db;
     border-radius: 6px;
-    background: var(--erp-card-bg);
-    color: var(--erp-text-main);
+    background: #ffffff;
+    color: #1e293b;
     outline: none;
     font-family: var(--erp-font);
     cursor: pointer;
@@ -333,50 +336,66 @@ html, body {
     -webkit-appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 6px center;
-    background-size: 11px;
-    transition: border-color 0.15s;
+    background-position: right 7px center;
+    background-size: 10px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    text-overflow: ellipsis;
+}
+.erp-select:hover {
+    border-color: #94a3b8;
 }
 .erp-select:focus {
-    border-color: var(--erp-primary);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
 }
 
 .erp-input-sm {
-    height: 28px;
-    width: 75px;
-    padding: 2px 6px;
-    font-size: 12px;
-    font-family: var(--erp-mono);
-    border: 1px solid var(--erp-border);
+    height: 29px;
+    width: 65px;
+    padding: 0 7px;
+    font-size: 11.5px;
+    font-family: var(--erp-font);
+    border: 1px solid #d1d5db;
     border-radius: 6px;
-    background: var(--erp-card-bg);
-    color: var(--erp-text-main);
+    background: #ffffff;
+    color: #1e293b;
     outline: none;
-    transition: border-color 0.15s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.erp-input-sm:hover {
+    border-color: #94a3b8;
 }
 .erp-input-sm:focus {
-    border-color: var(--erp-primary);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+.erp-input-sm::placeholder {
+    color: #94a3b8;
+    font-size: 11px;
 }
 
 .erp-btn-reset {
-    height: 28px;
-    padding: 3px 10px;
-    font-size: 11.5px;
+    height: 29px;
+    padding: 0 11px;
+    font-size: 12px;
     font-weight: 600;
-    color: var(--erp-text-muted);
-    background: transparent;
-    border: 1px solid var(--erp-border);
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
     border-radius: 6px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     transition: all 0.15s;
 }
 .erp-btn-reset:hover {
-    background: var(--erp-th-bg);
-    color: var(--erp-danger);
-    border-color: var(--erp-danger-border);
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
 }
 
 /* Bulk Selection Toolbar Strip */
@@ -1150,11 +1169,28 @@ html, body {
                 <span class="erp-filter-label">Category:</span>
                 <select name="category_id" id="categoryInput" class="erp-select" onchange="applyAjaxFilters()">
                     <option value="">All Categories</option>
-                    <?php foreach ($categories as $cat): ?>
-                    <option value="<?= $cat->id ?>" <?= (string)$filters['category_id'] === (string)$cat->id ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($cat->name) ?>
-                    </option>
-                    <?php endforeach; ?>
+                    <?php if (!empty($categories)): ?>
+                        <?php foreach ($categories as $cat): ?>
+                        <option value="<?= $cat->id ?>" <?= (string)($filters['category_id'] ?? '') === (string)$cat->id ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($cat->name) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+
+            <!-- Supplier Filter -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Supplier:</span>
+                <select name="supplier_id" id="supplierInput" class="erp-select" onchange="applyAjaxFilters()">
+                    <option value="">All Suppliers</option>
+                    <?php if (!empty($vendors)): ?>
+                        <?php foreach ($vendors as $ven): ?>
+                        <option value="<?= $ven->id ?>" <?= (string)($filters['supplier_id'] ?? '') === (string)$ven->id ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($ven->name) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </select>
             </div>
 
@@ -1162,10 +1198,10 @@ html, body {
             <div class="erp-filter-control">
                 <span class="erp-filter-label">Stock:</span>
                 <select name="stock_status" id="stockStatusInput" class="erp-select" onchange="applyAjaxFilters()">
-                    <option value="" <?= $filters['stock_status'] === '' ? 'selected' : '' ?>>All Stock</option>
-                    <option value="instock" <?= $filters['stock_status'] === 'instock' ? 'selected' : '' ?>>In Stock (&gt;5)</option>
-                    <option value="lowstock" <?= $filters['stock_status'] === 'lowstock' ? 'selected' : '' ?>>Low Stock (1-5)</option>
-                    <option value="outstock" <?= $filters['stock_status'] === 'outstock' ? 'selected' : '' ?>>Out of Stock (0)</option>
+                    <option value="" <?= ($filters['stock_status'] ?? '') === '' ? 'selected' : '' ?>>All Stock</option>
+                    <option value="instock" <?= ($filters['stock_status'] ?? '') === 'instock' ? 'selected' : '' ?>>In Stock (&gt;5)</option>
+                    <option value="lowstock" <?= ($filters['stock_status'] ?? '') === 'lowstock' ? 'selected' : '' ?>>Low Stock (1-5)</option>
+                    <option value="outstock" <?= ($filters['stock_status'] ?? '') === 'outstock' ? 'selected' : '' ?>>Out of Stock (0)</option>
                 </select>
             </div>
 
@@ -1184,7 +1220,7 @@ html, body {
                 <span class="erp-filter-label">Price:</span>
                 <input type="number" step="0.01" name="min_price" id="minPriceInput" class="erp-input-sm"
                        value="<?= htmlspecialchars($filters['min_price']) ?>" oninput="triggerSearchDelay()" placeholder="Min Rs">
-                <span>-</span>
+                <span style="color: #94a3b8; font-weight: 500;">–</span>
                 <input type="number" step="0.01" name="max_price" id="maxPriceInput" class="erp-input-sm"
                        value="<?= htmlspecialchars($filters['max_price']) ?>" oninput="triggerSearchDelay()" placeholder="Max Rs">
             </div>
@@ -1699,6 +1735,8 @@ function clearSearchInput() {
 function clearAllFilters() {
     document.getElementById('searchInput').value = '';
     document.getElementById('categoryInput').value = '';
+    const supInput = document.getElementById('supplierInput');
+    if (supInput) supInput.value = '';
     document.getElementById('stockStatusInput').value = '';
     document.getElementById('itemStatusInput').value = '';
     document.getElementById('minPriceInput').value = '';
