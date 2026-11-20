@@ -243,17 +243,6 @@ class Item {
         $qtyCol = $this->safeCol($this->qtyColumn);
         $descCol = $this->safeCol($this->descColumn);
         $orderByCol = $this->safeCol($this->orderByColumn);
-        $orderSql = "i.{$orderByCol}";
-        if (!empty($filters['sort'])) {
-            switch ($filters['sort']) {
-                case 'name_asc': $orderSql = "i.name ASC"; break;
-                case 'name_desc': $orderSql = "i.name DESC"; break;
-                case 'price_asc': $orderSql = "i.{$priceCol} ASC"; break;
-                case 'price_desc': $orderSql = "i.{$priceCol} DESC"; break;
-                case 'stock_asc': $orderSql = "CAST(i.{$qtyCol} AS SIGNED) ASC"; break;
-                case 'stock_desc': $orderSql = "CAST(i.{$qtyCol} AS SIGNED) DESC"; break;
-            }
-        }
 
         $this->db->query("SELECT i.*, 
                           cat.name AS category_name,
@@ -267,7 +256,7 @@ class Item {
                           LEFT JOIN item_categories cat ON i.category_id = cat.id
                           LEFT JOIN vendors v ON i.vendor_id = v.id
                           $whereSql 
-                          ORDER BY {$orderSql} 
+                          ORDER BY i.{$orderByCol} 
                           LIMIT :limit OFFSET :offset");
 
         $this->db->bind(':limit', (int)$limit, PDO::PARAM_INT);
@@ -325,70 +314,6 @@ class Item {
             'low_stock_count' => 0,
             'out_of_stock_count' => 0
         ];
-    }
-
-    /**
-     * Compute total stock valuation at cost and retail price.
-     */
-    public function getStockValuation() {
-        try {
-            $qtyCol = $this->safeCol($this->qtyColumn);
-            $priceCol = $this->safeCol($this->priceColumn);
-            $this->db->query("SELECT 
-                SUM(COALESCE(CAST({$qtyCol} AS DECIMAL(12,2)), 0) * COALESCE(cost_price, 0)) as total_cost,
-                SUM(COALESCE(CAST({$qtyCol} AS DECIMAL(12,2)), 0) * COALESCE({$priceCol}, 0)) as total_retail
-                FROM items WHERE (status IS NULL OR status != 'deleted')");
-            $res = $this->db->single();
-            return (object)[
-                'total_cost' => floatval($res->total_cost ?? 0),
-                'total_retail' => floatval($res->total_retail ?? 0)
-            ];
-        } catch (Throwable $e) {
-            return (object)['total_cost' => 0, 'total_retail' => 0];
-        }
-    }
-
-    /**
-     * Get count of deleted/trashed items.
-     */
-    public function getDeletedCount() {
-        try {
-            $this->db->query("SELECT COUNT(*) as cnt FROM items WHERE status = 'deleted'");
-            $res = $this->db->single();
-            return (int)($res->cnt ?? 0);
-        } catch (Throwable $e) {
-            return 0;
-        }
-    }
-
-    /**
-     * Batch fetch stock FIFO batches for a list of item IDs.
-     */
-    public function getBatchesForItems(array $itemIds) {
-        if (empty($itemIds)) return [];
-        $validIds = array_values(array_filter(array_map('intval', $itemIds)));
-        if (empty($validIds)) return [];
-        try {
-            $placeholders = implode(',', array_fill(0, count($validIds), '?'));
-            $this->db->query("
-                SELECT sb.*, g.grn_number 
-                FROM stock_batches sb 
-                LEFT JOIN goods_receipt_notes g ON sb.grn_id = g.id 
-                WHERE sb.item_id IN ($placeholders) AND sb.quantity_remaining > 0
-                ORDER BY sb.id DESC
-            ");
-            foreach ($validIds as $index => $id) {
-                $this->db->bind($index + 1, $id);
-            }
-            $rows = $this->db->resultSet() ?: [];
-            $grouped = [];
-            foreach ($rows as $row) {
-                $grouped[$row->item_id][] = $row;
-            }
-            return $grouped;
-        } catch (Throwable $e) {
-            return [];
-        }
     }
 
     /**
