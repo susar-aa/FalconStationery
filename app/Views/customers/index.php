@@ -52,7 +52,7 @@ $csrfToken = $data['csrf_token'] ?? '';
 }
 
 html, body {
-    height: 100% !important;
+    height: 100vh !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
@@ -61,7 +61,29 @@ html, body {
     -webkit-font-smoothing: antialiased;
 }
 
-.cust-erp-workspace {
+body.erp-locked .app-container,
+body:has(.erp-viewport-view) .app-container,
+.app-container {
+    margin-top: 70px !important;
+    height: calc(100vh - 70px) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+body.erp-locked .main-content,
+body:has(.erp-viewport-view) .main-content,
+.main-content {
+    padding: 8px 16px 8px 16px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 !important;
+}
+
+.erp-viewport-view.cust-erp-workspace {
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -72,7 +94,7 @@ html, body {
     gap: 6px;
     box-sizing: border-box;
     position: relative;
-    padding: 0 0 52px 0; /* Clearance for floating bottom island */
+    padding: 0; /* Zero bottom padding so table reaches bottom of viewport */
 }
 
 /* 1. Sleek Compact KPI Stats Strip */
@@ -227,6 +249,7 @@ html, body {
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
 .erp-table-scroll {
@@ -235,6 +258,7 @@ html, body {
     overflow-y: auto;
     overflow-x: auto;
     position: relative;
+    padding-bottom: 54px; /* Clearance inside table scroll so bottom rows clear the floating island */
 }
 
 .erp-table {
@@ -413,35 +437,34 @@ html, body {
     pointer-events: none;
 }
 
-/* 5. Floating Bottom Command Island */
+/* 5. Sleek Floating Island Bar (Search Bar + Add New Button) - Standard Inventory Style */
 .cmd-bar {
     position: fixed;
-    bottom: 16px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.94);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(24, 24, 27, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 9999px;
-    padding: 4px 8px 4px 12px;
+    padding: 7px 10px 7px 18px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-    z-index: 50;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    gap: 14px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
 }
 .cmd-search {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     position: relative;
     width: 320px;
 }
 .cmd-search i {
-    color: #94a3b8;
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
     flex-shrink: 0;
 }
 .cmd-search input {
@@ -449,17 +472,19 @@ html, body {
     border: none;
     outline: none;
     color: #ffffff;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
     width: 100%;
     font-family: var(--erp-font);
+    padding: 3px 0;
 }
 .cmd-search input::placeholder {
-    color: #94a3b8;
+    color: rgba(255, 255, 255, 0.48);
 }
 .cmd-divider {
     width: 1px;
-    height: 18px;
-    background: rgba(255, 255, 255, 0.2);
+    height: 22px;
+    background: rgba(255, 255, 255, 0.18);
 }
 .cmd-icon {
     width: 28px;
@@ -481,23 +506,25 @@ html, body {
     color: #ffffff;
 }
 .cmd-cta {
+    background: #ffffff;
+    color: #0f172a !important;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 6px 16px;
+    border-radius: 9999px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #ffffff;
-    color: #0f172a;
-    border: none;
-    border-radius: 9999px;
-    padding: 0 14px;
-    height: 28px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
     text-decoration: none;
-    transition: all 0.15s;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 .cmd-cta:hover {
-    background: #f1f5f9;
+    background: #f8fafc;
+    transform: scale(1.02);
 }
 
 /* Modals */
@@ -823,20 +850,20 @@ html, body {
         </div>
     </div>
 
-</div>
-
-<!-- ============================================================
-     FLOATING BOTTOM ISLAND COMMAND BAR (RULE 3)
-     ============================================================ -->
-<div class="cmd-bar">
-    <div class="cmd-search">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" placeholder="Search customer, phone, code, territory..." onkeyup="onSearchInput()">
+    <!-- ============================================================
+         FLOATING BOTTOM ISLAND COMMAND BAR (RULE 3)
+         ============================================================ -->
+    <div class="cmd-bar">
+        <div class="cmd-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search customer, phone, code, territory..." onkeyup="onSearchInput()">
+        </div>
+        <div class="cmd-divider"></div>
+        <a href="<?= APP_URL ?>/customer/exportCSV" class="cmd-icon" title="Export CSV"><i class="fa-solid fa-download"></i></a>
+        <button type="button" class="cmd-icon" onclick="openModal('csvImportModal')" title="Import CSV"><i class="fa-solid fa-upload"></i></button>
+        <button type="button" class="cmd-cta" onclick="openModal('addCustomerModal')"><i class="fa-solid fa-plus"></i> New Customer</button>
     </div>
-    <div class="cmd-divider"></div>
-    <a href="<?= APP_URL ?>/customer/exportCSV" class="cmd-icon" title="Export CSV"><i class="fa-solid fa-download"></i></a>
-    <button type="button" class="cmd-icon" onclick="openModal('csvImportModal')" title="Import CSV"><i class="fa-solid fa-upload"></i></button>
-    <button type="button" class="cmd-cta" onclick="openModal('addCustomerModal')"><i class="fa-solid fa-plus"></i> New Customer</button>
+
 </div>
 
 <!-- ============================================================
