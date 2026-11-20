@@ -203,7 +203,7 @@ class Customer {
             $sql .= (!empty($whereSql) ? " AND " : " WHERE ") . " (c.opening_balance + COALESCE(inv.total_billed, 0) - COALESCE(pmt.total_paid, 0) - COALESCE(cn.total_credited, 0) + COALESCE(je_b.total_je_balance, 0)) <= 0 ";
         }
 
-        $sql .= " ORDER BY c.id DESC LIMIT :limit OFFSET :offset";
+        $sql .= " ORDER BY (CASE WHEN c.review_status = 'New' THEN 0 ELSE 1 END) ASC, c.id DESC LIMIT :limit OFFSET :offset";
 
         $this->db->query($sql);
         foreach ($params as $k => $v) {

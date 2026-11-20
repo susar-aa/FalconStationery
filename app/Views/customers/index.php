@@ -11,7 +11,7 @@ $owedCustomersCount = $data['summary_stats']['owed_customers_count'] ?? 0;
 $csrfToken = $data['csrf_token'] ?? '';
 ?>
 
-<!-- Inter & FontAwesome 6 Icons Guarantee -->
+<!-- FontAwesome 6 Icons Guarantee -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
@@ -69,10 +69,10 @@ html, body {
     max-height: 100%;
     flex: 1;
     overflow: hidden;
-    gap: 8px;
+    gap: 6px;
     box-sizing: border-box;
     position: relative;
-    padding: 0 4px 54px; /* Clearance for pinned floating bottom island */
+    padding: 0 0 52px 0; /* Clearance for floating bottom island */
 }
 
 /* 1. Sleek Compact KPI Stats Strip */
@@ -82,7 +82,6 @@ html, body {
     gap: 10px;
     flex-wrap: wrap;
     flex-shrink: 0;
-    margin-top: 4px;
 }
 
 .stat-pill {
@@ -92,7 +91,7 @@ html, body {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 9999px;
-    padding: 4px 12px;
+    padding: 3px 12px;
     font-size: 12px;
     color: #475569;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -111,78 +110,7 @@ html, body {
     flex-shrink: 0;
 }
 
-/* 2. Review Banner Alert Strip (Compact) */
-.review-banner-strip {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    border-radius: 8px;
-    padding: 6px 14px;
-    flex-shrink: 0;
-    font-size: 12.5px;
-    gap: 12px;
-}
-
-.review-banner-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.review-banner-title {
-    font-weight: 700;
-    color: #92400e;
-    flex-shrink: 0;
-}
-
-.review-banner-summary {
-    color: #78350f;
-    font-size: 12px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.review-banner-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.erp-btn-xs {
-    padding: 3px 8px;
-    font-size: 11px;
-    font-weight: 600;
-    border-radius: 4px;
-    border: 1px solid transparent;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    text-decoration: none;
-    transition: all 0.12s;
-}
-
-.erp-btn-success-xs {
-    background: #16a34a;
-    color: #ffffff;
-}
-.erp-btn-success-xs:hover { background: #15803d; }
-
-.erp-btn-primary-xs {
-    background: #2563eb;
-    color: #ffffff;
-}
-.erp-btn-primary-xs:hover { background: #1d4ed8; }
-
-/* 3. Top-Right Clean Filter Bar Above Table */
+/* 2. Top-Right Clean Filter Bar Above Table */
 .erp-filter-bar {
     display: flex;
     align-items: center;
@@ -190,7 +118,7 @@ html, body {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 6px 14px;
+    padding: 5px 14px;
     flex-shrink: 0;
     gap: 12px;
 }
@@ -238,7 +166,7 @@ html, body {
 }
 
 .erp-select {
-    height: 29px;
+    height: 28px;
     max-width: 165px;
     padding: 0 24px 0 10px;
     font-size: 12px;
@@ -268,7 +196,7 @@ html, body {
 }
 
 .erp-btn-reset {
-    height: 29px;
+    height: 28px;
     padding: 0 11px;
     font-size: 12px;
     font-weight: 600;
@@ -288,7 +216,7 @@ html, body {
     border-color: #94a3b8;
 }
 
-/* 4. Table Card with Dedicated Independent Scroll */
+/* 3. Table Card with Dedicated Independent Scroll */
 .erp-card-table {
     flex: 1;
     min-height: 0;
@@ -326,7 +254,7 @@ html, body {
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 9px 14px;
+    padding: 8px 14px;
     border-bottom: 1px solid #e2e8f0;
     white-space: nowrap;
 }
@@ -344,8 +272,22 @@ html, body {
     background: #fbfcfe;
 }
 
+/* Highlighted Styling for Newly Added Customers on Top */
+.erp-table tbody tr.row-new-customer {
+    background: #fffdf5 !important;
+    border-left: 3.5px solid #f59e0b !important;
+}
+.erp-table tbody tr.row-new-customer:hover {
+    background: #fef9c3 !important;
+}
+.row-new-customer .avatar-circle {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+
 .erp-table td {
-    padding: 10px 14px;
+    padding: 8px 14px;
     vertical-align: middle;
     color: #1e293b;
 }
@@ -355,8 +297,8 @@ html, body {
 }
 
 .avatar-circle {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     background: #f1f5f9;
     color: #475569;
@@ -372,10 +314,10 @@ html, body {
 .sf-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 2px 7px;
+    gap: 4px;
+    padding: 2px 6px;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.02em;
@@ -383,7 +325,7 @@ html, body {
 }
 .sf-badge.badge-active { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
 .sf-badge.badge-owed   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-.sf-badge.badge-new    { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.sf-badge.badge-new    { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 .sf-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
 /* Action Buttons (Ghost Icon Style) */
@@ -394,8 +336,8 @@ html, body {
     justify-content: center;
 }
 .erp-icon-btn {
-    width: 26px;
-    height: 26px;
+    width: 25px;
+    height: 25px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -403,7 +345,7 @@ html, body {
     border: 1px solid #e2e8f0;
     background: #ffffff;
     color: #475569;
-    font-size: 11.5px;
+    font-size: 11px;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.12s ease;
@@ -416,15 +358,17 @@ html, body {
 }
 .erp-icon-btn.view { color: #2563eb; }
 .erp-icon-btn.view:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.erp-icon-btn.approve { color: #16a34a; }
+.erp-icon-btn.approve:hover { background: #ecfdf5; border-color: #86efac; color: #15803d; }
 .erp-icon-btn.share { color: #059669; }
 .erp-icon-btn.share:hover { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
 
-/* 5. Pinned Pagination Footer */
+/* 4. Pinned Pagination Footer */
 .erp-pagination {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 14px;
+    padding: 6px 14px;
     background: #ffffff;
     border-top: 1px solid #e2e8f0;
     flex-shrink: 0;
@@ -437,9 +381,9 @@ html, body {
     gap: 4px;
 }
 .erp-page-btn {
-    min-width: 26px;
-    height: 26px;
-    padding: 0 6px;
+    min-width: 25px;
+    height: 25px;
+    padding: 0 5px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -447,7 +391,7 @@ html, body {
     background: #ffffff;
     color: #334155;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
     text-decoration: none;
@@ -469,10 +413,10 @@ html, body {
     pointer-events: none;
 }
 
-/* 6. Floating Bottom Command Island */
+/* 5. Floating Bottom Command Island */
 .cmd-bar {
     position: fixed;
-    bottom: 22px;
+    bottom: 16px;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(15, 23, 42, 0.94);
@@ -480,7 +424,7 @@ html, body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 9999px;
-    padding: 5px 8px 5px 12px;
+    padding: 4px 8px 4px 12px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -545,8 +489,8 @@ html, body {
     border: none;
     border-radius: 9999px;
     padding: 0 14px;
-    height: 30px;
-    font-size: 12.5px;
+    height: 28px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     text-decoration: none;
@@ -574,25 +518,25 @@ html, body {
 }
 .modal-head {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 18px; border-bottom: 1px solid #e2e8f0;
+    padding: 12px 18px; border-bottom: 1px solid #e2e8f0;
     background: #f8fafc;
 }
-.modal-title { font-size: 15px; font-weight: 700; margin: 0; color: #0f172a; }
+.modal-title { font-size: 14.5px; font-weight: 700; margin: 0; color: #0f172a; }
 .modal-close {
     background: transparent; border: none; width: 26px; height: 26px;
     border-radius: 4px; display: flex; align-items: center; justify-content: center;
     color: #64748b; cursor: pointer; font-size: 14px;
 }
 .modal-close:hover { background: #e2e8f0; color: #0f172a; }
-.modal-body { padding: 18px; }
+.modal-body { padding: 16px 18px; }
 .modal-foot {
     display: flex; justify-content: flex-end; gap: 8px;
-    padding: 12px 18px; background: #f8fafc;
+    padding: 10px 18px; background: #f8fafc;
     border-top: 1px solid #e2e8f0;
 }
 
 .sf-btn {
-    padding: 7px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
     display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; cursor: pointer;
 }
 .sf-btn.primary { background: #2563eb; color: #fff; }
@@ -604,22 +548,22 @@ html, body {
 .sf-btn.success { background: #16a34a; color: #fff; }
 .sf-btn.success:hover { background: #15803d; }
 
-.sf-group { margin-bottom: 12px; }
-.sf-group label { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.03em; }
+.sf-group { margin-bottom: 10px; }
+.sf-group label { display: block; margin-bottom: 4px; font-size: 10.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.03em; }
 .sf-input {
-    width: 100%; padding: 8px 10px;
+    width: 100%; padding: 7px 9px;
     border-radius: 6px; border: 1px solid #d1d5db;
     background: #ffffff; color: #0f172a;
-    font-size: 13px; outline: none; box-sizing: border-box; font-family: var(--erp-font);
+    font-size: 12.5px; outline: none; box-sizing: border-box; font-family: var(--erp-font);
 }
 .sf-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12); }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* Tabs inside Profile Modal */
 .tabs { display: flex; border-bottom: 1px solid #e2e8f0; background: #f8fafc; padding: 0 16px; }
 .tab-btn {
-    padding: 10px 14px; border: none; background: transparent; cursor: pointer;
-    font-size: 12.5px; font-weight: 600; color: #64748b;
+    padding: 9px 14px; border: none; background: transparent; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: #64748b;
     border-bottom: 2px solid transparent; transition: 0.15s;
 }
 .tab-btn:hover { color: #2563eb; }
@@ -628,18 +572,18 @@ html, body {
 .tab-content.active { display: block; }
 
 .data-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.data-table th, .data-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 12.5px; }
-.data-table th { color: #475569; font-weight: 700; font-size: 10.5px; text-transform: uppercase; background: #f8fafc; }
+.data-table th, .data-table td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
+.data-table th { color: #475569; font-weight: 700; font-size: 10px; text-transform: uppercase; background: #f8fafc; }
 .num-col { text-align: right !important; }
 
 .drop-zone {
-    border: 1.5px dashed #cbd5e1; padding: 24px; border-radius: 8px;
+    border: 1.5px dashed #cbd5e1; padding: 22px; border-radius: 8px;
     text-align: center; background: #f8fafc; position: relative; cursor: pointer;
 }
 .drop-zone:hover { background: #f1f5f9; }
 .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.drop-zone-icon { font-size: 26px; margin-bottom: 6px; color: #94a3b8; }
-.drop-zone-title { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+.drop-zone-icon { font-size: 24px; margin-bottom: 6px; color: #94a3b8; }
+.drop-zone-title { font-size: 12.5px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
 .drop-zone-sub { font-size: 11px; color: #64748b; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -647,7 +591,12 @@ html, body {
 .hidden { display: none !important; }
 </style>
 
-<div class="cust-erp-workspace">
+<script>
+    // Ensure viewport-lock standards on parent layout
+    document.body.classList.add('erp-locked');
+</script>
+
+<div class="erp-viewport-view cust-erp-workspace">
 
     <!-- Top Compact KPI Stats Strip -->
     <div class="erp-stats-strip">
@@ -667,7 +616,7 @@ html, body {
 
     <!-- Notifications -->
     <?php if (!empty($data['error'])): ?>
-        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:8px 12px; font-size:12.5px; color:#991b1b; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 12px; font-size:12px; color:#991b1b; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
             <div style="display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-circle-exclamation"></i>
                 <span><?= htmlspecialchars($data['error']) ?></span>
@@ -677,7 +626,7 @@ html, body {
     <?php endif; ?>
 
     <?php if (!empty($data['success'])): ?>
-        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 12px; font-size:12.5px; color:#166534; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:6px 12px; font-size:12px; color:#166534; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
             <div style="display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-circle-check"></i>
                 <span><?= htmlspecialchars($data['success']) ?></span>
@@ -687,41 +636,11 @@ html, body {
     <?php endif; ?>
 
     <?php if ($importResults): ?>
-        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:8px 12px; font-size:12px; color:#1e40af; flex-shrink:0;">
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:6px 12px; font-size:12px; color:#1e40af; flex-shrink:0;">
             <strong>CSV Import Completed:</strong> Added <?= intval($importResults['added']) ?> customers, Updated <?= intval($importResults['updated']) ?> customers.
             <?php if (!empty($importResults['errors'])): ?>
                 <span style="color:#dc2626; margin-left:8px;">(<?= count($importResults['errors']) ?> errors)</span>
             <?php endif; ?>
-        </div>
-    <?php endif; ?>
-
-    <!-- Newly Added Customers Pending Review Banner (Compact Strip) -->
-    <?php
-    $pendingReview = [];
-    foreach ($data['customers'] ?? [] as $cust) {
-        if (isset($cust->review_status) && $cust->review_status === 'New') {
-            $pendingReview[] = $cust;
-        }
-    }
-    ?>
-    <?php if (!empty($pendingReview)): ?>
-        <div class="review-banner-strip">
-            <div class="review-banner-left">
-                <i class="fa-solid fa-user-clock" style="color: #ea580c; font-size: 14px;"></i>
-                <span class="review-banner-title">Newly Added Customers Pending Review (<?= count($pendingReview) ?>):</span>
-                <span class="review-banner-summary">
-                    <strong><?= htmlspecialchars($pendingReview[0]->name ?? '') ?></strong> (CODE: CUST-<?= $pendingReview[0]->id ?>) &bull; <?= htmlspecialchars($pendingReview[0]->phone ?? 'No Phone') ?> &bull; Rep: <?= htmlspecialchars($pendingReview[0]->created_by_username ?? 'App Sync') ?>
-                    <?= count($pendingReview) > 1 ? '<em style="color:#64748b;"> +' . (count($pendingReview) - 1) . ' more</em>' : '' ?>
-                </span>
-            </div>
-            <div class="review-banner-actions">
-                <button type="button" class="erp-btn-xs erp-btn-success-xs" onclick="quickVerifyCustomer(<?= $pendingReview[0]->id ?>)" title="Quick Verify">
-                    <i class="fa-solid fa-check"></i> Verify
-                </button>
-                <button type="button" class="erp-btn-xs erp-btn-primary-xs" onclick="showCustomerProfile(<?= $pendingReview[0]->id ?>, 'profile')" title="Review & Correct">
-                    <i class="fa-solid fa-user-pen"></i> Review
-                </button>
-            </div>
         </div>
     <?php endif; ?>
 
@@ -789,7 +708,7 @@ html, body {
                         <th style="text-align:right;">Outstanding Balance</th>
                         <th>Ledger Status</th>
                         <th>Account Status</th>
-                        <th style="text-align:center; width:90px;">Actions</th>
+                        <th style="text-align:center; width:100px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="custList">
@@ -807,8 +726,10 @@ html, body {
                             $badgeCls = $bal > 0 ? 'badge-owed' : 'badge-active';
                             $badgeTxt = $bal > 0 ? 'Owed' : 'Cleared';
                             $accountStatus = $c->status ?? 'Active';
+                            $isNew = isset($c->review_status) && $c->review_status === 'New';
+                            $rowCls = 'customer-row' . ($isNew ? ' row-new-customer' : '');
                             ?>
-                            <tr class="customer-row" onclick="showCustomerProfile(<?= $c->id ?>)">
+                            <tr class="<?= $rowCls ?>" onclick="showCustomerProfile(<?= $c->id ?>)">
                                 <td>
                                     <div style="display:flex; align-items:center; gap:10px;">
                                         <div class="avatar-circle"><?= strtoupper(substr($c->name ?? '', 0, 2)) ?></div>
@@ -843,15 +764,23 @@ html, body {
                                         <span class="sf-badge <?= $accountStatus === 'Active' ? 'badge-active' : 'badge-owed' ?>">
                                             <span class="dot"></span><?= $accountStatus ?>
                                         </span>
-                                        <?php if (isset($c->review_status) && $c->review_status === 'New'): ?>
+                                        <?php if ($isNew): ?>
                                             <span class="sf-badge badge-new">
-                                                <span class="dot"></span>New
+                                                <span class="dot"></span>Needs Review
                                             </span>
                                         <?php endif; ?>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="erp-row-actions" onclick="event.stopPropagation()">
+                                        <?php if ($isNew): ?>
+                                            <button type="button" class="erp-icon-btn approve" onclick="quickVerifyCustomer(<?= $c->id ?>)" title="Quick Verify">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                            <button type="button" class="erp-icon-btn view" onclick="showCustomerProfile(<?= $c->id ?>, 'profile')" title="Review & Correct">
+                                                <i class="fa-solid fa-user-pen"></i>
+                                            </button>
+                                        <?php endif; ?>
                                         <button type="button" class="erp-icon-btn view" onclick="showCustomerProfile(<?= $c->id ?>)" title="View Profile & Ledger">
                                             <i class="fa-solid fa-eye"></i>
                                         </button>
@@ -960,7 +889,7 @@ html, body {
                     <span>📞 <?= !empty($c->phone) ? htmlspecialchars($c->phone) : '<span style="color:#dc2626;">Missing</span>' ?></span>
                     <span>📍 <?= !empty($c->mca_name) ? htmlspecialchars($c->mca_name) : 'Unassigned' ?></span>
                     <?php if (isset($c->review_status) && $c->review_status === 'New'): ?>
-                        <span class="sf-badge badge-new" style="font-size:9.5px; padding:1px 5px;">New</span>
+                        <span class="sf-badge badge-new" style="font-size:9.5px; padding:1px 5px;">Needs Review</span>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1488,6 +1417,8 @@ html, body {
                         const badgeCls = bal > 0 ? 'badge-owed' : 'badge-active';
                         const badgeTxt = bal > 0 ? 'Owed' : 'Cleared';
                         const accountStatus = c.status || 'Active';
+                        const isNew = c.review_status === 'New';
+                        const rowCls = 'customer-row' + (isNew ? ' row-new-customer' : '');
                         const name = escapeHtml(c.name || '');
                         const initials = name.substring(0, 2).toUpperCase();
                         const phone = c.phone ? escapeHtml(c.phone) : '<span style="color:#dc2626; font-weight:600;">Missing Phone</span>';
@@ -1497,7 +1428,7 @@ html, body {
                         const balColor = bal > 0 ? '#dc2626' : '#16a34a';
 
                         html += `
-                            <tr class="customer-row" onclick="showCustomerProfile(${c.id})">
+                            <tr class="${rowCls}" onclick="showCustomerProfile(${c.id})">
                                 <td>
                                     <div style="display:flex; align-items:center; gap:10px;">
                                         <div class="avatar-circle">${initials}</div>
@@ -1522,11 +1453,15 @@ html, body {
                                 <td>
                                     <div style="display:flex; flex-direction:column; gap:3px; align-items:flex-start;">
                                         <span class="sf-badge ${accountStatus === 'Active' ? 'badge-active' : 'badge-owed'}"><span class="dot"></span>${accountStatus}</span>
-                                        ${c.review_status === 'New' ? '<span class="sf-badge badge-new"><span class="dot"></span>New</span>' : ''}
+                                        ${isNew ? '<span class="sf-badge badge-new"><span class="dot"></span>Needs Review</span>' : ''}
                                     </div>
                                 </td>
                                 <td>
                                     <div class="erp-row-actions" onclick="event.stopPropagation()">
+                                        ${isNew ? `
+                                            <button type="button" class="erp-icon-btn approve" onclick="quickVerifyCustomer(${c.id})" title="Quick Verify"><i class="fa-solid fa-check"></i></button>
+                                            <button type="button" class="erp-icon-btn view" onclick="showCustomerProfile(${c.id}, 'profile')" title="Review & Correct"><i class="fa-solid fa-user-pen"></i></button>
+                                        ` : ''}
                                         <button type="button" class="erp-icon-btn view" onclick="showCustomerProfile(${c.id})" title="View Profile & Ledger"><i class="fa-solid fa-eye"></i></button>
                                         <button type="button" class="erp-icon-btn share" onclick="sharePortal(${c.id}, '${escapeJs(c.phone || '')}', '${escapeJs(c.name || '')}')" title="Share B2B Portal Link"><i class="fa-solid fa-share-nodes"></i></button>
                                     </div>
