@@ -1125,11 +1125,18 @@ class Item {
                 $targetStatus = ($cur === 'active') ? 'inactive' : 'active';
             }
 
-            $this->db->query("UPDATE items SET status = :status, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
-            $this->db->bind(':status', $targetStatus);
-            $this->db->bind(':id', $id);
-            return $this->db->execute();
-        } catch (Exception $e) {
+            try {
+                $this->db->query("UPDATE items SET status = :status, updated_at = CURRENT_TIMESTAMP WHERE id = :id");
+                $this->db->bind(':status', $targetStatus);
+                $this->db->bind(':id', $id);
+                return $this->db->execute();
+            } catch (Throwable $e1) {
+                $this->db->query("UPDATE items SET status = :status WHERE id = :id");
+                $this->db->bind(':status', $targetStatus);
+                $this->db->bind(':id', $id);
+                return $this->db->execute();
+            }
+        } catch (Throwable $e) {
             error_log("Error toggling status for item #{$id}: " . $e->getMessage());
             return false;
         }

@@ -46,29 +46,30 @@ $flashError = $_SESSION['flash_error'] ?? null;
 if ($flashError) unset($_SESSION['flash_error']);
 $importResults = $_SESSION['import_results'] ?? null;
 if ($importResults) unset($_SESSION['import_results']);
+
+$csrfToken = $_SESSION['csrf_token'] ?? '';
 ?>
 
-<!-- Fonts & Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- FontAwesome Icons -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
 /* ============================================================
-   ENTERPRISE ERP DESIGN SYSTEM — PROFESSIONAL VIEWPORT LOCKED
+   ENTERPRISE ERP DESIGN SYSTEM — SF PRO & REFINED GLASS AESTHETIC
    ============================================================ */
 
 :root {
-    --erp-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --erp-mono: 'JetBrains Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
+    --erp-font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --erp-mono: ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
 
-    /* Theme Palette */
+    /* Surfaces & Borders */
     --erp-bg: #f8fafc;
     --erp-card-bg: #ffffff;
     --erp-border: #e2e8f0;
-    --erp-border-subtle: #edf2f7;
-    --erp-th-bg: #f1f5f9;
-    --erp-row-hover: #f8fafc;
-    --erp-row-alt: #ffffff;
+    --erp-border-subtle: #f1f5f9;
+    --erp-th-bg: #f8fafc;
+    --erp-row-alt: #f8fafc;
+    --erp-row-hover: #f1f5f9;
     --erp-selected-row: #eff6ff;
 
     /* Text */
@@ -77,19 +78,19 @@ if ($importResults) unset($_SESSION['import_results']);
     --erp-text-label: #475569;
 
     /* Accents */
-    --erp-primary: #1e40af;
-    --erp-primary-hover: #1d4ed8;
-    --erp-primary-light: #dbeafe;
+    --erp-primary: #0066cc;
+    --erp-primary-hover: #0052a3;
+    --erp-primary-light: #e8f2fc;
 
-    --erp-success: #059669;
+    --erp-success: #10b981;
     --erp-success-bg: #ecfdf5;
     --erp-success-border: #a7f3d0;
 
-    --erp-warning: #d97706;
+    --erp-warning: #f59e0b;
     --erp-warning-bg: #fffbeb;
     --erp-warning-border: #fde68a;
 
-    --erp-danger: #dc2626;
+    --erp-danger: #ef4444;
     --erp-danger-bg: #fef2f2;
     --erp-danger-border: #fecaca;
 }
@@ -99,19 +100,19 @@ if ($importResults) unset($_SESSION['import_results']);
         --erp-bg: #090d16;
         --erp-card-bg: #111827;
         --erp-border: #1f2937;
-        --erp-border-subtle: #172033;
+        --erp-border-subtle: #182234;
         --erp-th-bg: #131d2e;
+        --erp-row-alt: #141f33;
         --erp-row-hover: #1e293b;
-        --erp-row-alt: #111827;
         --erp-selected-row: #172554;
 
         --erp-text-main: #f8fafc;
         --erp-text-muted: #94a3b8;
         --erp-text-label: #cbd5e1;
 
-        --erp-primary: #3b82f6;
+        --erp-primary: #38bdf8;
         --erp-primary-hover: #60a5fa;
-        --erp-primary-light: #1e3a8a;
+        --erp-primary-light: #162a45;
     }
 }
 
@@ -121,6 +122,7 @@ html, body {
     overflow: hidden !important;
     margin: 0;
     padding: 0;
+    font-family: var(--erp-font);
 }
 
 /* Base ERP Workspace Container */
@@ -135,6 +137,7 @@ html, body {
     font-family: var(--erp-font);
     color: var(--erp-text-main);
     box-sizing: border-box;
+    position: relative;
 }
 
 /* Form tag wrapping full workspace */
@@ -148,60 +151,28 @@ html, body {
     margin: 0;
 }
 
-/* 1. Header Toolbar */
+/* 1. Slim Top Action & KPI Bar (No Redundant Bulky Headlines) */
 .erp-top-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: var(--erp-card-bg);
     border: 1px solid var(--erp-border);
-    border-radius: 6px;
-    padding: 8px 16px;
+    border-radius: 8px;
+    padding: 6px 14px;
     flex-shrink: 0;
-    gap: 16px;
-}
-
-.erp-title-group {
-    display: flex;
-    align-items: center;
     gap: 12px;
-}
-
-.erp-module-icon {
-    width: 34px;
-    height: 34px;
-    background: var(--erp-primary-light);
-    color: var(--erp-primary);
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-}
-
-.erp-module-title {
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--erp-text-main);
-    line-height: 1.2;
-}
-
-.erp-module-subtitle {
-    font-size: 11.5px;
-    color: var(--erp-text-muted);
 }
 
 /* Compact KPI Strip */
 .erp-kpi-strip {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: var(--erp-th-bg);
     border: 1px solid var(--erp-border);
     border-radius: 6px;
-    padding: 3px 8px;
+    padding: 2px 6px;
 }
 
 .erp-kpi-item {
@@ -250,16 +221,16 @@ html, body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 5px 12px;
     font-size: 12px;
     font-weight: 600;
-    border-radius: 4px;
+    border-radius: 6px;
     border: 1px solid transparent;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.15s ease;
     white-space: nowrap;
-    height: 30px;
+    height: 28px;
     box-sizing: border-box;
 }
 
@@ -291,14 +262,14 @@ html, body {
     background: var(--erp-danger-bg);
 }
 
-/* 2. Rule 2: Filters Bar Above Table (Right Corner Placed) */
+/* 2. Filters Bar Above Table (Aligned to Top-Right Corner) */
 .erp-filter-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: var(--erp-card-bg);
     border: 1px solid var(--erp-border);
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 6px 12px;
     flex-shrink: 0;
     gap: 12px;
@@ -307,65 +278,25 @@ html, body {
 .erp-filter-left {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex: 1;
-    max-width: 420px;
-}
-
-.erp-search-box {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-}
-
-.erp-search-icon {
-    position: absolute;
-    left: 9px;
-    color: var(--erp-text-muted);
-    font-size: 12px;
-    pointer-events: none;
-}
-
-.erp-search-input {
-    width: 100%;
-    height: 30px;
-    padding: 4px 28px 4px 28px;
-    font-size: 12px;
-    border: 1px solid var(--erp-border);
-    border-radius: 4px;
-    background: var(--erp-card-bg);
-    color: var(--erp-text-main);
-    outline: none;
-    transition: border-color 0.15s;
-    font-family: var(--erp-font);
-}
-.erp-search-input:focus {
-    border-color: var(--erp-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
-}
-
-.erp-search-clear {
-    position: absolute;
-    right: 8px;
-    color: var(--erp-text-muted);
-    cursor: pointer;
-    font-size: 12px;
-    display: none;
+    gap: 12px;
 }
 
 .erp-results-badge {
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--erp-text-muted);
     white-space: nowrap;
     font-weight: 500;
 }
+.erp-results-badge strong {
+    color: var(--erp-text-main);
+    font-family: var(--erp-mono);
+}
 
-/* Rule 2: Filters on Right Corner */
+/* Rule: Filters on Right Corner */
 .erp-filter-right {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: nowrap;
     justify-content: flex-end;
 }
@@ -373,8 +304,8 @@ html, body {
 .erp-filter-control {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 11.5px;
+    gap: 5px;
+    font-size: 12px;
     color: var(--erp-text-label);
 }
 
@@ -388,11 +319,11 @@ html, body {
 }
 
 .erp-select {
-    height: 30px;
-    padding: 2px 24px 2px 8px;
+    height: 28px;
+    padding: 2px 22px 2px 8px;
     font-size: 12px;
     border: 1px solid var(--erp-border);
-    border-radius: 4px;
+    border-radius: 6px;
     background: var(--erp-card-bg);
     color: var(--erp-text-main);
     outline: none;
@@ -403,37 +334,39 @@ html, body {
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 6px center;
-    background-size: 12px;
+    background-size: 11px;
+    transition: border-color 0.15s;
 }
 .erp-select:focus {
     border-color: var(--erp-primary);
 }
 
 .erp-input-sm {
-    height: 30px;
-    width: 78px;
+    height: 28px;
+    width: 75px;
     padding: 2px 6px;
     font-size: 12px;
     font-family: var(--erp-mono);
     border: 1px solid var(--erp-border);
-    border-radius: 4px;
+    border-radius: 6px;
     background: var(--erp-card-bg);
     color: var(--erp-text-main);
     outline: none;
+    transition: border-color 0.15s;
 }
 .erp-input-sm:focus {
     border-color: var(--erp-primary);
 }
 
 .erp-btn-reset {
-    height: 30px;
-    padding: 4px 10px;
+    height: 28px;
+    padding: 3px 10px;
     font-size: 11.5px;
     font-weight: 600;
     color: var(--erp-text-muted);
     background: transparent;
     border: 1px solid var(--erp-border);
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -453,9 +386,9 @@ html, body {
     gap: 8px;
     background: #1e293b;
     color: #ffffff;
-    border-radius: 4px;
-    padding: 3px 10px;
-    font-size: 12px;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 11.5px;
 }
 
 .erp-bulk-strip.hidden {
@@ -466,8 +399,8 @@ html, body {
     background: #334155;
     color: #ffffff;
     border: none;
-    border-radius: 3px;
-    padding: 3px 8px;
+    border-radius: 4px;
+    padding: 2px 8px;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
@@ -485,7 +418,7 @@ html, body {
     background: #b91c1c;
 }
 
-/* 3. Rule 1: Table Card & Scrollable Table Body Only */
+/* 3. Table Card & Scrollable Table Body Only */
 .erp-table-card {
     flex: 1;
     min-height: 0;
@@ -493,7 +426,7 @@ html, body {
     flex-direction: column;
     background: var(--erp-card-bg);
     border: 1px solid var(--erp-border);
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     position: relative;
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
@@ -506,6 +439,7 @@ html, body {
     overflow-y: auto;
     overflow-x: auto;
     position: relative;
+    padding-bottom: 54px; /* Extra clearance for the bottom floating bar */
 }
 
 /* Sticky Header */
@@ -531,18 +465,25 @@ html, body {
     white-space: nowrap;
 }
 
+/* Mandatory Zebra Striping */
+.erp-table tbody tr:nth-child(even) {
+    background-color: var(--erp-row-alt) !important;
+}
+.erp-table tbody tr:nth-child(odd) {
+    background-color: var(--erp-card-bg) !important;
+}
+
 .erp-table tbody tr {
     border-bottom: 1px solid var(--erp-border-subtle);
-    background: var(--erp-card-bg);
     transition: background 0.1s ease;
 }
 
 .erp-table tbody tr:hover {
-    background: var(--erp-row-hover);
+    background-color: var(--erp-row-hover) !important;
 }
 
 .erp-table tbody tr.row-selected {
-    background: var(--erp-selected-row) !important;
+    background-color: var(--erp-selected-row) !important;
 }
 
 .erp-table td {
@@ -566,7 +507,7 @@ html, body {
 .erp-prod-thumb {
     width: 32px;
     height: 32px;
-    border-radius: 4px;
+    border-radius: 6px;
     object-fit: cover;
     border: 1px solid var(--erp-border);
     background: #f1f5f9;
@@ -589,7 +530,7 @@ html, body {
 .erp-tag-cat {
     display: inline-block;
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: 4px;
     background: var(--erp-th-bg);
     color: var(--erp-text-muted);
     font-size: 10.5px;
@@ -605,7 +546,7 @@ html, body {
     cursor: pointer;
     padding: 2px 4px;
     font-size: 11px;
-    border-radius: 3px;
+    border-radius: 4px;
 }
 .erp-var-btn:hover {
     background: var(--erp-primary-light);
@@ -666,6 +607,62 @@ html, body {
     border: 1px solid #cbd5e1;
 }
 
+/* Interactive iOS Status Toggle Switch */
+.erp-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+    vertical-align: middle;
+    margin: 0;
+    cursor: pointer;
+}
+
+.erp-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.erp-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 18px;
+}
+
+.erp-slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+
+.erp-switch input:checked + .erp-slider {
+    background-color: #10b981; /* Active Green */
+}
+
+.erp-switch input:checked + .erp-slider:before {
+    transform: translateX(16px);
+}
+
+.erp-switch input:disabled + .erp-slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Row Actions */
 .erp-row-actions {
     display: flex;
@@ -677,7 +674,7 @@ html, body {
 .erp-icon-btn {
     width: 26px;
     height: 26px;
-    border-radius: 4px;
+    border-radius: 6px;
     border: 1px solid var(--erp-border);
     background: var(--erp-card-bg);
     color: var(--erp-text-muted);
@@ -705,7 +702,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 6px 12px;
+    padding: 6px 14px;
     background: var(--erp-th-bg);
     border-top: 1px solid var(--erp-border);
     flex-shrink: 0;
@@ -772,6 +769,80 @@ html, body {
     font-size: 11.5px;
 }
 
+/* 5. Sleek Floating Island Bar (Search + Add New Button) */
+.cmd-bar {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(24, 24, 27, 0.94);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    padding: 5px 8px 5px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+.cmd-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.cmd-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 13px;
+    font-family: var(--erp-font);
+    width: 220px;
+    padding: 2px 0;
+}
+.cmd-search input::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.cmd-clear-btn {
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-size: 12px;
+    display: none;
+}
+.cmd-clear-btn:hover {
+    color: #ffffff;
+}
+
+.cmd-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.cmd-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    color: #0f172a !important;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 9999px;
+    text-decoration: none;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+.cmd-cta:hover {
+    background: #f1f5f9;
+    transform: scale(1.02);
+}
+
 /* Split View with Slide-Over Quick View */
 .erp-content-split {
     display: flex;
@@ -790,7 +861,7 @@ html, body {
     height: 100%;
     background: var(--erp-card-bg);
     border-left: 1px solid var(--erp-border);
-    box-shadow: -4px 0 16px rgba(0,0,0,0.08);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.08);
     transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 50;
     display: flex;
@@ -842,7 +913,7 @@ html, body {
     width: 100%;
     height: 180px;
     border: 1px solid var(--erp-border);
-    border-radius: 6px;
+    border-radius: 8px;
     background: #f8fafc;
     overflow: hidden;
     position: relative;
@@ -866,7 +937,7 @@ html, body {
 .erp-drawer-tile {
     background: var(--erp-th-bg);
     border: 1px solid var(--erp-border);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 8px;
 }
 
@@ -905,8 +976,9 @@ html, body {
 .erp-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(2px);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -919,8 +991,8 @@ html, body {
 .erp-modal-box {
     background: var(--erp-card-bg);
     border: 1px solid var(--erp-border);
-    border-radius: 6px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     width: 90%;
     max-width: 480px;
     overflow: hidden;
@@ -932,20 +1004,20 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    padding: 14px 18px;
     border-bottom: 1px solid var(--erp-border);
     background: var(--erp-th-bg);
 }
 
 .erp-modal-head h3 {
     margin: 0;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--erp-text-main);
 }
 
 .erp-modal-body {
-    padding: 16px;
+    padding: 18px;
     overflow-y: auto;
     max-height: 70vh;
 }
@@ -954,7 +1026,7 @@ html, body {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    padding: 10px 16px;
+    padding: 12px 18px;
     border-top: 1px solid var(--erp-border);
     background: var(--erp-th-bg);
 }
@@ -962,7 +1034,7 @@ html, body {
 /* Alerts */
 .erp-alert {
     padding: 8px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 12px;
     display: flex;
     align-items: center;
@@ -993,18 +1065,8 @@ html, body {
     <input type="hidden" name="page" id="currentPageInput" value="<?= $currentPage ?>">
     <input type="hidden" name="per_page" id="perPageInput" value="<?= $perPage ?>">
 
-    <!-- 1. Top ERP Header with Compact Stats and Action Toolbar -->
+    <!-- 1. Slim Top Action & KPI Bar (No Redundant Headlines) -->
     <div class="erp-top-header">
-        <div class="erp-title-group">
-            <div class="erp-module-icon">
-                <i class="fa-solid fa-boxes-stacked"></i>
-            </div>
-            <div>
-                <div class="erp-module-title">Inventory Catalog</div>
-                <div class="erp-module-subtitle">Manage products, stock levels, wholesale rates & variations</div>
-            </div>
-        </div>
-
         <!-- Compact KPI Strip -->
         <div class="erp-kpi-strip">
             <div class="erp-kpi-item">
@@ -1029,11 +1091,8 @@ html, body {
             </div>
         </div>
 
-        <!-- Action Toolbar -->
+        <!-- Top Action Toolbar -->
         <div class="erp-actions-group">
-            <a href="<?= APP_URL ?>/inventory/add" class="erp-btn erp-btn-primary">
-                <i class="fa-solid fa-plus"></i> New Product
-            </a>
             <button type="button" onclick="openCsvModal()" class="erp-btn erp-btn-outline" title="Import CSV">
                 <i class="fa-solid fa-file-arrow-up"></i> Import
             </button>
@@ -1064,22 +1123,12 @@ html, body {
     </div>
     <?php endif; ?>
 
-    <!-- 2. RULE 2: Filters Bar Above Table with Right-Corner Filter Alignment -->
+    <!-- 2. Filters Bar Above Table with Right-Corner Filter Alignment -->
     <div class="erp-filter-bar">
-        <!-- Left: Search and Selection Indicators -->
+        <!-- Left: Active Item Count & Bulk Selection Controls -->
         <div class="erp-filter-left">
-            <div class="erp-search-box">
-                <i class="fa-solid fa-magnifying-glass erp-search-icon"></i>
-                <input type="text" name="search" id="searchInput"
-                       class="erp-search-input"
-                       value="<?= htmlspecialchars($filters['search']) ?>"
-                       oninput="triggerSearchDelay()"
-                       placeholder="Search SKU, name, barcode, sample code…">
-                <i class="fa-solid fa-xmark erp-search-clear" id="searchClearBtn" onclick="clearSearchInput()"></i>
-            </div>
-            
             <span class="erp-results-badge">
-                <strong id="matching-count"><?= number_format($totalItems) ?></strong> items
+                <strong id="matching-count"><?= number_format($totalItems) ?></strong> products
             </span>
 
             <!-- Bulk Selection Strip (Shown only when rows are selected) -->
@@ -1095,7 +1144,7 @@ html, body {
         <div class="erp-filter-right">
             <!-- Category Filter -->
             <div class="erp-filter-control">
-                <span class="erp-filter-label">Cat:</span>
+                <span class="erp-filter-label">Category:</span>
                 <select name="category_id" id="categoryInput" class="erp-select" onchange="applyAjaxFilters()">
                     <option value="">All Categories</option>
                     <?php foreach ($categories as $cat): ?>
@@ -1129,12 +1178,12 @@ html, body {
 
             <!-- Price Range (Min/Max) -->
             <div class="erp-filter-control">
-                <span class="erp-filter-label">Rs:</span>
+                <span class="erp-filter-label">Price:</span>
                 <input type="number" step="0.01" name="min_price" id="minPriceInput" class="erp-input-sm"
-                       value="<?= htmlspecialchars($filters['min_price']) ?>" oninput="triggerSearchDelay()" placeholder="Min">
+                       value="<?= htmlspecialchars($filters['min_price']) ?>" oninput="triggerSearchDelay()" placeholder="Min Rs">
                 <span>-</span>
                 <input type="number" step="0.01" name="max_price" id="maxPriceInput" class="erp-input-sm"
-                       value="<?= htmlspecialchars($filters['max_price']) ?>" oninput="triggerSearchDelay()" placeholder="Max">
+                       value="<?= htmlspecialchars($filters['max_price']) ?>" oninput="triggerSearchDelay()" placeholder="Max Rs">
             </div>
 
             <!-- Reset Filters -->
@@ -1144,7 +1193,7 @@ html, body {
         </div>
     </div>
 
-    <!-- 3. RULE 1: Table Card (Full Height & Scrollable Table Rows Only) -->
+    <!-- 3. Table Card (Full Height & Scrollable Table Rows Only with Zebra Striping) -->
     <div class="erp-content-split">
         <div class="erp-table-card">
             <div id="table-loader">
@@ -1163,14 +1212,15 @@ html, body {
                             <th class="text-right" style="width:110px;">Retail (LKR)</th>
                             <th class="text-right" style="width:110px;">B2B / W/S</th>
                             <th class="text-center" style="width:80px;">Qty</th>
+                            <th class="text-center" style="width:90px;">Active</th>
                             <th class="text-center" style="width:110px;">Status</th>
-                            <th class="text-right" style="width:120px;">Actions</th>
+                            <th class="text-right" style="width:100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($items)): ?>
                         <tr>
-                            <td colspan="8" class="text-center" style="padding: 40px 16px; color: var(--erp-text-muted);">
+                            <td colspan="9" class="text-center" style="padding: 40px 16px; color: var(--erp-text-muted);">
                                 <i class="fa-solid fa-box-open" style="font-size: 28px; margin-bottom: 8px; display: block; opacity: 0.5;"></i>
                                 <strong style="font-size: 14px; color: var(--erp-text-main);">No products found</strong>
                                 <div style="font-size: 12px; margin-top: 4px;">Try clearing filters or search criteria.</div>
@@ -1246,7 +1296,7 @@ html, body {
                                                 <div class="erp-prod-title">
                                                     <?= htmlspecialchars($item->name ?? 'Unnamed Product') ?>
                                                     <?php if (!empty($variations)): ?>
-                                                        <span style="font-size: 10px; font-weight: 700; background: var(--erp-primary-light); color: var(--erp-primary); padding: 1px 5px; border-radius: 3px; margin-left: 4px;">
+                                                        <span style="font-size: 10px; font-weight: 700; background: var(--erp-primary-light); color: var(--erp-primary); padding: 1px 5px; border-radius: 4px; margin-left: 4px;">
                                                             <?= count($variations) ?> vars
                                                         </span>
                                                     <?php endif; ?>
@@ -1277,6 +1327,13 @@ html, body {
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center">
+                                        <!-- Sleek iOS Toggle Switch -->
+                                        <label class="erp-switch" title="Toggle Active / Inactive">
+                                            <input type="checkbox" onchange="toggleProductStatus(<?= $item->id ?>, this.checked ? 'active' : 'inactive', this)" <?= $itemStatus === 'active' ? 'checked' : '' ?>>
+                                            <span class="erp-slider"></span>
+                                        </label>
+                                    </td>
+                                    <td class="text-center" id="status_badge_<?= $item->id ?>">
                                         <?php if ($itemStatus === 'inactive'): ?>
                                             <span class="erp-badge badge-inactive">Inactive</span>
                                         <?php elseif ($qty <= 0): ?>
@@ -1295,9 +1352,6 @@ html, body {
                                             <a href="<?= APP_URL ?>/inventory/edit/<?= $item->id ?>" class="erp-icon-btn" title="Edit Product">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </a>
-                                            <button type="button" class="erp-icon-btn" onclick="toggleProductStatus(<?= $item->id ?>, '<?= $itemStatus === 'active' ? 'inactive' : 'active' ?>')" title="Toggle Active/Inactive">
-                                                <i class="fa-solid fa-power-off" style="color: <?= $itemStatus === 'active' ? '#10b981' : '#94a3b8' ?>;"></i>
-                                            </button>
                                             <button type="button" class="erp-icon-btn danger" onclick="confirmDelete(<?= $item->id ?>, '<?= htmlspecialchars(addslashes($item->name)) ?>')" title="Delete">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
@@ -1320,6 +1374,7 @@ html, body {
                                         <td class="text-center font-mono">
                                             <strong><?= (int)($var->quantity_on_hand ?? 0) ?></strong>
                                         </td>
+                                        <td></td>
                                         <td class="text-center">
                                             <?php $varQty = (int)($var->quantity_on_hand ?? 0); ?>
                                             <?php if ($varQty <= 0): ?>
@@ -1433,11 +1488,28 @@ html, body {
             </div>
         </div>
     </div>
+
+    <!-- 5. Floating Island Bar (Search Bar + Add New Button) -->
+    <div class="cmd-bar">
+        <div class="cmd-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="search" id="searchInput"
+                   value="<?= htmlspecialchars($filters['search']) ?>"
+                   oninput="triggerSearchDelay()"
+                   placeholder="Search catalog…">
+            <i class="fa-solid fa-xmark cmd-clear-btn" id="searchClearBtn" onclick="clearSearchInput()" title="Clear search"></i>
+        </div>
+        <div class="cmd-divider"></div>
+        <a href="<?= APP_URL ?>/inventory/add" class="cmd-cta" title="Create New Product">
+            <i class="fa-solid fa-plus" style="font-size:11px;"></i> New
+        </a>
+    </div>
+
 </form>
 </div>
 
 <!-- ============================================================
-     MODALS: CSV IMPORT, DELETE, BULK EDIT
+     MODALS: CSV IMPORT, DELETE (CLEAN ENTERPRISE), BULK EDIT
      ============================================================ -->
 
 <!-- CSV Import Modal -->
@@ -1448,12 +1520,13 @@ html, body {
             <button type="button" onclick="closeCsvModal()" class="erp-drawer-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="csvImportForm" action="<?= APP_URL ?>/inventory/importERPCSV" method="POST" enctype="multipart/form-data" onsubmit="return handleCsvImportSubmit(event)">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
             <div class="erp-modal-body">
-                <div style="border: 2px dashed var(--erp-border); border-radius:6px; padding:24px; text-align:center; background:var(--erp-th-bg);">
+                <div style="border: 2px dashed var(--erp-border); border-radius:8px; padding:24px; text-align:center; background:var(--erp-th-bg);">
                     <input type="file" name="csv_file" id="csvFileInput" accept=".csv" required onchange="logFileSelection(this)">
                     <div style="font-size:12px; color:var(--erp-text-muted); margin-top:8px;">Upload .csv file with columns: Item Code, Name, Selling Price, Cost, Qty, Category</div>
                 </div>
-                <div id="importDebugInfo" style="display:none; background:#f1f5f9; padding:8px; margin-top:8px; border-radius:4px; font-size:11px; font-family:monospace;">
+                <div id="importDebugInfo" style="display:none; background:#f1f5f9; padding:8px; margin-top:8px; border-radius:6px; font-size:11px; font-family:monospace;">
                     <strong>File:</strong> <span id="fileInfoText"></span>
                 </div>
             </div>
@@ -1465,26 +1538,31 @@ html, body {
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Delete Confirmation Modal (Clean Enterprise Style matching user image) -->
 <div id="deleteProductModal" class="erp-modal-backdrop hidden">
     <div class="erp-modal-box">
         <div class="erp-modal-head">
-            <h3 style="color:var(--erp-danger);"><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i> Delete Product</h3>
+            <h3 style="color:var(--erp-danger); display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Delete Product
+            </h3>
             <button type="button" onclick="closeDeleteModal()" class="erp-drawer-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="deleteProductForm" onsubmit="submitDeleteProduct(event)">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
             <div class="erp-modal-body">
                 <input type="hidden" id="deleteItemId" name="item_id">
-                <p style="font-size:13px; margin:0 0 12px 0;">
+                <p style="font-size:14px; margin:0 0 16px 0; color:var(--erp-text-main);">
                     Are you sure you want to delete <strong id="deleteItemName" style="color:var(--erp-text-main);"></strong>?
                 </p>
-                <div id="deleteErrorContainer" class="erp-alert error" style="display:none; margin-bottom:10px;"></div>
-                <label style="font-size:11.5px; font-weight:600; display:block; margin-bottom:4px;">Confirm with Account Password:</label>
-                <input type="password" name="password" id="deleteAdminPassword" class="erp-search-input" placeholder="Enter password" required autocomplete="current-password">
+                <div id="deleteErrorContainer" class="erp-alert error" style="display:none; margin-bottom:12px;"></div>
+                <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px; color:var(--erp-text-main);">
+                    Confirm with Account Password:
+                </label>
+                <input type="password" name="password" id="deleteAdminPassword" class="erp-input-sm" style="width:100%; height:34px; padding:6px 10px; font-size:13px;" placeholder="Enter password" required autocomplete="current-password">
             </div>
             <div class="erp-modal-foot">
-                <button type="button" onclick="closeDeleteModal()" class="erp-btn erp-btn-outline">Cancel</button>
-                <button type="submit" id="deleteSubmitBtn" class="erp-btn erp-btn-primary" style="background:var(--erp-danger); border-color:var(--erp-danger);">
+                <button type="button" onclick="closeDeleteModal()" class="erp-btn erp-btn-outline" style="padding:6px 16px;">Cancel</button>
+                <button type="submit" id="deleteSubmitBtn" class="erp-btn erp-btn-primary" style="background:#dc2626; border-color:#dc2626; padding:6px 16px;">
                     <i id="deleteBtnSpinner" class="fa-solid fa-spinner fa-spin" style="display:none; margin-right:4px;"></i> Delete
                 </button>
             </div>
@@ -1500,6 +1578,7 @@ html, body {
             <button type="button" onclick="closeBulkEditModal()" class="erp-drawer-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="bulkEditForm" onsubmit="submitBulkEdit(event)">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
             <div class="erp-modal-body">
                 <div style="font-size:12px; color:var(--erp-text-muted); margin-bottom:12px;">
                     Updating <strong id="bulkSelectedCount" style="color:var(--erp-text-main);">0</strong> selected products:
@@ -1508,7 +1587,7 @@ html, body {
 
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <!-- Category -->
-                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                    <div style="border:1px solid var(--erp-border); border-radius:6px; padding:8px;">
                         <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
                             <input type="checkbox" name="update_category" value="1" id="bulkUpdateCategory" onchange="toggleBulkField('category')"> Update Category
                         </label>
@@ -1521,7 +1600,7 @@ html, body {
                     </div>
 
                     <!-- Retail Price -->
-                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                    <div style="border:1px solid var(--erp-border); border-radius:6px; padding:8px;">
                         <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
                             <input type="checkbox" name="update_selling_price" value="1" id="bulkUpdateSellingPrice" onchange="toggleBulkField('selling_price')"> Update Retail Price
                         </label>
@@ -1531,12 +1610,12 @@ html, body {
                                 <option value="pct_inc">+ %</option>
                                 <option value="pct_dec">− %</option>
                             </select>
-                            <input type="number" step="0.01" name="selling_price_val" id="bulkSellingPriceVal" class="erp-search-input" style="pointer-events:none; opacity:0.4;" placeholder="0.00">
+                            <input type="number" step="0.01" name="selling_price_val" id="bulkSellingPriceVal" class="erp-input-sm" style="flex:1; pointer-events:none; opacity:0.4;" placeholder="0.00">
                         </div>
                     </div>
 
                     <!-- B2B Price -->
-                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                    <div style="border:1px solid var(--erp-border); border-radius:6px; padding:8px;">
                         <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
                             <input type="checkbox" name="update_wholesale_price" value="1" id="bulkUpdateWholesalePrice" onchange="toggleBulkField('wholesale_price')"> Update B2B Price
                         </label>
@@ -1546,12 +1625,12 @@ html, body {
                                 <option value="pct_inc">+ %</option>
                                 <option value="pct_dec">− %</option>
                             </select>
-                            <input type="number" step="0.01" name="wholesale_price_val" id="bulkWholesalePriceVal" class="erp-search-input" style="pointer-events:none; opacity:0.4;" placeholder="0.00">
+                            <input type="number" step="0.01" name="wholesale_price_val" id="bulkWholesalePriceVal" class="erp-input-sm" style="flex:1; pointer-events:none; opacity:0.4;" placeholder="0.00">
                         </div>
                     </div>
 
                     <!-- Status -->
-                    <div style="border:1px solid var(--erp-border); border-radius:4px; padding:8px;">
+                    <div style="border:1px solid var(--erp-border); border-radius:6px; padding:8px;">
                         <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; cursor:pointer;">
                             <input type="checkbox" name="update_status" value="1" id="bulkUpdateStatus" onchange="toggleBulkField('status')"> Update Status
                         </label>
@@ -1579,13 +1658,17 @@ html, body {
 let searchTimer = null;
 let activeDeleteId = null;
 
-// Search with Debounce
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?= htmlspecialchars($csrfToken) ?>';
+}
+
+// Search with Debounce & Clear Icon Visibility
 function triggerSearchDelay() {
     clearTimeout(searchTimer);
     const searchVal = document.getElementById('searchInput').value;
     const clearBtn = document.getElementById('searchClearBtn');
     if (clearBtn) {
-        clearBtn.style.display = searchVal.length > 0 ? 'block' : 'none';
+        clearBtn.style.display = searchVal.length > 0 ? 'inline-block' : 'none';
     }
     searchTimer = setTimeout(() => {
         document.getElementById('currentPageInput').value = 1;
@@ -1634,36 +1717,41 @@ function applyAjaxFilters() {
     const queryParams = new URLSearchParams(paramsToKeep).toString();
     const requestUrl = form.getAttribute('action') + '?' + queryParams;
 
-    fetch(requestUrl)
-        .then(r => { if (!r.ok) throw new Error('Network error'); return r.text(); })
-        .then(html => {
-            const doc = new DOMParser().parseFromString(html, 'text/html');
-            const newTable = doc.getElementById('table-container');
-            const oldTable = document.getElementById('table-container');
-            if (newTable && oldTable) {
-                oldTable.innerHTML = newTable.innerHTML;
-            }
+    fetch(requestUrl, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+        }
+    })
+    .then(r => { if (!r.ok) throw new Error('Network error'); return r.text(); })
+    .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const newTable = doc.getElementById('table-container');
+        const oldTable = document.getElementById('table-container');
+        if (newTable && oldTable) {
+            oldTable.innerHTML = newTable.innerHTML;
+        }
 
-            // Update pagination bar
-            const newPg = doc.querySelector('.erp-pagination-bar');
-            const oldPg = document.querySelector('.erp-pagination-bar');
-            if (newPg && oldPg) {
-                oldPg.innerHTML = newPg.innerHTML;
-            }
+        // Update pagination bar
+        const newPg = doc.querySelector('.erp-pagination-bar');
+        const oldPg = document.querySelector('.erp-pagination-bar');
+        if (newPg && oldPg) {
+            oldPg.innerHTML = newPg.innerHTML;
+        }
 
-            // Update KPI stats & item counts
-            ['stat-total-items','stat-low-stock','stat-out-of-stock','matching-count'].forEach(id => {
-                const n = doc.getElementById(id), o = document.getElementById(id);
-                if (n && o) o.innerHTML = n.innerHTML;
-            });
-
-            window.history.pushState({ path: requestUrl }, '', requestUrl);
-            clearSelection();
-        })
-        .catch(err => console.error('Filter Error:', err))
-        .finally(() => {
-            if (loader) loader.classList.remove('active');
+        // Update KPI stats & item counts
+        ['stat-total-items','stat-low-stock','stat-out-of-stock','matching-count'].forEach(id => {
+            const n = doc.getElementById(id), o = document.getElementById(id);
+            if (n && o) o.innerHTML = n.innerHTML;
         });
+
+        window.history.pushState({ path: requestUrl }, '', requestUrl);
+        clearSelection();
+    })
+    .catch(err => console.error('Filter Error:', err))
+    .finally(() => {
+        if (loader) loader.classList.remove('active');
+    });
 }
 
 // Variation Rows Toggle
@@ -1835,25 +1923,36 @@ function submitBulkEdit(e) {
     if (spinner) spinner.style.display = 'inline-block';
     if (err) { err.style.display = 'none'; err.textContent = ''; }
 
-    fetch('<?= APP_URL ?>/inventory/bulkUpdate', { method: 'POST', body: new FormData(form) })
-        .then(r => { if (!r.ok) throw new Error('Bulk update failed'); return r.json(); })
-        .then(data => {
-            if (data.success) {
-                closeBulkEditModal();
-                clearSelection();
-                applyAjaxFilters();
-            } else if (err) {
-                err.textContent = data.error || 'Update failed.';
-                err.style.display = 'block';
-            }
-        })
-        .catch(ex => {
-            if (err) { err.textContent = ex.message; err.style.display = 'block'; }
-        })
-        .finally(() => {
-            if (btn) btn.disabled = false;
-            if (spinner) spinner.style.display = 'none';
-        });
+    const formData = new FormData(form);
+    formData.append('csrf_token', getCsrfToken());
+
+    fetch('<?= APP_URL ?>/inventory/bulkUpdate', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(r => { if (!r.ok) throw new Error('Bulk update failed'); return r.json(); })
+    .then(data => {
+        if (data.success) {
+            closeBulkEditModal();
+            clearSelection();
+            applyAjaxFilters();
+        } else if (err) {
+            err.textContent = data.error || 'Update failed.';
+            err.style.display = 'block';
+        }
+    })
+    .catch(ex => {
+        if (err) { err.textContent = ex.message; err.style.display = 'block'; }
+    })
+    .finally(() => {
+        if (btn) btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    });
 }
 
 function confirmBulkDelete() {
@@ -1866,45 +1965,86 @@ function confirmBulkDelete() {
     }
 
     const formData = new FormData();
+    formData.append('csrf_token', getCsrfToken());
     selected.forEach(cb => formData.append('item_ids[]', cb.value));
 
-    fetch('<?= APP_URL ?>/inventory/bulk_delete', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                clearSelection();
-                applyAjaxFilters();
-            } else {
-                alert(data.error || data.message || 'Bulk delete failed.');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('An error occurred during bulk deletion.');
-        });
+    fetch('<?= APP_URL ?>/inventory/bulk_delete', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            clearSelection();
+            applyAjaxFilters();
+        } else {
+            alert(data.error || data.message || 'Bulk delete failed.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('An error occurred during bulk deletion.');
+    });
 }
 
-// Single Product Status Toggle
-function toggleProductStatus(id, targetStatus) {
+// Single Product Status Toggle (Fixed with CSRF & Slider State Reversion)
+function toggleProductStatus(id, targetStatus, switchInput) {
     const formData = new FormData();
+    const token = getCsrfToken();
     formData.append('status', targetStatus);
+    formData.append('csrf_token', token);
 
-    fetch('<?= APP_URL ?>/inventory/toggle_status/' + id, { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                applyAjaxFilters();
-            } else {
-                alert(data.message || 'Failed to toggle status.');
+    if (switchInput) switchInput.disabled = true;
+
+    fetch('<?= APP_URL ?>/inventory/toggle_status/' + id, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': token,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(r => {
+        if (!r.ok) {
+            return r.json().then(j => { throw new Error(j.message || 'Server returned status ' + r.status); }).catch(() => {
+                throw new Error('Server returned status ' + r.status);
+            });
+        }
+        return r.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update the status badge cell dynamically
+            const badgeCell = document.getElementById('status_badge_' + id);
+            if (badgeCell) {
+                if (targetStatus === 'inactive') {
+                    badgeCell.innerHTML = '<span class="erp-badge badge-inactive">Inactive</span>';
+                } else {
+                    badgeCell.innerHTML = '<span class="erp-badge badge-instock">Active</span>';
+                }
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Error toggling status.');
-        });
+        } else {
+            if (switchInput) switchInput.checked = (targetStatus !== 'active');
+            alert(data.message || 'Failed to toggle product status.');
+        }
+    })
+    .catch(err => {
+        console.error('Status toggle error:', err);
+        if (switchInput) switchInput.checked = (targetStatus !== 'active');
+        alert('Unable to update status: ' + (err.message || 'Security validation error. Please refresh.'));
+    })
+    .finally(() => {
+        if (switchInput) switchInput.disabled = false;
+    });
 }
 
-// Single Product Delete
+// Single Product Delete Modal & Submission
 function confirmDelete(id, name) {
     activeDeleteId = id;
     document.getElementById('deleteItemId').value = id;
@@ -1934,24 +2074,35 @@ function submitDeleteProduct(e) {
     if (spinner) spinner.style.display = 'inline-block';
     if (err) { err.style.display = 'none'; err.textContent = ''; }
 
-    fetch('<?= APP_URL ?>/inventory/delete/' + activeDeleteId, { method: 'POST', body: new FormData(form) })
-        .then(r => { if (!r.ok) throw new Error('Delete failed'); return r.json(); })
-        .then(data => {
-            if (data.success) {
-                closeDeleteModal();
-                applyAjaxFilters();
-            } else if (err) {
-                err.textContent = data.message || 'Failed to delete product.';
-                err.style.display = 'block';
-            }
-        })
-        .catch(ex => {
-            if (err) { err.textContent = ex.message; err.style.display = 'block'; }
-        })
-        .finally(() => {
-            if (btn) btn.disabled = false;
-            if (spinner) spinner.style.display = 'none';
-        });
+    const formData = new FormData(form);
+    formData.append('csrf_token', getCsrfToken());
+
+    fetch('<?= APP_URL ?>/inventory/delete/' + activeDeleteId, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': getCsrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            closeDeleteModal();
+            applyAjaxFilters();
+        } else if (err) {
+            err.textContent = data.message || 'Failed to delete product.';
+            err.style.display = 'block';
+        }
+    })
+    .catch(ex => {
+        if (err) { err.textContent = ex.message; err.style.display = 'block'; }
+    })
+    .finally(() => {
+        if (btn) btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    });
 }
 
 // CSV Modal

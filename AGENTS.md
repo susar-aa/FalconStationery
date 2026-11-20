@@ -15,11 +15,8 @@ These rules are MANDATORY for all existing and future modules in the Falcon Stat
    - The table container (`.erp-table-scroll` / `.table-container`) MUST use `flex: 1; min-height: 0; overflow-y: auto; overflow-x: auto;`.
    - Table column headers (`thead th`) MUST be sticky (`position: sticky; top: 0; z-index: 10;`).
    - ONLY the rows (`tbody tr`) of the table scroll inside the table container.
-   - The pagination and status footer MUST remain permanently pinned at the bottom of the table card, always visible without scrolling.
-
-3. **No Intrusive Floating Docks**:
-   - Never use floating docks or command bars that overlap or obscure data rows or pagination controls.
-   - All primary actions (Add, Import, Export, Bulk Actions) belong in a clean, dedicated top ERP action bar.
+   - Pinned pagination and status footer MUST remain permanently pinned at the bottom of the table card, always visible without scrolling.
+   - Maintain adequate bottom padding (`padding-bottom: 54px;`) so the bottom floating island bar never obscures the last rows of data or pagination.
 
 ---
 
@@ -29,8 +26,7 @@ These rules are MANDATORY for all existing and future modules in the Falcon Stat
    - Filter controls must be positioned directly above the data table in a dedicated toolbar (`.erp-filter-bar`).
    
 2. **Left Corner Layout**:
-   - Quick search input (`Search SKU, Name, Barcode, etc.`) with clear icon (`×`).
-   - Active results counter (e.g., `Showing 1,050 items`) and selection/bulk indicator.
+   - Quick search or active results counter (e.g., `Showing 1,050 products`) and selection/bulk action indicators.
 
 3. **Right Corner Layout (Mandatory Filter Placement)**:
    - ALL filtering options must be grouped together and aligned to the **top-right corner** above the table:
@@ -44,22 +40,35 @@ These rules are MANDATORY for all existing and future modules in the Falcon Stat
 
 ---
 
-## RULE 3: Professional ERP System Design Language (Not a "Fancy Website")
+## RULE 3: Professional ERP System Design Language & Typography
 
-1. **High Information Density**:
-   - Use crisp, compact typography (Inter, SF Pro, Roboto, or system sans-serif; monospace for SKUs, codes, currencies, and quantities).
-   - Standard table cell padding: 8px to 10px vertical, 12px horizontal.
-   - Avoid oversized empty cards, huge paddings, and bloated consumer-website card layouts.
+1. **Mandatory Font Family — SF Pro Display**:
+   - Use the local `SF Pro Display` font suite (`public/assets/fonts/sf_pro_display_*.ttf`) across the whole system on all views, tables, forms, and buttons.
+   - Monospace (`SF Mono`, `ui-monospace`) for SKUs, codes, currencies, and quantities.
 
-2. **Clean Enterprise Geometry**:
-   - Subtle, crisp borders (`1px solid #e2e8f0` / `var(--border-color)`).
-   - Clean professional border radii: `4px` to `6px` for tables, inputs, buttons, and badges. Avoid bubbly 24px+ pill radii.
-   - Professional status badges: Subtle tinted backgrounds with solid dots/text (Emerald for Active/In-Stock, Amber for Low-Stock, Rose for Out-of-Stock/Inactive).
+2. **Mandatory Zebra Striping on All Data Tables**:
+   - Every data table across all modules must implement alternating zebra striping (`tbody tr:nth-child(even)` subtly tinted) for effortless line tracking on dense records.
 
-3. **Compact Inline KPI Metrics**:
-   - Display summary KPIs (Total Count, Active, Warnings, Critical) as a compact inline status bar or horizontal strip at the top, rather than massive oversized cards that consume vertical screen space.
+3. **No Redundant Large Headlines**:
+   - Do NOT render large `<h1>` module titles or multi-line descriptive subtitles (e.g., "Inventory Catalog - Manage products, stock levels...").
+   - The active module is already indicated in the top navigation bar. Keep the workspace top header strip ultra-compact and functional.
 
-4. **Performance & Batching (N+1 Prevention)**:
-   - Always batch-load child records (e.g., product variations, order lines) in a single SQL query using `IN (...)`. Never execute SQL queries inside PHP view loops.
-   - Server-side pagination with database `LIMIT` and `OFFSET` is mandatory for all large datasets.
+4. **Floating Command Bar**:
+   - Keep the sleek floating island pill at the bottom containing the primary live-search input and the `+ New` button.
 
+5. **Interactive Status Toggles**:
+   - Operational statuses (Active / Inactive) must use interactive iOS-style toggle switches (`.erp-switch`), not static power or text icons.
+   - All status toggle requests must include CSRF tokens and AJAX headers (`X-CSRF-TOKEN`, `X-Requested-With`) with instant UI updates and automatic rollback on error.
+
+---
+
+## RULE 4: Always Provide Standalone SQL Code for Any Database Changes (Mandatory)
+
+1. **Explicit Production-Ready SQL in Responses**:
+   - Whenever any database change is made or required (including `CREATE TABLE`, `ALTER TABLE`, `ADD COLUMN`, `MODIFY COLUMN`, `DROP COLUMN`, `ADD INDEX`, `CREATE TRIGGER`, schema migrations, or essential reference data `INSERT`/`UPDATE`), you MUST ALWAYS provide the exact, copy-pasteable SQL code block in your response.
+   - Never assume database migrations run automatically on the online server or rely solely on local PHP migration scripts. The user must be given the direct SQL statements to execute on their live online server (e.g., in phpMyAdmin, MySQL CLI, cPanel, or Plesk).
+
+2. **Safe & Idempotent SQL Syntax**:
+   - Use safe statements wherever possible (`CREATE TABLE IF NOT EXISTS`, conditional column alterations, or clear comments on target table/column constraints).
+   - Group the SQL code in an easily identifiable `sql` markdown code block with clear instructions on which database and environment to apply it to.
+   - If rollback or verification queries are relevant, provide them alongside the migration SQL.

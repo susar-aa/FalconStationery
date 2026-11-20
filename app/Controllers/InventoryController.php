@@ -10,7 +10,7 @@ class InventoryController extends Controller {
             header('Location: ' . APP_URL . '/auth/login');
             exit;
         }
-        
+        $this->generateCsrfToken();
         $this->itemModel = $this->model('Item');
         $this->categoryModel = $this->model('Category');
         $this->db = new Database(); // Added to check for database relations
@@ -2253,21 +2253,32 @@ class InventoryController extends Controller {
         $this->checkPermission('inventory', 'create_edit');
         $id = intval($id);
         $status = $_POST['status'] ?? $_GET['status'] ?? null;
+        if (!$status) {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $status = $input['status'] ?? null;
+        }
 
         $res = $this->itemModel->toggleStatus($id, $status);
 
         $this->logActivity(
             'Product Status Toggle',
             'Inventory',
-            "Updated operational status for product #{$id}.",
+            "Updated operational status for product #{$id} to " . ($status ?? 'toggled') . ".",
             $id
         );
 
-        $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest' || isset($_GET['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                  isset($_GET['ajax']) || 
+                  (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+                  $_SERVER['REQUEST_METHOD'] === 'POST';
 
         if ($isAjax) {
             header('Content-Type: application/json');
-            echo json_encode(['success' => (bool)$res, 'message' => $res ? 'Status updated successfully!' : 'Failed to update status.']);
+            echo json_encode([
+                'success' => (bool)$res,
+                'status' => $status,
+                'message' => $res ? 'Status updated successfully!' : 'Failed to update status.'
+            ]);
             exit;
         }
 

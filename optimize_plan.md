@@ -272,6 +272,11 @@ Test how the system handles each situation and fix genuine problems.
    - Compact inline KPI badges instead of bloated oversized cards.
    - Batch database queries to eliminate N+1 query bottlenecks in views.
 
+4. **Rule 4: Mandatory Standalone SQL Code for Online Server Execution**
+   - Whenever any database change is made or required (including `CREATE TABLE`, `ALTER TABLE`, `ADD COLUMN`, `MODIFY COLUMN`, `DROP COLUMN`, `ADD INDEX`, `CREATE TRIGGER`, schema migrations, or data fixes / default values), ALWAYS provide the exact, copy-pasteable SQL snippet in your response.
+   - Never rely solely on automated local migration runners or PHP scripts; the user must be given standalone SQL code ready to execute directly on the production/online database (e.g., via phpMyAdmin, cPanel, Plesk, or MySQL CLI).
+   - Provide safe and idempotent SQL statements (`IF NOT EXISTS`, conditional alterations, or explicit checks) along with rollback and verification instructions.
+
 ### 11.2 Module Optimization Progress
 
 - [x] **Module 1: Inventory Catalog (`InventoryController`, `Item`, `Views/inventory/index.php`)**

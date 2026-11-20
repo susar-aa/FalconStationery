@@ -45,6 +45,7 @@ if (!function_exists('hasPermission')) {
     <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
     <meta name="theme-color" content="#0066cc">
     <link rel="apple-touch-icon" href="<?= APP_URL ?>/icon-192.png">
+    <meta name="csrf-token" content="<?= $_SESSION['csrf_token'] ?? '' ?>">
     
     <script>
         if ('serviceWorker' in navigator) {
@@ -60,6 +61,46 @@ if (!function_exists('hasPermission')) {
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
     <style>
+        /* ============================================================
+           MANDATORY SYSTEM FONTS — SF PRO DISPLAY
+           ============================================================ */
+        @font-face {
+            font-family: 'SF Pro Display';
+            src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_regular.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/fonts/sf_pro_display_regular.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'SF Pro Display';
+            src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_medium.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/fonts/sf_pro_display_medium.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'SF Pro Display';
+            src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_semibold.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/fonts/sf_pro_display_semibold.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_semibold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'SF Pro Display';
+            src: url('<?= APP_URL ?>/assets/fonts/sf_pro_display_bold.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/fonts/sf_pro_display_bold.ttf') format('truetype'),
+                 url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+        }
+
         :root {
             /* Glassmorphism Core Variables */
             --glass-bg: rgba(255, 255, 255, 0.72);
@@ -120,8 +161,11 @@ if (!function_exists('hasPermission')) {
             box-sizing: border-box;
         }
         
+        body, button, input, select, textarea {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             background-image: 
                 radial-gradient(ellipse at 10% 20%, rgba(79, 70, 229, 0.06) 0%, transparent 50%),
@@ -131,6 +175,26 @@ if (!function_exists('hasPermission')) {
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+        }
+
+        /* Mandatory Zebra Striping across all Data Tables */
+        table.erp-table tbody tr:nth-child(even),
+        .table tbody tr:nth-child(even) {
+            background-color: rgba(241, 245, 249, 0.55) !important;
+        }
+        table.erp-table tbody tr:nth-child(odd),
+        .table tbody tr:nth-child(odd) {
+            background-color: var(--erp-card-bg, #ffffff) !important;
+        }
+        @media (prefers-color-scheme: dark) {
+            table.erp-table tbody tr:nth-child(even),
+            .table tbody tr:nth-child(even) {
+                background-color: rgba(255, 255, 255, 0.03) !important;
+            }
+            table.erp-table tbody tr:nth-child(odd),
+            .table tbody tr:nth-child(odd) {
+                background-color: var(--card-bg, #111827) !important;
+            }
         }
 
         /* --- GLASSMORPHISM FLOATING NAV BAR (Redesigned) --- */
