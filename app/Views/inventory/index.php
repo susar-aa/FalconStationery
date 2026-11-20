@@ -769,30 +769,31 @@ html, body {
     font-size: 11.5px;
 }
 
-/* 5. Sleek Floating Island Bar (Search + Add New Button) */
+/* 5. Sleek Floating Island Bar (Search + Add New Button) - Standard Size */
 .cmd-bar {
     position: fixed;
-    bottom: 22px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(24, 24, 27, 0.94);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(24, 24, 27, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 9999px;
-    padding: 5px 8px 5px 14px;
+    padding: 7px 10px 7px 18px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+    gap: 14px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 100;
 }
 
 .cmd-search {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.6);
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
 }
 
 .cmd-search input {
@@ -800,19 +801,20 @@ html, body {
     border: none;
     outline: none;
     color: #ffffff;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
     font-family: var(--erp-font);
-    width: 220px;
-    padding: 2px 0;
+    width: 320px;
+    padding: 3px 0;
 }
 .cmd-search input::placeholder {
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.48);
 }
 
 .cmd-clear-btn {
     color: rgba(255, 255, 255, 0.4);
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     display: none;
 }
 .cmd-clear-btn:hover {
@@ -821,25 +823,26 @@ html, body {
 
 .cmd-divider {
     width: 1px;
-    height: 18px;
+    height: 22px;
     background: rgba(255, 255, 255, 0.2);
 }
 
 .cmd-cta {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     background: #ffffff;
     color: #0f172a !important;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
-    padding: 5px 14px;
+    padding: 7px 18px;
     border-radius: 9999px;
     text-decoration: none;
-    transition: transform 0.15s ease, background 0.15s ease;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 .cmd-cta:hover {
-    background: #f1f5f9;
+    background: #f8fafc;
     transform: scale(1.02);
 }
 
@@ -1209,10 +1212,11 @@ html, body {
                             </th>
                             <th>Product Details</th>
                             <th>Category</th>
+                            <th>Supplier</th>
                             <th class="text-right" style="width:110px;">Retail (LKR)</th>
                             <th class="text-right" style="width:110px;">B2B / W/S</th>
-                            <th class="text-center" style="width:80px;">Qty</th>
-                            <th class="text-center" style="width:90px;">Active</th>
+                            <th class="text-center" style="width:75px;">Qty</th>
+                            <th class="text-center" style="width:85px;">Active</th>
                             <th class="text-center" style="width:110px;">Status</th>
                             <th class="text-right" style="width:100px;">Actions</th>
                         </tr>
@@ -1220,7 +1224,7 @@ html, body {
                     <tbody>
                         <?php if (empty($items)): ?>
                         <tr>
-                            <td colspan="9" class="text-center" style="padding: 40px 16px; color: var(--erp-text-muted);">
+                            <td colspan="10" class="text-center" style="padding: 40px 16px; color: var(--erp-text-muted);">
                                 <i class="fa-solid fa-box-open" style="font-size: 28px; margin-bottom: 8px; display: block; opacity: 0.5;"></i>
                                 <strong style="font-size: 14px; color: var(--erp-text-main);">No products found</strong>
                                 <div style="font-size: 12px; margin-top: 4px;">Try clearing filters or search criteria.</div>
@@ -1271,6 +1275,7 @@ html, body {
                                         'qty' => $qty,
                                         'desc' => $item->description ?? '',
                                         'category' => $item->category_name ?? 'Uncategorized',
+                                        'supplier' => $item->supplier_name ?? 'N/A',
                                         'brand' => $item->brand ?? 'N/A',
                                         'status' => $itemStatus,
                                         'img' => $img_src
@@ -1283,8 +1288,8 @@ html, body {
                                     <td>
                                         <div class="erp-prod-cell">
                                             <?php if (!empty($variations)): ?>
-                                                <button type="button" class="erp-var-btn" onclick="toggleVariationsRow(<?= $item->id ?>, this)" title="Show/Hide Variations">
-                                                    <i class="fa-solid fa-chevron-right"></i>
+                                                <button type="button" class="erp-var-btn" onclick="toggleVariationsRow(<?= $item->id ?>, this)" title="Collapse / Expand Variations">
+                                                    <i class="fa-solid fa-chevron-down"></i>
                                                 </button>
                                             <?php else: ?>
                                                 <span style="width: 14px; display: inline-block;"></span>
@@ -1309,7 +1314,10 @@ html, body {
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="erp-tag-cat"><?= htmlspecialchars($item->category_name ?? 'Uncategorized') ?></span>
+                                        <?= htmlspecialchars($item->category_name ?? '-') ?>
+                                    </td>
+                                    <td>
+                                        <?= htmlspecialchars($item->supplier_name ?? '-') ?>
                                     </td>
                                     <td class="text-right font-mono">
                                         <?= number_format($price, 2) ?>
@@ -1361,14 +1369,15 @@ html, body {
 
                                 <?php if (!empty($variations)): ?>
                                     <?php foreach ($variations as $var): ?>
-                                    <tr class="variation-subrow variations_row_<?= $item->id ?>" style="display:none;">
+                                    <tr class="variation-subrow variations_row_<?= $item->id ?>">
                                         <td></td>
                                         <td>
                                             <span class="variation-tree-line">└─</span>
                                             <strong style="color: var(--erp-text-main);"><?= htmlspecialchars($var->value_name ?? 'Option') ?></strong>
                                             <span class="erp-prod-meta" style="margin-left:8px;">SKU: <?= htmlspecialchars($var->sku ?? '') ?></span>
                                         </td>
-                                        <td><span class="erp-tag-cat">Variation</span></td>
+                                        <td style="color:var(--erp-text-muted); font-size:11.5px;">Variation</td>
+                                        <td style="color:var(--erp-text-muted); font-size:11.5px;">-</td>
                                         <td class="text-right font-mono"><?= number_format($var->price ?? $price, 2) ?></td>
                                         <td class="text-right font-mono" style="color: var(--erp-text-muted);"><?= number_format($var->wholesale_price ?? $wholesalePrice, 2) ?></td>
                                         <td class="text-center font-mono">
@@ -1754,15 +1763,15 @@ function applyAjaxFilters() {
     });
 }
 
-// Variation Rows Toggle
+// Variation Rows Toggle (Expanded by default, collapses/expands on click)
 function toggleVariationsRow(itemId, btn) {
     const rows = document.querySelectorAll('.variations_row_' + itemId);
     if (!rows.length) return;
-    const isHidden = rows[0].style.display === 'none';
-    rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
+    const isVisible = (rows[0].style.display !== 'none');
+    rows.forEach(r => r.style.display = isVisible ? 'none' : 'table-row');
     const icon = btn.querySelector('i');
     if (icon) {
-        icon.className = isHidden ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right';
+        icon.className = isVisible ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-down';
     }
 }
 

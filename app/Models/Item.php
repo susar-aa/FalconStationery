@@ -240,6 +240,7 @@ class Item {
 
         $this->db->query("SELECT i.*, 
                           cat.name AS category_name,
+                          COALESCE(v.name, (SELECT v2.name FROM item_suppliers isup JOIN vendors v2 ON isup.supplier_id = v2.id WHERE isup.item_id = i.id ORDER BY isup.is_primary DESC, isup.id ASC LIMIT 1)) AS supplier_name,
                           i.{$priceCol} AS selling_price, 
                           i.{$wholesalePriceCol} AS wholesale_price, 
                           i.{$itemCodeCol} AS item_code, 
@@ -247,6 +248,7 @@ class Item {
                           i.{$descCol} AS description 
                           FROM items i 
                           LEFT JOIN item_categories cat ON i.category_id = cat.id
+                          LEFT JOIN vendors v ON i.vendor_id = v.id
                           $whereSql 
                           ORDER BY i.{$orderByCol} 
                           LIMIT :limit OFFSET :offset");
