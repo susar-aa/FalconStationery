@@ -509,13 +509,98 @@ html, body {
     font-weight: 700;
     padding: 7px 18px;
     border-radius: 9999px;
+    border: none;
     text-decoration: none;
+    cursor: pointer;
     transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
     box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 .cmd-cta:hover {
     background: #f8fafc;
     transform: scale(1.02);
+}
+
+/* PO Option Selection Cards */
+.po-choice-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    cursor: pointer;
+}
+.po-choice-card:hover {
+    border-color: #3b82f6;
+    background: #f8faff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
+}
+.po-choice-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.po-choice-icon.ai {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+.po-choice-icon.manual {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+.po-choice-content {
+    flex: 1;
+    min-width: 0;
+}
+.po-choice-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+.po-choice-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.po-choice-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background: #dbeafe;
+    color: #1e40af;
+    letter-spacing: 0.02em;
+}
+.po-choice-badge.secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+.po-choice-desc {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+}
+.po-choice-arrow {
+    color: #cbd5e1;
+    font-size: 13px;
+    transition: transform 0.15s, color 0.15s;
+    padding-left: 6px;
+}
+.po-choice-card:hover .po-choice-arrow {
+    color: #2563eb;
+    transform: translateX(3px);
 }
 
 /* Alerts */
@@ -640,16 +725,6 @@ html, body {
                 <span class="erp-kpi-label">Received:</span>
                 <span class="erp-kpi-value" id="stat-received"><?= number_format($data['stats']->received_count ?? 0) ?></span>
             </div>
-        </div>
-
-        <!-- Top Action Toolbar (Secondary Tools only, New PO is in floating bar) -->
-        <div class="erp-actions-group">
-            <a href="<?= APP_URL ?>/purchase/wizard" class="erp-btn erp-btn-outline" title="PO Auto-Reorder Wizard">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Reorder Wizard
-            </a>
-            <a href="<?= APP_URL ?>/grn" class="erp-btn erp-btn-outline" title="View Goods Receipts (GRN)">
-                <i class="fa-solid fa-boxes-packing"></i> Goods Receipts (GRN)
-            </a>
         </div>
     </div>
 
@@ -913,10 +988,73 @@ html, body {
         <i class="fa-solid fa-xmark cmd-clear-btn" id="searchClearBtn" onclick="clearSearchInput()" title="Clear search"></i>
     </div>
     <div class="cmd-divider"></div>
-    <a href="<?= APP_URL ?>/purchase/create" class="cmd-cta" title="Create New Purchase Order">
+    <button type="button" onclick="openPoOptionModal()" class="cmd-cta" title="Create New Purchase Order">
         <i class="fa-solid fa-plus"></i>
         <span>+ New PO</span>
-    </a>
+    </button>
+</div>
+
+<!-- Modal: Choose Create PO Option (AI Auto Wizard vs Manual Custom) -->
+<div id="poOptionModal" class="erp-modal-overlay hidden">
+    <div class="erp-modal-card" style="max-width: 530px;">
+        <div class="erp-modal-header" style="padding: 16px 20px;">
+            <div>
+                <div class="erp-modal-title" style="font-size: 15px; color: #0f172a;">
+                    <i class="fa-solid fa-file-circle-plus" style="color: #2563eb;"></i> Create Purchase Order
+                </div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
+                    Select your preferred procurement workflow
+                </div>
+            </div>
+            <button type="button" onclick="closePoOptionModal()" style="background:none; border:none; cursor:pointer; color:#94a3b8; font-size:16px;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="erp-modal-body" style="padding: 18px 20px; display:flex; flex-direction:column; gap:12px;">
+            <!-- Option 1: AI Auto-Reorder Wizard -->
+            <a href="<?= APP_URL ?>/purchase/wizard" class="po-choice-card">
+                <div class="po-choice-icon ai">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="po-choice-content">
+                    <div class="po-choice-heading">
+                        <span class="po-choice-title">AI Auto-Reorder Wizard</span>
+                        <span class="po-choice-badge">Smart Forecast</span>
+                    </div>
+                    <div class="po-choice-desc">
+                        Automatically calculates recommended order quantities by vendor using sales velocity, demand spikes, and stock buffers.
+                    </div>
+                </div>
+                <div class="po-choice-arrow">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </a>
+
+            <!-- Option 2: Manual Custom PO -->
+            <a href="<?= APP_URL ?>/purchase/create" class="po-choice-card">
+                <div class="po-choice-icon manual">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+                <div class="po-choice-content">
+                    <div class="po-choice-heading">
+                        <span class="po-choice-title">Manual Purchase Order</span>
+                        <span class="po-choice-badge secondary">Custom Draft</span>
+                    </div>
+                    <div class="po-choice-desc">
+                        Build a custom PO from scratch. Select suppliers, pick items from the catalog, input custom quantities, wholesale rates, and notes.
+                    </div>
+                </div>
+                <div class="po-choice-arrow">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </a>
+        </div>
+        <div class="erp-modal-footer" style="padding: 10px 20px;">
+            <button type="button" onclick="closePoOptionModal()" class="erp-btn erp-btn-outline" style="font-size:12px;">
+                Cancel
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Delete PO Confirmation -->
@@ -1201,9 +1339,19 @@ function handleEmailSubmit(e) {
     });
 }
 
+// Modal Handlers: PO Creation Option Selection
+function openPoOptionModal() {
+    document.getElementById('poOptionModal').classList.remove('hidden');
+}
+
+function closePoOptionModal() {
+    document.getElementById('poOptionModal').classList.add('hidden');
+}
+
 // ESC closes modals
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+        closePoOptionModal();
         closeDeleteModal();
         closeEmailModal();
     }
