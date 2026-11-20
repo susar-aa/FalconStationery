@@ -100,6 +100,12 @@
             font-size: 10px;
             letter-spacing: 0.5px;
         }
+        .ledger-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .ledger-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
         .ledger-table tr.credit-row td {
             color: #065f46;
         }

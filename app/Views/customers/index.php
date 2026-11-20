@@ -599,8 +599,34 @@ body:has(.erp-viewport-view) .main-content,
 .tab-content.active { display: block; }
 
 .data-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.data-table th, .data-table td { padding: 7px 9px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
-.data-table th { color: #475569; font-weight: 700; font-size: 10px; text-transform: uppercase; background: #f8fafc; }
+.data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    border-bottom: 2px solid #e2e8f0;
+}
+.data-table tbody td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 12px;
+}
+/* Alternating Zebra Striping for Customer Profile Lists & Ledger */
+.data-table tbody tr:nth-child(even) {
+    background-color: #f8fafc !important;
+}
+.data-table tbody tr:nth-child(odd) {
+    background-color: #ffffff !important;
+}
+.data-table tbody tr:hover {
+    background-color: #f1f5f9 !important;
+}
 .num-col { text-align: right !important; }
 
 .drop-zone {

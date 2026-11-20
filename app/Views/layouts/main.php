@@ -178,22 +178,67 @@ if (!function_exists('hasPermission')) {
             overflow: hidden;
         }
 
-        /* Mandatory Zebra Striping across all Data Tables */
+        /* Mandatory Zebra Striping across all Data Tables, Modals, Ledgers & Nested Lists */
         table.erp-table tbody tr:nth-child(even),
-        .table tbody tr:nth-child(even) {
-            background-color: rgba(241, 245, 249, 0.55) !important;
+        table.data-table tbody tr:nth-child(even),
+        table.cust-table tbody tr:nth-child(even),
+        table.table-custom tbody tr:nth-child(even),
+        table.table-apple tbody tr:nth-child(even),
+        table.ledger-table tbody tr:nth-child(even),
+        table.allocations-table tbody tr:nth-child(even),
+        .table tbody tr:nth-child(even),
+        .modal-body table tbody tr:nth-child(even),
+        .sf-modal table tbody tr:nth-child(even),
+        .tab-content table tbody tr:nth-child(even) {
+            background-color: rgba(241, 245, 249, 0.65) !important;
         }
         table.erp-table tbody tr:nth-child(odd),
-        .table tbody tr:nth-child(odd) {
+        table.data-table tbody tr:nth-child(odd),
+        table.cust-table tbody tr:nth-child(odd),
+        table.table-custom tbody tr:nth-child(odd),
+        table.table-apple tbody tr:nth-child(odd),
+        table.ledger-table tbody tr:nth-child(odd),
+        table.allocations-table tbody tr:nth-child(odd),
+        .table tbody tr:nth-child(odd),
+        .modal-body table tbody tr:nth-child(odd),
+        .sf-modal table tbody tr:nth-child(odd),
+        .tab-content table tbody tr:nth-child(odd) {
             background-color: var(--erp-card-bg, #ffffff) !important;
+        }
+        table.erp-table tbody tr:hover,
+        table.data-table tbody tr:hover,
+        table.cust-table tbody tr:hover,
+        table.table-custom tbody tr:hover,
+        table.table-apple tbody tr:hover,
+        table.ledger-table tbody tr:hover,
+        .modal-body table tbody tr:hover,
+        .sf-modal table tbody tr:hover,
+        .tab-content table tbody tr:hover {
+            background-color: rgba(226, 232, 240, 0.5) !important;
         }
         @media (prefers-color-scheme: dark) {
             table.erp-table tbody tr:nth-child(even),
-            .table tbody tr:nth-child(even) {
+            table.data-table tbody tr:nth-child(even),
+            table.cust-table tbody tr:nth-child(even),
+            table.table-custom tbody tr:nth-child(even),
+            table.table-apple tbody tr:nth-child(even),
+            table.ledger-table tbody tr:nth-child(even),
+            .table tbody tr:nth-child(even),
+            .modal-body table tbody tr:nth-child(even),
+            .sf-modal table tbody tr:nth-child(even),
+            .tab-content table tbody tr:nth-child(even) {
                 background-color: rgba(255, 255, 255, 0.03) !important;
             }
             table.erp-table tbody tr:nth-child(odd),
-            .table tbody tr:nth-child(odd) {
+            table.data-table tbody tr:nth-child(odd),
+            table.cust-table tbody tr:nth-child(odd),
+            table.table-custom tbody tr:nth-child(odd),
+            table.table-apple tbody tr:nth-child(odd),
+            table.ledger-table tbody tr:nth-child(odd),
+            .table tbody tr:nth-child(odd),
+            .modal-body table tbody tr:nth-child(odd),
+            .sf-modal table tbody tr:nth-child(odd),
+            .tab-content table tbody tr:nth-child(odd) {
                 background-color: var(--card-bg, #111827) !important;
             }
         }

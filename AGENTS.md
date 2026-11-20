@@ -46,8 +46,8 @@ These rules are MANDATORY for all existing and future modules in the Falcon Stat
    - Use the local `SF Pro Display` font suite (`public/assets/fonts/sf_pro_display_*.ttf`) across the whole system on all views, tables, forms, and buttons.
    - Monospace (`SF Mono`, `ui-monospace`) for SKUs, codes, currencies, and quantities.
 
-2. **Mandatory Zebra Striping on All Data Tables**:
-   - Every data table across all modules must implement alternating zebra striping (`tbody tr:nth-child(even)` subtly tinted) for effortless line tracking on dense records.
+2. **Mandatory Zebra Striping on All Data Tables, Modals, Ledgers & Nested Lists**:
+   - Every data table, modal table, ledger view, activity list, PDC cheque list, invoice list, and nested sub-table across all modules (including Customer Profile Activity Ledger, Invoices, Cheques, Statements, Payment Allocations, COA tables, etc.) MUST implement alternating zebra striping (`tbody tr:nth-child(even)` subtly tinted, e.g., `#f8fafc` or `rgba(241, 245, 249, 0.65)`) for effortless line tracking on dense financial and operational records.
 
 3. **No Redundant Large Headlines**:
    - Do NOT render large `<h1>` module titles or multi-line descriptive subtitles (e.g., "Inventory Catalog - Manage products, stock levels...").

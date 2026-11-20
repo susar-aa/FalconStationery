@@ -328,7 +328,7 @@ Test how the system handles each situation and fix genuine problems.
     - Grouped all filters (Route, Ledger Status, Operational Status, Reset) aligned to the **top-right corner** directly above the data table (Rule 2).
     - Replaced the 3 oversized pastel cards with a compact, high-density KPI stat strip (Total Customers, Total Outstanding, Owed Accounts).
     - Replaced the vertical-bloating pending review table with a sleek, compact alert bar (36px) featuring 1-click Quick Verify and Review actions.
-    - Enforced SF Pro Display typography suite, monospace formatting on customer codes, balances, and phone numbers, and alternating zebra striping (`tbody tr:nth-child(even)`).
+    - Enforced SF Pro Display typography suite, monospace formatting on customer codes, balances, and phone numbers, and alternating zebra striping (`tbody tr:nth-child(even)`) across all main tables, Customer Profile modal tabs (Activity Ledger, Invoices, Cheques), and statement ledgers.
     - Standardized the floating island command bar (320px live search + CSV Export + CSV Import + `+ New Customer`).
     - Added full CSRF protection and token validation (`validateCsrfOrDie`) across all customer mutating endpoints and modals.
     - Added RBAC permission checks (`checkPermission('customer', 'view' | 'create_edit' | 'delete')`).
