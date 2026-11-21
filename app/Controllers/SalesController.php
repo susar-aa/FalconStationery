@@ -62,7 +62,13 @@ class SalesController extends Controller {
      * Display all sales invoices with search, filtering, and pagination
      */
     public function index() {
-        $limit = 10;
+        $this->checkPermission('sales', 'view');
+        $csrfToken = $this->generateCsrfToken();
+
+        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 25;
+        if ($limit < 5) $limit = 25;
+        if ($limit > 1000) $limit = 1000;
+
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         if ($page < 1) $page = 1;
         $offset = ($page - 1) * $limit;
@@ -147,6 +153,17 @@ class SalesController extends Controller {
         $this->db->bind(':offset', $offset, PDO::PARAM_INT);
         $invoices = $this->db->resultSet() ?: [];
 
+        // Fetch KPI stats
+        $statsQuery = "SELECT 
+            COUNT(*) as total_invoices,
+            COALESCE(SUM(i.total_amount), 0) as total_amount,
+            SUM(CASE WHEN i.status = 'Unpaid' THEN 1 ELSE 0 END) as unpaid_count,
+            COALESCE(SUM(CASE WHEN i.status = 'Unpaid' THEN i.total_amount ELSE 0 END), 0) as unpaid_amount
+        FROM invoices i 
+        WHERE (i.stock_status IS NULL OR i.stock_status = 'deducted')";
+        $this->db->query($statsQuery);
+        $stats = $this->db->single();
+
         // Fetch customers for filter dropdown
         $this->db->query("SELECT id, name FROM customers ORDER BY name ASC");
         $customers = $this->db->resultSet() ?: [];
@@ -165,9 +182,12 @@ class SalesController extends Controller {
             'end_date' => $endDate,
             'customer_id' => $customerId,
             'status' => $status,
+            'limit' => $limit,
             'page' => $page,
             'total_pages' => $totalPages,
             'total_records' => $totalRecords,
+            'stats' => $stats,
+            'csrf_token' => $csrfToken,
             'content_view' => 'sales/list'
         ];
 
@@ -1203,10 +1223,13 @@ class SalesController extends Controller {
      * Delete an Invoice or Route Sales Order with administrative authentication
      */
     public function delete($id = null) {
+        $this->checkPermission('sales', 'delete');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . APP_URL . '/sales');
             exit;
         }
+
+        $this->validateCsrfOrDie();
 
         $isAjax = isset($_POST['is_ajax']) || (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest');
         
@@ -1329,6 +1352,11 @@ class SalesController extends Controller {
      * Convert an Invoice back to a Sales Order and restock the deducted inventory.
      */
     public function convert_to_so($id = null) {
+        $this->checkPermission('sales', 'create_edit');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->validateCsrfOrDie();
+        }
+
         if (!$id) {
             $_SESSION['flash_error'] = "Invoice ID is missing!";
             header('Location: ' . APP_URL . '/sales');
@@ -1479,10 +1507,13 @@ class SalesController extends Controller {
      * Process bulk action (edit dates, change reps, or delete) on multiple invoices.
      */
     public function bulk_action() {
+        $this->checkPermission('sales', 'create_edit');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . APP_URL . '/sales');
             exit;
         }
+
+        $this->validateCsrfOrDie();
 
         $ids = $_POST['ids'] ?? [];
         $action = $_POST['bulk_action'] ?? '';

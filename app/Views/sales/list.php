@@ -1,177 +1,732 @@
-<!-- Inter Font & FontAwesome Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<?php
+$csrfToken = $data['csrf_token'] ?? ($_SESSION['csrf_token'] ?? '');
+$totalRecords = $data['total_records'] ?? 0;
+$stats = $data['stats'] ?? null;
+$totalInvoices = $stats->total_invoices ?? $totalRecords;
+$totalSales = floatval($stats->total_amount ?? 0);
+$unpaidCount = intval($stats->unpaid_count ?? 0);
+$unpaidAmount = floatval($stats->unpaid_amount ?? 0);
+?>
+
+<script>
+document.body.classList.add('erp-locked');
+</script>
+
+<!-- FontAwesome 6 Icons Guarantee -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
 <style>
 /* ============================================================
-   SF PRO + APPLE DESIGN LANGUAGE
+   FALCON STATIONERY ERP: INVOICES & ACCOUNTS RECEIVABLE
+   SF PRO DISPLAY + VIEWPORT-LOCKED ERP STANDARDS (RULES 1, 2, 3)
    ============================================================ */
+
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_regular.ttf') format('truetype');
+    font-weight: 400;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_medium.ttf') format('truetype');
+    font-weight: 500;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_semibold.ttf') format('truetype');
+    font-weight: 600;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_bold.ttf') format('truetype');
+    font-weight: 700;
+}
+
 :root {
-    --c-bg:           #f2f2f7;
-    --c-surface:      #ffffff;
-    --c-surface2:     #f9f9fb;
-    --c-fill:         rgba(120,120,128,0.12);
-    --c-fill2:        rgba(120,120,128,0.16);
-    --c-separator:    rgba(60,60,67,0.12);
-    --c-separator2:   rgba(60,60,67,0.06);
-
-    --c-blue:         #007aff;
-    --c-blue-light:   #e5f2ff;
-    --c-green:        #34c759;
-    --c-green-light:  #e6f9ec;
-    --c-orange:       #ff9500;
-    --c-orange-light: #fff4e5;
-    --c-red:          #ff3b30;
-    --c-red-light:    #fff0ef;
-    --c-purple:       #af52de;
-    --c-purple-light: #f5eeff;
-    --c-gray:         #8e8e93;
-
-    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
-
-    --t-primary:   #1c1c1e;
-    --t-secondary: #636366;
-    --t-label:     #8e8e93;
-
-    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
-    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
-
-    --r-md: 14px;
-    --r-xl: 26px;
-    --r-pill: 999px;
-
-    --dur-fast:    0.18s;
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --erp-bg: #f8fafc;
+    --erp-card: #ffffff;
+    --erp-border: #e2e8f0;
+    --erp-text: #0f172a;
+    --erp-muted: #64748b;
+    --erp-font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --erp-mono: 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
 }
 
-.inv-wrap {
-    max-width: 1420px; margin: 0 auto;
-    padding: 20px 24px 140px;
-    font-family: var(--f-system);
-    color: var(--t-primary);
+html, body {
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: var(--erp-bg, #f8fafc);
+    font-family: var(--erp-font);
+    -webkit-font-smoothing: antialiased;
 }
 
-.sf-alert { display: flex; align-items: flex-start; gap: 12px; background: var(--c-surface); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 20px; box-shadow: var(--shadow-xs); border: 0.5px solid var(--c-separator); border-left-width: 3px; font-size: 14px; }
-.sf-alert.success { border-left-color: var(--c-green); }
-.sf-alert.error   { border-left-color: var(--c-red); }
-.sf-alert-icon { font-size: 18px; flex-shrink: 0; padding-top: 1px; }
-.sf-alert.success .sf-alert-icon { color: var(--c-green); }
-.sf-alert.error   .sf-alert-icon { color: var(--c-red); }
-.sf-alert-title { font-weight: 600; color: var(--t-primary); margin-bottom: 2px; }
-.sf-alert-msg   { color: var(--t-secondary); font-size: 13px; }
+body.erp-locked .app-container,
+body:has(.erp-viewport-view) .app-container,
+.app-container {
+    margin-top: 70px !important;
+    height: calc(100vh - 70px) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
 
-/* Filter Card */
-.filter-card { background: var(--c-surface); border-radius: var(--r-xl); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm); border: 0.5px solid var(--c-separator); }
-.filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; align-items: end; }
-.sf-form-group { margin-bottom: 0; }
-.sf-form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--t-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em;}
-.sf-input { width: 100%; padding: 10px 14px; background: var(--c-surface2); border: 1px solid var(--c-separator); border-radius: var(--r-md); font-family: var(--f-system); font-size: 14px; color: var(--t-primary); box-sizing: border-box; transition: border-color var(--dur-fast), background var(--dur-fast); }
-.sf-input:focus { outline: none; border-color: var(--c-blue); background: var(--c-surface); }
+body.erp-locked .main-content,
+body:has(.erp-viewport-view) .main-content,
+.main-content {
+    padding: 8px 16px 8px 16px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 !important;
+}
 
-/* Buttons */
-.sf-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; border-radius: var(--r-pill); font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: all var(--dur-fast) var(--ease-spring); font-family: var(--f-system); text-decoration: none; }
-.sf-btn:active { transform: scale(0.96); }
-.sf-btn-primary { background: var(--c-blue); color: #fff; }
-.sf-btn-primary:hover { background: #006ce6; }
-.sf-btn-ghost { background: var(--c-fill); color: var(--t-primary); }
-.sf-btn-ghost:hover { background: var(--c-fill2); }
-.sf-btn-danger { background: var(--c-red); color: #fff; }
+.erp-viewport-view.inv-erp-workspace {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    flex: 1;
+    overflow: hidden;
+    gap: 6px;
+    box-sizing: border-box;
+    position: relative;
+    padding: 0;
+}
 
-/* Table Section */
-.table-panel { background: var(--c-surface); border-radius: var(--r-xl); border: 0.5px solid var(--c-separator); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 20px; }
-.inv-table { width: 100%; border-collapse: collapse; }
-.inv-table thead th { padding: 13px 18px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--t-label); background: var(--c-surface2); border-bottom: 0.5px solid var(--c-separator); text-align: left; }
-.inv-table tbody tr { transition: background var(--dur-fast); border-bottom: 0.5px solid var(--c-separator2); }
-.inv-table tbody tr:hover { background: var(--c-fill2); }
-.inv-table td { padding: 14px 18px; font-size: 14px; color: var(--t-primary); vertical-align: middle; }
+/* 1. Sleek Compact KPI Stats Strip */
+.erp-stats-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
 
-/* Badges */
-.sf-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--r-pill); font-size: 12px; font-weight: 700; letter-spacing: 0.01em; white-space: nowrap; }
-.sf-badge .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-.badge-Pending { background: var(--c-orange-light); color: #c05d00; }
-.badge-Pending .dot { background: var(--c-orange); }
-.badge-Invoiced { background: var(--c-green-light); color: #1a7f3c; }
-.badge-Invoiced .dot { background: var(--c-green); }
-.badge-Voided { background: var(--c-separator); color: var(--t-secondary); }
-.badge-Voided .dot { background: var(--t-secondary); }
-.badge-Paid { background: var(--c-green-light); color: #1a7f3c; }
-.badge-Paid .dot { background: var(--c-green); }
-.badge-Unpaid { background: var(--c-red-light); color: var(--c-red); }
-.badge-Unpaid .dot { background: var(--c-red); }
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 3px 12px;
+    font-size: 12px;
+    color: #475569;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+.stat-pill strong {
+    color: #0f172a;
+    font-weight: 700;
+    font-family: var(--erp-mono);
+}
+.badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 
-/* Row Actions */
-.row-acts { display: flex; gap: 6px; justify-content: flex-end; }
-.act-btn { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--c-fill); color: var(--t-label); border: none; cursor: pointer; text-decoration: none; font-size: 13px; transition: all var(--dur-fast) var(--ease-spring); }
-.act-btn:hover { transform: scale(1.12); }
-.act-btn.print:hover   { background: var(--c-gray); color: #fff; }
-.act-btn.convert:hover { background: var(--c-green-light); color: var(--c-green); }
-.act-btn.edit:hover   { background: var(--c-blue-light); color: var(--c-blue); }
-.act-btn.delete:hover { background: var(--c-red-light); color: var(--c-red); }
+/* 2. Top-Right Clean Filter Bar Above Table (RULE 2) */
+.erp-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px 14px;
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.erp-filter-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-results-badge {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+    font-weight: 500;
+}
+.erp-results-badge strong {
+    color: #0f172a;
+    font-family: var(--erp-font);
+    font-weight: 700;
+}
+
+.erp-filter-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    margin: 0;
+}
+
+.erp-filter-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.erp-filter-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.erp-select {
+    height: 28px;
+    max-width: 175px;
+    padding: 0 24px 0 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    font-family: var(--erp-font);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 10px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    text-overflow: ellipsis;
+}
+.erp-select:hover { border-color: #94a3b8; }
+.erp-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.erp-input-date {
+    height: 28px;
+    padding: 0 8px;
+    font-size: 11.5px;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    font-family: var(--erp-font);
+    box-sizing: border-box;
+}
+.erp-input-date:hover { border-color: #94a3b8; }
+.erp-input-date:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.erp-btn-reset {
+    height: 28px;
+    padding: 0 11px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+    text-decoration: none;
+}
+.erp-btn-reset:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
 
 /* Bulk Action Bar */
-.bulk-bar { display: none; background: rgba(255, 255, 255, 0.85); backdrop-filter: saturate(180%) blur(20px); border: 0.5px solid var(--c-blue); border-radius: var(--r-xl); padding: 12px 20px; margin-bottom: 24px; box-shadow: var(--shadow-md); align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
-.bulk-selected { background: var(--c-blue); color: #fff; padding: 4px 10px; border-radius: var(--r-pill); font-size: 12px; font-weight: 600; }
+.bulk-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 6px 14px;
+    flex-shrink: 0;
+    animation: fadeIn 0.15s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.bulk-selected {
+    background: #2563eb;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--erp-mono);
+}
+
+/* 3. Table Card with Dedicated Independent Scroll (RULE 1 & 3) */
+.erp-card-table {
+    flex: 1;
+    min-height: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.erp-table-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
+    position: relative;
+    padding-bottom: 54px; /* Clearance inside table scroll so bottom rows clear the floating island */
+}
+
+.erp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    text-align: left;
+}
+
+.erp-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.erp-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.12s ease;
+}
+
+/* MANDATORY ZEBRA STRIPING (RULE 3) */
+.erp-table tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+.erp-table tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+.erp-table td {
+    padding: 8px 14px;
+    vertical-align: middle;
+    color: #1e293b;
+}
+
+.txt-right { text-align: right !important; }
+.txt-center { text-align: center !important; }
+
+/* Status Badges */
+.sf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.badge-Paid { background: #dcfce7; color: #15803d; }
+.badge-Unpaid { background: #fee2e2; color: #b91c1c; }
+.badge-PartiallyPaid { background: #fef3c7; color: #b45309; }
+.badge-Voided { background: #f1f5f9; color: #64748b; }
+.badge-Pending { background: #fef3c7; color: #b45309; }
+.badge-dot-sm { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+/* Action Buttons */
+.row-acts { display: flex; gap: 5px; justify-content: flex-end; }
+.act-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+    text-decoration: none;
+}
+.act-btn.convert { color: #f97316; }
+.act-btn.convert:hover { background: #fff7ed; border-color: #ffedd5; }
+.act-btn.print   { color: #64748b; }
+.act-btn.print:hover   { background: #f1f5f9; border-color: #cbd5e1; }
+.act-btn.edit    { color: #3b82f6; }
+.act-btn.edit:hover    { background: #eff6ff; border-color: #bfdbfe; }
+.act-btn.delete  { color: #ef4444; }
+.act-btn.delete:hover  { background: #fef2f2; border-color: #fecaca; }
 
 /* Checkboxes */
-.sf-checkbox { accent-color: var(--c-blue); width: 16px; height: 16px; cursor: pointer; }
+.sf-checkbox {
+    accent-color: #2563eb;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    margin: 0;
+    vertical-align: middle;
+}
 
-/* Command Bar (Dynamic Island) */
-.cmd-bar { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: rgba(28, 28, 30, 0.92); backdrop-filter: saturate(180%) blur(28px); -webkit-backdrop-filter: saturate(180%) blur(28px); border: 0.5px solid rgba(255,255,255,0.12); border-radius: var(--r-pill); padding: 7px 10px; display: flex; align-items: center; gap: 4px; box-shadow: var(--shadow-xl), 0 0 0 0.5px rgba(0,0,0,0.3); z-index: 1000; }
-.cmd-search { display: flex; align-items: center; gap: 9px; background: rgba(255,255,255,0.1); border-radius: var(--r-pill); padding: 8px 14px; width: 250px; transition: width 0.42s cubic-bezier(0.25, 0.1, 0.25, 1), background var(--dur-fast); }
-.cmd-search:focus-within { width: 380px; background: rgba(255,255,255,0.18); }
-.cmd-search i { color: rgba(255,255,255,0.55); font-size: 14px; }
-.cmd-search input { background: transparent; border: none; outline: none; color: #fff; font-size: 14px; font-weight: 500; font-family: var(--f-system); width: 100%; }
-.cmd-search input::placeholder { color: rgba(255,255,255,0.45); }
-.cmd-divider { width: 0.5px; height: 22px; background: rgba(255,255,255,0.15); margin: 0 3px; }
-.cmd-cta { display: flex; align-items: center; gap: 7px; background: #fff; color: #1c1c1e; border: none; border-radius: var(--r-pill); padding: 0 18px; height: 38px; font-size: 14px; font-weight: 700; font-family: var(--f-system); cursor: pointer; transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast); margin-left: 2px; text-decoration: none; }
-.cmd-cta:hover { background: #e5e5ea; transform: scale(0.97); }
+/* Pinned Table Pagination Footer (RULE 1) */
+.erp-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 16px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #64748b;
+    z-index: 10;
+}
+.pg-info strong {
+    color: #0f172a;
+    font-weight: 700;
+}
+.pg-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.pg-size-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.pg-size-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+}
+.pg-size-sel {
+    font-family: var(--erp-font);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #1e293b;
+    background: #f8fafc;
+    border: 1px solid #d1d5db;
+    border-radius: 5px;
+    padding: 3px 6px;
+    outline: none;
+    cursor: pointer;
+}
+.pg-nav {
+    display: flex;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.pg-btn {
+    width: 28px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border: none;
+    cursor: pointer;
+    color: #475569;
+    font-size: 11px;
+    text-decoration: none;
+    transition: background 0.12s;
+}
+.pg-btn:hover:not(.disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+.pg-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.pg-btn + .pg-btn {
+    border-left: 1px solid #e2e8f0;
+}
+.pg-current {
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #0f172a;
+    background: #ffffff;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+}
+
+/* 4. Sleek Floating Island Command Bar Pill (RULE 3) */
+.cmd-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    z-index: 100;
+}
+
+.cmd-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    padding: 6px 14px;
+    width: 320px;
+}
+.cmd-search i {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.cmd-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--erp-font);
+    width: 100%;
+}
+.cmd-search input::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.cmd-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 2px;
+}
+
+.cmd-cta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    border: none;
+    border-radius: 9999px;
+    padding: 0 16px;
+    height: 32px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--erp-font);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.cmd-cta:hover {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+}
 
 /* Modals */
-.sf-modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); align-items: center; justify-content: center; opacity: 0; transition: opacity var(--dur-fast); }
-.sf-modal.open { display: flex; opacity: 1; }
-.sf-modal-box { background: var(--c-surface); width: 440px; border-radius: var(--r-xl); padding: 32px; box-shadow: var(--shadow-xl); border: 0.5px solid var(--c-separator); transform: scale(0.95); transition: transform var(--dur-fast) var(--ease-spring); }
-.sf-modal.open .sf-modal-box { transform: scale(1); }
+.sf-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+.sf-modal.open { display: flex; }
+
+.sf-modal-box {
+    background: #ffffff;
+    width: 460px;
+    max-width: 95vw;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+    border: 1px solid #e2e8f0;
+    animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalPop {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.sf-form-group { margin-bottom: 14px; }
+.sf-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.sf-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    font-family: var(--erp-font);
+}
+.sf-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+/* Alerts */
+.sf-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border: 1px solid #e2e8f0;
+    border-left-width: 4px;
+    font-size: 12.5px;
+}
+.sf-alert.success { border-left-color: #10b981; }
+.sf-alert.error   { border-left-color: #ef4444; }
+.sf-alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 2px; }
+.sf-alert.success .sf-alert-icon { color: #10b981; }
+.sf-alert.error   .sf-alert-icon { color: #ef4444; }
+.sf-alert-title { font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+.sf-alert-msg   { color: #475569; font-size: 12px; }
+
+/* Buttons */
+.sf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12.5px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-family: var(--erp-font);
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.sf-btn-primary { background: #3b82f6; color: #ffffff; }
+.sf-btn-primary:hover { background: #2563eb; }
+.sf-btn-ghost { background: #ffffff; border-color: #cbd5e1; color: #475569; }
+.sf-btn-ghost:hover { background: #f8fafc; color: #0f172a; }
+.sf-btn-danger { background: #ef4444; color: #ffffff; }
+.sf-btn-danger:hover { background: #dc2626; }
+.sf-btn-warning { background: #f97316; color: #ffffff; }
+.sf-btn-warning:hover { background: #ea580c; }
 </style>
 
-<!-- Invoices & Accounts Receivable Management -->
-<div class="inv-wrap">
+<div class="erp-viewport-view inv-erp-workspace">
+
+    <!-- 1. Sleek Compact KPI Stats Strip -->
+    <div class="erp-stats-strip">
+        <div class="stat-pill">
+            <span class="badge-dot" style="background:#3b82f6;"></span>
+            Total Invoices: <strong><?= number_format($totalInvoices) ?></strong>
+        </div>
+        <div class="stat-pill">
+            <span class="badge-dot" style="background:#10b981;"></span>
+            Total Sales: <strong>Rs. <?= number_format($totalSales, 2) ?></strong>
+        </div>
+        <div class="stat-pill">
+            <span class="badge-dot" style="background:#ef4444;"></span>
+            Unpaid Accounts: <strong><?= number_format($unpaidCount) ?> (Rs. <?= number_format($unpaidAmount, 2) ?>)</strong>
+        </div>
+    </div>
 
     <!-- Alert Notifications -->
     <?php if (isset($_SESSION['flash_success'])): ?>
-    <div class="sf-alert success">
+    <div class="sf-alert success" id="success-alert">
         <i class="fa-solid fa-circle-check sf-alert-icon"></i>
         <div style="flex:1;">
             <div class="sf-alert-title">Success</div>
             <div class="sf-alert-msg"><?= $_SESSION['flash_success']; unset($_SESSION['flash_success']); ?></div>
         </div>
+        <button type="button" style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="document.getElementById('success-alert').style.display='none';"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <?php endif; ?>
 
     <?php if (isset($_SESSION['flash_error'])): ?>
-    <div class="sf-alert error">
+    <div class="sf-alert error" id="error-alert">
         <i class="fa-solid fa-triangle-exclamation sf-alert-icon"></i>
         <div style="flex:1;">
             <div class="sf-alert-title">Error</div>
             <div class="sf-alert-msg"><?= $_SESSION['flash_error']; unset($_SESSION['flash_error']); ?></div>
         </div>
+        <button type="button" style="background:none; border:none; color:#94a3b8; cursor:pointer;" onclick="document.getElementById('error-alert').style.display='none';"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <?php endif; ?>
 
-    <!-- Search & Filters Card -->
-    <div class="filter-card">
-        <form id="filterForm" method="GET" action="<?= APP_URL ?>/sales" class="filter-grid">
-            
-            <!-- Hidden Search Text (for Command Bar) -->
+    <!-- 2. Top-Right Clean Filter Bar Above Table (RULE 2) -->
+    <div class="erp-filter-bar">
+        <div class="erp-filter-left">
+            <span class="erp-results-badge">Showing <strong><?= number_format($totalRecords) ?></strong> invoices</span>
+        </div>
+        <form id="filterForm" method="GET" action="<?= APP_URL ?>/sales" class="erp-filter-right">
+            <!-- Hidden inputs -->
             <input type="hidden" name="search" id="mainSearchInput" value="<?= htmlspecialchars($data['search'] ?? '') ?>">
+            <input type="hidden" name="limit" id="filterLimitInput" value="<?= $data['limit'] ?? 25 ?>">
 
             <!-- Customer Filter -->
-            <div class="sf-form-group">
-                <label>Customer</label>
-                <select name="customer_id" class="sf-input">
-                    <option value="0">-- All Customers --</option>
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Customer:</span>
+                <select name="customer_id" class="erp-select" onchange="this.form.submit()">
+                    <option value="0">All Customers</option>
                     <?php foreach ($data['customers'] as $c): ?>
                         <option value="<?= $c->id ?>" <?= (isset($data['customer_id']) && $data['customer_id'] == $c->id) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($c->name) ?>
@@ -180,23 +735,19 @@
                 </select>
             </div>
 
-            <!-- Date Range: Start -->
-            <div class="sf-form-group">
-                <label>Start Date</label>
-                <input type="date" name="start_date" value="<?= htmlspecialchars($data['start_date'] ?? '') ?>" class="sf-input">
-            </div>
-
-            <!-- Date Range: End -->
-            <div class="sf-form-group">
-                <label>End Date</label>
-                <input type="date" name="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>" class="sf-input">
+            <!-- Date Range Filters -->
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Date:</span>
+                <input type="date" name="start_date" value="<?= htmlspecialchars($data['start_date'] ?? '') ?>" class="erp-input-date" onchange="this.form.submit()" title="Start Date">
+                <span style="color:#94a3b8; font-size:11px;">–</span>
+                <input type="date" name="end_date" value="<?= htmlspecialchars($data['end_date'] ?? '') ?>" class="erp-input-date" onchange="this.form.submit()" title="End Date">
             </div>
 
             <!-- Payment Status -->
-            <div class="sf-form-group">
-                <label>Payment Status</label>
-                <select name="status" class="sf-input">
-                    <option value="">-- All Statuses --</option>
+            <div class="erp-filter-control">
+                <span class="erp-filter-label">Status:</span>
+                <select name="status" class="erp-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
                     <option value="Unpaid" <?= (isset($data['status']) && $data['status'] === 'Unpaid') ? 'selected' : '' ?>>Unpaid</option>
                     <option value="Paid" <?= (isset($data['status']) && $data['status'] === 'Paid') ? 'selected' : '' ?>>Paid</option>
                     <option value="Partially Paid" <?= (isset($data['status']) && $data['status'] === 'Partially Paid') ? 'selected' : '' ?>>Partially Paid</option>
@@ -204,85 +755,83 @@
                 </select>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="sf-form-group" style="display: flex; gap: 8px;">
-                <button type="submit" class="sf-btn sf-btn-primary" style="flex: 1;">
-                    <i class="fa-solid fa-filter"></i> Filter
-                </button>
-                <a href="<?= APP_URL ?>/sales" class="sf-btn sf-btn-ghost" style="flex: 1; text-align: center;">
-                    Reset
-                </a>
-            </div>
+            <a href="<?= APP_URL ?>/sales" class="erp-btn-reset" title="Reset all filters">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </a>
         </form>
     </div>
 
-    <form id="bulkForm" method="POST" action="<?= APP_URL ?>/sales/bulk_action" onsubmit="return handleBulkSubmit(event);">
-        <!-- Bulk Action Bar -->
-        <div id="bulkActionBar" class="bulk-bar">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span class="bulk-selected" id="selectedCountBadge">0 selected</span>
-                <span style="font-size: 13px; font-weight: 600; color: var(--t-primary);">Bulk Actions:</span>
-            </div>
-            
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex-grow: 1; justify-content: flex-end;">
-                <!-- Action Dropdown -->
-                <select name="bulk_action" id="bulkActionSelect" onchange="toggleBulkActionInputs()" class="sf-input" style="min-width: 180px; width:auto;" required>
-                    <option value="">-- Select Action --</option>
-                    <option value="change_date">Change Transaction Date</option>
-                    <option value="change_rep">Change Assigned Representative</option>
-                    <option value="delete">Delete Selected</option>
-                </select>
-
-                <!-- Date Input -->
-                <div id="bulkDateInputContainer" style="display: none;">
-                    <input type="date" name="bulk_date" class="sf-input" style="width:auto;">
-                </div>
-
-                <!-- Rep Dropdown -->
-                <div id="bulkRepInputContainer" style="display: none;">
-                    <select name="bulk_rep" class="sf-input" style="width:auto;">
-                        <option value="">-- Select Representative --</option>
-                        <?php if (!empty($data['sales_reps'])): ?>
-                            <?php foreach ($data['sales_reps'] as $rep): ?>
-                                <option value="<?= htmlspecialchars($rep->name) ?>"><?= htmlspecialchars($rep->name) ?></option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
-
-                <!-- Password Input (for Delete validation) -->
-                <div id="bulkPasswordInputContainer" style="display: none; align-items: center; gap: 8px;">
-                    <input type="password" name="admin_password" placeholder="Admin Password" class="sf-input" style="border-color:var(--c-red); width:auto;" autocomplete="new-password">
-                </div>
-
-                <!-- Apply Button -->
-                <button type="submit" class="sf-btn sf-btn-primary">
-                    <i class="fa-solid fa-check"></i> Apply
-                </button>
-            </div>
+    <!-- Bulk Action Toolbar (Displays when checkboxes are checked) -->
+    <div id="bulkActionBar" class="bulk-bar" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="bulk-selected" id="selectedCountBadge">0 selected</span>
+            <span style="font-size: 12px; font-weight: 600; color: #1e3a8a;">Bulk Actions:</span>
         </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <select name="bulk_action_choice" id="bulkActionChoice" onchange="toggleBulkActionInputs()" class="erp-select" style="max-width: 190px;">
+                <option value="">-- Select Action --</option>
+                <option value="change_date">Change Transaction Date</option>
+                <option value="change_rep">Change Assigned Rep</option>
+                <option value="delete">Delete Selected</option>
+            </select>
 
-        <!-- Data Table Container -->
-        <div class="table-panel">
-            <table class="inv-table">
+            <div id="bulkDateInputContainer" style="display: none;">
+                <input type="date" id="bulkDateInput" class="erp-input-date">
+            </div>
+
+            <div id="bulkRepInputContainer" style="display: none;">
+                <select id="bulkRepSelect" class="erp-select" style="max-width: 170px;">
+                    <option value="">-- Rep --</option>
+                    <?php if (!empty($data['sales_reps'])): ?>
+                        <?php foreach ($data['sales_reps'] as $rep): ?>
+                            <option value="<?= htmlspecialchars($rep->name) ?>"><?= htmlspecialchars($rep->name) ?></option>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </select>
+            </div>
+
+            <div id="bulkPasswordInputContainer" style="display: none;">
+                <input type="password" id="bulkAdminPassword" placeholder="Admin Password" class="sf-input" style="height: 28px; width: 140px; padding: 2px 8px; border-color: #ef4444;" autocomplete="new-password">
+            </div>
+
+            <button type="button" onclick="executeBulkAction()" class="sf-btn sf-btn-primary" style="height: 28px; padding: 0 12px; font-size: 11.5px;">
+                <i class="fa-solid fa-check"></i> Apply
+            </button>
+            <button type="button" onclick="clearSelections()" class="erp-btn-reset" style="height: 28px;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- 3. Table Card with Dedicated Independent Scroll (RULE 1 & 3) -->
+    <div class="erp-card-table">
+        <form id="bulkForm" method="POST" action="<?= APP_URL ?>/sales/bulk_action" style="display: none;">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+            <input type="hidden" name="bulk_action" id="hiddenBulkAction">
+            <input type="hidden" name="bulk_date" id="hiddenBulkDate">
+            <input type="hidden" name="bulk_rep" id="hiddenBulkRep">
+            <input type="hidden" name="admin_password" id="hiddenAdminPassword">
+            <div id="hiddenBulkIds"></div>
+        </form>
+
+        <div class="erp-table-scroll">
+            <table class="erp-table">
                 <thead>
                     <tr>
-                        <th style="width: 4%; text-align: center;">
+                        <th style="width: 38px; text-align: center;">
                             <input type="checkbox" id="selectAllCheckbox" class="sf-checkbox" onchange="toggleSelectAll(this)">
                         </th>
-                        <th style="width: 14%;">Invoice No</th>
-                        <th style="width: 12%;">Date</th>
+                        <th style="width: 140px;">Invoice No</th>
+                        <th style="width: 110px;">Date</th>
                         <th>Customer Name</th>
-                        <th style="width: 14%; text-align: right;">Total Amount</th>
-                        <th style="width: 12%; text-align: center;">Status</th>
-                        <th style="width: 22%; text-align: right;">Actions</th>
+                        <th style="width: 150px;" class="txt-right">Total Amount</th>
+                        <th style="width: 130px;" class="txt-center">Status</th>
+                        <th style="width: 140px;" class="txt-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="invoiceTableBody">
                     <?php if (empty($data['invoices'])): ?>
                         <tr>
-                            <td colspan="7" style="padding: 60px; text-align: center; color: var(--t-secondary);">
-                                <i class="fa-regular fa-folder-open" style="font-size: 32px; display: block; margin: 0 auto 10px; opacity:0.5;"></i>
+                            <td colspan="7" style="padding: 50px; text-align: center; color: #64748b;">
+                                <i class="fa-regular fa-folder-open" style="font-size: 28px; display: block; margin: 0 auto 8px; opacity: 0.5;"></i>
                                 No invoices matching the current criteria found.
                             </td>
                         </tr>
@@ -290,49 +839,49 @@
                         <?php foreach ($data['invoices'] as $inv): ?>
                             <tr>
                                 <td style="text-align: center;">
-                                    <input type="checkbox" name="ids[]" value="invoice:<?= $inv->id ?>" class="row-checkbox sf-checkbox" onchange="updateSelectedCount()">
+                                    <input type="checkbox" value="invoice:<?= $inv->id ?>" class="row-checkbox sf-checkbox" onchange="updateSelectedCount()">
                                 </td>
                                 <td>
-                                    <strong style="color:var(--c-blue); font-family:var(--f-mono);">
+                                    <strong style="color: #2563eb; font-family: var(--erp-mono); font-size: 13px;">
                                         <a href="<?= APP_URL ?>/sales/show/<?= $inv->id ?>" target="_blank" style="text-decoration: none; color: inherit;">
                                             <?= htmlspecialchars($inv->invoice_number) ?>
                                         </a>
                                     </strong>
                                 </td>
-                                <td>
+                                <td style="font-family: var(--erp-mono); font-size: 12px; color: #475569;">
                                     <?= date('Y-m-d', strtotime($inv->invoice_date)) ?>
                                 </td>
                                 <td>
-                                    <div style="font-weight: 500;"><?= htmlspecialchars($inv->customer_name) ?></div>
+                                    <div style="font-weight: 600; color: #0f172a; font-size: 13px;"><?= htmlspecialchars($inv->customer_name) ?></div>
                                 </td>
-                                <td style="font-weight: 600; text-align: right; font-family: var(--f-mono);">
+                                <td class="txt-right" style="font-weight: 700; font-family: var(--erp-mono); font-size: 13px; color: #0f172a;">
                                     Rs: <?= number_format($inv->total_amount, 2) ?>
                                 </td>
-                                <td style="text-align: center;">
+                                <td class="txt-center">
                                     <?php 
                                         $status = $inv->status ?? 'Unpaid';
-                                        $badgeClass = 'badge-Pending';
+                                        $badgeClass = 'badge-Unpaid';
                                         if ($status === 'Paid') { $badgeClass = 'badge-Paid'; }
                                         elseif ($status === 'Unpaid') { $badgeClass = 'badge-Unpaid'; }
-                                        elseif ($status === 'Partially Paid') { $badgeClass = 'badge-Pending'; }
+                                        elseif ($status === 'Partially Paid') { $badgeClass = 'badge-PartiallyPaid'; }
                                         elseif ($status === 'Voided') { $badgeClass = 'badge-Voided'; }
                                     ?>
-                                    <div class="sf-badge <?= $badgeClass ?>">
-                                        <div class="dot"></div> <?= $status ?>
-                                    </div>
+                                    <span class="sf-badge <?= $badgeClass ?>">
+                                        <span class="badge-dot-sm"></span> <?= $status ?>
+                                    </span>
                                 </td>
-                                <td style="text-align: right;">
+                                <td class="txt-right">
                                     <div class="row-acts">
-                                        <button type="button" class="act-btn convert" title="Convert to SO" style="color: #e65100;" onclick="confirmConvert(<?= $inv->id ?>, '<?= $inv->invoice_number ?>')">
+                                        <button type="button" class="act-btn convert" title="Convert Invoice back to Sales Order" onclick="openConvertModal(<?= $inv->id ?>, '<?= htmlspecialchars(addslashes($inv->invoice_number)) ?>')">
                                             <i class="fa-solid fa-rotate-left"></i>
                                         </button>
-                                        <a href="<?= APP_URL ?>/sales/show/<?= $inv->id ?>" target="_blank" class="act-btn print" title="Print">
+                                        <a href="<?= APP_URL ?>/sales/show/<?= $inv->id ?>" target="_blank" class="act-btn print" title="Print Invoice">
                                             <i class="fa-solid fa-print"></i>
                                         </a>
-                                        <a href="<?= APP_URL ?>/sales/edit/<?= $inv->id ?>" target="_blank" class="act-btn edit" title="Edit">
+                                        <a href="<?= APP_URL ?>/sales/edit/<?= $inv->id ?>" target="_blank" class="act-btn edit" title="Edit Invoice">
                                             <i class="fa-solid fa-pen"></i>
                                         </a>
-                                        <button type="button" class="act-btn delete" title="Delete" onclick="openDeleteModal(<?= $inv->id ?>, '<?= htmlspecialchars(addslashes($inv->invoice_number)) ?>', 'invoice')">
+                                        <button type="button" class="act-btn delete" title="Delete Invoice" onclick="openDeleteModal(<?= $inv->id ?>, '<?= htmlspecialchars(addslashes($inv->invoice_number)) ?>', 'invoice')">
                                             <i class="fa-regular fa-trash-can"></i>
                                         </button>
                                     </div>
@@ -343,37 +892,55 @@
                 </tbody>
             </table>
         </div>
-    </form>
 
-    <!-- Pagination Footer -->
-    <?php if ($data['total_pages'] > 1): ?>
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #666; padding: 10px 5px;">
-            <div>
-                Showing page <strong><?= $data['page'] ?></strong> of <strong><?= $data['total_pages'] ?></strong> (Total <strong><?= $data['total_records'] ?></strong> records)
+        <!-- Pinned Pagination Footer (RULE 1) -->
+        <div class="erp-pagination">
+            <div class="pg-info">
+                <?php
+                $page = $data['page'] ?? 1;
+                $limit = $data['limit'] ?? 25;
+                $totalPages = $data['total_pages'] ?? 1;
+                $startRecord = $totalRecords > 0 ? (($page - 1) * $limit + 1) : 0;
+                $endRecord = min($page * $limit, $totalRecords);
+                ?>
+                Showing <strong><?= $startRecord ?></strong> – <strong><?= $endRecord ?></strong> of <strong><?= number_format($totalRecords) ?></strong>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <?php if ($data['page'] > 1): ?>
-                    <a href="?page=<?= $data['page'] - 1 ?>&search=<?= urlencode($data['search']) ?>&customer_id=<?= $data['customer_id'] ?>&start_date=<?= urlencode($data['start_date']) ?>&end_date=<?= urlencode($data['end_date']) ?>&status=<?= urlencode($data['status']) ?>" class="sf-btn sf-btn-ghost">&laquo; Previous</a>
-                <?php else: ?>
-                    <span class="sf-btn sf-btn-ghost" style="opacity: 0.5; cursor: not-allowed;">&laquo; Previous</span>
-                <?php endif; ?>
-
-                <?php if ($data['page'] < $data['total_pages']): ?>
-                    <a href="?page=<?= $data['page'] + 1 ?>&search=<?= urlencode($data['search']) ?>&customer_id=<?= $data['customer_id'] ?>&start_date=<?= urlencode($data['start_date']) ?>&end_date=<?= urlencode($data['end_date']) ?>&status=<?= urlencode($data['status']) ?>" class="sf-btn sf-btn-ghost">Next &raquo;</a>
-                <?php else: ?>
-                    <span class="sf-btn sf-btn-ghost" style="opacity: 0.5; cursor: not-allowed;">Next &raquo;</span>
-                <?php endif; ?>
+            <div class="pg-right">
+                <div class="pg-size-wrap">
+                    <span class="pg-size-lbl">SHOW:</span>
+                    <select class="pg-size-sel" onchange="changeLimit(this.value)">
+                        <option value="15" <?= $limit == 15 ? 'selected' : '' ?>>15</option>
+                        <option value="25" <?= $limit == 25 ? 'selected' : '' ?>>25</option>
+                        <option value="50" <?= $limit == 50 ? 'selected' : '' ?>>50</option>
+                        <option value="100" <?= $limit == 100 ? 'selected' : '' ?>>100</option>
+                        <option value="1000" <?= $limit == 1000 ? 'selected' : '' ?>>All</option>
+                    </select>
+                </div>
+                <div class="pg-nav">
+                    <?php
+                    $queryParams = $_GET;
+                    $prevParams = $queryParams; $prevParams['page'] = max(1, $page - 1);
+                    $nextParams = $queryParams; $nextParams['page'] = min($totalPages, $page + 1);
+                    ?>
+                    <a href="?<?= http_build_query($prevParams) ?>" class="pg-btn <?= $page <= 1 ? 'disabled' : '' ?>" title="Previous Page">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                    <div class="pg-current"><?= $page ?> / <?= $totalPages ?></div>
+                    <a href="?<?= http_build_query($nextParams) ?>" class="pg-btn <?= $page >= $totalPages ? 'disabled' : '' ?>" title="Next Page">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                </div>
             </div>
         </div>
-    <?php endif; ?>
+    </div>
 
 </div>
 
-<!-- Command Bar -->
+<!-- 4. Sleek Floating Island Command Bar Pill (RULE 3) -->
 <div class="cmd-bar">
     <div class="cmd-search">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" placeholder="Search invoices..." value="<?= htmlspecialchars($data['search'] ?? '') ?>" onkeypress="if(event.key === 'Enter') { document.getElementById('mainSearchInput').value = this.value; document.getElementById('filterForm').submit(); }">
+        <input type="text" placeholder="Search invoice #, customer, notes..." value="<?= htmlspecialchars($data['search'] ?? '') ?>" onkeypress="if(event.key === 'Enter') { document.getElementById('mainSearchInput').value = this.value; document.getElementById('filterForm').submit(); }">
     </div>
     <div class="cmd-divider"></div>
     <a href="<?= APP_URL ?>/sales/create" class="cmd-cta">
@@ -381,44 +948,91 @@
     </a>
 </div>
 
+<!-- Convert to SO Confirmation Modal -->
+<div id="convertModal" class="sf-modal">
+    <div class="sf-modal-box">
+        <h3 style="color: #ea580c; display: flex; align-items: center; gap: 8px; font-size: 16px; margin: 0 0 10px 0;">
+            <i class="fa-solid fa-rotate-left"></i> Convert to Sales Order
+        </h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.5; margin-bottom: 20px;">
+            Are you sure you want to convert <strong id="convertInvoiceNum" style="color: #0f172a;"></strong> back to a <strong>Sales Order</strong>?<br><br>
+            <span style="color: #b45309; font-size: 12px; background: #fffbeb; padding: 6px 10px; border-radius: 6px; display: block; border: 1px solid #fef3c7;">
+                ⚠️ This will delete the invoice record, reverse all associated double-entry general ledger postings, and return the item quantities back into available inventory.
+            </span>
+        </p>
+        
+        <form id="convertForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+                <button type="button" class="sf-btn sf-btn-ghost" onclick="closeConvertModal()">Cancel</button>
+                <button type="submit" class="sf-btn sf-btn-warning">
+                    <i class="fa-solid fa-rotate-left"></i> Confirm & Revert
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Delete Authentication Modal -->
 <div id="deleteAuthModal" class="sf-modal">
     <div class="sf-modal-box">
-        <h3 style="color:var(--c-red); display:flex; align-items:center; gap:8px;">
+        <h3 style="color: #ef4444; display: flex; align-items: center; gap: 8px; font-size: 16px; margin: 0 0 10px 0;">
             <i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion
         </h3>
-        <p style="font-size: 13px; color: var(--t-secondary); line-height: 1.5; margin-bottom: 20px;">
-            You are about to delete <strong id="deleteRecordNum" style="color:var(--c-red);"></strong>. This action requires administrative authentication. The deletion will be permanently logged in the audit trail.
+        <p style="font-size: 13px; color: #475569; line-height: 1.5; margin-bottom: 16px;">
+            You are about to delete <strong id="deleteRecordNum" style="color: #ef4444;"></strong>. This action requires administrative authentication and will be permanently recorded in the system audit trail.
         </p>
         
         <form id="deleteForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+            
             <div class="sf-form-group">
                 <label>Reason for Deletion *</label>
-                <textarea name="delete_reason" class="sf-input" required style="height:70px; resize:none;" placeholder="Why are you deleting this record?"></textarea>
+                <textarea name="delete_reason" class="sf-input" required style="height: 60px; resize: none;" placeholder="Provide justification for deleting this record..."></textarea>
             </div>
             
             <div class="sf-form-group">
-                <label>Your Admin Password *</label>
-                <input type="password" name="password" class="sf-input" required placeholder="Enter password to verify">
+                <label>Admin Password *</label>
+                <input type="password" name="password" class="sf-input" required placeholder="Enter your password to verify" autocomplete="current-password">
             </div>
             
-            <div class="sf-form-group" style="display:flex; justify-content:flex-end; gap:10px; margin-top: 24px;">
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
                 <button type="button" class="sf-btn sf-btn-ghost" onclick="closeDeleteModal()">Cancel</button>
-                <button type="submit" class="sf-btn sf-btn-danger">Verify & Delete</button>
+                <button type="submit" class="sf-btn sf-btn-danger">
+                    <i class="fa-regular fa-trash-can"></i> Verify & Delete
+                </button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+// Change limit helper
+function changeLimit(newLimit) {
+    document.getElementById('filterLimitInput').value = newLimit;
+    document.getElementById('filterForm').submit();
+}
+
+// Convert modal logic
+function openConvertModal(id, number) {
+    document.getElementById('convertInvoiceNum').textContent = 'Invoice #' + number;
+    const form = document.getElementById('convertForm');
+    const queryParams = window.location.search || '';
+    form.action = `<?= APP_URL ?>/sales/convert_to_so/${id}${queryParams}`;
+    document.getElementById('convertModal').classList.add('open');
+}
+
+function closeConvertModal() {
+    document.getElementById('convertModal').classList.remove('open');
+}
+
+// Delete modal logic
 function openDeleteModal(id, number, type = 'invoice') {
     const modal = document.getElementById('deleteAuthModal');
     const form = document.getElementById('deleteForm');
     const recordNumSpan = document.getElementById('deleteRecordNum');
     
-    recordNumSpan.textContent = `${type === 'invoice' ? 'Invoice' : 'Sales Order'} ${number}`;
-    
-    // Capture current search/filter parameters
+    recordNumSpan.textContent = `${type === 'invoice' ? 'Invoice' : 'Sales Order'} #${number}`;
     const queryParams = window.location.search || '';
     
     form.action = (type === 'invoice') ? 
@@ -433,19 +1047,13 @@ function closeDeleteModal() {
     document.getElementById('deleteAuthModal').classList.remove('open');
 }
 
-function confirmConvert(id, number) {
-    if (confirm("Are you sure you want to convert Invoice " + number + " back to a Sales Order? This will delete the invoice, reverse all general ledger entries, and add the stock back to inventory.")) {
-        window.location.href = '<?= APP_URL ?>/sales/convert_to_so/' + id;
-    }
-}
-
-// Close modal if user clicks outside content
+// Outside click handler for modals
 window.onclick = function(event) {
-    const modal = document.getElementById('deleteAuthModal');
-    if (event.target == modal) {
-        closeDeleteModal();
-    }
-}
+    const delModal = document.getElementById('deleteAuthModal');
+    const convModal = document.getElementById('convertModal');
+    if (event.target === delModal) closeDeleteModal();
+    if (event.target === convModal) closeConvertModal();
+};
 
 // Bulk Actions Logic
 function toggleSelectAll(master) {
@@ -456,59 +1064,86 @@ function toggleSelectAll(master) {
 
 function updateSelectedCount() {
     const checkboxes = document.querySelectorAll('.row-checkbox:checked');
-    const panel = document.getElementById('bulkActionBar');
+    const bar = document.getElementById('bulkActionBar');
     const badge = document.getElementById('selectedCountBadge');
     
     if (checkboxes.length > 0) {
-        panel.style.display = 'flex';
+        bar.style.display = 'flex';
         badge.textContent = checkboxes.length + ' selected';
     } else {
-        panel.style.display = 'none';
+        bar.style.display = 'none';
         const selectAll = document.getElementById('selectAllCheckbox');
         if (selectAll) selectAll.checked = false;
     }
 }
 
+function clearSelections() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+    const selectAll = document.getElementById('selectAllCheckbox');
+    if (selectAll) selectAll.checked = false;
+    updateSelectedCount();
+}
+
 function toggleBulkActionInputs() {
-    const action = document.getElementById('bulkActionSelect').value;
-    
+    const action = document.getElementById('bulkActionChoice').value;
     document.getElementById('bulkDateInputContainer').style.display = action === 'change_date' ? 'block' : 'none';
     document.getElementById('bulkRepInputContainer').style.display = action === 'change_rep' ? 'block' : 'none';
     document.getElementById('bulkPasswordInputContainer').style.display = action === 'delete' ? 'block' : 'none';
-    
-    // Add required attributes dynamically
-    document.querySelector('input[name="bulk_date"]').required = action === 'change_date';
-    document.querySelector('select[name="bulk_rep"]').required = action === 'change_rep';
-    document.querySelector('input[name="admin_password"]').required = action === 'delete';
 }
 
-function handleBulkSubmit(e) {
-    const action = document.getElementById('bulkActionSelect').value;
+function executeBulkAction() {
+    const action = document.getElementById('bulkActionChoice').value;
     if (!action) {
         alert('Please select a bulk action.');
-        e.preventDefault();
-        return false;
+        return;
     }
-    
+
     const checkboxes = document.querySelectorAll('.row-checkbox:checked');
     if (checkboxes.length === 0) {
         alert('No records selected.');
-        e.preventDefault();
-        return false;
+        return;
     }
-    
-    if (action === 'delete') {
-        const password = document.querySelector('input[name="admin_password"]').value;
-        if (!password) {
+
+    const hiddenForm = document.getElementById('bulkForm');
+    const hiddenIdsContainer = document.getElementById('hiddenBulkIds');
+    hiddenIdsContainer.innerHTML = '';
+
+    checkboxes.forEach(cb => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = 'ids[]';
+        inp.value = cb.value;
+        hiddenIdsContainer.appendChild(inp);
+    });
+
+    document.getElementById('hiddenBulkAction').value = action;
+
+    if (action === 'change_date') {
+        const dateVal = document.getElementById('bulkDateInput').value;
+        if (!dateVal) {
+            alert('Please select a new transaction date.');
+            return;
+        }
+        document.getElementById('hiddenBulkDate').value = dateVal;
+    } else if (action === 'change_rep') {
+        const repVal = document.getElementById('bulkRepSelect').value;
+        if (!repVal) {
+            alert('Please select a representative.');
+            return;
+        }
+        document.getElementById('hiddenBulkRep').value = repVal;
+    } else if (action === 'delete') {
+        const passVal = document.getElementById('bulkAdminPassword').value;
+        if (!passVal) {
             alert('Admin password is required for bulk deletion.');
-            e.preventDefault();
-            return false;
+            return;
         }
-        if (!confirm('Are you sure you want to permanently delete the ' + checkboxes.length + ' selected records? This action requires administrator validation and cannot be undone.')) {
-            e.preventDefault();
-            return false;
+        if (!confirm('Are you sure you want to permanently delete ' + checkboxes.length + ' selected records? This action requires administrator password verification.')) {
+            return;
         }
+        document.getElementById('hiddenAdminPassword').value = passVal;
     }
-    return true;
+
+    hiddenForm.submit();
 }
 </script>
