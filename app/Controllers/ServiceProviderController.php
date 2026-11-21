@@ -13,6 +13,8 @@ class ServiceProviderController extends Controller {
     }
 
     public function index($id = null) {
+        $this->checkPermission('supplier', 'view');
+        $csrfToken = $this->generateCsrfToken();
         $serviceProviders = $this->serviceProviderModel->getAllServiceProviders();
         
         $selectedServiceProvider = null;
@@ -58,6 +60,7 @@ class ServiceProviderController extends Controller {
         $data = [
             'title' => 'Service Provider Center',
             'content_view' => 'service_providers/index',
+            'csrf_token' => $csrfToken,
             'service_providers' => $serviceProviders,
             'selected_service_provider' => $selectedServiceProvider,
             'stats' => $stats,
@@ -74,6 +77,9 @@ class ServiceProviderController extends Controller {
         ];
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
+            $this->validateCsrfOrDie();
+            $this->checkPermission('supplier', 'create_edit');
+
             if ($_POST['action'] == 'add_service_provider') {
                 $category = trim($_POST['service_category_select'] ?? '');
                 if ($category === 'Other') {
@@ -189,6 +195,7 @@ class ServiceProviderController extends Controller {
     }
 
     public function bill($id) {
+        $this->checkPermission('supplier', 'view');
         $bill = $this->serviceProviderModel->getServiceBillById(intval($id));
         if (!$bill) {
             die('Service Bill not found.');
@@ -202,5 +209,41 @@ class ServiceProviderController extends Controller {
         ];
         
         $this->view('service_providers/bill_detail', $data);
+    }
+
+    public function toggle_status($id) {
+        $this->checkPermission('supplier', 'create_edit');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            exit;
+        }
+
+        // Validate CSRF token from header or post body
+        $headers = getallheaders();
+        $token = $_POST['csrf_token'] ?? $headers['X-CSRF-TOKEN'] ?? '';
+        if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Invalid or expired security token']);
+            exit;
+        }
+
+        $sp = $this->serviceProviderModel->getServiceProviderById(intval($id));
+        if (!$sp) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Service provider not found']);
+            exit;
+        }
+
+        $res = $this->serviceProviderModel->toggleStatus(intval($id));
+        if ($res) {
+            $newStatus = ($sp->status === 'Active') ? 'Inactive' : 'Active';
+            $this->logActivity('Toggle Status', 'Service Providers', "Toggled status of provider #{$id} ({$sp->name}) to {$newStatus}");
+            echo json_encode(['success' => true, 'new_status' => $newStatus, 'message' => "Service provider marked as {$newStatus}"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to update provider status']);
+        }
+        exit;
     }
 }

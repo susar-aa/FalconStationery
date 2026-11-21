@@ -94,6 +94,30 @@ class ServiceProvider {
         return $this->db->execute();
     }
 
+    /**
+     * Explicitly toggle or set active/inactive status for a service provider.
+     * @param int $id
+     * @param string|null $status
+     * @return string|false
+     */
+    public function toggleStatus($id, $status = null) {
+        $id = intval($id);
+        if ($status !== null) {
+            $newStatus = (strtolower($status) === 'active' || $status === '1' || $status === 1) ? 'Active' : 'Inactive';
+        } else {
+            $current = $this->getServiceProviderById($id);
+            if (!$current) return false;
+            $newStatus = ($current->status === 'Active') ? 'Inactive' : 'Active';
+        }
+        $this->db->query("UPDATE service_providers SET status = :status WHERE id = :id");
+        $this->db->bind(':status', $newStatus);
+        $this->db->bind(':id', $id);
+        if ($this->db->execute()) {
+            return $newStatus;
+        }
+        return false;
+    }
+
     public function getOrCreateCategoryAccount($category) {
         $category = trim($category);
         if (empty($category)) {

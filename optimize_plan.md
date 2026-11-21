@@ -352,10 +352,26 @@ Test how the system handles each situation and fix genuine problems.
     - Added strict CSRF protection (`validateCsrfOrDie()`) across supplier addition, updates, and status toggles.
     - Enforced RBAC authorization (`checkPermission('supplier', 'view' | 'create_edit')`).
     - Provided safe production SQL script for `vendors` indexes and schema validation.
-- [ ] **Module 6: Rep Tracking & Route Audits**
-- [ ] **Module 7: Double-Entry Accounting & Banking**
-- [ ] **Module 8: HRM & Payroll**
-- [ ] **Module 9: Reports Engine**
+- [x] **Module 6: Service Provider Center (`ServiceProviderController`, `ServiceProvider`, `Views/service_providers/index.php`)** (COMPLETED)
+  - **Issues Found**:
+    - Unlocked page layout with page-level body scroll and oversized pastel stat cards.
+    - Category and Ledger filter controls were on the left shelf with missing Account Status filter.
+    - Missing CSRF token validation and RBAC checks across service provider registration, profile updates, service bill entries, and status toggles.
+    - Operational status was rendered as a static text badge with no interactive toggle.
+    - Lack of alternating zebra striping on the master table and modal lists (Activity Ledger, Service Bills SRN history).
+  - **Fixes & Optimizations**:
+    - Locked to 100vh viewport (`.sp-erp-workspace`, sticky `thead`, table rows only scrolling in `.erp-table-scroll` with `padding-bottom: 54px;`, pinned `.erp-pagination` footer).
+    - Replaced 3 oversized cards with high-density KPI stat strip (`Total Service Providers`, `Total Payable Outstanding`, `Accounts to Settle`).
+    - Grouped all filters aligned to the **top-right corner** above the table (Category, Ledger, Account Status, Reset button).
+    - Added interactive iOS status toggle switches (`.erp-switch`) with CSRF tokens, AJAX endpoint (`/serviceprovider/toggle_status/{id}`), and instant state rollback on failure.
+    - Enforced SF Pro Display typography suite, monospace formatting for currencies and codes, and alternating zebra striping (`tbody tr:nth-child(even)`) on main table and modal tabs.
+    - Standardized floating bottom command bar pill (320px live search + `+ New Service Provider` button).
+    - Added strict CSRF validation (`validateCsrfOrDie()`) and RBAC checks (`checkPermission('supplier', 'view' | 'create_edit')`) across all endpoints and forms.
+    - Provided copy-pasteable production SQL for `service_providers` and related tables per Rule 1 & Rule 4.
+- [ ] **Module 7: Rep Tracking & Route Audits**
+- [ ] **Module 8: Double-Entry Accounting & Banking**
+- [ ] **Module 9: HRM & Payroll**
+- [ ] **Module 10: Reports Engine**
 
 ## 12. Final Deliverables
 
