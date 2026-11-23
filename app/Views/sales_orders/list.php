@@ -671,22 +671,6 @@ body:has(.erp-viewport-view) .main-content,
 
 <div class="erp-viewport-view so-erp-workspace">
 
-    <!-- 1. Sleek Compact KPI Stats Strip -->
-    <div class="erp-stats-strip">
-        <div class="stat-pill">
-            <span class="badge-dot" style="background:#3b82f6;"></span>
-            Total Orders: <strong><?= number_format($totalOrders) ?></strong>
-        </div>
-        <div class="stat-pill">
-            <span class="badge-dot" style="background:#10b981;"></span>
-            Total Value: <strong>Rs. <?= number_format($totalAmount, 2) ?></strong>
-        </div>
-        <div class="stat-pill">
-            <span class="badge-dot" style="background:#f59e0b;"></span>
-            Pending Orders: <strong><?= number_format($pendingCount) ?> (Rs. <?= number_format($pendingAmount, 2) ?>)</strong>
-        </div>
-    </div>
-
     <!-- Alert Notifications -->
     <?php if (isset($_SESSION['flash_success'])): ?>
     <div class="sf-alert success" id="success-alert">
