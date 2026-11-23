@@ -673,22 +673,6 @@ body:has(.erp-viewport-view) .main-content,
 
 <div class="erp-viewport-view inv-erp-workspace">
 
-    <!-- 1. Sleek Compact KPI Stats Strip -->
-    <div class="erp-stats-strip">
-        <div class="stat-pill">
-            <span class="badge-dot" style="background:#3b82f6;"></span>
-            Total Invoices: <strong><?= number_format($totalInvoices) ?></strong>
-        </div>
-        <div class="stat-pill">
-            <span class="badge-dot" style="background:#10b981;"></span>
-            Total Sales: <strong>Rs. <?= number_format($totalSales, 2) ?></strong>
-        </div>
-        <div class="stat-pill">
-            <span class="badge-dot" style="background:#ef4444;"></span>
-            Unpaid Accounts: <strong><?= number_format($unpaidCount) ?> (Rs. <?= number_format($unpaidAmount, 2) ?>)</strong>
-        </div>
-    </div>
-
     <!-- Alert Notifications -->
     <?php if (isset($_SESSION['flash_success'])): ?>
     <div class="sf-alert success" id="success-alert">
