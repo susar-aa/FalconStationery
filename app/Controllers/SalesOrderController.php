@@ -31,7 +31,13 @@ class SalesOrderController extends Controller {
      * Display all sales orders (Standard & Route) with search, filtering, and pagination
      */
     public function index() {
-        $limit = 10;
+        $this->checkPermission('sales', 'view');
+        $csrfToken = $this->generateCsrfToken();
+
+        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 25;
+        if ($limit < 5) $limit = 25;
+        if ($limit > 1000) $limit = 1000;
+
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         if ($page < 1) $page = 1;
         $offset = ($page - 1) * $limit;
@@ -148,6 +154,21 @@ class SalesOrderController extends Controller {
         $this->db->bind(':offset', $offset, PDO::PARAM_INT);
         $orders = $this->db->resultSet() ?: [];
 
+        // Fetch KPI stats
+        $statsQuery = "SELECT 
+            COUNT(*) as total_orders,
+            COALESCE(SUM(grand_total), 0) as total_amount,
+            SUM(CASE WHEN status != 'Transferred' AND status != 'Completed' AND status != 'Voided' THEN 1 ELSE 0 END) as pending_count,
+            COALESCE(SUM(CASE WHEN status != 'Transferred' AND status != 'Completed' AND status != 'Voided' THEN grand_total ELSE 0 END), 0) as pending_amount
+        FROM (
+            SELECT so.grand_total, so.status FROM sales_orders so
+            UNION ALL
+            SELECT (i.total_amount - COALESCE(CASE WHEN i.global_discount_type = '%' THEN (i.total_amount * i.global_discount_val / 100) ELSE i.global_discount_val END, 0) + COALESCE(i.tax_amount, 0)) as grand_total, i.status 
+            FROM invoices i WHERE i.stock_status = 'reserved'
+        ) as stats_table";
+        $this->db->query($statsQuery);
+        $stats = $this->db->single();
+
         // Fetch customers for filter dropdown
         $this->db->query("SELECT id, name FROM customers ORDER BY name ASC");
         $customers = $this->db->resultSet() ?: [];
@@ -168,9 +189,12 @@ class SalesOrderController extends Controller {
             'status' => $status,
             'source_type' => $sourceType,
             'rep_name' => $repName,
+            'limit' => $limit,
             'page' => $page,
             'total_pages' => $totalPages,
             'total_records' => $totalRecords,
+            'stats' => $stats,
+            'csrf_token' => $csrfToken,
             'content_view' => 'sales_orders/list'
         ];
 
@@ -398,10 +422,13 @@ class SalesOrderController extends Controller {
      * Delete a Standard Sales Order with administrative re-authentication
      */
     public function delete($id = null) {
+        $this->checkPermission('sales', 'delete');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . APP_URL . '/salesorder');
             exit;
         }
+
+        $this->validateCsrfOrDie();
 
         if (!$id) {
             $_SESSION['flash_error'] = "Record ID is missing!";
@@ -508,10 +535,13 @@ class SalesOrderController extends Controller {
      * Process bulk action (edit dates, change reps, or delete) on multiple sales orders/route bookings.
      */
     public function bulk_action() {
+        $this->checkPermission('sales', 'create_edit');
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . APP_URL . '/salesorder');
             exit;
         }
+
+        $this->validateCsrfOrDie();
 
         $ids = $_POST['ids'] ?? [];
         $action = $_POST['bulk_action'] ?? '';

@@ -287,31 +287,31 @@ Test how the system handles each situation and fix genuine problems.
   - Replaced oversized consumer pastel cards with compact, high-density KPI status badges.
   - Fixed N+1 query bottleneck by introducing batch variation preloading `Item::getVariationsForItems()`.
   - Added project rules in `AGENTS.md` and `.agents/rules/erp-ui-standards.md`.
-- [x] **Module 2: Sales, Invoices & Accounts Receivable (`SalesController`, `Invoice`, `Views/sales/index.php`, `Views/sales/list.php`)**
+- [x] **Module 2: Sales, Invoices & Sales Order Center (`SalesController`, `SalesOrderController`, `Invoice`, `Views/sales/`, `Views/sales_orders/`)**
   - **Audit Findings**:
     - Discovered an extreme N+1 query loop in `create()` where variations were not preloaded in the controller, causing `sales/index.php` to query variations in a loop for all 1,050+ catalog items on every single invoice page load (>1,050 individual SQL queries).
     - Customer outstanding balance calculations ran 3 correlated subqueries (`invoices`, `customer_payments`, `credit_notes`) across all active customers without composite index optimization.
     - Missing CSRF token in `<form id="invoiceForm">` and missing CSRF validation in `SalesController::store()`.
     - No double-submission protection on submit buttons (`Save & Close`, `Save & New`, `Save & Print`, `Save & WhatsApp`), creating risks of duplicate invoices and double ledger postings.
-    - Invoices list view (`Views/sales/list.php`) suffered from unlocked viewport causing page-level scrolling, with a bulky multi-row filter card occupying half the screen and pushing data rows out of view.
-    - Hardcoded pagination limit of 10 records per page in `SalesController::index()`.
+    - Invoices and Sales Orders list views suffered from unlocked viewports causing page-level scrolling, with bulky multi-row filter cards occupying half the screen and pushing table rows out of view.
+    - Hardcoded pagination limit of 10 records per page in both `SalesController::index()` and `SalesOrderController::index()`.
     - Missing CSRF validation and RBAC checks on `delete()`, `bulk_action()`, and `convert_to_so()`.
     - `convert_to_so` was exposed via unauthenticated GET request with raw browser `confirm()`, vulnerable to accidental execution or CSRF.
-    - Absence of alternating zebra striping and sticky table headers on the invoice data table.
+    - Absence of alternating zebra striping and sticky table headers on the invoice and sales order data tables.
   - **Fixes & Optimizations**:
     - Batch preloaded variations in `SalesController::create()` in 1 single database query using `Item::getVariationsForItems()`, and guarded view against redundant per-item variation queries.
     - Added CSRF token protection to the main invoice form and enforced `$this->validateCsrfOrDie()` in `SalesController::store()`.
-    - Added RBAC permission enforcement (`$this->checkPermission('sales', 'view' | 'create_edit' | 'delete')`).
+    - Added RBAC permission enforcement (`$this->checkPermission('sales', 'view' | 'create_edit' | 'delete')`) across both controllers.
     - Added double-submission lock (`isInvoiceSubmitting`) and active button disabling to prevent concurrent duplicate invoice creation.
     - Preserved 100% of the existing invoice creation UI layout, styles, and workflows per user instructions ("do not redesign it").
-    - Overhauled Invoices Index to 100vh Viewport-Locked layout (`.inv-erp-workspace`, sticky `thead`, table rows only scrolling inside `.erp-table-scroll` with `padding-bottom: 54px;`, pinned `.erp-pagination` footer).
-    - Replaced the bulky filter card with an ultra-compact `.erp-filter-bar` aligned to the top-right corner (Customer, Date Range, Payment Status, Reset).
-    - Added high-density KPI stat strip (`Total Invoices`, `Total Sales`, `Unpaid Accounts / Outstanding Receivable`).
+    - Overhauled Invoices Index & Sales Order Center to 100vh Viewport-Locked layout (`.inv-erp-workspace`, `.so-erp-workspace`, sticky `thead`, table rows only scrolling inside `.erp-table-scroll` with `padding-bottom: 54px;`, pinned `.erp-pagination` footer).
+    - Replaced the bulky filter cards with an ultra-compact `.erp-filter-bar` aligned to the top-right corner above the table (Customer, Date Range, Channel/Source, Rep, Status, Reset).
+    - Added high-density KPI stat strips on both screens (`Total Records`, `Total Sales / Order Value`, `Pending Orders / Unpaid Accounts`).
     - Made pagination limits dynamic (15, 25, 50, 100, 1000/All) with default of 25.
     - Upgraded `convert_to_so` to a secure POST confirmation modal (`#convertModal`) with CSRF protection and clear accounting warnings.
     - Upgraded `delete` and bulk action flows with strict CSRF verification and admin password authentication.
     - Applied SF Pro Display fonts, SF Mono for codes/amounts, and alternating zebra striping (`tbody tr:nth-child(even)`).
-    - Provided production composite indexing SQL for `invoices`, `invoice_items`, `sales_orders`, and `customer_payments`.
+    - Provided production composite indexing SQL for `invoices`, `invoice_items`, `sales_orders`, `sales_order_items`, and `customer_payments`.
 - [x] **Module 3: Purchases & GRN (`PurchaseController`, `GRNController`, `PurchaseOrder`, `GRN`, `Views/purchases/`, `Views/grns/`)**
   - **Audit Findings**:
     - Discovered missing CSRF tokens on Delete PO, Delete GRN, and Admin Approval POST forms, causing security risks and potential CSRF exploits.
