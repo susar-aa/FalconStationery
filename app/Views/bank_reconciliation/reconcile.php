@@ -468,6 +468,9 @@ $clearedBalance = round(floatval($rec->statement_opening_balance) + $matchedDepo
                 <i class="ph ph-printer"></i> Print Statement
             </a>
             <?php if (!$isFinalized): ?>
+                <button type="button" class="btn-rec btn-rec-secondary" onclick="openTargetsModal()">
+                    <i class="ph ph-sliders"></i> Edit Targets
+                </button>
                 <button type="button" class="btn-rec btn-rec-secondary" onclick="openBankOnlyModal()">
                     <i class="ph ph-plus-circle"></i> Bank Adjustment
                 </button>
@@ -484,15 +487,15 @@ $clearedBalance = round(floatval($rec->statement_opening_balance) + $matchedDepo
 
     <!-- KPI Summary Grid -->
     <div class="rec-kpi-bar">
-        <div class="rec-kpi-card">
+        <div class="rec-kpi-card" <?= !$isFinalized ? 'onclick="openTargetsModal()" style="cursor: pointer;" title="Click to edit statement opening balance"' : '' ?>>
             <div class="kpi-label">Statement Opening</div>
-            <div class="kpi-value">LKR <?= number_format($rec->statement_opening_balance, 2) ?></div>
-            <div class="kpi-hint">Confirmed prior month closing</div>
+            <div class="kpi-value" id="stmtOpenVal">LKR <?= number_format($rec->statement_opening_balance, 2) ?></div>
+            <div class="kpi-hint"><?= !$isFinalized ? 'Click to adjust statement opening' : 'Confirmed prior month closing' ?></div>
         </div>
-        <div class="rec-kpi-card target">
+        <div class="rec-kpi-card target" <?= !$isFinalized ? 'onclick="openTargetsModal()" style="cursor: pointer;" title="Click to edit target closing balance"' : '' ?>>
             <div class="kpi-label">Target Statement Ending</div>
-            <div class="kpi-value">LKR <?= number_format($rec->statement_closing_balance, 2) ?></div>
-            <div class="kpi-hint">Target from bank statement</div>
+            <div class="kpi-value" id="stmtCloseVal">LKR <?= number_format($rec->statement_closing_balance, 2) ?></div>
+            <div class="kpi-hint"><?= !$isFinalized ? 'Click to adjust target ending' : 'Target from bank statement' ?></div>
         </div>
         <div class="rec-kpi-card">
             <div class="kpi-label">Cleared in Bank</div>
@@ -704,6 +707,48 @@ $clearedBalance = round(floatval($rec->statement_opening_balance) + $matchedDepo
         </form>
     </div>
 </div>
+
+<!-- Edit Statement Targets Modal -->
+<div class="erp-modal-overlay" id="statementTargetsModal">
+    <div class="erp-modal-box" style="max-width: 480px;">
+        <div class="erp-modal-header">
+            <div class="erp-modal-title">
+                <i class="ph ph-sliders" style="color: #2563eb;"></i> Edit Statement Targets
+            </div>
+            <button type="button" class="erp-modal-close" onclick="closeTargetsModal()">&times;</button>
+        </div>
+        <form id="statementTargetsForm">
+            <input type="hidden" name="csrf_token" value="<?= $csrfToken ?>">
+            <input type="hidden" name="reconciliation_id" value="<?= $rec->id ?>">
+            <div class="erp-modal-body">
+                <div class="modal-form-group">
+                    <label>Statement Opening Balance (LKR) <span style="color: #dc2626;">*</span></label>
+                    <input type="number" step="0.01" name="statement_opening_balance" id="targetOpeningInput" class="modal-input num-mono" value="<?= floatval($rec->statement_opening_balance) ?>" required>
+                    <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+                        <button type="button" class="btn-rec btn-rec-secondary" style="font-size: 11px; padding: 2px 8px;" onclick="document.getElementById('targetOpeningInput').value = '0.00';">Set to 0.00 (Opening in table)</button>
+                        <?php if (floatval($rec->statement_opening_balance) < 0): ?>
+                            <button type="button" class="btn-rec btn-rec-secondary" style="font-size: 11px; padding: 2px 8px;" onclick="document.getElementById('targetOpeningInput').value = '<?= abs(floatval($rec->statement_opening_balance)) ?>';">Make Positive (+<?= number_format(abs(floatval($rec->statement_opening_balance)), 2) ?>)</button>
+                        <?php endif; ?>
+                    </div>
+                    <div style="font-size: 11.5px; color: #64748b; margin-top: 5px;">
+                        💡 <strong>Hint:</strong> If your opening balance journal entry (e.g., ADJ-...) is already checked as a row in the table below, set this to <code>0.00</code> to prevent double-counting.
+                    </div>
+                </div>
+                <div class="modal-form-group">
+                    <label>Target Statement Ending Balance (LKR) <span style="color: #dc2626;">*</span></label>
+                    <input type="number" step="0.01" name="statement_closing_balance" id="targetClosingInput" class="modal-input num-mono" value="<?= floatval($rec->statement_closing_balance) ?>" required>
+                    <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">Closing balance stated on physical bank statement.</div>
+                </div>
+            </div>
+            <div class="erp-modal-footer">
+                <button type="button" class="btn-rec btn-rec-secondary" onclick="closeTargetsModal()">Cancel</button>
+                <button type="submit" class="btn-rec btn-rec-primary" id="btnSaveTargets">
+                    <i class="ph ph-check-circle"></i> Save & Recalculate
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 <?php endif; ?>
 
 <script>
@@ -715,6 +760,15 @@ function openBankOnlyModal() {
 }
 function closeBankOnlyModal() {
     const modal = document.getElementById('bankOnlyModal');
+    if (modal) modal.classList.remove('active');
+}
+
+function openTargetsModal() {
+    const modal = document.getElementById('statementTargetsModal');
+    if (modal) modal.classList.add('active');
+}
+function closeTargetsModal() {
+    const modal = document.getElementById('statementTargetsModal');
     if (modal) modal.classList.remove('active');
 }
 
@@ -859,6 +913,65 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(err => {
                 console.error("Bank entry error:", err);
+                alert('Server communication error.');
+            });
+        });
+    }
+
+    // AJAX Update Statement Targets
+    const targetsForm = document.getElementById('statementTargetsForm');
+    if (targetsForm) {
+        targetsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btnSave = document.getElementById('btnSaveTargets');
+            if (btnSave) btnSave.disabled = true;
+
+            const formData = new FormData(this);
+
+            fetch('<?= APP_URL ?>/bankreconciliation/update_statement_ajax', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (btnSave) btnSave.disabled = false;
+                if (data.status === 'success' && data.summary) {
+                    closeTargetsModal();
+
+                    const s = data.summary;
+                    document.getElementById('stmtOpenVal').textContent = 'LKR ' + (data.statement_opening).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('stmtCloseVal').textContent = 'LKR ' + (data.statement_closing).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('clearedVal').textContent = 'LKR ' + s.cleared_balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('diffVal').textContent = 'LKR ' + s.difference.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('transitVal').textContent = 'LKR ' + s.deposits_in_transit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('outstandingVal').textContent = 'LKR ' + s.outstanding_cheques.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('adjBankVal').textContent = 'LKR ' + s.adjusted_bank.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    document.getElementById('adjBookVal').textContent = 'LKR ' + s.adjusted_book.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+                    const diffCard = document.getElementById('diffCard');
+                    const diffSub = document.getElementById('diffSub');
+                    const btnFinalize = document.getElementById('btnFinalize');
+
+                    if (Math.abs(s.difference) < 0.009) {
+                        diffCard.className = 'rec-kpi-card diff-success';
+                        diffSub.textContent = '0.00 (Perfect Match)';
+                        if (btnFinalize) btnFinalize.disabled = false;
+                    } else {
+                        diffCard.className = 'rec-kpi-card diff-danger';
+                        diffSub.textContent = 'Unreconciled Difference';
+                        if (btnFinalize) btnFinalize.disabled = true;
+                    }
+                } else {
+                    alert(data.message || 'Failed to update statement targets.');
+                }
+            })
+            .catch(err => {
+                if (btnSave) btnSave.disabled = false;
+                console.error("Statement targets update error:", err);
                 alert('Server communication error.');
             });
         });

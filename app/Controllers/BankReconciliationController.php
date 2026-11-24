@@ -190,6 +190,30 @@ class BankReconciliationController extends Controller {
         }
     }
 
+    public function update_statement_ajax() {
+        $this->checkPermission('accounting', 'create_edit');
+        $this->validateCsrfOrDie();
+        header('Content-Type: application/json');
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $recId = intval($_POST['reconciliation_id'] ?? 0);
+            $stmtOpen = floatval($_POST['statement_opening_balance'] ?? 0);
+            $stmtClose = floatval($_POST['statement_closing_balance'] ?? 0);
+
+            $summary = $this->recModel->updateStatementTargets($recId, $stmtOpen, $stmtClose);
+            if ($summary !== false) {
+                echo json_encode([
+                    'status' => 'success',
+                    'summary' => $summary,
+                    'statement_opening' => $stmtOpen,
+                    'statement_closing' => $stmtClose
+                ]);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to update statement targets.']);
+            }
+            exit;
+        }
+    }
+
     public function finalize_ajax() {
         $this->checkPermission('accounting', 'create_edit');
         $this->validateCsrfOrDie();

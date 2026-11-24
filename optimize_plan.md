@@ -439,6 +439,10 @@ Test how the system handles each situation and fix genuine problems.
         - Redesigned `bank_reconciliation/index.php` into 100vh Viewport-Locked ERP layout with sticky header, scrollable rows, top-right filter toolbar (Bank Account filter, Status filter: Draft/Finalized, search, reset), local SF Pro Display, monospace numbers, zebra striping, and secure CSRF delete modal.
         - Redesigned `bank_reconciliation/create.php` with auto-selection of bank accounts via GET parameter, dynamic opening balance and prior month status fetch, and CSRF protection.
         - Redesigned `bank_reconciliation/reconcile.php` into 100vh Viewport-Locked workspace with sticky KPI strip, top-right transaction filters (Match status, Origin, Flow type, search), and CSRF tokens across all AJAX requests (`match_ajax`, `bank_only_ajax`, `finalize_ajax`, `reopen_ajax`).
+        - **Opening Balance Difference & Target Editing Engine**:
+          - Identified root cause of the unreconciled difference matching the opening balance value (`34,215.66`): `statement_opening_balance` had been saved with an inverted negative sign (`-34,215.66`), which canceled out the matched opening balance deposit (`ADJ-20261110-131536` for `+34,215.66`), driving cleared bank balance to negative `-12,414.50` and creating an exact difference of `34,215.66`.
+          - Added dynamic statement targets editing engine (`updateStatementTargets()` in model, `update_statement_ajax` in controller, `#statementTargetsModal` in workspace view) allowing live adjustment of Statement Opening and Target Statement Closing balances with real-time recalculation of difference, cleared balance, and finalize lock state.
+          - Provided standalone production SQL queries to immediately balance the active draft reconciliation in phpMyAdmin.
         - Redesigned `bank_reconciliation/report.php` into clean, print/PDF-optimized audit statement using local SF Pro typography and zebra striping without external CDN dependencies.
         - Delivered standalone copy-pasteable production SQL composite indexes for live server execution.
 - [ ] **Module 9: HRM & Payroll**

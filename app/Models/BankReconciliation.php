@@ -491,6 +491,28 @@ class BankReconciliation {
     }
 
     /**
+     * Update statement opening and target closing balances for a Draft reconciliation.
+     */
+    public function updateStatementTargets($recId, $stmtOpen, $stmtClose) {
+        $rec = $this->getReconciliationById($recId);
+        if (!$rec || $rec->status === 'Finalized') {
+            return false;
+        }
+
+        $this->db->query("UPDATE bank_reconciliations 
+                          SET statement_opening_balance = :open_bal, 
+                              statement_closing_balance = :close_bal 
+                          WHERE id = :id");
+        $this->db->bind(':open_bal', floatval($stmtOpen));
+        $this->db->bind(':close_bal', floatval($stmtClose));
+        $this->db->bind(':id', $recId);
+        if ($this->db->execute()) {
+            return $this->calculateBalances($recId);
+        }
+        return false;
+    }
+
+    /**
      * Finalize reconciliation:
      * - Locks the reconciliation.
      * - Sets matched transactions as is_reconciled = 1.
