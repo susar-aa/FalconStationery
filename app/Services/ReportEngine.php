@@ -944,7 +944,7 @@ class ReportEngine {
                 'description' => 'Post-dated and in-hand cheques with bank details, maturity dates, and realization status.',
                 'icon' => 'ph-money',
                 'filters' => ['date_range', 'customer', 'status'],
-                'date_column' => 'chk.cheque_date',
+                'date_column' => 'chk.banking_date',
                 'columns' => [
                     'cheque_number' => ['label' => 'Cheque Number', 'type' => 'text'],
                     'bank_name' => ['label' => 'Drawn Bank', 'type' => 'text'],
@@ -954,9 +954,9 @@ class ReportEngine {
                     'cheque_status' => ['label' => 'Realization Status', 'type' => 'badge'],
                     'days_to_mature' => ['label' => 'Days Left', 'type' => 'number', 'align' => 'right']
                 ],
-                'sql' => "SELECT chk.cheque_number, chk.bank_name, chk.cheque_date as maturity_date,
+                'sql' => "SELECT chk.cheque_number, chk.bank_name, chk.banking_date as maturity_date,
                                  COALESCE(c.name, 'Direct/Walk-in') as customer_name, chk.amount, chk.status as cheque_status,
-                                 DATEDIFF(chk.cheque_date, NOW()) as days_to_mature, chk.customer_id
+                                 DATEDIFF(chk.banking_date, NOW()) as days_to_mature, chk.customer_id
                           FROM cheques chk
                           LEFT JOIN customers c ON chk.customer_id = c.id
                           WHERE 1=1 /*WHERE_CLAUSE*/"
