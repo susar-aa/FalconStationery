@@ -84,83 +84,8 @@ body, html {
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    padding: 12px 18px 0;
+    padding: 12px 18px 12px;
     box-sizing: border-box;
-}
-
-/* TOP WORKSPACE NAVIGATION STRIP */
-.report-top-shelf {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    flex-shrink: 0;
-}
-
-.shelf-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.btn-circle-back {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 1px solid var(--c-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #334155;
-    text-decoration: none;
-    font-size: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    transition: all 0.15s ease;
-}
-.btn-circle-back:hover {
-    background: #f8fafc;
-    color: var(--c-text-main);
-    border-color: #cbd5e1;
-}
-
-.hub-title-pill {
-    background: #ffffff;
-    border: 1px solid var(--c-border);
-    border-radius: 999px;
-    padding: 7px 18px;
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--c-text-main);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.branch-select-pill {
-    background: #ffffff;
-    border: 1px solid var(--c-border);
-    border-radius: 999px;
-    padding: 6px 14px;
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #334155;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-}
-.branch-select-pill select {
-    border: none;
-    background: transparent;
-    font-family: var(--f-main);
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #334155;
-    outline: none;
-    cursor: pointer;
 }
 
 /* MAIN TWO-COLUMN CONTAINER */
@@ -455,32 +380,6 @@ body, html {
 </style>
 
 <div class="report-hub-viewport erp-viewport-view">
-    <!-- TOP WORKSPACE NAVIGATION STRIP -->
-    <div class="report-top-shelf">
-        <div class="shelf-left">
-            <a href="<?= APP_URL ?>/home" class="btn-circle-back" title="Go Back">
-                <i class="ph ph-arrow-left"></i>
-            </a>
-            <div class="hub-title-pill">
-                <span>Central Reports & Financial Statements</span>
-            </div>
-            <div class="branch-select-pill">
-                <i class="ph ph-storefront"></i>
-                <select id="branchSelector">
-                    <?php if (!empty($warehouses)): ?>
-                        <?php foreach ($warehouses as $wh): ?>
-                            <option value="<?= $wh->id ?>"><?= htmlspecialchars($wh->name) ?></option>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <option value="1">Kandy Branch (KKK)</option>
-                        <option value="2">Colombo Main Hub</option>
-                    <?php endif; ?>
-                </select>
-                <i class="ph ph-caret-down" style="font-size: 12px; color: #94a3b8;"></i>
-            </div>
-        </div>
-    </div>
-
     <!-- MAIN TWO-COLUMN CONTAINER -->
     <div class="hub-content-grid">
         <!-- LEFT SIDEBAR: CATEGORIES -->
