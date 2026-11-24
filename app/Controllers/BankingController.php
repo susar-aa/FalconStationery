@@ -5,6 +5,7 @@ class BankingController extends Controller {
 
     public function __construct() {
         if (!isset($_SESSION['user_id'])) { header('Location: ' . APP_URL . '/auth/login'); exit; }
+        $this->generateCsrfToken();
         $this->coaModel = $this->model('ChartOfAccount');
         $this->journalModel = $this->model('JournalEntry');
     }
@@ -178,8 +179,10 @@ class BankingController extends Controller {
         $this->view('layouts/main', $data);
     }
 
-    // View detailed transaction history for a specific account
+    // View detailed transaction history for a specific account (Bank / Cash Register)
     public function ledger($accountId = null) {
+        $this->checkPermission('accounting', 'view');
+
         if (!$accountId) {
             header('Location: ' . APP_URL . '/banking');
             exit;
@@ -188,10 +191,44 @@ class BankingController extends Controller {
         $account = $this->coaModel->getAccountById($accountId);
         if (!$account) { die("Account not found."); }
 
-        $transactions = $this->coaModel->getBankLedger($accountId);
+        $rawTransactions = $this->coaModel->getBankLedger($accountId);
         $searchQuery = trim($_GET['q'] ?? '');
+        $statusFilter = trim($_GET['status'] ?? '');
+        $flowFilter = trim($_GET['flow'] ?? '');
+        $startDate = trim($_GET['start_date'] ?? '');
+        $endDate = trim($_GET['end_date'] ?? '');
 
-        // Export to Excel / CSV if requested
+        // 1. Calculate Chronological Running Balances (Oldest to Newest)
+        $ascTransactions = array_reverse($rawTransactions);
+        $runningBal = 0.0;
+        $totalInflow = 0.0;
+        $totalOutflow = 0.0;
+        $clearedCount = 0;
+        $unclearedCount = 0;
+
+        foreach ($ascTransactions as $t) {
+            $st = $t->status ?? $t->entry_status ?? '';
+            $isVoided = ($st === 'Voided');
+            $debit = (float)($t->debit ?? 0);
+            $credit = (float)($t->credit ?? 0);
+
+            if (!$isVoided) {
+                $runningBal += ($debit - $credit);
+                $totalInflow += $debit;
+                $totalOutflow += $credit;
+                if (!empty($t->is_cleared)) {
+                    $clearedCount++;
+                } else {
+                    $unclearedCount++;
+                }
+            }
+            $t->running_balance = $runningBal;
+        }
+
+        // Keep reverse-chronological order for table display (newest first)
+        $transactions = array_reverse($ascTransactions);
+
+        // 2. Export to Excel / CSV if requested
         if (isset($_GET['export']) && in_array(strtolower($_GET['export']), ['excel', 'csv', 'true', '1'])) {
             if (ob_get_level()) { ob_end_clean(); }
             $cleanCode = preg_replace('/[^a-zA-Z0-9_-]/', '_', $account->account_code ?: 'bank');
@@ -206,10 +243,12 @@ class BankingController extends Controller {
             // Write UTF-8 BOM so Microsoft Excel correctly renders Unicode characters
             fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            // Header row
-            fputcsv($output, ['Date', 'Reference', 'Description', 'Debit', 'Credit', 'Status']);
+            // Header row with Running Balance
+            fputcsv($output, ['Date', 'Reference', 'Description', 'Debit (LKR)', 'Credit (LKR)', 'Running Balance (LKR)', 'Status']);
 
             $exportList = $transactions;
+
+            // Apply search filter if present
             if ($searchQuery !== '') {
                 $lowerQ = strtolower($searchQuery);
                 $lowerQNoComma = str_replace(',', '', $lowerQ);
@@ -237,11 +276,44 @@ class BankingController extends Controller {
                 }));
             }
 
+            // Apply status filter if present
+            if ($statusFilter !== '') {
+                $exportList = array_values(array_filter($exportList, function($t) use ($statusFilter) {
+                    $st = $t->status ?? $t->entry_status ?? '';
+                    if ($statusFilter === 'cleared') return !empty($t->is_cleared) && $st !== 'Voided';
+                    if ($statusFilter === 'uncleared') return empty($t->is_cleared) && $st !== 'Voided';
+                    if ($statusFilter === 'voided') return $st === 'Voided';
+                    return true;
+                }));
+            }
+
+            // Apply flow filter if present
+            if ($flowFilter !== '') {
+                $exportList = array_values(array_filter($exportList, function($t) use ($flowFilter) {
+                    if ($flowFilter === 'debit') return (float)$t->debit > 0;
+                    if ($flowFilter === 'credit') return (float)$t->credit > 0;
+                    return true;
+                }));
+            }
+
+            // Apply date filters if present
+            if ($startDate !== '') {
+                $exportList = array_values(array_filter($exportList, function($t) use ($startDate) {
+                    return date('Y-m-d', strtotime($t->entry_date)) >= $startDate;
+                }));
+            }
+            if ($endDate !== '') {
+                $exportList = array_values(array_filter($exportList, function($t) use ($endDate) {
+                    return date('Y-m-d', strtotime($t->entry_date)) <= $endDate;
+                }));
+            }
+
             foreach ($exportList as $t) {
                 $st = $t->status ?? $t->entry_status ?? '';
                 $statusText = ($st === 'Voided') ? 'Voided' : ($t->is_cleared ? 'Cleared' : 'Uncleared');
                 $debitVal = ($t->debit > 0) ? number_format((float)$t->debit, 2, '.', '') : '0.00';
                 $creditVal = ($t->credit > 0) ? number_format((float)$t->credit, 2, '.', '') : '0.00';
+                $runningVal = number_format((float)($t->running_balance ?? 0), 2, '.', '');
 
                 fputcsv($output, [
                     date('Y-m-d', strtotime($t->entry_date)),
@@ -249,6 +321,7 @@ class BankingController extends Controller {
                     $t->description ?? '',
                     $debitVal,
                     $creditVal,
+                    $runningVal,
                     $statusText
                 ]);
             }
@@ -257,19 +330,36 @@ class BankingController extends Controller {
             exit;
         }
 
+        $stats = [
+            'current_balance' => (float)($account->balance ?? 0),
+            'total_transactions' => count($rawTransactions),
+            'cleared_count' => $clearedCount,
+            'uncleared_count' => $unclearedCount,
+            'total_inflow' => $totalInflow,
+            'total_outflow' => $totalOutflow,
+            'net_change' => $totalInflow - $totalOutflow
+        ];
+
         $data = [
-            'title' => 'Account Ledger: ' . $account->account_name,
+            'title' => 'Bank Register: ' . $account->account_name,
             'content_view' => 'banking/ledger',
             'account' => $account,
             'transactions' => $transactions,
-            'searchQuery' => $searchQuery
+            'stats' => $stats,
+            'searchQuery' => $searchQuery,
+            'statusFilter' => $statusFilter,
+            'flowFilter' => $flowFilter,
+            'startDate' => $startDate,
+            'endDate' => $endDate
         ];
 
         $this->view('layouts/main', $data);
     }
 
-    // --- NEW: Bank Reconciliation Screen ---
+    // --- Bank Reconciliation Screen ---
     public function reconcile($accountId = null) {
+        $this->checkPermission('accounting', 'view');
+
         if (!$accountId) {
             header('Location: ' . APP_URL . '/banking');
             exit;
@@ -292,6 +382,7 @@ class BankingController extends Controller {
 
         // Handle the submission of checked transactions
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'save_reconciliation') {
+            $this->checkPermission('accounting', 'create_edit');
             $statementBalance = floatval($_POST['statement_balance'] ?? 0.0);
             $clearedTx = $_POST['cleared_tx'] ?? [];
 

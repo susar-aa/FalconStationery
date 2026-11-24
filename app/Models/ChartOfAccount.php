@@ -550,28 +550,26 @@ class ChartOfAccount {
     }
 
     public function getBankLedger($accountId) {
-        $this->db->query("SELECT t.*, 
+        $this->db->query("SELECT t.id, t.journal_entry_id, t.account_id, t.debit, t.credit, t.is_cleared,
                                  je.entry_date, 
                                  je.reference, 
-                                 COALESCE(t.description, je.description) AS description,
+                                 COALESCE(t.description, je.description, 'Bank Transaction') AS description,
                                  COALESCE(
                                      NULLIF(je.status, ''), 
                                      (SELECT CASE WHEN cp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM customer_payments cp WHERE cp.journal_entry_id = je.id LIMIT 1),
                                      (SELECT CASE WHEN sp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM supplier_payments sp WHERE sp.journal_entry_id = je.id LIMIT 1),
                                      'Posted'
-                                 ) AS status,
-                                 COALESCE(
-                                     NULLIF(je.status, ''), 
-                                     (SELECT CASE WHEN cp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM customer_payments cp WHERE cp.journal_entry_id = je.id LIMIT 1),
-                                     (SELECT CASE WHEN sp.status = 'Reversed' THEN 'Voided' ELSE NULL END FROM supplier_payments sp WHERE sp.journal_entry_id = je.id LIMIT 1),
-                                     'Posted'
-                                 ) AS entry_status
+                                 ) AS status
                           FROM transactions t 
                           JOIN journal_entries je ON t.journal_entry_id = je.id 
                           WHERE t.account_id = :aid 
-                          ORDER BY je.entry_date DESC, je.id DESC");
+                          ORDER BY je.entry_date DESC, je.id DESC, t.id DESC");
         $this->db->bind(':aid', $accountId);
-        return $this->db->resultSet() ?: [];
+        $rows = $this->db->resultSet() ?: [];
+        foreach ($rows as $r) {
+            $r->entry_status = $r->status;
+        }
+        return $rows;
     }
 
     public function postOpeningBalance($accountId, $amount, $type, $date, $notes, $userId) {

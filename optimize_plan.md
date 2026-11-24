@@ -401,7 +401,23 @@ Test how the system handles each situation and fix genuine problems.
     - Targeted primary AR debit row and primary Revenue credit row with `ORDER BY debit/credit DESC LIMIT 1` in `api_save_accounting_entries` to prevent ledger corruption.
     - Preloaded all distinct routes and filter reps in controller `loadRouteDashboardData()`, eliminating view database queries and enabling full catalog route selection in the filter bar.
     - Generated standalone copy-pasteable production SQL composite indexes for live server execution.
-- [ ] **Module 8: Double-Entry Accounting & Banking**
+- [x] **Module 8: Double-Entry Accounting & Banking (Bank Register & Account Ledgers)**
+    - **Audit Findings**:
+      - Unlocked viewport layout allowing page-level body scrolling, with bulky stat cards pushing the table out of view and creating an awkward web layout.
+      - Absence of a chronological Running Balance column — the single most critical data point expected in any bank or cash register.
+      - Lack of top-right filter controls (no date range preset, no date pickers, no status filter, no inflow/outflow filter), forcing users to view all records in a single unpaginated dump.
+      - Subquery duplication in `ChartOfAccount::getBankLedger()`, executing repeated subqueries for every single transaction row.
+      - Missing RBAC authorization (`checkPermission('accounting', 'view' | 'create_edit')`) on the ledger and reconciliation endpoints.
+      - External font dependency instead of local offline SF Pro Display font suite.
+    - **Fixes & Optimizations**:
+      - Converted Bank Register to 100vh Viewport-Locked ERP layout (`.bank-register-workspace`, sticky `thead`, table rows only scrolling inside `.erp-table-scroll` with `padding-bottom: 54px;`, pinned `.erp-pagination` footer with dynamic page sizes: 25, 50, 100, All).
+      - Added chronological historical Running Balance calculation (`$t->running_balance`) and added it to both the data table and CSV/Excel exports.
+      - Grouped all filters (Flow: All/Deposits/Payments, Status: All/Cleared/Uncleared/Voided, Range: Presets/From/To, Reset) aligned to the **top-right corner** directly above the data table (Rule 2).
+      - Replaced bulky cards with a compact, high-density KPI stat strip (Current Balance, Cleared Entries, Pending Entries, Period Inflows, Period Outflows, Total Entries).
+      - Enforced SF Pro Display typography, monospace data formatting (`SF Mono`) on dates, references, debits, credits, and running balances, with alternating zebra striping (`tbody tr:nth-child(even)`).
+      - Added floating command bar with instant 320px live search and shortcut to `Reconcile Statement`.
+      - Optimized SQL query in `ChartOfAccount::getBankLedger()` by removing redundant subquery executions.
+      - Provided production composite indexing SQL for `transactions`, `customer_payments`, and `supplier_payments`.
 - [ ] **Module 9: HRM & Payroll**
 - [x] **Module 10: Reports Engine (Central Reports Hub & Report Viewer Engine)**
     - Restored 100% of all 38 authentic Falcon Stationery ERP reports across the 9 system categories (`Inventory Reports`, `Sales Reports`, `Procurement Reports`, `Customer Reports`, `Supplier Reports`, `Finance & Accounts Reports`, `Collection & Payment Reports`, `Route & Distribution Reports`, `Management Reports`), with exact SQL queries, column definitions, and filters preserved. Removed extraneous/hallucinated cashier reports.
