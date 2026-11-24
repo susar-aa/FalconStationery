@@ -388,7 +388,20 @@ class SalesController extends Controller {
             $customerId = intval($_POST['customer_id'] ?? 0);
             $type = $_POST['type'] ?? 'invoice';
             $editingId = intval($_POST['editing_invoice_id'] ?? 0);
+            $repName = trim($_POST['rep_name'] ?? '');
+            $invoiceDate = !empty($_POST['invoice_date']) ? trim($_POST['invoice_date']) : date('Y-m-d');
             $repRouteId = !empty($_POST['rep_route_id']) ? intval($_POST['rep_route_id']) : null;
+
+            // If a Sales Rep was selected or changed in the dropdown, resolve or create their route
+            if (!empty($repName)) {
+                $resolvedRouteId = $this->getOrCreateRouteForRep($repName, $invoiceDate);
+                if ($resolvedRouteId) {
+                    $repRouteId = $resolvedRouteId;
+                }
+            } else {
+                // If rep was explicitly cleared to blank
+                $repRouteId = null;
+            }
 
             // Resolve whether this record is in invoices table or sales_orders table
             $isInvoiceTable = false;
@@ -767,7 +780,7 @@ class SalesController extends Controller {
                     $invoiceData = [
                         'customer_id' => $customerId,
                         'invoice_number' => $invoiceNumber,
-                        'invoice_date' => $_POST['invoice_date'] ?? date('Y-m-d'),
+                        'invoice_date' => $invoiceDate,
                         'due_date' => $_POST['due_date'] ?? date('Y-m-d'),
                         'payment_term_id' => !empty($_POST['payment_term_id']) ? intval($_POST['payment_term_id']) : null,
                         'subtotal' => $subtotal,
@@ -775,6 +788,7 @@ class SalesController extends Controller {
                         'global_discount_type' => $globalDiscountType,
                         'notes' => trim($_POST['notes'] ?? ''),
                         'rep_route_id' => $repRouteId,
+                        'rep_name' => $repName,
                         'grand_total' => $grandTotal + $taxAmount,
                         'stock_status' => 'deducted',
                         'tax_amount' => $taxAmount,
@@ -977,11 +991,14 @@ class SalesController extends Controller {
             }
         }
 
-        // Fetch all items for catalog
+        // Fetch all items for catalog with batch-preloaded variations (prevent N+1 queries)
         $items = $this->itemModel->getAllItems();
+        $itemIds = array_map(function($i) { return (int)$i->id; }, $items);
+        $variationsByItem = $this->itemModel->getVariationsForItems($itemIds);
 
         // Standardize wholesale pricing for catalog items
         foreach ($items as $key => $item) {
+            $item->variations = $variationsByItem[$item->id] ?? [];
             $billingPrice = 0.00;
             if (is_object($item)) {
                 if (isset($item->wholesale_price) && floatval($item->wholesale_price) > 0) {
@@ -990,9 +1007,17 @@ class SalesController extends Controller {
                     $billingPrice = floatval($item->selling_price);
                 } elseif (isset($item->price) && floatval($item->price) > 0) {
                     $billingPrice = floatval($item->price);
+                } elseif (isset($item->regular_price) && floatval($item->regular_price) > 0) {
+                    $billingPrice = floatval($item->regular_price);
                 }
-                $item->selling_price = $billingPrice;
-                $item->price = $billingPrice;
+                $item->selling_price   = $billingPrice;
+                $item->price           = $billingPrice;
+                $item->regular_price   = $billingPrice;
+                $item->sale_price      = $billingPrice;
+                $item->wholesale_price = $billingPrice;
+                $item->b2b_price       = $billingPrice;
+                $item->unit_price      = $billingPrice;
+                $item->rate            = $billingPrice;
             }
         }
 
@@ -1066,6 +1091,43 @@ class SalesController extends Controller {
             die("Record not found. ID: {$id}, Type: {$type}");
         }
 
+        // Guarantee rep_name is resolved on the editing object from route or creator
+        if (empty($inv->rep_name)) {
+            if (!empty($inv->rep_route_id)) {
+                $this->db->query("SELECT CONCAT(e.first_name, ' ', e.last_name) as rep_name 
+                                  FROM rep_daily_routes r 
+                                  JOIN users u ON r.user_id = u.id 
+                                  JOIN employees e ON u.employee_id = e.id 
+                                  WHERE r.id = :route_id LIMIT 1");
+                $this->db->bind(':route_id', $inv->rep_route_id);
+                $repRow = $this->db->single();
+                if ($repRow && !empty($repRow->rep_name)) {
+                    $inv->rep_name = trim($repRow->rep_name);
+                } else {
+                    $this->db->query("SELECT u.username as rep_name 
+                                      FROM rep_daily_routes r 
+                                      JOIN users u ON r.user_id = u.id 
+                                      WHERE r.id = :route_id LIMIT 1");
+                    $this->db->bind(':route_id', $inv->rep_route_id);
+                    $uRow = $this->db->single();
+                    if ($uRow && !empty($uRow->rep_name)) {
+                        $inv->rep_name = trim($uRow->rep_name);
+                    }
+                }
+            }
+            if (empty($inv->rep_name) && !empty($inv->created_by)) {
+                $this->db->query("SELECT CONCAT(e.first_name, ' ', e.last_name) as rep_name 
+                                  FROM users u 
+                                  JOIN employees e ON u.employee_id = e.id 
+                                  WHERE u.id = :user_id LIMIT 1");
+                $this->db->bind(':user_id', $inv->created_by);
+                $userRow = $this->db->single();
+                if ($userRow && !empty($userRow->rep_name)) {
+                    $inv->rep_name = trim($userRow->rep_name);
+                }
+            }
+        }
+
         $type = $actualType;
 
         // Fetch all payment terms
@@ -1076,6 +1138,8 @@ class SalesController extends Controller {
         $discountModel = $this->model('DiscountRule');
         $activeDiscountRules = $discountModel->getActiveRules();
 
+        $csrfToken = $this->generateCsrfToken();
+
         $data = [
             'title' => ($type === 'sales_order' || (isset($inv->stock_status) && $inv->stock_status === 'reserved')) ? 'Edit Sales Order' : 'Edit Bill & Invoice',
             'catalog_items' => $items,
@@ -1085,7 +1149,8 @@ class SalesController extends Controller {
             'editing_items' => $editingItems,
             'invoice_number' => $inv->invoice_number,
             'type' => $type,
-            'active_discount_rules' => $activeDiscountRules
+            'active_discount_rules' => $activeDiscountRules,
+            'csrf_token' => $csrfToken
         ];
 
         $this->view('sales/index', $data);

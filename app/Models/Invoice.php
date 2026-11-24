@@ -4,6 +4,17 @@ class Invoice {
 
     public function __construct() {
         $this->db = new Database();
+        $this->ensureRepColumnExists();
+    }
+
+    private function ensureRepColumnExists() {
+        try {
+            $this->db->query("SHOW COLUMNS FROM invoices LIKE 'rep_name'");
+            if (!$this->db->single()) {
+                $this->db->query("ALTER TABLE invoices ADD COLUMN rep_name VARCHAR(150) NULL AFTER rep_route_id");
+                $this->db->execute();
+            }
+        } catch (Throwable $e) {}
     }
 
     public function getAllInvoices() {
@@ -22,7 +33,44 @@ class Invoice {
                           LEFT JOIN tax_rates t ON i.tax_rate_id = t.id
                           WHERE i.id = :id");
         $this->db->bind(':id', $id);
-        return $this->db->single();
+        $invoice = $this->db->single();
+        if ($invoice) {
+            // Automatically resolve sales rep name from all available route/user associations
+            if (empty($invoice->rep_name) && !empty($invoice->rep_route_id)) {
+                $this->db->query("SELECT CONCAT(e.first_name, ' ', e.last_name) as rep_name 
+                                  FROM rep_daily_routes r 
+                                  JOIN users u ON r.user_id = u.id 
+                                  JOIN employees e ON u.employee_id = e.id 
+                                  WHERE r.id = :route_id LIMIT 1");
+                $this->db->bind(':route_id', $invoice->rep_route_id);
+                $repRow = $this->db->single();
+                if ($repRow && !empty($repRow->rep_name)) {
+                    $invoice->rep_name = trim($repRow->rep_name);
+                } else {
+                    $this->db->query("SELECT u.username as rep_name 
+                                      FROM rep_daily_routes r 
+                                      JOIN users u ON r.user_id = u.id 
+                                      WHERE r.id = :route_id LIMIT 1");
+                    $this->db->bind(':route_id', $invoice->rep_route_id);
+                    $uRow = $this->db->single();
+                    if ($uRow && !empty($uRow->rep_name)) {
+                        $invoice->rep_name = trim($uRow->rep_name);
+                    }
+                }
+            }
+            if (empty($invoice->rep_name) && !empty($invoice->created_by)) {
+                $this->db->query("SELECT CONCAT(e.first_name, ' ', e.last_name) as rep_name 
+                                  FROM users u 
+                                  JOIN employees e ON u.employee_id = e.id 
+                                  WHERE u.id = :user_id LIMIT 1");
+                $this->db->bind(':user_id', $invoice->created_by);
+                $userRow = $this->db->single();
+                if ($userRow && !empty($userRow->rep_name)) {
+                    $invoice->rep_name = trim($userRow->rep_name);
+                }
+            }
+        }
+        return $invoice;
     }
 
     public function getInvoiceItems($id) {
@@ -213,8 +261,22 @@ class Invoice {
 
             $stockStatus = $invoiceData['stock_status'] ?? 'deducted';
             $uuid = $invoiceData['uuid'] ?? null;
-            $this->db->query("INSERT INTO invoices (invoice_number, uuid, customer_id, rep_route_id, invoice_date, due_date, payment_term_id, total_amount, grand_total, original_grand_total, tax_amount, tax_rate_id, global_discount_val, global_discount_type, notes, journal_entry_id, created_by, status, stock_status, customer_vat_number) 
-                              VALUES (:invoice_number, :uuid, :customer_id, :rep_route_id, :invoice_date, :due_date, :payment_term_id, :total_amount, :grand_total, :original_grand_total, :tax_amount, :tax_rate_id, :global_discount_val, :global_discount_type, :notes, :journal_entry_id, :created_by, 'Unpaid', :stock_status, :customer_vat_number)");
+
+            // Check if rep_name column exists in invoices
+            $hasRepNameCol = false;
+            try {
+                $this->db->query("SHOW COLUMNS FROM invoices LIKE 'rep_name'");
+                $hasRepNameCol = !empty($this->db->single());
+            } catch (Throwable $e) {}
+
+            if ($hasRepNameCol) {
+                $this->db->query("INSERT INTO invoices (invoice_number, uuid, customer_id, rep_route_id, rep_name, invoice_date, due_date, payment_term_id, total_amount, grand_total, original_grand_total, tax_amount, tax_rate_id, global_discount_val, global_discount_type, notes, journal_entry_id, created_by, status, stock_status, customer_vat_number) 
+                                  VALUES (:invoice_number, :uuid, :customer_id, :rep_route_id, :rep_name, :invoice_date, :due_date, :payment_term_id, :total_amount, :grand_total, :original_grand_total, :tax_amount, :tax_rate_id, :global_discount_val, :global_discount_type, :notes, :journal_entry_id, :created_by, 'Unpaid', :stock_status, :customer_vat_number)");
+                $this->db->bind(':rep_name', !empty($invoiceData['rep_name']) ? trim($invoiceData['rep_name']) : null);
+            } else {
+                $this->db->query("INSERT INTO invoices (invoice_number, uuid, customer_id, rep_route_id, invoice_date, due_date, payment_term_id, total_amount, grand_total, original_grand_total, tax_amount, tax_rate_id, global_discount_val, global_discount_type, notes, journal_entry_id, created_by, status, stock_status, customer_vat_number) 
+                                  VALUES (:invoice_number, :uuid, :customer_id, :rep_route_id, :invoice_date, :due_date, :payment_term_id, :total_amount, :grand_total, :original_grand_total, :tax_amount, :tax_rate_id, :global_discount_val, :global_discount_type, :notes, :journal_entry_id, :created_by, 'Unpaid', :stock_status, :customer_vat_number)");
+            }
             $this->db->bind(':invoice_number', $invoiceData['invoice_number']);
             $this->db->bind(':uuid', $uuid);
             $this->db->bind(':customer_id', $invoiceData['customer_id']);
@@ -634,8 +696,16 @@ class Invoice {
             }
 
             // 5. UPDATE TOP-LEVEL RECORD & PRESERVE stock_status
-            $this->db->query("UPDATE invoices SET 
+            $hasRepNameCol = false;
+            try {
+                $this->db->query("SHOW COLUMNS FROM invoices LIKE 'rep_name'");
+                $hasRepNameCol = !empty($this->db->single());
+            } catch (Throwable $e) {}
+
+            $updateSql = "UPDATE invoices SET 
                                 customer_id = :customer_id, 
+                                rep_route_id = :rep_route_id, " .
+                                ($hasRepNameCol ? "rep_name = :rep_name, " : "") . "
                                 invoice_date = :invoice_date, 
                                 due_date = :due_date, 
                                 payment_term_id = :payment_term_id,
@@ -648,8 +718,13 @@ class Invoice {
                                 notes = :notes,
                                 stock_status = :stock_status,
                                 customer_vat_number = :customer_vat_number
-                              WHERE id = :id");
+                              WHERE id = :id";
+            $this->db->query($updateSql);
             $this->db->bind(':customer_id', $invoiceData['customer_id']);
+            $this->db->bind(':rep_route_id', $invoiceData['rep_route_id'] ?? null);
+            if ($hasRepNameCol) {
+                $this->db->bind(':rep_name', !empty($invoiceData['rep_name']) ? trim($invoiceData['rep_name']) : null);
+            }
             $this->db->bind(':invoice_date', $invoiceData['invoice_date']);
             $this->db->bind(':due_date', $invoiceData['due_date']);
             $this->db->bind(':payment_term_id', $invoiceData['payment_term_id'] ?? null);

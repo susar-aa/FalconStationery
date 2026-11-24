@@ -122,13 +122,9 @@ $customers = $db->resultSet();
 $db->query("SELECT * FROM mca_areas ORDER BY name ASC");
 $mcaAreas = $db->resultSet() ?: [];
 
-// Fetch Employees specifically marked as Reps/Sales (or fallback to all active employees)
-$db->query("SELECT * FROM employees WHERE status = 'Active' AND job_title = 'Rep' ORDER BY first_name ASC");
-$reps = $db->resultSet();
-if (empty($reps)) {
-    $db->query("SELECT * FROM employees WHERE status = 'Active' ORDER BY first_name ASC");
-    $reps = $db->resultSet();
-}
+// Fetch Active Employees for Sales Rep selection
+$db->query("SELECT * FROM employees WHERE status = 'Active' ORDER BY first_name ASC, last_name ASC");
+$reps = $db->resultSet() ?: [];
 
 // Automate Accounting Defaults
 $assets = $data['assets'] ?? [];
@@ -1222,7 +1218,7 @@ if ($inv && isset($inv->id)) {
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($data['csrf_token'] ?? $_SESSION['csrf_token'] ?? '') ?>">
             <input type="hidden" name="save_action" id="saveActionInput" value="close">
             <input type="hidden" name="type" value="<?= htmlspecialchars((string)($data['type'] ?? 'invoice')) ?>">
-            <input type="hidden" name="rep_route_id" value="<?= htmlspecialchars((string)$rep_route_id) ?>">
+            <input type="hidden" name="rep_route_id" id="repRouteIdInput" value="<?= htmlspecialchars((string)$rep_route_id) ?>">
             <input type="hidden" name="from_sales_order_id" value="<?= htmlspecialchars((string)($data['from_sales_order_id'] ?? '0')) ?>">
             <input type="hidden" name="back_url" value="<?= htmlspecialchars($backUrl) ?>">
             <input type="hidden" name="mca" id="displayMca" value="<?= ($inv && isset($inv->mca)) ? htmlspecialchars((string)$inv->mca) : '' ?>">
@@ -1387,14 +1383,29 @@ if ($inv && isset($inv->id)) {
                                 </div>
                                 <div class="inv-field-col">
                                     <div class="inv-field-label">Rep</div>
-                                    <select name="rep_name" class="inv-field-select">
+                                    <select name="rep_name" class="inv-field-select" onchange="var el = document.getElementById('repRouteIdInput'); if (el) el.value = '';">
                                         <option value="">Select Rep...</option>
-                                        <?php foreach($reps as $rep): ?>
-                                            <option value="<?= htmlspecialchars((string)($rep->first_name . ' ' . $rep->last_name)) ?>"
-                                                <?= ($inv && isset($inv->rep_name) && trim((string)$inv->rep_name) == trim((string)($rep->first_name . ' ' . $rep->last_name))) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars((string)($rep->first_name . ' ' . $rep->last_name)) ?>
+                                        <?php 
+                                        $repFound = false;
+                                        $currentRep = trim((string)($inv->rep_name ?? ''));
+                                        foreach($reps as $rep): 
+                                            $repFullName = trim((string)($rep->first_name . ' ' . $rep->last_name));
+                                            $repShortName = trim((string)$rep->first_name);
+                                            $isSelected = ($currentRep !== '' && (
+                                                strcasecmp($currentRep, $repFullName) === 0 || 
+                                                strcasecmp($currentRep, $repShortName) === 0
+                                            ));
+                                            if ($isSelected) $repFound = true;
+                                        ?>
+                                            <option value="<?= htmlspecialchars($repFullName) ?>" <?= $isSelected ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($repFullName) ?>
                                             </option>
                                         <?php endforeach; ?>
+                                        <?php if (!$repFound && !empty($currentRep)): ?>
+                                            <option value="<?= htmlspecialchars($currentRep) ?>" selected>
+                                                <?= htmlspecialchars($currentRep) ?>
+                                            </option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
                             </div>

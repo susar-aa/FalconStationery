@@ -311,7 +311,20 @@ Test how the system handles each situation and fix genuine problems.
     - Upgraded `convert_to_so` to a secure POST confirmation modal (`#convertModal`) with CSRF protection and clear accounting warnings.
     - Upgraded `delete` and bulk action flows with strict CSRF verification and admin password authentication.
     - Applied SF Pro Display fonts, SF Mono for codes/amounts, and alternating zebra striping (`tbody tr:nth-child(even)`).
-    - Provided production composite indexing SQL for `invoices`, `invoice_items`, `sales_orders`, `sales_order_items`, and `customer_payments`.
+    - **Invoice Edit & Sales Rep Audit Findings**:
+      - Opening an existing invoice for editing displayed the Sales Rep field as "Select Rep..." (unselected).
+      - Root cause 1: `Invoice::getInvoiceById($id)` queried `i.*` without joining `rep_daily_routes`, leaving `$inv->rep_name` undefined or null.
+      - Root cause 2: `app/Views/sales/index.php` fetched reps strictly with `job_title = 'Rep'`, excluding reps with job titles like `'Sales Representative'` or `'Sales Rep'`.
+      - Root cause 3: In `SalesController::store()`, `$_POST['rep_name']` was not resolved to a route ID (`getOrCreateRouteForRep`), and `$_POST['rep_route_id']` remained tied to the old route or empty.
+      - Root cause 4: `Invoice::updateInvoiceWithAccounting()` completely omitted `rep_route_id` and `rep_name` from the `UPDATE invoices SET ...` query, preventing changed reps from being saved.
+      - Root cause 5: Catalog items in `SalesController::edit()` suffered from the same N+1 variation query loop present earlier in `create()`.
+    - **Invoice Edit & Sales Rep Fixes & Optimizations**:
+      - Updated `Invoice::getInvoiceById()` and `SalesController::edit()` to automatically resolve the Sales Rep name from `rep_daily_routes` (via `rep_route_id`), `users`, or `employees` table.
+      - Enhanced `app/Views/sales/index.php` to query all active employees for Sales Rep selection, added case-insensitive matching, and guaranteed fallback rendering so the current rep is always pre-selected.
+      - Updated `SalesController::store()` to resolve `$_POST['rep_name']` to a route via `getOrCreateRouteForRep()`, correctly updating `rep_route_id` and `rep_name`.
+      - Updated `Invoice::updateInvoiceWithAccounting()` and `createInvoiceWithAccounting()` to save both `rep_route_id` and `rep_name`.
+      - Optimized `SalesController::edit()` by batch-preloading all item variations in 1 query, eliminating 1,050+ N+1 queries on invoice editing.
+      - Generated standalone copy-pasteable production SQL for `ALTER TABLE invoices ADD COLUMN rep_name` and backfill migration.
 - [x] **Module 3: Purchases & GRN (`PurchaseController`, `GRNController`, `PurchaseOrder`, `GRN`, `Views/purchases/`, `Views/grns/`)**
   - **Audit Findings**:
     - Discovered missing CSRF tokens on Delete PO, Delete GRN, and Admin Approval POST forms, causing security risks and potential CSRF exploits.
