@@ -1,743 +1,693 @@
 <?php
 $categories = $data['categories'] ?? [];
 $groupedReports = $data['grouped_reports'] ?? [];
-
-$categoryMeta = [
-    'inventory' => [
-        'icon' => 'fa-boxes-stacked',
-        'color' => 'blue',
-        'desc' => 'Stock movements, batch tracking, valuation & reorders'
-    ],
-    'sales' => [
-        'icon' => 'fa-chart-line',
-        'color' => 'green',
-        'desc' => 'Invoicing, revenue summaries, sales reps & margins'
-    ],
-    'procurement' => [
-        'icon' => 'fa-truck-ramp-box',
-        'color' => 'orange',
-        'desc' => 'Purchase orders, supplier receipts & return tracking'
-    ],
-    'customer' => [
-        'icon' => 'fa-users',
-        'color' => 'purple',
-        'desc' => 'Aging, balances, credit limits & customer analytics'
-    ],
-    'supplier' => [
-        'icon' => 'fa-store',
-        'color' => 'orange',
-        'desc' => 'Payables aging, statements & procurement histories'
-    ],
-    'finance' => [
-        'icon' => 'fa-building-columns',
-        'color' => 'blue',
-        'desc' => 'P&L, Balance Sheet, Cash Flows, Trial Balance & GL'
-    ],
-    'collection' => [
-        'icon' => 'fa-hand-holding-dollar',
-        'color' => 'green',
-        'desc' => 'Receipts, credit collections & payment allocations'
-    ],
-    'route' => [
-        'icon' => 'fa-route',
-        'color' => 'purple',
-        'desc' => 'Driver routes, trip performance & field sales'
-    ],
-    'management' => [
-        'icon' => 'fa-briefcase',
-        'color' => 'blue',
-        'desc' => 'Executive KPIs, periodic performance & health metrics'
-    ]
-];
+$allReports = $data['reports'] ?? [];
+$warehouses = $data['warehouses'] ?? [];
 
 $totalReportsCount = 0;
 foreach ($groupedReports as $list) {
     $totalReportsCount += count($list);
 }
-$activeCategoriesCount = count($categories);
+
+// Icon mappings for the 12 canonical categories
+$categoryIcons = [
+    'overview'    => 'ph ph-activity',
+    'sales'       => 'ph ph-currency-dollar',
+    'inventory'   => 'ph ph-package',
+    'procurement' => 'ph ph-shopping-bag',
+    'supplier'    => 'ph ph-users',
+    'customer'    => 'ph ph-user-check',
+    'collection'  => 'ph ph-credit-card',
+    'banking'     => 'ph ph-bank',
+    'expenses'    => 'ph ph-receipt',
+    'finance'     => 'ph ph-book-open',
+    'cashier'     => 'ph ph-medal',
+    'expiry'      => 'ph ph-calendar-x'
+];
 ?>
 
-<!-- Inter Font & FontAwesome Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<!-- Phosphor Icons Suite -->
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 
 <style>
 /* ============================================================
-   SF PRO + APPLE DESIGN LANGUAGE - REPORTS HUB (SIDE PANEL)
+   ERP PROFESSIONAL DESIGN STANDARDS — REPORTS HUB (100VH LOCKED)
    ============================================================ */
-:root {
-    --c-bg:           #f2f2f7;
-    --c-surface:      #ffffff;
-    --c-surface2:     #f9f9fb;
-    --c-fill:         rgba(120,120,128,0.12);
-    --c-fill2:        rgba(120,120,128,0.16);
-    --c-separator:    rgba(60,60,67,0.12);
-    --c-separator2:   rgba(60,60,67,0.06);
-
-    --c-blue:         #007aff;
-    --c-blue-light:   #e5f2ff;
-    --c-blue-mid:     #b3d6ff;
-    --c-green:        #34c759;
-    --c-green-light:  #e6f9ec;
-    --c-orange:       #ff9500;
-    --c-orange-light: #fff4e5;
-    --c-red:          #ff3b30;
-    --c-red-light:    #fff0ef;
-    --c-purple:       #af52de;
-    --c-purple-light: #f5eeff;
-
-    --f-system: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-    --f-mono:   ui-monospace, 'SF Mono', 'Menlo', 'Monaco', monospace;
-
-    --t-primary:   #1c1c1e;
-    --t-secondary: #636366;
-    --t-tertiary:  #aeaeb2;
-    --t-label:     #8e8e93;
-
-    --shadow-xs:  0 1px 2px rgba(0,0,0,0.04);
-    --shadow-sm:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-md:  0 8px 24px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-    --shadow-xl:  0 24px 48px rgba(0,0,0,0.14), 0 4px 12px rgba(0,0,0,0.06);
-
-    --r-xs: 6px;
-    --r-sm: 10px;
-    --r-md: 14px;
-    --r-lg: 20px;
-    --r-xl: 26px;
-    --r-pill: 999px;
-
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --ease-ios:    cubic-bezier(0.25, 0.1, 0.25, 1);
-    --dur-fast:    0.18s;
-    --dur-slow:    0.42s;
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_semibold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'SF Pro Display';
+    src: url('<?= APP_URL ?>/public/assets/fonts/sf_pro_display_bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
 }
 
-body {
+:root {
+    --f-main: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --f-mono: 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
+    --c-bg: #eef2f6;
+    --c-surface: #ffffff;
+    --c-border: #e2e8f0;
+    --c-text-main: #0f172a;
+    --c-text-muted: #64748b;
+    --c-navy-dark: #0f172a;
+    --c-navy-hover: #1e293b;
+    --c-blue-accent: #2563eb;
+    --c-blue-light: #eff6ff;
+}
+
+body, html {
     margin: 0;
     padding: 0;
-    background: var(--c-bg);
+    height: 100vh;
+    overflow: hidden !important;
+    font-family: var(--f-main);
+    background-color: var(--c-bg);
 }
 
-.rep-root {
-    font-family: var(--f-system);
-    font-size: 15px;
-    color: var(--t-primary);
-    -webkit-font-smoothing: antialiased;
-    height: calc(100vh - 60px); /* Adjust based on global header if any */
-    display: flex;
-    overflow: hidden;
-}
-
-/* Sidebar */
-.rep-sidebar {
-    width: 280px;
-    background: var(--c-surface);
-    border-right: 0.5px solid var(--c-separator);
+.report-hub-viewport {
+    height: calc(100vh - 60px);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    padding: 12px 18px 0;
+    box-sizing: border-box;
+}
+
+/* TOP WORKSPACE NAVIGATION STRIP */
+.report-top-shelf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
     flex-shrink: 0;
-    z-index: 10;
 }
 
-.rep-sidebar-header {
-    padding: 24px 20px 16px;
-    border-bottom: 0.5px solid var(--c-separator2);
+.shelf-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.rep-eyebrow {
-    font-size: 11px;
+.btn-circle-back {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid var(--c-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #334155;
+    text-decoration: none;
+    font-size: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: all 0.15s ease;
+}
+.btn-circle-back:hover {
+    background: #f8fafc;
+    color: var(--c-text-main);
+    border-color: #cbd5e1;
+}
+
+.hub-title-pill {
+    background: #ffffff;
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    padding: 7px 18px;
+    font-size: 13.5px;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--c-blue);
-    margin-bottom: 4px;
-}
-
-.rep-title {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: var(--t-primary);
-    margin: 0 0 16px 0;
-}
-
-.cmd-search {
+    color: var(--c-text-main);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--c-fill);
-    border-radius: var(--r-md);
-    padding: 10px 12px;
-    transition: background var(--dur-fast), box-shadow var(--dur-fast);
-}
-.cmd-search:focus-within {
-    background: var(--c-surface);
-    box-shadow: 0 0 0 2px var(--c-blue-mid);
-}
-.cmd-search i {
-    color: var(--t-tertiary);
-    font-size: 14px;
-}
-.cmd-search input {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--t-primary);
-    font-size: 14px;
-    font-weight: 500;
-    font-family: var(--f-system);
-    width: 100%;
-}
-.cmd-search input::placeholder {
-    color: var(--t-label);
-}
-.cmd-kbd {
-    background: var(--c-surface);
-    color: var(--t-secondary);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 10px;
-    font-weight: 700;
-    font-family: var(--f-mono);
-    border: 0.5px solid var(--c-separator);
 }
 
-.rep-nav {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-radius: var(--r-sm);
-    color: var(--t-secondary);
-    text-decoration: none;
-    font-size: 14px;
+.branch-select-pill {
+    background: #ffffff;
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12.5px;
     font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 7px;
     cursor: pointer;
-    transition: all var(--dur-fast);
-    margin-bottom: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
-.nav-item-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.nav-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    background: var(--c-surface2);
-    color: var(--t-tertiary);
-    transition: all var(--dur-fast);
-}
-.nav-item:hover {
-    background: var(--c-fill);
-    color: var(--t-primary);
-}
-.nav-item:hover .nav-icon {
-    background: #fff;
-    color: var(--t-primary);
-    box-shadow: var(--shadow-xs);
+.branch-select-pill select {
+    border: none;
+    background: transparent;
+    font-family: var(--f-main);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #334155;
+    outline: none;
+    cursor: pointer;
 }
 
-.nav-item.active {
-    background: var(--c-blue);
-    color: #fff;
-}
-.nav-item.active .nav-icon {
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-}
-
-.nav-count {
-    font-size: 11px;
-    font-weight: 700;
-    background: var(--c-fill2);
-    padding: 2px 8px;
-    border-radius: var(--r-pill);
-    color: inherit;
-}
-
-.nav-item.active .nav-count {
-    background: rgba(255,255,255,0.25);
-}
-
-/* Main Content */
-.rep-main {
+/* MAIN TWO-COLUMN CONTAINER */
+.hub-content-grid {
     flex: 1;
-    overflow-y: auto;
-    padding: 32px 40px;
-    background: var(--c-bg);
-}
-
-.rep-main-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-}
-
-.rep-main-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--t-primary);
-    margin: 0;
-}
-.rep-main-meta {
-    font-size: 13px;
-    color: var(--t-secondary);
-    font-weight: 500;
-}
-
-/* Categories Grid */
-.categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 20px;
-}
-
-.category-card {
-    background: var(--c-surface);
-    border-radius: var(--r-lg);
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-sm);
+    background: transparent;
+    gap: 16px;
+    min-height: 0;
     overflow: hidden;
+}
+
+/* LEFT SIDEBAR: CATEGORIES */
+.hub-sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    background: #ffffff;
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
     display: flex;
     flex-direction: column;
-    transition: transform var(--dur-fast), box-shadow var(--dur-fast), border-color var(--dur-fast);
-}
-.category-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-    border-color: rgba(0,122,255,0.3);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 }
 
-.cat-header {
-    padding: 16px 20px;
-    background: var(--c-surface2);
-    border-bottom: 0.5px solid var(--c-separator);
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.sidebar-header-label {
+    padding: 16px 18px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--c-text-muted);
+    text-transform: uppercase;
 }
-.cat-icon-badge {
-    width: 38px;
-    height: 38px;
-    border-radius: var(--r-sm);
+
+.sidebar-menu-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.category-tab-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 16px;
+    justify-content: space-between;
+    padding: 9px 12px;
+    border-radius: 9px;
+    color: #334155;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.category-tab-btn:hover {
+    background: #f1f5f9;
+    color: var(--c-text-main);
+}
+
+.category-tab-btn.active {
+    background: var(--c-navy-dark) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.cat-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.cat-label-wrap i {
+    font-size: 17px;
+    color: #64748b;
+    transition: color 0.15s;
     flex-shrink: 0;
 }
-.cat-icon-badge.blue   { background: var(--c-blue-light); color: var(--c-blue); }
-.cat-icon-badge.green  { background: var(--c-green-light); color: var(--c-green); }
-.cat-icon-badge.orange { background: var(--c-orange-light); color: var(--c-orange); }
-.cat-icon-badge.purple { background: var(--c-purple-light); color: var(--c-purple); }
 
-.cat-header-text {
+.category-tab-btn.active .cat-label-wrap i {
+    color: #ffffff;
+}
+
+.cat-count-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    flex-shrink: 0;
+}
+
+.category-tab-btn.active .cat-count-badge {
+    background: rgba(255,255,255,0.2);
+    color: #ffffff;
+}
+
+/* RIGHT PANE: REPORT LIST */
+.hub-main-pane {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid var(--c-border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.pane-header-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+}
+
+.active-cat-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.active-cat-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--c-text-main);
+}
+
+.active-cat-badge {
+    background: var(--c-blue-light);
+    color: var(--c-blue-accent);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.report-search-box {
+    position: relative;
+    width: 270px;
+}
+.report-search-box i {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 15px;
+}
+.report-search-box input {
+    width: 100%;
+    padding: 7px 12px 7px 34px;
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+    font-family: var(--f-main);
+    font-size: 13px;
+    color: var(--c-text-main);
+    background: #f8fafc;
+    box-sizing: border-box;
+    outline: none;
+    transition: all 0.15s ease;
+}
+.report-search-box input:focus {
+    background: #ffffff;
+    border-color: var(--c-blue-accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* REPORT CARDS CONTAINER (SCROLLABLE ONLY) */
+.reports-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 22px 70px;
+    box-sizing: border-box;
+}
+
+.report-card-item {
+    background: #ffffff;
+    border: 1px solid var(--c-border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.report-card-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    transform: translateY(-1px);
+}
+
+.card-left-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
     flex: 1;
     min-width: 0;
 }
-.cat-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--t-primary);
-    margin: 0;
+
+.card-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid var(--c-border);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    font-size: 20px;
+    color: #334155;
+    flex-shrink: 0;
 }
-.cat-badge {
-    font-size: 11px;
+
+.card-text-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.card-report-title {
+    font-size: 14.5px;
     font-weight: 700;
-    padding: 3px 8px;
-    border-radius: var(--r-pill);
-    background: var(--c-fill);
-    color: var(--t-secondary);
+    color: var(--c-text-main);
 }
-.cat-desc {
-    font-size: 12px;
-    color: var(--t-label);
-    margin: 2px 0 0;
+
+.card-report-desc {
+    font-size: 12.5px;
+    color: var(--c-text-muted);
+    line-height: 1.35;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Reports List inside Card */
-.reports-list {
-    padding: 6px 0;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-.report-item {
+.card-right-section {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px;
-    text-decoration: none;
-    color: var(--t-primary);
-    border-bottom: 0.5px solid var(--c-separator2);
-    transition: background var(--dur-fast);
-}
-.report-item:last-child {
-    border-bottom: none;
-}
-.report-item:hover {
-    background: var(--c-fill);
-}
-.report-item:hover .rep-name {
-    color: var(--c-blue);
-}
-
-/* Expanded State for Single Category View */
-.category-card.expanded {
-    grid-column: 1 / -1;
-}
-.category-card.expanded .reports-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-    padding: 16px;
-    background: var(--c-surface2);
-}
-.category-card.expanded .report-item {
-    background: var(--c-surface);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-sm);
-    box-shadow: var(--shadow-xs);
-    transition: transform var(--dur-fast), box-shadow var(--dur-fast), border-color var(--dur-fast);
-}
-.category-card.expanded .report-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
-    border-color: rgba(0,122,255,0.3);
-}
-
-.rep-info {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding-right: 12px;
-}
-.rep-name {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--t-primary);
-    transition: color var(--dur-fast);
-}
-.rep-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.rep-tag {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    padding: 2px 6px;
-    border-radius: var(--r-xs);
-    background: var(--c-surface2);
-    border: 0.5px solid var(--c-separator);
-    color: var(--t-label);
-}
-.rep-tag.realtime {
-    background: var(--c-green-light);
-    color: #1a7f3c;
-    border-color: rgba(52,199,89,0.2);
-}
-.rep-tag.drilldown {
-    background: var(--c-blue-light);
-    color: var(--c-blue);
-    border-color: rgba(0,122,255,0.2);
-}
-.rep-arrow {
-    font-size: 12px;
-    color: var(--t-tertiary);
+    gap: 12px;
     flex-shrink: 0;
+    margin-left: 16px;
 }
 
-/* Empty Search State */
-.rep-empty {
-    grid-column: 1 / -1;
-    background: var(--c-surface);
-    border-radius: var(--r-xl);
-    padding: 48px 24px;
-    text-align: center;
-    border: 0.5px solid var(--c-separator);
-    box-shadow: var(--shadow-sm);
-    display: none;
+.card-cat-pill {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 999px;
 }
-.rep-empty-icon {
-    font-size: 42px;
-    color: var(--t-label);
+
+.card-arrow-icon {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* EMPTY STATE */
+.reports-empty-state {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+}
+.reports-empty-state i {
+    font-size: 40px;
     margin-bottom: 12px;
 }
-.rep-empty-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--t-primary);
-    margin-bottom: 6px;
-}
-.rep-empty-desc {
+.reports-empty-state p {
     font-size: 14px;
-    color: var(--t-secondary);
-    max-width: 420px;
-    margin: 0 auto 18px;
-}
-.filter-reset {
-    background: var(--c-surface);
-    border: 0.5px solid var(--c-separator);
-    border-radius: var(--r-pill);
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--t-primary);
-    cursor: pointer;
-}
-.filter-reset:hover {
-    background: var(--c-fill);
+    margin: 0;
 }
 
-@media (max-width: 900px) {
-    .rep-root {
-        flex-direction: column;
-    }
-    .rep-sidebar {
-        width: 100%;
-        height: auto;
-        border-right: none;
-        border-bottom: 0.5px solid var(--c-separator);
-    }
-    .rep-nav {
-        display: flex;
-        overflow-x: auto;
-        padding: 10px;
-    }
-    .nav-item {
-        flex-direction: column;
-        min-width: 80px;
-        text-align: center;
-        gap: 6px;
-        padding: 8px;
-    }
-    .nav-count {
-        display: none;
-    }
+/* BOTTOM COMMAND BAR DOCK */
+.report-bottom-dock {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    border-radius: 999px;
+    padding: 5px 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.06);
+    z-index: 100;
+}
+
+.dock-item-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 14px;
+    border-radius: 999px;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    gap: 2px;
+}
+.dock-item-btn i {
+    font-size: 16px;
+}
+.dock-item-btn:hover, .dock-item-btn.active {
+    color: var(--c-text-main);
+    background: #f1f5f9;
+}
+.dock-badge-pill {
+    background: #ef4444;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 999px;
+    margin-left: 2px;
 }
 </style>
 
-<div class="rep-root">
-    
-    <!-- Sidebar Panel -->
-    <div class="rep-sidebar">
-        <div class="rep-sidebar-header">
-            <div class="rep-eyebrow">Enterprise Intelligence</div>
-            <h1 class="rep-title">Reports Hub</h1>
-            <div class="cmd-search">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="reportSearch" placeholder="Find reports..." autocomplete="off">
-                <span class="cmd-kbd">/</span>
+<div class="report-hub-viewport erp-viewport-view">
+    <!-- TOP WORKSPACE NAVIGATION STRIP -->
+    <div class="report-top-shelf">
+        <div class="shelf-left">
+            <a href="<?= APP_URL ?>/home" class="btn-circle-back" title="Go Back">
+                <i class="ph ph-arrow-left"></i>
+            </a>
+            <div class="hub-title-pill">
+                <span>Central Reports & Financial Statements</span>
             </div>
-        </div>
-        <div class="rep-nav">
-            <div class="nav-item active" data-cat="all" onclick="selectCategory('all', 'All Reports')">
-                <div class="nav-item-left">
-                    <div class="nav-icon"><i class="fa-solid fa-grid-2"></i></div>
-                    <span>All Reports</span>
-                </div>
-                <span class="nav-count"><?= $totalReportsCount ?></span>
+            <div class="branch-select-pill">
+                <i class="ph ph-storefront"></i>
+                <select id="branchSelector">
+                    <?php if (!empty($warehouses)): ?>
+                        <?php foreach ($warehouses as $wh): ?>
+                            <option value="<?= $wh->id ?>"><?= htmlspecialchars($wh->name) ?></option>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <option value="1">Kandy Branch (KKK)</option>
+                        <option value="2">Colombo Main Hub</option>
+                    <?php endif; ?>
+                </select>
+                <i class="ph ph-caret-down" style="font-size: 12px; color: #94a3b8;"></i>
             </div>
-            
-            <?php foreach ($categories as $catKey => $catTitle): 
-                $count = count($groupedReports[$catKey] ?? []);
-                $meta = $categoryMeta[$catKey] ?? ['icon' => 'fa-folder', 'color' => 'blue'];
-            ?>
-                <div class="nav-item" data-cat="<?= $catKey ?>" onclick="selectCategory('<?= $catKey ?>', '<?= htmlspecialchars($catTitle) ?>')">
-                    <div class="nav-item-left">
-                        <div class="nav-icon"><i class="fa-solid <?= $meta['icon'] ?>"></i></div>
-                        <span><?= htmlspecialchars($catTitle) ?></span>
-                    </div>
-                    <span class="nav-count"><?= $count ?></span>
-                </div>
-            <?php endforeach; ?>
         </div>
     </div>
 
-    <!-- Main Content Panel -->
-    <div class="rep-main" id="mainContent">
-        <div class="rep-main-header">
-            <h2 class="rep-main-title" id="mainTitle">All Reports</h2>
-            <div class="rep-main-meta">
-                Showing <strong id="visibleCount"><?= $totalReportsCount ?></strong> reports
+    <!-- MAIN TWO-COLUMN CONTAINER -->
+    <div class="hub-content-grid">
+        <!-- LEFT SIDEBAR: CATEGORIES -->
+        <div class="hub-sidebar">
+            <div class="sidebar-header-label">CATEGORIES</div>
+            <div class="sidebar-menu-list">
+                <!-- ALL REPORTS -->
+                <button type="button" class="category-tab-btn active" data-category="all">
+                    <span class="cat-label-wrap">
+                        <i class="ph ph-squares-four"></i>
+                        <span>All Reports</span>
+                    </span>
+                    <span class="cat-count-badge" id="totalCountBadge"><?= $totalReportsCount ?></span>
+                </button>
+
+                <!-- 12 CANONICAL CATEGORIES -->
+                <?php foreach ($categories as $catKey => $catTitle): 
+                    $catCount = isset($groupedReports[$catKey]) ? count($groupedReports[$catKey]) : 0;
+                    $iconClass = $categoryIcons[$catKey] ?? 'ph ph-chart-line';
+                ?>
+                    <button type="button" class="category-tab-btn" data-category="<?= $catKey ?>">
+                        <span class="cat-label-wrap">
+                            <i class="<?= $iconClass ?>"></i>
+                            <span><?= htmlspecialchars($catTitle) ?></span>
+                        </span>
+                        <span class="cat-count-badge"><?= $catCount ?></span>
+                    </button>
+                <?php endforeach; ?>
             </div>
         </div>
 
-        <!-- Categories Grid -->
-        <div class="categories-grid" id="categoriesGrid">
-            <?php foreach ($categories as $catKey => $catTitle): 
-                $reports = $groupedReports[$catKey] ?? [];
-                if (empty($reports)) continue;
-                $meta = $categoryMeta[$catKey] ?? ['icon' => 'fa-folder', 'color' => 'blue', 'desc' => ''];
-            ?>
-                <div class="category-card" data-category="<?= $catKey ?>">
-                    <div class="cat-header">
-                        <div class="cat-icon-badge <?= $meta['color'] ?>">
-                            <i class="fa-solid <?= $meta['icon'] ?>"></i>
-                        </div>
-                        <div class="cat-header-text">
-                            <div class="cat-title">
-                                <span><?= htmlspecialchars($catTitle) ?></span>
-                                <span class="cat-badge"><?= count($reports) ?></span>
-                            </div>
-                            <div class="cat-desc"><?= htmlspecialchars($meta['desc']) ?></div>
-                        </div>
-                    </div>
-                    <div class="reports-list">
-                        <?php foreach ($reports as $key => $rep): 
-                            $isCustom = !empty($rep['custom_render']);
-                        ?>
-                            <a href="<?= APP_URL ?>/report/viewer/<?= $key ?>" class="report-item" data-title="<?= strtolower(htmlspecialchars($rep['title'])) ?>" data-key="<?= $key ?>">
-                                <div class="rep-info">
-                                    <div class="rep-name"><?= htmlspecialchars($rep['title']) ?></div>
-                                    <div class="rep-meta">
-                                        <span class="rep-tag realtime"><i class="fa-solid fa-circle" style="font-size:6px; margin-right:4px;"></i>Live</span>
-                                        <?php if ($isCustom): ?>
-                                            <span class="rep-tag drilldown">Custom</span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                <i class="fa-solid fa-chevron-right rep-arrow"></i>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
+        <!-- RIGHT PANE: REPORT LIST -->
+        <div class="hub-main-pane">
+            <div class="pane-header-strip">
+                <div class="active-cat-title-wrap">
+                    <span class="active-cat-title" id="activeCategoryHeader">All Reports</span>
+                    <span class="active-cat-badge" id="activeCategoryBadge"><?= $totalReportsCount ?> Reports</span>
                 </div>
-            <?php endforeach; ?>
+                <div class="report-search-box">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" id="reportSearchInput" placeholder="Quick search reports..." autocomplete="off">
+                </div>
+            </div>
 
-            <!-- Empty Search State -->
-            <div class="rep-empty" id="emptySearchState">
-                <div class="rep-empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-                <div class="rep-empty-title">No reports found</div>
-                <div class="rep-empty-desc">We couldn't find any report matching your search query in this category.</div>
-                <button class="filter-reset" onclick="resetFilters()">Clear Filters & Search</button>
+            <!-- SCROLLABLE REPORT CARDS CONTAINER -->
+            <div class="reports-scroll-container" id="reportsCardsList">
+                <?php foreach ($allReports as $repKey => $rep): 
+                    $catKey = $rep['category'] ?? 'overview';
+                    $catTitle = $categories[$catKey] ?? ucfirst($catKey);
+                    $icon = $rep['icon'] ?? 'ph-chart-line';
+                    $url = APP_URL . '/report/viewer/' . $repKey;
+                ?>
+                    <a href="<?= $url ?>" 
+                       class="report-card-item" 
+                       data-category="<?= $catKey ?>"
+                       data-title="<?= strtolower(htmlspecialchars($rep['title'])) ?>"
+                       data-desc="<?= strtolower(htmlspecialchars($rep['description'] ?? '')) ?>">
+                        <div class="card-left-section">
+                            <div class="card-icon-box">
+                                <i class="ph <?= $icon ?>"></i>
+                            </div>
+                            <div class="card-text-body">
+                                <span class="card-report-title"><?= htmlspecialchars($rep['title']) ?></span>
+                                <span class="card-report-desc"><?= htmlspecialchars($rep['description'] ?? 'High-fidelity analytical report with real-time GL reconciliation.') ?></span>
+                            </div>
+                        </div>
+                        <div class="card-right-section">
+                            <span class="card-cat-pill"><?= htmlspecialchars($catTitle) ?></span>
+                            <i class="ph ph-caret-right card-arrow-icon"></i>
+                        </div>
+                    </a>
+                <?php endforeach; ?>
+
+                <div class="reports-empty-state" id="reportsEmptyState">
+                    <i class="ph ph-file-dashed"></i>
+                    <p>No matching reports found.</p>
+                </div>
             </div>
         </div>
+    </div>
+
+    <!-- BOTTOM COMMAND DOCK -->
+    <div class="report-bottom-dock">
+        <a href="<?= APP_URL ?>/home" class="dock-item-btn">
+            <i class="ph ph-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="<?= APP_URL ?>/pos" class="dock-item-btn">
+            <i class="ph ph-cash-register"></i>
+            <span>POS</span>
+        </a>
+        <a href="<?= APP_URL ?>/alerts" class="dock-item-btn">
+            <i class="ph ph-bell"></i>
+            <span>Alerts <span class="dock-badge-pill">3</span></span>
+        </a>
     </div>
 </div>
 
 <script>
-    let activeCategory = 'all';
+document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('erp-locked');
+    const tabButtons = document.querySelectorAll('.category-tab-btn');
+    const reportCards = document.querySelectorAll('.report-card-item');
+    const searchInput = document.getElementById('reportSearchInput');
+    const categoryHeader = document.getElementById('activeCategoryHeader');
+    const categoryBadge = document.getElementById('activeCategoryBadge');
+    const emptyState = document.getElementById('reportsEmptyState');
 
-    const searchInput = document.getElementById('reportSearch');
-    const categoriesGrid = document.getElementById('categoriesGrid');
-    const emptyState = document.getElementById('emptySearchState');
-    const visibleCountEl = document.getElementById('visibleCount');
-    const mainTitle = document.getElementById('mainTitle');
-    const mainContent = document.getElementById('mainContent');
-
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            filterReports();
-        });
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if ((e.key === '/' && document.activeElement !== searchInput && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') ||
-            ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
-            e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
-        }
-        if (e.key === 'Escape' && document.activeElement === searchInput) {
-            searchInput.blur();
-            searchInput.value = '';
-            filterReports();
-        }
-    });
-
-    function selectCategory(catKey, catTitle) {
-        activeCategory = catKey;
-        mainTitle.innerText = catTitle;
-        
-        document.querySelectorAll('.nav-item').forEach(item => {
-            if (item.getAttribute('data-cat') === catKey) {
-                item.classList.add('active');
-            } else {
-                item.classList.remove('active');
-            }
-        });
-        
-        // Scroll to top of main content
-        mainContent.scrollTop = 0;
-        
-        filterReports();
-    }
+    let currentCategory = 'all';
 
     function filterReports() {
-        const query = (searchInput.value || '').trim().toLowerCase();
-        let totalVisibleReports = 0;
+        const query = searchInput.value.trim().toLowerCase();
+        let visibleCount = 0;
 
-        const cards = document.querySelectorAll('.category-card');
-        cards.forEach(card => {
+        reportCards.forEach(card => {
             const cardCat = card.getAttribute('data-category');
-            const matchesCategory = (activeCategory === 'all' || activeCategory === cardCat);
+            const cardTitle = card.getAttribute('data-title');
+            const cardDesc = card.getAttribute('data-desc');
 
-            const items = card.querySelectorAll('.report-item');
-            let visibleInCard = 0;
+            const matchesCategory = (currentCategory === 'all' || cardCat === currentCategory);
+            const matchesQuery = !query || cardTitle.includes(query) || cardDesc.includes(query);
 
-            items.forEach(item => {
-                const title = item.getAttribute('data-title') || '';
-                const key = item.getAttribute('data-key') || '';
-                const matchesQuery = !query || title.includes(query) || key.includes(query);
-
-                if (matchesCategory && matchesQuery) {
-                    item.style.display = 'flex';
-                    visibleInCard++;
-                    totalVisibleReports++;
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-
-            if (visibleInCard > 0) {
+            if (matchesCategory && matchesQuery) {
                 card.style.display = 'flex';
-                const countBadge = card.querySelector('.cat-badge');
-                if (countBadge) countBadge.innerText = visibleInCard;
-                
-                if (activeCategory !== 'all') {
-                    card.classList.add('expanded');
-                } else {
-                    card.classList.remove('expanded');
-                }
+                visibleCount++;
             } else {
                 card.style.display = 'none';
-                card.classList.remove('expanded');
             }
         });
 
-        visibleCountEl.innerText = totalVisibleReports;
-
-        if (totalVisibleReports === 0) {
+        if (visibleCount === 0) {
             emptyState.style.display = 'block';
         } else {
             emptyState.style.display = 'none';
         }
+
+        categoryBadge.textContent = visibleCount + ' Reports';
     }
 
-    function resetFilters() {
-        if (searchInput) searchInput.value = '';
-        selectCategory('all', 'All Reports');
-    }
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            currentCategory = this.getAttribute('data-category');
+            const catName = this.querySelector('.cat-label-wrap span').textContent;
+            categoryHeader.textContent = catName;
+
+            filterReports();
+        });
+    });
+
+    searchInput.addEventListener('input', function() {
+        filterReports();
+    });
+});
 </script>

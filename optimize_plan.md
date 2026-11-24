@@ -403,7 +403,12 @@ Test how the system handles each situation and fix genuine problems.
     - Generated standalone copy-pasteable production SQL composite indexes for live server execution.
 - [ ] **Module 8: Double-Entry Accounting & Banking**
 - [ ] **Module 9: HRM & Payroll**
-- [ ] **Module 10: Reports Engine**
+- [x] **Module 10: Reports Engine (Central Reports Hub & Report Viewer Engine)**
+    - Re-architected `ReportEngine.php` with 12 canonical ERP categories (`Overview`, `Sales & Revenue`, `Inventory & Stock`, `Purchases & GRN`, `Suppliers & Payables`, `Customers & Receivables`, `Payments & Collections`, `Banking & Cash`, `Expenses & Overheads`, `Accounting & Financial`, `Cashier Performance`, `Expiry & Batches`) and 35+ comprehensive production reports.
+    - Built complete UI redesign of the Central Reports Hub (`app/Views/reports/index.php`) matching reference mockups with top navigation pill, branch selector dropdown, left category navigation sidebar with active navy pill and badges, instant client-side search, and sleek white report cards.
+    - Built complete UI redesign of the Central Report Viewer (`app/Views/reports/viewer.php`) matching reference mockups: 100vh viewport-locked screen with zero page-level scrollbars, dedicated top-right filter toolbar (`BRANCH`, `RANGE`, `FROM`, `TO`, `Reset`), column customization modal, multi-format export dropdown (CSV, Excel, Word, JSON), sticky column headers, alternating zebra striping (`tbody tr:nth-child(even)`), monospace currency formatting, colored status badges, and pinned summary revenue footer.
+    - Optimized SQL queries and backend aggregation for server-side pagination, sorting, and live grand totals calculation.
+    - Preserved Rule 1 (Viewport-Locked Layout), Rule 2 (Top-Right Corner Filters), Rule 3 (SF Pro Display Fonts & Zebra Striping), Rule 4 (Standalone SQL Delivery for Online Server Deployment), and Rule 5 (Document Immutability & Balance Integrity).
 
 ## 12. Final Deliverables
 

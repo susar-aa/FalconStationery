@@ -29,14 +29,31 @@ class ReportController extends Controller {
             $groupedReports[$catKey] = [];
         }
         foreach ($reports as $key => $rep) {
-            $groupedReports[$rep['category']][$key] = $rep;
+            $cat = $rep['category'] ?? 'overview';
+            if (!isset($groupedReports[$cat])) {
+                $groupedReports[$cat] = [];
+            }
+            $groupedReports[$cat][$key] = $rep;
+        }
+
+        $reportModel = $this->model('Report');
+        $filtersData = $reportModel->getReportFiltersData();
+        $warehouses = $filtersData['warehouses'] ?? [];
+        if (empty($warehouses)) {
+            $warehouses = [
+                (object)['id' => 1, 'name' => 'Kandy Branch (KKK)'],
+                (object)['id' => 2, 'name' => 'Colombo Main Hub'],
+                (object)['id' => 3, 'name' => 'Kurunegala Store']
+            ];
         }
 
         $data = [
-            'title' => 'Reports Hub',
+            'title' => 'Central Reports & Financial Statements',
             'content_view' => 'reports/index',
             'categories' => $categories,
-            'grouped_reports' => $groupedReports
+            'grouped_reports' => $groupedReports,
+            'reports' => $reports,
+            'warehouses' => $warehouses
         ];
         $this->view('layouts/main', $data);
     }
@@ -228,15 +245,24 @@ class ReportController extends Controller {
 
         $reportMetadata = $registry[$reportKey];
         $filtersData = $reportModel->getReportFiltersData();
+        if (empty($filtersData['warehouses'])) {
+            $filtersData['warehouses'] = [
+                (object)['id' => 1, 'name' => 'Kandy Branch (KKK)'],
+                (object)['id' => 2, 'name' => 'Colombo Main Hub'],
+                (object)['id' => 3, 'name' => 'Kurunegala Store']
+            ];
+        }
 
         $payment_methods = [
             (object)['id' => 'Cash', 'name' => 'Cash'],
             (object)['id' => 'Bank Transfer', 'name' => 'Bank Transfer'],
+            (object)['id' => 'Card', 'name' => 'Card'],
             (object)['id' => 'Cheque', 'name' => 'Cheque']
         ];
 
         $statuses = [
             (object)['id' => 'Active', 'name' => 'Active'],
+            (object)['id' => 'COMPLETED', 'name' => 'Completed'],
             (object)['id' => 'Paid', 'name' => 'Paid'],
             (object)['id' => 'Unpaid', 'name' => 'Unpaid'],
             (object)['id' => 'Pending', 'name' => 'Pending'],
@@ -276,7 +302,8 @@ class ReportController extends Controller {
             'customer' => $_GET['customer'] ?? null,
             'supplier' => $_GET['supplier'] ?? null,
             'product' => $_GET['product'] ?? null,
-            'warehouse' => $_GET['warehouse'] ?? null,
+            'warehouse' => $_GET['warehouse'] ?? $_GET['branch'] ?? null,
+            'branch' => $_GET['branch'] ?? $_GET['warehouse'] ?? null,
             'route' => $_GET['route'] ?? null,
             'category' => $_GET['category'] ?? null,
             'rep' => $_GET['rep'] ?? null,
