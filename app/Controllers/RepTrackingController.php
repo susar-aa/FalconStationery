@@ -2474,42 +2474,68 @@ class RepTrackingController extends Controller {
                     
                     $items = $del['items'] ?? [];
                     
-                    // If status is Cancelled or Postponed, set all items delivered qty to 0
+                    // If status is Cancelled or Postponed, release stock reservation without destroying invoice line items or totals
                     if ($deliveryStatus === 'Cancelled' || $deliveryStatus === 'Postponed') {
                         $allInvoiceItems = $driverInvoiceModel->getInvoiceItems($invoiceId);
                         foreach ($allInvoiceItems as $item) {
-                            $driverInvoiceModel->deleteInvoiceItem($item->id); // sets quantity to 0 and releases reservation
+                            $oldQty = floatval($item->quantity);
+                            if ($oldQty > 0) {
+                                if ($item->item_id) {
+                                    $db->query("UPDATE items SET quantity_reserved = GREATEST(0, CAST(quantity_reserved AS SIGNED) - :diff) WHERE id = :id");
+                                    $db->bind(':diff', $oldQty);
+                                    $db->bind(':id', $item->item_id);
+                                    $db->execute();
+                                }
+                                if ($item->variation_option_id) {
+                                    $db->query("UPDATE item_variation_options SET quantity_reserved = GREATEST(0, CAST(quantity_reserved AS SIGNED) - :diff) WHERE id = :id");
+                                    $db->bind(':diff', $oldQty);
+                                    $db->bind(':id', $item->variation_option_id);
+                                    $db->execute();
+                                }
+                            }
                         }
                         $db->query("UPDATE invoices SET stock_status = 'returned' WHERE id = :id");
                         $db->bind(':id', $invoiceId);
                         $db->execute();
                     } else {
-                        // If we are setting to Delivered or Pending, and NO custom items were sent in payload
-                        // (meaning it was a simple status dropdown change), we should restore the items to their loaded_quantity!
-                        if (empty($items)) {
+                        // If setting to Delivered or Pending, restore reserved stock if previously returned
+                        $db->query("SELECT stock_status FROM invoices WHERE id = :id");
+                        $db->bind(':id', $invoiceId);
+                        $curStockStatus = $db->single()->stock_status ?? 'reserved';
+                        if ($curStockStatus === 'returned') {
                             $allInvoiceItems = $driverInvoiceModel->getInvoiceItems($invoiceId);
                             foreach ($allInvoiceItems as $item) {
-                                if (floatval($item->quantity) == 0 && floatval($item->loaded_quantity) > 0) {
-                                    $driverInvoiceModel->updateInvoiceItemQty($item->id, intval($item->loaded_quantity));
-                                }
-                            }
-                        } else {
-                            // Otherwise update based on custom user input
-                            foreach ($items as $item) {
-                                $itemId = intval($item['invoice_item_id'] ?? 0);
-                                $deliveredQty = intval($item['delivered_qty'] ?? 0);
-                                if ($itemId > 0) {
-                                    if ($deliveredQty <= 0) {
-                                        $driverInvoiceModel->deleteInvoiceItem($itemId);
-                                    } else {
-                                        $driverInvoiceModel->updateInvoiceItemQty($itemId, $deliveredQty);
+                                $oldQty = floatval($item->quantity);
+                                if ($oldQty > 0) {
+                                    if ($item->item_id) {
+                                        $db->query("UPDATE items SET quantity_reserved = quantity_reserved + :diff WHERE id = :id");
+                                        $db->bind(':diff', $oldQty);
+                                        $db->bind(':id', $item->item_id);
+                                        $db->execute();
+                                    }
+                                    if ($item->variation_option_id) {
+                                        $db->query("UPDATE item_variation_options SET quantity_reserved = quantity_reserved + :diff WHERE id = :id");
+                                        $db->bind(':diff', $oldQty);
+                                        $db->bind(':id', $item->variation_option_id);
+                                        $db->execute();
                                     }
                                 }
                             }
+                            $db->query("UPDATE invoices SET stock_status = 'reserved' WHERE id = :id");
+                            $db->bind(':id', $invoiceId);
+                            $db->execute();
                         }
-                        $db->query("UPDATE invoices SET stock_status = 'reserved' WHERE id = :id");
-                        $db->bind(':id', $invoiceId);
-                        $db->execute();
+
+                        // If explicit custom delivered quantities were submitted by user, process line item delivery updates
+                        if (!empty($items)) {
+                            foreach ($items as $item) {
+                                $itemId = intval($item['invoice_item_id'] ?? 0);
+                                $deliveredQty = intval($item['delivered_qty'] ?? 0);
+                                if ($itemId > 0 && $deliveredQty >= 0) {
+                                    $driverInvoiceModel->updateInvoiceItemQty($itemId, $deliveredQty);
+                                }
+                            }
+                        }
                     }
                 }
             }

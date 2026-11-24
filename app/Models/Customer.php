@@ -17,13 +17,6 @@ class Customer {
                 $this->db->query("ALTER TABLE customers ADD COLUMN status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active' AFTER opening_balance_date");
                 $this->db->execute();
             }
-
-            // Automatic self-healing: Sync any invoices with delivery_status = 'Cancelled' to status = 'Cancelled' and void GL entries
-            $this->db->query("UPDATE invoices SET status = 'Cancelled', stock_status = 'returned' WHERE delivery_status = 'Cancelled' AND status != 'Cancelled'");
-            $this->db->execute();
-
-            $this->db->query("UPDATE journal_entries je JOIN invoices i ON i.journal_entry_id = je.id SET je.status = 'Voided' WHERE (i.delivery_status = 'Cancelled' OR i.status = 'Cancelled') AND je.status != 'Voided'");
-            $this->db->execute();
         } catch (Exception $e) {
             error_log("Customer selfHealSchema Error: " . $e->getMessage());
         }
@@ -64,7 +57,17 @@ class Customer {
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
                 LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
-                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
+                LEFT JOIN invoices inv_je ON inv_je.journal_entry_id = je.id
+                LEFT JOIN credit_notes cn_je ON cn_je.journal_entry_id = je.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') 
+                  AND je.status = 'Posted' 
+                  AND coa.account_code = '1200' 
+                  AND cp.id IS NULL
+                  AND inv_je.id IS NULL
+                  AND cn_je.id IS NULL
+                  AND je.reference NOT LIKE 'INV-%'
+                  AND je.reference NOT LIKE 'CN-%'
+                  AND je.reference NOT LIKE 'MRN-%'
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
         ";
@@ -138,7 +141,17 @@ class Customer {
                         JOIN journal_entries je ON t.journal_entry_id = je.id
                         JOIN chart_of_accounts coa ON t.account_id = coa.id
                         LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
-                        WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
+                        LEFT JOIN invoices inv_je ON inv_je.journal_entry_id = je.id
+                        LEFT JOIN credit_notes cn_je ON cn_je.journal_entry_id = je.id
+                        WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') 
+                          AND je.status = 'Posted' 
+                          AND coa.account_code = '1200' 
+                          AND cp.id IS NULL
+                          AND inv_je.id IS NULL
+                          AND cn_je.id IS NULL
+                          AND je.reference NOT LIKE 'INV-%'
+                          AND je.reference NOT LIKE 'CN-%'
+                          AND je.reference NOT LIKE 'MRN-%'
                         GROUP BY COALESCE(t.entity_id, je.entity_id)
                     ) je_b ON c.id = je_b.customer_id
                     " . $whereSql . "
@@ -192,7 +205,17 @@ class Customer {
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
                 LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
-                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
+                LEFT JOIN invoices inv_je ON inv_je.journal_entry_id = je.id
+                LEFT JOIN credit_notes cn_je ON cn_je.journal_entry_id = je.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') 
+                  AND je.status = 'Posted' 
+                  AND coa.account_code = '1200' 
+                  AND cp.id IS NULL
+                  AND inv_je.id IS NULL
+                  AND cn_je.id IS NULL
+                  AND je.reference NOT LIKE 'INV-%'
+                  AND je.reference NOT LIKE 'CN-%'
+                  AND je.reference NOT LIKE 'MRN-%'
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
             " . $whereSql;
@@ -300,7 +323,17 @@ class Customer {
                 JOIN journal_entries je ON t.journal_entry_id = je.id
                 JOIN chart_of_accounts coa ON t.account_id = coa.id
                 LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
-                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL
+                LEFT JOIN invoices inv_je ON inv_je.journal_entry_id = je.id
+                LEFT JOIN credit_notes cn_je ON cn_je.journal_entry_id = je.id
+                WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') 
+                  AND je.status = 'Posted' 
+                  AND coa.account_code = '1200' 
+                  AND cp.id IS NULL
+                  AND inv_je.id IS NULL
+                  AND cn_je.id IS NULL
+                  AND je.reference NOT LIKE 'INV-%'
+                  AND je.reference NOT LIKE 'CN-%'
+                  AND je.reference NOT LIKE 'MRN-%'
                 GROUP BY COALESCE(t.entity_id, je.entity_id)
             ) je_b ON c.id = je_b.customer_id
         ";
@@ -353,7 +386,18 @@ class Customer {
                           JOIN journal_entries je ON t.journal_entry_id = je.id 
                           JOIN chart_of_accounts coa ON t.account_id = coa.id 
                           LEFT JOIN customer_payments cp ON cp.journal_entry_id = je.id
-                          WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') AND (COALESCE(t.entity_id, je.entity_id) = :id) AND je.status = 'Posted' AND coa.account_code = '1200' AND cp.id IS NULL");
+                          LEFT JOIN invoices inv_je ON inv_je.journal_entry_id = je.id
+                          LEFT JOIN credit_notes cn_je ON cn_je.journal_entry_id = je.id
+                          WHERE (COALESCE(t.entity_type, je.entity_type) = 'Customer') 
+                            AND (COALESCE(t.entity_id, je.entity_id) = :id) 
+                            AND je.status = 'Posted' 
+                            AND coa.account_code = '1200' 
+                            AND cp.id IS NULL
+                            AND inv_je.id IS NULL
+                            AND cn_je.id IS NULL
+                            AND je.reference NOT LIKE 'INV-%'
+                            AND je.reference NOT LIKE 'CN-%'
+                            AND je.reference NOT LIKE 'MRN-%'");
         $this->db->bind(':id', $id);
         $je = $this->db->single();
 

@@ -298,6 +298,9 @@ class RepVarianceService {
                         if ($taxRateRow) {
                             $taxVal = ($subtotal - $disc) * floatval($taxRateRow->rate_percentage) / 100;
                         }
+                    } else if (floatval($invRow->tax_amount ?? 0) > 0 && $oldSub > 0) {
+                        $taxRate = floatval($invRow->tax_amount) / $oldSub;
+                        $taxVal = ($subtotal - $disc) * $taxRate;
                     }
 
                     $grandTotal = max(0.0, ($subtotal - $disc) + $taxVal);
@@ -677,6 +680,9 @@ class RepVarianceService {
                         if ($taxRateRow) {
                             $taxVal = ($subtotal - $disc) * floatval($taxRateRow->rate_percentage) / 100;
                         }
+                    } else if (floatval($invRow->tax_amount ?? 0) > 0 && $oldSub > 0) {
+                        $taxRate = floatval($invRow->tax_amount) / $oldSub;
+                        $taxVal = ($subtotal - $disc) * $taxRate;
                     }
 
                     $grandTotal = max(0.0, ($subtotal - $disc) + $taxVal);

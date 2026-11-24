@@ -72,3 +72,16 @@ These rules are MANDATORY for all existing and future modules in the Falcon Stat
    - Use safe statements wherever possible (`CREATE TABLE IF NOT EXISTS`, conditional column alterations, or clear comments on target table/column constraints).
    - Group the SQL code in an easily identifiable `sql` markdown code block with clear instructions on which database and environment to apply it to.
    - If rollback or verification queries are relevant, provide them alongside the migration SQL.
+
+---
+
+## RULE 5: Commercial Document Immutability & Customer/Vendor Balance Integrity
+
+1. **Never Zero Out or Mutate Historical Invoice Totals on Operational Status Changes**:
+   - Marking a delivery or route dispatch as `Cancelled`, `Postponed`, or `Returned` must NEVER set `invoice_items.quantity = 0`, `invoice_items.total = 0`, or wipe `invoices.total_amount` / `grand_total` to 0. Operational delivery issues only affect delivery status flags and stock reservation returns. The original invoice line items, prices, discounts, and total billed values are commercial legal contracts and must remain strictly immutable.
+2. **Prevent Double-Counting in Customer and Supplier Balance Calculations**:
+   - When computing customer outstanding balance (`opening_balance + total_billed - total_paid - total_credited + total_je_balance`), any subquery aggregating manual journal entries on Account `1200` (Accounts Receivable) MUST explicitly exclude journal entries originating from invoices (`invoices.journal_entry_id`) and credit notes (`credit_notes.journal_entry_id`). Otherwise, when an invoice or route is settled and posted to the General Ledger, the customer's balance will jump or double.
+   - The same applies to Vendor/Supplier Account `2000` (Accounts Payable), which must exclude GRNs and supplier payments.
+3. **No Unsolicited Auto-Mutations in Model Constructors**:
+   - Model constructors (`__construct`) must never execute unsolicited background `UPDATE` or `DELETE` queries that mutate invoice statuses or void journal entries on routine page visits.
+
