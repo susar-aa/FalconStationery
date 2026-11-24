@@ -499,6 +499,14 @@ class Report {
         $this->db->query("SELECT DISTINCT territory FROM customers WHERE territory IS NOT NULL AND territory != '' ORDER BY territory ASC");
         $data['territories'] = $this->db->resultSet() ?: [];
 
+        // Bank Accounts for Bank Statements and financial reporting
+        try {
+            $this->db->query("SELECT id, CONCAT(bank_name, ' - ', account_number) as name FROM bank_accounts ORDER BY bank_name ASC");
+            $data['bank_accounts'] = $this->db->resultSet() ?: [];
+        } catch (Throwable $e) {
+            $data['bank_accounts'] = [];
+        }
+
         $this->db->query("
             SELECT DISTINCT u.id, 
                    COALESCE(NULLIF(TRIM(CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, ''))), ''), u.username) as name 

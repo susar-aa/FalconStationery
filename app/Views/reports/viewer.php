@@ -1,9 +1,23 @@
 <?php
 $reportKey = $data['reportKey'];
 $metadata = $data['metadata'];
-$warehouses = $data['warehouses'] ?? [];
 $columns = $metadata['columns'] ?? [];
 $reportTitle = $metadata['title'] ?? 'ERP Analytical Report';
+$reportFilters = $metadata['filters'] ?? [];
+$hasDateFilter = in_array('date_range', $reportFilters) || !empty($metadata['date_column']);
+
+$customers = $data['customers'] ?? [];
+$suppliers = $data['suppliers'] ?? [];
+$bankAccounts = $data['bank_accounts'] ?? [];
+$products = $data['products'] ?? [];
+$categories = $data['categories'] ?? [];
+$brands = $data['brands'] ?? [];
+$warehouses = $data['warehouses'] ?? [];
+$routes = $data['routes'] ?? [];
+$reps = $data['reps'] ?? [];
+$paymentMethods = $data['payment_methods'] ?? [];
+$statuses = $data['statuses'] ?? [];
+$groups = $data['groups'] ?? [];
 
 // Default date range: start of current month to today
 $defaultFrom = date('Y-m-01');
@@ -176,8 +190,9 @@ body, html {
 .erp-filter-group-right {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .filter-input-wrap {
@@ -204,6 +219,8 @@ body, html {
     background: #ffffff;
     outline: none;
     transition: all 0.15s ease;
+    max-width: 200px;
+}
 }
 .filter-select-sm:focus, .filter-date-sm:focus {
     border-color: var(--c-blue-accent);
@@ -571,22 +588,162 @@ body, html {
             <div class="report-header-title" id="displayReportTitle"><?= htmlspecialchars($reportTitle) ?></div>
 
             <div class="erp-filter-group-right">
-                <!-- BRANCH DROPDOWN -->
+                <?php if (in_array('customer', $reportFilters)): ?>
+                <!-- CUSTOMER FILTER -->
                 <div class="filter-input-wrap">
-                    <span class="filter-label-tiny">BRANCH:</span>
-                    <select id="filterBranch" class="filter-select-sm">
-                        <option value="">All Branches</option>
-                        <?php if (!empty($warehouses)): ?>
-                            <?php foreach ($warehouses as $wh): ?>
-                                <option value="<?= $wh->id ?>"><?= htmlspecialchars($wh->name) ?></option>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <option value="1" selected>Kandy Branch</option>
-                            <option value="2">Colombo Main Hub</option>
-                        <?php endif; ?>
+                    <span class="filter-label-tiny">CUSTOMER:</span>
+                    <select id="filterCustomer" class="filter-select-sm">
+                        <option value="">All Customers</option>
+                        <?php foreach ($customers as $c): ?>
+                            <option value="<?= $c->id ?>"><?= htmlspecialchars($c->name) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
+                <?php endif; ?>
 
+                <?php if (in_array('supplier', $reportFilters)): ?>
+                <!-- SUPPLIER FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">SUPPLIER:</span>
+                    <select id="filterSupplier" class="filter-select-sm">
+                        <option value="">All Suppliers</option>
+                        <?php foreach ($suppliers as $s): ?>
+                            <option value="<?= $s->id ?>"><?= htmlspecialchars($s->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('bank_account', $reportFilters)): ?>
+                <!-- BANK ACCOUNT FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">BANK:</span>
+                    <select id="filterBankAccount" class="filter-select-sm">
+                        <option value="">All Bank Accounts</option>
+                        <?php foreach ($bankAccounts as $ba): ?>
+                            <option value="<?= $ba->id ?>"><?= htmlspecialchars($ba->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('product', $reportFilters)): ?>
+                <!-- PRODUCT FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">PRODUCT:</span>
+                    <select id="filterProduct" class="filter-select-sm">
+                        <option value="">All Products</option>
+                        <?php foreach ($products as $p): ?>
+                            <option value="<?= $p->id ?>"><?= htmlspecialchars($p->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('category', $reportFilters)): ?>
+                <!-- CATEGORY FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">CATEGORY:</span>
+                    <select id="filterCategory" class="filter-select-sm">
+                        <option value="">All Categories</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat->id ?>"><?= htmlspecialchars($cat->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('brand', $reportFilters)): ?>
+                <!-- BRAND FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">BRAND:</span>
+                    <select id="filterBrand" class="filter-select-sm">
+                        <option value="">All Brands</option>
+                        <?php foreach ($brands as $b): ?>
+                            <option value="<?= htmlspecialchars($b->brand) ?>"><?= htmlspecialchars($b->brand) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('warehouse', $reportFilters)): ?>
+                <!-- WAREHOUSE FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">WAREHOUSE:</span>
+                    <select id="filterWarehouse" class="filter-select-sm">
+                        <option value="">All Warehouses</option>
+                        <?php foreach ($warehouses as $wh): ?>
+                            <option value="<?= $wh->id ?>"><?= htmlspecialchars($wh->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('rep', $reportFilters)): ?>
+                <!-- REP FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">REP:</span>
+                    <select id="filterRep" class="filter-select-sm">
+                        <option value="">All Sales Reps</option>
+                        <?php foreach ($reps as $r): ?>
+                            <option value="<?= $r->id ?>"><?= htmlspecialchars($r->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('route', $reportFilters)): ?>
+                <!-- ROUTE FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">ROUTE:</span>
+                    <select id="filterRoute" class="filter-select-sm">
+                        <option value="">All Routes</option>
+                        <?php foreach ($routes as $rt): ?>
+                            <option value="<?= $rt->id ?>"><?= htmlspecialchars($rt->route_name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('payment_method', $reportFilters)): ?>
+                <!-- PAYMENT METHOD FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">METHOD:</span>
+                    <select id="filterPaymentMethod" class="filter-select-sm">
+                        <option value="">All Methods</option>
+                        <?php foreach ($paymentMethods as $pm): ?>
+                            <option value="<?= $pm->id ?>"><?= htmlspecialchars($pm->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('status', $reportFilters)): ?>
+                <!-- STATUS FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">STATUS:</span>
+                    <select id="filterStatus" class="filter-select-sm">
+                        <option value="">All Statuses</option>
+                        <?php foreach ($statuses as $st): ?>
+                            <option value="<?= $st->id ?>"><?= htmlspecialchars($st->name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if (in_array('tb_type', $reportFilters)): ?>
+                <!-- TB TYPE FILTER -->
+                <div class="filter-input-wrap">
+                    <span class="filter-label-tiny">TYPE:</span>
+                    <select id="filterTbType" class="filter-select-sm">
+                        <option value="unadjusted" selected>Unadjusted TB</option>
+                        <option value="adjusted">Adjusted TB</option>
+                        <option value="post_closing">Post-Closing TB</option>
+                    </select>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($hasDateFilter): ?>
                 <!-- PRESET RANGE DROPDOWN -->
                 <div class="filter-input-wrap">
                     <span class="filter-label-tiny">RANGE:</span>
@@ -612,6 +769,7 @@ body, html {
                     <span class="filter-label-tiny">TO:</span>
                     <input type="date" id="filterEndDate" class="filter-date-sm" value="<?= $defaultTo ?>">
                 </div>
+                <?php endif; ?>
 
                 <!-- RESET BUTTON -->
                 <button type="button" class="btn-filter-reset" id="btnResetFilters" title="Reset all filters">
@@ -716,25 +874,50 @@ function formatCurrency(num) {
     return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function loadReportData() {
-    const branch = document.getElementById('filterBranch').value;
-    const startDate = document.getElementById('filterStartDate').value;
-    const endDate = document.getElementById('filterEndDate').value;
-
+function getActiveFilterParams() {
     const params = new URLSearchParams({
         report: REPORT_KEY,
         page: currentPage,
-        limit: pageSize,
-        branch: branch,
-        warehouse: branch,
-        start_date: startDate,
-        end_date: endDate
+        limit: pageSize
     });
+
+    const filterMap = {
+        customer: 'filterCustomer',
+        supplier: 'filterSupplier',
+        bank_account: 'filterBankAccount',
+        product: 'filterProduct',
+        category: 'filterCategory',
+        brand: 'filterBrand',
+        warehouse: 'filterWarehouse',
+        rep: 'filterRep',
+        route: 'filterRoute',
+        payment_method: 'filterPaymentMethod',
+        status: 'filterStatus',
+        tb_type: 'filterTbType',
+        start_date: 'filterStartDate',
+        end_date: 'filterEndDate'
+    };
+
+    for (const [paramKey, elemId] of Object.entries(filterMap)) {
+        const el = document.getElementById(elemId);
+        if (el && el.value !== '') {
+            params.append(paramKey, el.value);
+            if (paramKey === 'warehouse') {
+                params.append('branch', el.value);
+            }
+        }
+    }
 
     if (currentSortCol) {
         params.append('sort_col', currentSortCol);
         params.append('sort_dir', currentSortDir);
     }
+
+    return params;
+}
+
+function loadReportData() {
+    const params = getActiveFilterParams();
 
     const tbody = document.getElementById('reportTableBody');
     tbody.innerHTML = `
@@ -923,17 +1106,8 @@ function updatePresetDates(preset) {
 }
 
 function triggerExport(format) {
-    const branch = document.getElementById('filterBranch').value;
-    const startDate = document.getElementById('filterStartDate').value;
-    const endDate = document.getElementById('filterEndDate').value;
-
-    const params = new URLSearchParams({
-        format: format,
-        branch: branch,
-        warehouse: branch,
-        start_date: startDate,
-        end_date: endDate
-    });
+    const params = getActiveFilterParams();
+    params.set('format', format);
 
     window.location.href = BASE_EXPORT_URL + '?' + params.toString();
     document.getElementById('exportDropdownMenu').style.display = 'none';
@@ -946,41 +1120,47 @@ function triggerPrint() {
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     document.body.classList.add('erp-locked');
-    // Range preset change
-    document.getElementById('filterRangePreset').addEventListener('change', function() {
-        if (this.value !== 'custom') {
-            updatePresetDates(this.value);
+
+    // Attach change event listeners to all filter inputs and selects
+    const allFilters = document.querySelectorAll('.filter-select-sm, .filter-date-sm');
+    allFilters.forEach(el => {
+        el.addEventListener('change', function() {
+            if (this.id === 'filterRangePreset') {
+                if (this.value !== 'custom') {
+                    updatePresetDates(this.value);
+                }
+            } else if (this.id === 'filterStartDate' || this.id === 'filterEndDate') {
+                const presetEl = document.getElementById('filterRangePreset');
+                if (presetEl) presetEl.value = 'custom';
+            }
             currentPage = 1;
             loadReportData();
-        }
-    });
-
-    // Date inputs change
-    document.getElementById('filterStartDate').addEventListener('change', function() {
-        document.getElementById('filterRangePreset').value = 'custom';
-        currentPage = 1;
-        loadReportData();
-    });
-    document.getElementById('filterEndDate').addEventListener('change', function() {
-        document.getElementById('filterRangePreset').value = 'custom';
-        currentPage = 1;
-        loadReportData();
-    });
-
-    // Branch filter change
-    document.getElementById('filterBranch').addEventListener('change', function() {
-        currentPage = 1;
-        loadReportData();
+        });
     });
 
     // Reset Filters button
-    document.getElementById('btnResetFilters').addEventListener('click', function() {
-        document.getElementById('filterBranch').value = '';
-        document.getElementById('filterRangePreset').value = 'this_month';
-        updatePresetDates('this_month');
-        currentPage = 1;
-        loadReportData();
-    });
+    const btnReset = document.getElementById('btnResetFilters');
+    if (btnReset) {
+        btnReset.addEventListener('click', function() {
+            allFilters.forEach(el => {
+                if (el.tagName === 'SELECT') {
+                    if (el.id === 'filterRangePreset') {
+                        el.value = 'this_month';
+                    } else if (el.id === 'filterTbType') {
+                        el.value = 'unadjusted';
+                    } else {
+                        el.value = '';
+                    }
+                }
+            });
+            const presetEl = document.getElementById('filterRangePreset');
+            if (presetEl) {
+                updatePresetDates('this_month');
+            }
+            currentPage = 1;
+            loadReportData();
+        });
+    }
 
     // Pagination buttons
     document.getElementById('btnPrevPage').addEventListener('click', function() {

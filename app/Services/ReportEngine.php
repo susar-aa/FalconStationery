@@ -870,6 +870,51 @@ class ReportEngine {
                           LEFT JOIN budgets b ON c.id = b.account_id AND b.fiscal_year = YEAR(NOW())
                           WHERE c.account_type = 'Expense' /*WHERE_CLAUSE*/"
             ],
+            'bank_statement' => [
+                'description' => 'Chronological statement of bank account deposits, withdrawals, and running balance.',
+                'icon' => 'ph-bank',
+                'title' => 'Bank Statement / Account Ledger',
+                'category' => 'finance',
+                'filters' => ['date_range', 'bank_account'],
+                'date_column' => 't.date',
+                'columns' => [
+                    'date' => ['label' => 'Date', 'type' => 'date'],
+                    'ref' => ['label' => 'Reference / Cheque #', 'type' => 'text'],
+                    'bank_info' => ['label' => 'Bank Account', 'type' => 'text'],
+                    'description' => ['label' => 'Description / Particulars', 'type' => 'text'],
+                    'debit' => ['label' => 'Debit (Inflow)', 'type' => 'currency', 'align' => 'right', 'total' => 'sum'],
+                    'credit' => ['label' => 'Credit (Outflow)', 'type' => 'currency', 'align' => 'right', 'total' => 'sum'],
+                    'balance' => ['label' => 'Running Balance', 'type' => 'currency', 'align' => 'right']
+                ],
+                'sql' => "SELECT t.id, t.date, t.ref, t.bank_info, t.description, t.debit, t.credit,
+                                 SUM(t.debit - t.credit) OVER (ORDER BY t.date, t.id) as balance,
+                                 t.bank_account_id
+                          FROM (
+                              SELECT tr.id, je.entry_date as date,
+                                     COALESCE(NULLIF(je.reference, ''), CONCAT('JE-', je.id)) as ref,
+                                     CONCAT(ba.bank_name, ' (', ba.account_number, ')') as bank_info,
+                                     COALESCE(NULLIF(tr.description, ''), je.description, 'Bank Transaction') as description,
+                                     tr.debit as debit,
+                                     tr.credit as credit,
+                                     ba.id as bank_account_id
+                              FROM transactions tr
+                              JOIN journal_entries je ON tr.journal_entry_id = je.id
+                              JOIN chart_of_accounts coa ON tr.account_id = coa.id
+                              JOIN bank_accounts ba ON ba.chart_of_account_id = coa.id
+                              WHERE (je.status IS NULL OR je.status != 'Voided')
+                              UNION ALL
+                              SELECT 0 as id, ba.opening_balance_date as date,
+                                     'INITIAL-OB' as ref,
+                                     CONCAT(ba.bank_name, ' (', ba.account_number, ')') as bank_info,
+                                     'Initial Opening Balance' as description,
+                                     IF(ba.opening_balance >= 0, ba.opening_balance, 0) as debit,
+                                     IF(ba.opening_balance < 0, ABS(ba.opening_balance), 0) as credit,
+                                     ba.id as bank_account_id
+                              FROM bank_accounts ba
+                              WHERE ba.opening_balance != 0 AND ba.opening_balance_date IS NOT NULL
+                          ) as t
+                          WHERE 1=1 /*WHERE_CLAUSE*/"
+            ],
             'trial_balance' => [
                 'description' => 'Summary of debit and credit balances across chart of accounts.',
                 'icon' => 'ph-clipboard-text',
@@ -1127,6 +1172,18 @@ class ReportEngine {
                 $clauses[] = "vendor_id = :supplier";
             }
             $params[':supplier'] = $filters['supplier'];
+        }
+
+        // 2b. Bank Account Filter
+        if (isset($filters['bank_account']) && !empty($filters['bank_account'])) {
+            if (preg_match('/\bt\.bank_account_id\b/', $baseSql)) {
+                $clauses[] = "t.bank_account_id = :bank_account";
+            } elseif (preg_match('/\bba\.id\b/', $baseSql)) {
+                $clauses[] = "ba.id = :bank_account";
+            } elseif (strpos($baseSql, 'bank_account_id') !== false) {
+                $clauses[] = "bank_account_id = :bank_account";
+            }
+            $params[':bank_account'] = $filters['bank_account'];
         }
 
         // 3. Product Filter

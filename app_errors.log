@@ -16290,3 +16290,8 @@ SQL: Callable
 #1 Command line code(4): Database->__construct()
 #2 {main}
 
+[2026-11-24 11:53:16] Database initialization failed: SQLSTATE[HY000] [2002] Connection refused
+#0 /Users/mac/Documents/Curtiss/Falcon Stationary/FalconStationery/core/Database.php(27): PDO->__construct('mysql:host=127....', 'curtiss_erp', Object(SensitiveParameterValue), Array)
+#1 Command line code(4): Database->__construct()
+#2 {main}
+
