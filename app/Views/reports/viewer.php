@@ -584,55 +584,6 @@ body, html {
     background: #f1f5f9;
     color: var(--c-text-main);
 }
-
-/* BOTTOM COMMAND DOCK */
-.report-bottom-dock {
-    position: fixed;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.85);
-    border-radius: 999px;
-    padding: 5px 8px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.06);
-    z-index: 100;
-}
-.dock-item-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 14px;
-    border-radius: 999px;
-    color: #64748b;
-    text-decoration: none;
-    font-size: 11px;
-    font-weight: 600;
-    transition: all 0.15s ease;
-    gap: 2px;
-}
-.dock-item-btn i {
-    font-size: 16px;
-}
-.dock-item-btn:hover, .dock-item-btn.active {
-    color: var(--c-text-main);
-    background: #f1f5f9;
-}
-.dock-badge-pill {
-    background: #ef4444;
-    color: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 1px 5px;
-    border-radius: 999px;
-    margin-left: 2px;
-}
 </style>
 
 <div class="report-viewer-viewport erp-viewport-view">
@@ -804,22 +755,6 @@ body, html {
                 0.00
             </div>
         </div>
-    </div>
-
-    <!-- BOTTOM COMMAND DOCK -->
-    <div class="report-bottom-dock">
-        <a href="<?= APP_URL ?>/home" class="dock-item-btn">
-            <i class="ph ph-house"></i>
-            <span>Home</span>
-        </a>
-        <a href="<?= APP_URL ?>/pos" class="dock-item-btn">
-            <i class="ph ph-cash-register"></i>
-            <span>POS</span>
-        </a>
-        <a href="<?= APP_URL ?>/alerts" class="dock-item-btn">
-            <i class="ph ph-bell"></i>
-            <span>Alerts <span class="dock-badge-pill">3</span></span>
-        </a>
     </div>
 </div>
 
