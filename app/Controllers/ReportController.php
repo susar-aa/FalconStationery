@@ -29,7 +29,7 @@ class ReportController extends Controller {
             $groupedReports[$catKey] = [];
         }
         foreach ($reports as $key => $rep) {
-            $cat = $rep['category'] ?? 'overview';
+            $cat = $rep['category'] ?? 'inventory';
             if (!isset($groupedReports[$cat])) {
                 $groupedReports[$cat] = [];
             }

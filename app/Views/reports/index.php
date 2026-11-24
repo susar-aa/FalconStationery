@@ -9,20 +9,17 @@ foreach ($groupedReports as $list) {
     $totalReportsCount += count($list);
 }
 
-// Icon mappings for the 12 canonical categories
+// Icon mappings for the 9 ERP categories
 $categoryIcons = [
-    'overview'    => 'ph ph-activity',
-    'sales'       => 'ph ph-currency-dollar',
     'inventory'   => 'ph ph-package',
+    'sales'       => 'ph ph-currency-dollar',
     'procurement' => 'ph ph-shopping-bag',
-    'supplier'    => 'ph ph-users',
     'customer'    => 'ph ph-user-check',
-    'collection'  => 'ph ph-credit-card',
-    'banking'     => 'ph ph-bank',
-    'expenses'    => 'ph ph-receipt',
+    'supplier'    => 'ph ph-users',
     'finance'     => 'ph ph-book-open',
-    'cashier'     => 'ph ph-medal',
-    'expiry'      => 'ph ph-calendar-x'
+    'collection'  => 'ph ph-credit-card',
+    'route'       => 'ph ph-map-pin-line',
+    'management'  => 'ph ph-briefcase'
 ];
 ?>
 
