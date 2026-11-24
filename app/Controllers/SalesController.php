@@ -392,15 +392,19 @@ class SalesController extends Controller {
             $invoiceDate = !empty($_POST['invoice_date']) ? trim($_POST['invoice_date']) : date('Y-m-d');
             $repRouteId = !empty($_POST['rep_route_id']) ? intval($_POST['rep_route_id']) : null;
 
-            // If a Sales Rep was selected or changed in the dropdown, resolve or create their route
-            if (!empty($repName)) {
-                $resolvedRouteId = $this->getOrCreateRouteForRep($repName, $invoiceDate);
-                if ($resolvedRouteId) {
-                    $repRouteId = $resolvedRouteId;
+            // If a Sales Rep was selected or changed in the dropdown, resolve or link their route
+            try {
+                if (!empty($repName)) {
+                    $resolvedRouteId = $this->getOrCreateRouteForRep($repName, $invoiceDate);
+                    if ($resolvedRouteId) {
+                        $repRouteId = $resolvedRouteId;
+                    }
+                } else {
+                    // If rep was explicitly cleared to blank
+                    $repRouteId = null;
                 }
-            } else {
-                // If rep was explicitly cleared to blank
-                $repRouteId = null;
+            } catch (Throwable $e) {
+                error_log("SalesController::store - Route resolution notice: " . $e->getMessage());
             }
 
             // Resolve whether this record is in invoices table or sales_orders table
@@ -958,7 +962,7 @@ class SalesController extends Controller {
                         }
                     }
 
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     $_SESSION['flash_error'] = "Accounting Engine Error: " . $e->getMessage();
                     header('Location: ' . APP_URL . '/sales/create' . ($editingId ? '?id='.$editingId : ''));
                     exit;
@@ -1716,43 +1720,42 @@ class SalesController extends Controller {
      * Get or create daily route for a representative name and date.
      */
     private function getOrCreateRouteForRep($repName, $date) {
-        $this->db->query("SELECT u.id as user_id 
-                          FROM users u 
-                          JOIN employees e ON u.employee_id = e.id 
-                          WHERE CONCAT(e.first_name, ' ', e.last_name) = :rep_name LIMIT 1");
-        $this->db->bind(':rep_name', $repName);
-        $userRow = $this->db->single();
-        if (!$userRow) {
-            $this->db->query("SELECT id as user_id FROM users WHERE username = :rep_name LIMIT 1");
-            $this->db->bind(':rep_name', $repName);
-            $userRow = $this->db->single();
-        }
-        
-        if (!$userRow) {
+        if (empty($repName)) {
             return null;
         }
-        
-        $userId = $userRow->user_id;
-        $dateStr = date('Y-m-d', strtotime($date));
-        
-        $this->db->query("SELECT id FROM rep_daily_routes WHERE user_id = :user_id AND DATE(start_time) = :date LIMIT 1");
-        $this->db->bind(':user_id', $userId);
-        $this->db->bind(':date', $dateStr);
-        $routeRow = $this->db->single();
-        if ($routeRow) {
-            return $routeRow->id;
+
+        try {
+            $this->db->query("SELECT u.id as user_id 
+                              FROM users u 
+                              JOIN employees e ON u.employee_id = e.id 
+                              WHERE CONCAT(TRIM(e.first_name), ' ', TRIM(e.last_name)) = :rep_name 
+                                 OR e.first_name = :rep_name 
+                                 OR u.username = :rep_name 
+                              LIMIT 1");
+            $this->db->bind(':rep_name', $repName);
+            $userRow = $this->db->single();
+            if (!$userRow) {
+                return null;
+            }
+            
+            $userId = $userRow->user_id;
+            $dateStr = date('Y-m-d', strtotime($date));
+            
+            $this->db->query("SELECT id FROM rep_daily_routes WHERE user_id = :user_id AND DATE(start_time) = :date LIMIT 1");
+            $this->db->bind(':user_id', $userId);
+            $this->db->bind(':date', $dateStr);
+            $routeRow = $this->db->single();
+            if ($routeRow) {
+                return $routeRow->id;
+            }
+            
+            // For office/direct invoicing, do not force-insert a fake mobile GPS route if none was started.
+            // Linking rep_route_id = null while preserving rep_name on the invoice prevents DB schema mismatch crashes.
+            return null;
+        } catch (Throwable $e) {
+            error_log("SalesController::getOrCreateRouteForRep notice: " . $e->getMessage());
+            return null;
         }
-        
-        $routeName = $repName . " Route - " . $dateStr;
-        $startTime = $dateStr . " 08:00:00";
-        $this->db->query("INSERT INTO rep_daily_routes (user_id, route_name, start_time, status) 
-                          VALUES (:user_id, :route_name, :start_time, 'Active')");
-        $this->db->bind(':user_id', $userId);
-        $this->db->bind(':route_name', $routeName);
-        $this->db->bind(':start_time', $startTime);
-        $this->db->execute();
-        
-        return $this->db->lastInsertId();
     }
 
     /**

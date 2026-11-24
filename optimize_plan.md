@@ -320,8 +320,9 @@ Test how the system handles each situation and fix genuine problems.
       - Root cause 5: Catalog items in `SalesController::edit()` suffered from the same N+1 variation query loop present earlier in `create()`.
     - **Invoice Edit & Sales Rep Fixes & Optimizations**:
       - Updated `Invoice::getInvoiceById()` and `SalesController::edit()` to automatically resolve the Sales Rep name from `rep_daily_routes` (via `rep_route_id`), `users`, or `employees` table.
-      - Enhanced `app/Views/sales/index.php` to query all active employees for Sales Rep selection, added case-insensitive matching, and guaranteed fallback rendering so the current rep is always pre-selected.
-      - Updated `SalesController::store()` to resolve `$_POST['rep_name']` to a route via `getOrCreateRouteForRep()`, correctly updating `rep_route_id` and `rep_name`.
+      - Enhanced `app/Views/sales/index.php` to query strictly Sales Representatives (`e.job_title = 'Rep' OR LOWER(e.job_title) LIKE '%rep%' OR u.role = 'rep'`), filtering out non-rep staff (Drivers, Accountants, Admins, Office staff, Cashiers, Storekeepers), with case-insensitive matching and fallback rendering so the current rep is always pre-selected.
+      - Fixed 500 error (`ERR-SYS-1E4AB4DC-1795522542`) by safely decoupling route resolution in `SalesController::store()` and `SalesOrderController::store()`. Prevented uncaught PDOExceptions when saving counter/direct invoices by returning `null` when no physical route exists rather than attempting invalid inserts into `rep_daily_routes`.
+      - Removed runtime DDL (`ALTER TABLE`) and uncached `SHOW COLUMNS` from `Invoice::__construct()`, implementing static request-lifecycle caching (`hasRepNameColumn()`) to prevent unbuffered query conflicts during transactions.
       - Updated `Invoice::updateInvoiceWithAccounting()` and `createInvoiceWithAccounting()` to save both `rep_route_id` and `rep_name`.
       - Optimized `SalesController::edit()` by batch-preloading all item variations in 1 query, eliminating 1,050+ N+1 queries on invoice editing.
       - Generated standalone copy-pasteable production SQL for `ALTER TABLE invoices ADD COLUMN rep_name` and backfill migration.

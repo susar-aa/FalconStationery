@@ -122,8 +122,14 @@ $customers = $db->resultSet();
 $db->query("SELECT * FROM mca_areas ORDER BY name ASC");
 $mcaAreas = $db->resultSet() ?: [];
 
-// Fetch Active Employees for Sales Rep selection
-$db->query("SELECT * FROM employees WHERE status = 'Active' ORDER BY first_name ASC, last_name ASC");
+// Fetch Active Sales Representatives for Rep selection (strictly exclude non-rep staff)
+$db->query("SELECT DISTINCT e.id, e.first_name, e.last_name, e.job_title, e.phone 
+            FROM employees e 
+            LEFT JOIN users u ON u.employee_id = e.id 
+            WHERE (e.job_title = 'Rep' OR LOWER(e.job_title) LIKE '%rep%' OR u.role = 'rep') 
+              AND e.status = 'Active' 
+              AND (e.job_title IS NULL OR e.job_title NOT IN ('Driver', 'Accountant', 'Admin', 'Office', 'Cashier', 'Storekeeper'))
+            ORDER BY e.first_name ASC, e.last_name ASC");
 $reps = $db->resultSet() ?: [];
 
 // Automate Accounting Defaults
@@ -150,6 +156,22 @@ if (empty($revenues)) {
 // Extract Invoice Parameters
 $inv = $data['editing_invoice'] ?? null;
 $editingItems = $data['editing_items'] ?? [];
+
+// Guarantee rep_name is resolved on the editing invoice if currently empty
+if ($inv && empty($inv->rep_name)) {
+    if (!empty($inv->rep_route_id)) {
+        $db->query("SELECT CONCAT(e.first_name, ' ', e.last_name) as rep_name 
+                    FROM rep_daily_routes r 
+                    JOIN users u ON r.user_id = u.id 
+                    JOIN employees e ON u.employee_id = e.id 
+                    WHERE r.id = :route_id LIMIT 1");
+        $db->bind(':route_id', $inv->rep_route_id);
+        $repRow = $db->single();
+        if ($repRow && !empty($repRow->rep_name)) {
+            $inv->rep_name = trim($repRow->rep_name);
+        }
+    }
+}
 
 // Determine back URL
 $rep_route_id = $_GET['rep_route_id'] ?? $_GET['route_id'] ?? (isset($inv->rep_route_id) ? $inv->rep_route_id : '');

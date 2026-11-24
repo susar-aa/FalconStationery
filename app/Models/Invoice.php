@@ -1,20 +1,23 @@
 <?php
 class Invoice {
     private $db;
+    private static $hasRepNameColCache = null;
 
     public function __construct() {
         $this->db = new Database();
-        $this->ensureRepColumnExists();
     }
 
-    private function ensureRepColumnExists() {
-        try {
-            $this->db->query("SHOW COLUMNS FROM invoices LIKE 'rep_name'");
-            if (!$this->db->single()) {
-                $this->db->query("ALTER TABLE invoices ADD COLUMN rep_name VARCHAR(150) NULL AFTER rep_route_id");
-                $this->db->execute();
+    private function hasRepNameColumn() {
+        if (self::$hasRepNameColCache === null) {
+            try {
+                $this->db->query("SHOW COLUMNS FROM invoices LIKE 'rep_name'");
+                $rows = $this->db->resultSet();
+                self::$hasRepNameColCache = !empty($rows);
+            } catch (Throwable $e) {
+                self::$hasRepNameColCache = false;
             }
-        } catch (Throwable $e) {}
+        }
+        return self::$hasRepNameColCache;
     }
 
     public function getAllInvoices() {
@@ -263,11 +266,7 @@ class Invoice {
             $uuid = $invoiceData['uuid'] ?? null;
 
             // Check if rep_name column exists in invoices
-            $hasRepNameCol = false;
-            try {
-                $this->db->query("SHOW COLUMNS FROM invoices LIKE 'rep_name'");
-                $hasRepNameCol = !empty($this->db->single());
-            } catch (Throwable $e) {}
+            $hasRepNameCol = $this->hasRepNameColumn();
 
             if ($hasRepNameCol) {
                 $this->db->query("INSERT INTO invoices (invoice_number, uuid, customer_id, rep_route_id, rep_name, invoice_date, due_date, payment_term_id, total_amount, grand_total, original_grand_total, tax_amount, tax_rate_id, global_discount_val, global_discount_type, notes, journal_entry_id, created_by, status, stock_status, customer_vat_number) 
@@ -696,11 +695,7 @@ class Invoice {
             }
 
             // 5. UPDATE TOP-LEVEL RECORD & PRESERVE stock_status
-            $hasRepNameCol = false;
-            try {
-                $this->db->query("SHOW COLUMNS FROM invoices LIKE 'rep_name'");
-                $hasRepNameCol = !empty($this->db->single());
-            } catch (Throwable $e) {}
+            $hasRepNameCol = $this->hasRepNameColumn();
 
             $updateSql = "UPDATE invoices SET 
                                 customer_id = :customer_id, 
