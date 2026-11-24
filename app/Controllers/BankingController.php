@@ -356,89 +356,35 @@ class BankingController extends Controller {
         $this->view('layouts/main', $data);
     }
 
-    // --- Bank Reconciliation Screen ---
+    // --- Bank Reconciliation Screen (Seamless integration with BankReconciliation Engine) ---
     public function reconcile($accountId = null) {
         $this->checkPermission('accounting', 'view');
 
         if (!$accountId) {
-            header('Location: ' . APP_URL . '/banking');
+            header('Location: ' . APP_URL . '/bankreconciliation');
             exit;
         }
 
         $account = $this->coaModel->getAccountById($accountId);
-        if (!$account || $account->account_type !== 'Asset') {
-            die("Invalid account selected for reconciliation.");
+        if (!$account) {
+            header('Location: ' . APP_URL . '/banking');
+            exit;
         }
 
-        $data = [
-            'title' => 'Reconcile: ' . $account->account_name,
-            'content_view' => 'banking/reconcile',
-            'account' => $account,
-            'uncleared' => $this->coaModel->getUnclearedTransactions($accountId),
-            'statement_balance' => isset($_POST['statement_balance']) ? floatval($_POST['statement_balance']) : $account->balance,
-            'error' => '',
-            'success' => ''
-        ];
+        // Check if an unfinalized Draft exists for this account
+        $db = new Database();
+        $db->query("SELECT id FROM bank_reconciliations WHERE account_id = :account_id AND status = 'Draft' ORDER BY statement_date_end DESC LIMIT 1");
+        $db->bind(':account_id', intval($accountId));
+        $draft = $db->single();
 
-        // Handle the submission of checked transactions
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'save_reconciliation') {
-            $this->checkPermission('accounting', 'create_edit');
-            $statementBalance = floatval($_POST['statement_balance'] ?? 0.0);
-            $clearedTx = $_POST['cleared_tx'] ?? [];
-
-            if (!empty($clearedTx)) {
-                // Fetch current uncleared to calculate and validate
-                $unclearedList = $this->coaModel->getUnclearedTransactions($accountId);
-                $unclearedMap = [];
-                $totalUnclearedImpact = 0.0;
-                foreach ($unclearedList as $t) {
-                    $unclearedMap[$t->id] = $t;
-                    $totalUnclearedImpact += ($t->debit > 0) ? floatval($t->debit) : -floatval($t->credit);
-                }
-
-                $validCleared = [];
-                $selectedDeposits = 0.0;
-                $selectedPayments = 0.0;
-
-                foreach ($clearedTx as $txId) {
-                    $txId = intval($txId);
-                    if (isset($unclearedMap[$txId])) {
-                        $validCleared[] = $txId;
-                        $t = $unclearedMap[$txId];
-                        $impact = ($t->debit > 0) ? floatval($t->debit) : -floatval($t->credit);
-                        if ($impact > 0) {
-                            $selectedDeposits += $impact;
-                        } else {
-                            $selectedPayments += abs($impact);
-                        }
-                    }
-                }
-
-                if (count($validCleared) !== count($clearedTx)) {
-                    $data['error'] = 'Data Integrity Error: One or more selected transactions are invalid or already cleared.';
-                } else {
-                    $startingClearedBalance = floatval($account->balance) - $totalUnclearedImpact;
-                    $newClearedBalance = $startingClearedBalance + $selectedDeposits - $selectedPayments;
-                    $difference = $statementBalance - $newClearedBalance;
-
-                    if (abs($difference) >= 0.01) {
-                        $data['error'] = 'Reconciliation Error: Selected transactions do not match the statement ending balance (Difference: Rs ' . number_format($difference, 2) . ').';
-                    } else {
-                        if ($this->coaModel->clearTransactions($validCleared)) {
-                            $data['success'] = count($validCleared) . ' transaction(s) have been successfully reconciled and cleared!';
-                            $data['statement_balance'] = $statementBalance;
-                            $data['uncleared'] = $this->coaModel->getUnclearedTransactions($accountId);
-                        } else {
-                            $data['error'] = 'Database error: Failed to update transaction status.';
-                        }
-                    }
-                }
-            } else {
-                 $data['error'] = 'No transactions were selected to clear.';
-            }
+        if ($draft) {
+            header('Location: ' . APP_URL . '/bankreconciliation/reconcile/' . $draft->id);
+            exit;
         }
 
-        $this->view('layouts/main', $data);
+        // Otherwise route to create a new reconciliation period for this account
+        header('Location: ' . APP_URL . '/bankreconciliation/create?account_id=' . intval($accountId));
+        exit;
     }
 
     public function get_bank_details_json($id) {

@@ -282,6 +282,7 @@ class BankReconciliation {
                   AND je.entry_date <= :end_date
                   AND (je.status IS NULL OR je.status != 'Voided')
                   AND (t.is_reconciled = 0 OR t.reconciliation_id = :rec_id_dup2)
+                  AND (t.debit > 0 OR t.credit > 0)
                   AND bri.id IS NULL";
 
         $this->db->query($sql);
@@ -365,7 +366,7 @@ class BankReconciliation {
                 $oppDebit = $amount;
             }
 
-            $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit, description, is_reconciled, reconciliation_id) VALUES (:je, :acc, :dr, :cr, :desc, 1, :rec_id)");
+            $this->db->query("INSERT INTO transactions (journal_entry_id, account_id, debit, credit, description, is_reconciled, is_cleared, reconciliation_id) VALUES (:je, :acc, :dr, :cr, :desc, 1, 1, :rec_id)");
             $this->db->bind(':je', $jeId);
             $this->db->bind(':acc', $rec->account_id);
             $this->db->bind(':dr', $bankDebit);
@@ -531,10 +532,10 @@ class BankReconciliation {
             }
 
             if (!empty($matchedTxIds)) {
-                // Batch update matched transactions
+                // Batch update matched transactions: mark both reconciled and cleared for Bank Register synchronization
                 $inList = implode(',', $matchedTxIds);
                 $this->db->query("UPDATE transactions 
-                                  SET is_reconciled = 1, reconciliation_id = :rec_id 
+                                  SET is_reconciled = 1, is_cleared = 1, reconciliation_id = :rec_id 
                                   WHERE id IN ($inList)");
                 $this->db->bind(':rec_id', $recId);
                 $this->db->execute();
@@ -611,9 +612,9 @@ class BankReconciliation {
         try {
             $this->db->beginTransaction();
 
-            // 1. Unlock transactions linked to this reconciliation
+            // 1. Unlock transactions linked to this reconciliation: clear both reconciled and cleared flags
             $this->db->query("UPDATE transactions 
-                              SET is_reconciled = 0, reconciliation_id = NULL 
+                              SET is_reconciled = 0, is_cleared = 0, reconciliation_id = NULL 
                               WHERE reconciliation_id = :rec_id");
             $this->db->bind(':rec_id', $recId);
             $this->db->execute();
@@ -670,7 +671,7 @@ class BankReconciliation {
             $this->db->execute();
 
             // 3. Unlink any transactions linked to this reconciliation
-            $this->db->query("UPDATE transactions SET is_reconciled = 0, reconciliation_id = NULL WHERE reconciliation_id = :rec_id");
+            $this->db->query("UPDATE transactions SET is_reconciled = 0, is_cleared = 0, reconciliation_id = NULL WHERE reconciliation_id = :rec_id");
             $this->db->bind(':rec_id', $id);
             $this->db->execute();
 

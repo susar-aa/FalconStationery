@@ -401,23 +401,32 @@ Test how the system handles each situation and fix genuine problems.
     - Targeted primary AR debit row and primary Revenue credit row with `ORDER BY debit/credit DESC LIMIT 1` in `api_save_accounting_entries` to prevent ledger corruption.
     - Preloaded all distinct routes and filter reps in controller `loadRouteDashboardData()`, eliminating view database queries and enabling full catalog route selection in the filter bar.
     - Generated standalone copy-pasteable production SQL composite indexes for live server execution.
-- [x] **Module 8: Double-Entry Accounting & Banking (Bank Register & Account Ledgers)**
-    - **Audit Findings**:
+- [x] **Module 8: Double-Entry Accounting & Banking (Bank Register, Ledgers & Bank Reconciliation Engine)**
+    - **Audit Findings (Bank Register & Account Ledgers)**:
       - Unlocked viewport layout allowing page-level body scrolling, with bulky stat cards pushing the table out of view and creating an awkward web layout.
       - Absence of a chronological Running Balance column — the single most critical data point expected in any bank or cash register.
       - Lack of top-right filter controls (no date range preset, no date pickers, no status filter, no inflow/outflow filter), forcing users to view all records in a single unpaginated dump.
       - Subquery duplication in `ChartOfAccount::getBankLedger()`, executing repeated subqueries for every single transaction row.
       - Missing RBAC authorization (`checkPermission('accounting', 'view' | 'create_edit')`) on the ledger and reconciliation endpoints.
       - External font dependency instead of local offline SF Pro Display font suite.
+    - **Audit Findings (Bank Reconciliation Engine — `/bankreconciliation`)**:
+      - **Critical Disconnect Bug**: `finalizeReconciliation()` only marked `transactions.is_reconciled = 1` while leaving `transactions.is_cleared = 0`. As a result, transactions reconciled and locked in bank reconciliation remained displayed as "UNCLEARED" on the Bank Register.
+      - **Security & Authorization Flaws**: `BankReconciliationController` had an incorrect unauthenticated redirect to non-existent `/users/login` instead of `/auth/login`. Lacked CSRF verification across mutating POST/AJAX endpoints (`store`, `match_ajax`, `bank_only_ajax`, `finalize_ajax`, `reopen_ajax`). `delete($id)` was an unprotected GET link allowing deletion without confirmation tokens. Lacked granular RBAC (`checkPermission('accounting', 'view' | 'create_edit' | 'delete')`).
+      - **UI Architecture Flaws**: Violated Mandatory Rule 1 (lacked 100vh Viewport lock; page-level scrollbars present across all 4 views). Violated Mandatory Rule 2 (history list lacked top-right filter toolbar for bank accounts, statuses, and live search). Violated Mandatory Rule 3 (loaded external CDN Google Fonts / Inter / FontAwesome instead of local SF Pro Display, and lacked alternating zebra striping).
+      - **Navigation Disconnect**: Clicking "Reconcile" on the Bank Register used an obsolete disconnected screen `banking/reconcile` rather than routing seamlessly into the dedicated Bank Reconciliation engine.
     - **Fixes & Optimizations**:
-      - Converted Bank Register to 100vh Viewport-Locked ERP layout (`.bank-register-workspace`, sticky `thead`, table rows only scrolling inside `.erp-table-scroll` with `padding-bottom: 54px;`, pinned `.erp-pagination` footer with dynamic page sizes: 25, 50, 100, All).
-      - Added chronological historical Running Balance calculation (`$t->running_balance`) and added it to both the data table and CSV/Excel exports.
-      - Grouped all filters (Flow: All/Deposits/Payments, Status: All/Cleared/Uncleared/Voided, Range: Presets/From/To, Reset) aligned to the **top-right corner** directly above the data table (Rule 2).
-      - Replaced bulky cards with a compact, high-density KPI stat strip (Current Balance, Cleared Entries, Pending Entries, Period Inflows, Period Outflows, Total Entries).
-      - Enforced SF Pro Display typography, monospace data formatting (`SF Mono`) on dates, references, debits, credits, and running balances, with alternating zebra striping (`tbody tr:nth-child(even)`).
-      - Added floating command bar with instant 320px live search and shortcut to `Reconcile Statement`.
-      - Optimized SQL query in `ChartOfAccount::getBankLedger()` by removing redundant subquery executions.
-      - Provided production composite indexing SQL for `transactions`, `customer_payments`, and `supplier_payments`.
+      - **Bank Register**: Converted to 100vh Viewport-Locked ERP layout (`.bank-register-workspace`, sticky `thead`, table rows only scrolling inside `.erp-table-scroll` with `padding-bottom: 54px;`, pinned `.erp-pagination` footer with dynamic page sizes: 25, 50, 100, All). Added chronological historical Running Balance calculation (`$t->running_balance`). Grouped all filters aligned to the **top-right corner** (Rule 2). Replaced bulky cards with compact KPI stat strip. Monospace `SF Mono` formatting.
+      - **Bank Reconciliation Engine**:
+        - Fixed `BankReconciliation::finalizeReconciliation()` to atomically update both `is_reconciled = 1` and `is_cleared = 1` in `transactions`, perfectly synchronizing with the Bank Register.
+        - Fixed `reopenReconciliation()` and `deleteReconciliation()` to cleanly revert `is_reconciled = 0` and `is_cleared = 0`.
+        - Filtered out zero-amount items in `populateReconciliationItems()` with `AND (t.debit > 0 OR t.credit > 0)`.
+        - Fixed login redirect to `/auth/login`, added `$this->generateCsrfToken()`, enforced `$this->validateCsrfOrDie()` on all mutating endpoints (`store`, `match_ajax`, `bank_only_ajax`, `finalize_ajax`, `reopen_ajax`, `delete`), and enforced RBAC permissions (`view`, `create_edit`, `delete`).
+        - Integrated `BankingController::reconcile($accountId)` to check for active draft reconciliations and route directly into `/bankreconciliation/reconcile/{id}` or `/bankreconciliation/create?account_id={$accountId}`.
+        - Redesigned `bank_reconciliation/index.php` into 100vh Viewport-Locked ERP layout with sticky header, scrollable rows, top-right filter toolbar (Bank Account filter, Status filter: Draft/Finalized, search, reset), local SF Pro Display, monospace numbers, zebra striping, and secure CSRF delete modal.
+        - Redesigned `bank_reconciliation/create.php` with auto-selection of bank accounts via GET parameter, dynamic opening balance and prior month status fetch, and CSRF protection.
+        - Redesigned `bank_reconciliation/reconcile.php` into 100vh Viewport-Locked workspace with sticky KPI strip, top-right transaction filters (Match status, Origin, Flow type, search), and CSRF tokens across all AJAX requests (`match_ajax`, `bank_only_ajax`, `finalize_ajax`, `reopen_ajax`).
+        - Redesigned `bank_reconciliation/report.php` into clean, print/PDF-optimized audit statement using local SF Pro typography and zebra striping without external CDN dependencies.
+        - Delivered standalone copy-pasteable production SQL composite indexes for live server execution.
 - [ ] **Module 9: HRM & Payroll**
 - [x] **Module 10: Reports Engine (Central Reports Hub & Report Viewer Engine)**
     - Restored 100% of all 38 authentic Falcon Stationery ERP reports across the 9 system categories (`Inventory Reports`, `Sales Reports`, `Procurement Reports`, `Customer Reports`, `Supplier Reports`, `Finance & Accounts Reports`, `Collection & Payment Reports`, `Route & Distribution Reports`, `Management Reports`), with exact SQL queries, column definitions, and filters preserved. Removed extraneous/hallucinated cashier reports.

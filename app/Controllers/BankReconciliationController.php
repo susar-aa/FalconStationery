@@ -5,27 +5,34 @@ class BankReconciliationController extends Controller {
 
     public function __construct() {
         if (!isset($_SESSION['user_id'])) {
-            header('Location: ' . APP_URL . '/users/login');
+            header('Location: ' . APP_URL . '/auth/login');
             exit;
         }
+        $this->generateCsrfToken();
         $this->recModel = $this->model('BankReconciliation');
         $this->coaModel = $this->model('ChartOfAccount');
     }
 
     public function index() {
+        $this->checkPermission('accounting', 'view');
         $reconciliations = $this->recModel->getAllReconciliations();
+        $bankAccounts = $this->recModel->getBankAccounts();
         $data = [
             'content_view' => 'bank_reconciliation/index',
-            'reconciliations' => $reconciliations
+            'reconciliations' => $reconciliations,
+            'bankAccounts' => $bankAccounts
         ];
         $this->view('layouts/main', $data);
     }
 
     public function create() {
+        $this->checkPermission('accounting', 'create_edit');
         $bankAccounts = $this->recModel->getBankAccounts();
+        $selectedAccountId = intval($_GET['account_id'] ?? 0);
         $data = [
             'content_view' => 'bank_reconciliation/create',
-            'bankAccounts' => $bankAccounts
+            'bankAccounts' => $bankAccounts,
+            'selectedAccountId' => $selectedAccountId
         ];
         $this->view('layouts/main', $data);
     }
@@ -34,6 +41,7 @@ class BankReconciliationController extends Controller {
      * AJAX endpoint: fetch confirmed opening balance and recommended dates for selected bank account
      */
     public function get_account_info_ajax() {
+        $this->checkPermission('accounting', 'view');
         header('Content-Type: application/json');
         $accountId = intval($_GET['account_id'] ?? 0);
         $targetStart = !empty($_GET['start_date']) ? trim($_GET['start_date']) : null;
@@ -49,7 +57,9 @@ class BankReconciliationController extends Controller {
     }
 
     public function store() {
+        $this->checkPermission('accounting', 'create_edit');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->validateCsrfOrDie();
             try {
                 $accountId = intval($_POST['account_id'] ?? 0);
                 $startDate = trim($_POST['statement_date_start'] ?? '');
@@ -79,6 +89,7 @@ class BankReconciliationController extends Controller {
 
                 $recId = $this->recModel->createDraft($data);
                 if ($recId) {
+                    $_SESSION['flash_success'] = 'Reconciliation period created successfully.';
                     header('Location: ' . APP_URL . '/bankreconciliation/reconcile/' . $recId);
                     exit;
                 } else {
@@ -96,6 +107,7 @@ class BankReconciliationController extends Controller {
     }
 
     public function reconcile($id) {
+        $this->checkPermission('accounting', 'view');
         try {
             $id = intval($id);
             $reconciliation = $this->recModel->getReconciliationById($id);
@@ -133,6 +145,8 @@ class BankReconciliationController extends Controller {
     }
 
     public function match_ajax() {
+        $this->checkPermission('accounting', 'create_edit');
+        $this->validateCsrfOrDie();
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $itemId = intval($_POST['item_id'] ?? 0);
@@ -152,14 +166,16 @@ class BankReconciliationController extends Controller {
     }
 
     public function bank_only_ajax() {
+        $this->checkPermission('accounting', 'create_edit');
+        $this->validateCsrfOrDie();
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $recId = intval($_POST['reconciliation_id']);
+            $recId = intval($_POST['reconciliation_id'] ?? 0);
             $postData = [
-                'transaction_date' => $_POST['transaction_date'],
-                'type' => $_POST['type'],
-                'amount' => floatval($_POST['amount']),
-                'opposite_account_id' => intval($_POST['opposite_account_id']),
+                'transaction_date' => $_POST['transaction_date'] ?? date('Y-m-d'),
+                'type' => $_POST['type'] ?? 'BANK_CHARGE',
+                'amount' => floatval($_POST['amount'] ?? 0),
+                'opposite_account_id' => intval($_POST['opposite_account_id'] ?? 0),
                 'reference' => trim($_POST['reference'] ?? ''),
                 'description' => trim($_POST['description'] ?? '')
             ];
@@ -175,9 +191,11 @@ class BankReconciliationController extends Controller {
     }
 
     public function finalize_ajax() {
+        $this->checkPermission('accounting', 'create_edit');
+        $this->validateCsrfOrDie();
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $recId = intval($_POST['reconciliation_id']);
+            $recId = intval($_POST['reconciliation_id'] ?? 0);
             $userId = $_SESSION['user_id'] ?? 1;
 
             $result = $this->recModel->finalizeReconciliation($recId, $userId);
@@ -191,9 +209,11 @@ class BankReconciliationController extends Controller {
     }
 
     public function reopen_ajax() {
+        $this->checkPermission('accounting', 'create_edit');
+        $this->validateCsrfOrDie();
         header('Content-Type: application/json');
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $recId = intval($_POST['reconciliation_id']);
+            $recId = intval($_POST['reconciliation_id'] ?? 0);
             $userId = $_SESSION['user_id'] ?? 1;
 
             $result = $this->recModel->reopenReconciliation($recId, $userId);
@@ -207,9 +227,11 @@ class BankReconciliationController extends Controller {
     }
 
     public function report($id) {
+        $this->checkPermission('accounting', 'view');
+        $id = intval($id);
         $reconciliation = $this->recModel->getReconciliationById($id);
         if (!$reconciliation) {
-            flash('rec_message', 'Reconciliation record not found', 'alert alert-danger');
+            $_SESSION['flash_error'] = 'Reconciliation record not found';
             header('Location: ' . APP_URL . '/bankreconciliation');
             exit;
         }
@@ -225,18 +247,18 @@ class BankReconciliationController extends Controller {
     }
 
     public function delete($id) {
+        $this->checkPermission('accounting', 'delete');
+        $id = intval($id);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->validateCsrfOrDie();
+        }
+
         $userId = $_SESSION['user_id'] ?? 1;
         $result = $this->recModel->deleteReconciliation($id, $userId);
         if ($result['status']) {
             $_SESSION['flash_success'] = $result['message'];
-            if (function_exists('flash')) {
-                flash('rec_message', $result['message'], 'alert alert-success');
-            }
         } else {
             $_SESSION['flash_error'] = $result['message'];
-            if (function_exists('flash')) {
-                flash('rec_message', $result['message'], 'alert alert-danger');
-            }
         }
         header('Location: ' . APP_URL . '/bankreconciliation');
         exit;
