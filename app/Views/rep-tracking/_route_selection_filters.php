@@ -15,22 +15,13 @@
                 <select id="filterRepSelect" class="filter-input-select">
                     <option value="">All Representatives</option>
                     <?php
-                    $db = new Database();
-                    $db->query("
-                        SELECT DISTINCT COALESCE(e.first_name, u.username) as first_name, COALESCE(e.last_name, '') as last_name
-                        FROM rep_daily_routes r
-                        LEFT JOIN users u ON r.user_id = u.id
-                        LEFT JOIN employees e ON u.email = e.email
-                        UNION
-                        SELECT DISTINCT COALESCE(e.first_name, u.username) as first_name, COALESCE(e.last_name, '') as last_name
-                        FROM users u
-                        LEFT JOIN employees e ON u.employee_id = e.id
-                        WHERE u.role = 'rep' AND (u.status IS NULL OR u.status = 'Active')
-                    ");
-                    $dbReps = $db->resultSet() ?: [];
                     $repNames = [];
-                    foreach ($dbReps as $r) {
-                        $fullName = trim($r->first_name . ' ' . $r->last_name);
+                    $filterReps = !empty($data['filter_reps']) ? $data['filter_reps'] : (!empty($data['reps']) ? $data['reps'] : []);
+                    foreach ($filterReps as $r) {
+                        $fullName = trim(($r->first_name ?? '') . ' ' . ($r->last_name ?? ''));
+                        if ($fullName === '' && !empty($r->username)) {
+                            $fullName = trim($r->username);
+                        }
                         if ($fullName !== '' && !in_array($fullName, $repNames)) {
                             $repNames[] = $fullName;
                         }
@@ -54,9 +45,11 @@
                     <option value="">All Routes</option>
                     <?php 
                     $uniqueRouteNames = [];
-                    foreach ($data['routes'] as $r) {
-                        if (!in_array($r->route_name, $uniqueRouteNames)) {
-                            $uniqueRouteNames[] = $r->route_name;
+                    $sourceRoutes = !empty($data['all_routes']) ? $data['all_routes'] : ($data['routes'] ?? []);
+                    foreach ($sourceRoutes as $r) {
+                        $rName = is_object($r) ? ($r->route_name ?? '') : '';
+                        if (!empty($rName) && !in_array($rName, $uniqueRouteNames)) {
+                            $uniqueRouteNames[] = $rName;
                         }
                     }
                     sort($uniqueRouteNames);

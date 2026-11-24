@@ -16275,3 +16275,18 @@ SQL: Callable
 [2026-10-13 09:06:37] Migration 'cheques_entity_linking_v3' failed: SQLSTATE[HY000]: General error: 2014 Cannot execute queries while other unbuffered queries are active.  Consider using PDOStatement::fetchAll().  Alternatively, if your code is only ever going to run against mysql, you may enable query buffering by setting the PDO::MYSQL_ATTR_USE_BUFFERED_QUERY attribute.
 SQL: Callable
 
+[2026-11-23 07:57:59] Database initialization failed: SQLSTATE[HY000] [2002] Connection refused
+#0 /Users/mac/Documents/Curtiss/Falcon Stationary/FalconStationery/core/Database.php(27): PDO->__construct('mysql:host=127....', 'curtiss_erp', Object(SensitiveParameterValue), Array)
+#1 Command line code(4): Database->__construct()
+#2 {main}
+
+[2026-11-23 07:59:29] Database initialization failed: SQLSTATE[HY000] [2002] Connection refused
+#0 /Users/mac/Documents/Curtiss/Falcon Stationary/FalconStationery/core/Database.php(27): PDO->__construct('mysql:host=127....', 'root', Object(SensitiveParameterValue), Array)
+#1 Command line code(4): Database->__construct()
+#2 {main}
+
+[2026-11-23 08:05:45] Database initialization failed: SQLSTATE[HY000] [2002] Connection refused
+#0 /Users/mac/Documents/Curtiss/Falcon Stationary/FalconStationery/core/Database.php(27): PDO->__construct('mysql:host=127....', 'curtiss_erp', Object(SensitiveParameterValue), Array)
+#1 Command line code(4): Database->__construct()
+#2 {main}
+

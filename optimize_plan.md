@@ -380,7 +380,27 @@ Test how the system handles each situation and fix genuine problems.
     - Standardized floating bottom command bar pill (320px live search + `+ New Service Provider` button).
     - Added strict CSRF validation (`validateCsrfOrDie()`) and RBAC checks (`checkPermission('supplier', 'view' | 'create_edit')`) across all endpoints and forms.
     - Provided copy-pasteable production SQL for `service_providers` and related tables per Rule 1 & Rule 4.
-- [ ] **Module 7: Rep Tracking & Route Audits**
+- [x] **Module 7: Rep Tracking & Route Audits (`RepTrackingController`, `RepTracking`, `app/Views/rep-tracking/`)**
+  - **Audit Findings**:
+    - **Broken RBAC & Privilege Escalation Risks**: Main dashboard views (`index()` and `history()` via `renderRouteDashboard()`) lacked `$this->checkPermission('reptracking', 'view')`. Unprivileged users could access complete daily route operational tracking, live rep locations, vehicle dispatches, and financial settlements.
+    - **RBAC Slug Typo Lockout**: Lines 3083 & 3111 in `api_add_route_expense` and `api_delete_route_expense` checked `'rep_tracking', 'edit'` instead of `'reptracking', 'create_edit'`. Because `core/RbacService.php` checks `$action === 'create_edit'`, this caused non-admin users with reptracking permissions to be locked out.
+    - **Incorrect Permission in Route Deletion**: `delete_route()` checked `perms['sales']['can_delete']` instead of canonical `reptracking:delete`.
+    - **Mutating APIs Lacking Authorization**: Multiple critical state mutation APIs (`arrange`, `finalize`, `api_update_route_status`, `api_verify_collections`, `api_adjust_variance_billing`, `api_apply_substitution`, `api_finalize_collections`, `api_delete_sales_order`, `api_attach_invoices`, `api_create_binding`, `api_unbind_route`, `api_save_reconciliation`, `api_process_delivery_visit`, `api_save_return_stock`, `api_save_accounting_entries`, `api_save_route_notes`, `api_detach_invoice`, `create_route_manual`, `api_save_market_return`, `api_apply_credit_bill_payment`, `api_cancel_credit_bill_draft`) lacked RBAC permission validation.
+    - **Fatal Error Bug in `api_delete_sales_order`**: When deleting a sales order with reserved stock containing item variations, `$itemModel->syncVariationsJsonColumn()` was called on a `null` variable because `$itemModel` was only instantiated in the `if ($stockStatus === 'deducted')` branch, causing a 500 fatal crash.
+    - **Missing Exception Rollback**: In `api_delete_sales_order`, if an exception occurred during item deletion or stock revert, `$db->rollBack()` was omitted, potentially leaving open uncommitted transactions.
+    - **Double-Entry General Ledger Balance Disruption**: In `api_save_accounting_entries`, an unconditional `UPDATE transactions SET account_id = :aid, credit = :cred WHERE journal_entry_id = :jid AND credit > 0` set all credit transaction rows (including Tax / Discount lines) to the invoice gross total `$gTotal`, breaking double-entry trial balance ($Debit \ne $Credit).
+    - **Redundant View-Level Database Queries**: `_route_selection_filters.php` instantiated a new `Database()` object directly in the view to query reps, despite `loadRouteDashboardData()` already querying reps in the controller.
+    - **Route Dropdown Filter Truncation**: Route filter dropdown was built using only the current page's 20 items (`$data['routes']`) rather than all unique route names in the system.
+    - **Database Performance & Missing Composite Indexes**: Correlated subqueries in `getUnifiedRoutes()` and `getCompletedRoutes()` performed full table scans on `invoices` (`GROUP BY rep_route_id`) and `pending_collections` (`GROUP BY route_id`) without composite indexes on `(rep_route_id, status)` and `(route_id, status)`.
+  - **Fixes & Optimizations**:
+    - Preserved 100% of existing UI layout, multi-panel workflow, tabs 1-12, and Leaflet map integration without redesign per strict instructions.
+    - Enforced `$this->checkPermission('reptracking', 'view')` in `renderRouteDashboard()` and all print/report actions (`balancing_report`, `spreadsheet`, `export_csv`, `print_loading`, `print_route_invoices`, `print_route_invoices_summary`, `print_return_stock`, `print_market_return`).
+    - Enforced `$this->checkPermission('reptracking', 'create_edit')` and `checkPermission('reptracking', 'delete')` across all mutating endpoints.
+    - Fixed permission slug typo from `'rep_tracking', 'edit'` to `'reptracking', 'create_edit'`.
+    - Fixed fatal crash in `api_delete_sales_order` by instantiating `Item` model at the method scope and added transaction rollback in `catch`.
+    - Targeted primary AR debit row and primary Revenue credit row with `ORDER BY debit/credit DESC LIMIT 1` in `api_save_accounting_entries` to prevent ledger corruption.
+    - Preloaded all distinct routes and filter reps in controller `loadRouteDashboardData()`, eliminating view database queries and enabling full catalog route selection in the filter bar.
+    - Generated standalone copy-pasteable production SQL composite indexes for live server execution.
 - [ ] **Module 8: Double-Entry Accounting & Banking**
 - [ ] **Module 9: HRM & Payroll**
 - [ ] **Module 10: Reports Engine**

@@ -131,6 +131,24 @@ class RepTrackingController extends Controller {
                     ORDER BY e.first_name ASC, u.username ASC");
         $repsList = $db->resultSet() ?: [];
 
+        // Fetch distinct reps from daily routes
+        $db->query("
+            SELECT DISTINCT COALESCE(e.first_name, u.username) as first_name, COALESCE(e.last_name, '') as last_name
+            FROM rep_daily_routes r
+            LEFT JOIN users u ON r.user_id = u.id
+            LEFT JOIN employees e ON (u.employee_id = e.id OR (u.email IS NOT NULL AND u.email != '' AND LOWER(u.email) = LOWER(e.email)))
+            UNION
+            SELECT DISTINCT COALESCE(e.first_name, u.username) as first_name, COALESCE(e.last_name, '') as last_name
+            FROM users u
+            LEFT JOIN employees e ON u.employee_id = e.id
+            WHERE u.role = 'rep' AND (u.status IS NULL OR u.status = 'Active')
+        ");
+        $allFilterReps = $db->resultSet() ?: [];
+
+        // Fetch distinct route names across all routes
+        $db->query("SELECT DISTINCT route_name FROM rep_daily_routes WHERE route_name IS NOT NULL AND route_name != '' ORDER BY route_name ASC");
+        $allRoutesList = $db->resultSet() ?: [];
+
         // Fetch active MCA areas (territories)
         $db->query("SELECT id, name FROM mca_areas WHERE status = 'active' OR status IS NULL ORDER BY name ASC");
         $mcaAreas = $db->resultSet() ?: [];
@@ -142,11 +160,14 @@ class RepTrackingController extends Controller {
             'bank_accounts' => $bankAccounts,
             'all_accounts' => $allAccounts,
             'reps' => $repsList,
+            'filter_reps' => $allFilterReps,
+            'all_routes' => $allRoutesList,
             'mca_areas' => $mcaAreas
         ];
     }
 
     private function renderRouteDashboard($isHistory = false) {
+        $this->checkPermission('reptracking', 'view');
         $baseData = $this->loadRouteDashboardData();
 
         $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -1063,6 +1084,7 @@ class RepTrackingController extends Controller {
             exit;
         }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
 
         $rawInput = file_get_contents('php://input');
         $postData = json_decode($rawInput, true);
@@ -1109,6 +1131,7 @@ class RepTrackingController extends Controller {
             exit;
         }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
 
         $rawInput = file_get_contents('php://input');
         $postData = json_decode($rawInput, true);
@@ -1205,6 +1228,7 @@ class RepTrackingController extends Controller {
             exit;
         }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
 
         $rawInput = file_get_contents('php://input');
         $postData = json_decode($rawInput, true);
@@ -1364,6 +1388,7 @@ class RepTrackingController extends Controller {
     }
 
     public function balancing_report($id) {
+        $this->checkPermission('reptracking', 'view');
         $delivery = $this->deliveryModel->getDeliveryById($id);
         if (!$delivery) {
             die("<div style='padding:20px; font-family:sans-serif; color:red;'><h3>Delivery Not Found</h3></div>");
@@ -1378,6 +1403,7 @@ class RepTrackingController extends Controller {
     }
 
     public function spreadsheet($id) {
+        $this->checkPermission('reptracking', 'view');
         $delivery = $this->deliveryModel->getDeliveryById($id);
         if (!$delivery) {
             die("<div style='padding:20px; font-family:sans-serif; color:red;'><h3>Delivery Not Found</h3></div>");
@@ -1392,6 +1418,7 @@ class RepTrackingController extends Controller {
     }
 
     public function export_csv($id) {
+        $this->checkPermission('reptracking', 'view');
         $delivery = $this->deliveryModel->getDeliveryById($id);
         if (!$delivery) {
             die("Delivery not found.");
@@ -1415,6 +1442,7 @@ class RepTrackingController extends Controller {
     }
 
     public function print_loading($routeId) {
+        $this->checkPermission('reptracking', 'view');
         $type = $_GET['type'] ?? 'final';
         
         $routeIds = $this->trackingModel->resolveAllBoundRouteIds($routeId);
@@ -1482,6 +1510,7 @@ class RepTrackingController extends Controller {
     }
 
     public function print_route_invoices($routeId) {
+        $this->checkPermission('reptracking', 'view');
         $route = $this->trackingModel->getRouteById($routeId);
         if (!$route) {
             die("Route not found.");
@@ -1552,6 +1581,7 @@ class RepTrackingController extends Controller {
     }
 
     public function print_route_invoices_summary($routeId) {
+        $this->checkPermission('reptracking', 'view');
         $route = $this->trackingModel->getRouteById($routeId);
         if (!$route) {
             die("Route not found.");
@@ -1586,6 +1616,7 @@ class RepTrackingController extends Controller {
     }
 
     public function print_return_stock($routeId) {
+        $this->checkPermission('reptracking', 'view');
         $route = $this->trackingModel->getRouteById($routeId);
         if (!$route) {
             die("Route not found.");
@@ -1631,6 +1662,7 @@ class RepTrackingController extends Controller {
     public function api_verify_collections() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $updates = $payload['updates'] ?? [];
         $userId = $_SESSION['user_id'] ?? 1;
@@ -1869,6 +1901,7 @@ class RepTrackingController extends Controller {
     public function api_adjust_variance_billing() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $routeId = intval($payload['route_id'] ?? 0);
         $adjustments = $payload['adjustments'] ?? [];
@@ -1928,6 +1961,7 @@ class RepTrackingController extends Controller {
     public function api_apply_substitution() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $subId = intval($payload['substitution_id'] ?? 0);
         $pricingChoice = $payload['pricing_choice'] ?? 'replacement'; // 'original' or 'replacement'
@@ -1958,6 +1992,7 @@ class RepTrackingController extends Controller {
     public function api_finalize_collections() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $paymentIds = $payload['payment_ids'] ?? [];
         $bankAllocations = $payload['bank_allocations'] ?? [];
@@ -1983,9 +2018,13 @@ class RepTrackingController extends Controller {
     public function api_delete_sales_order($invoiceId) {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('sales', 'delete');
         try {
             $db = new Database();
             $db->beginTransaction();
+
+            require_once dirname(__DIR__) . '/Models/Item.php';
+            $itemModel = new Item();
 
             // Retrieve invoice number and stock status for reference
             $db->query("SELECT invoice_number, stock_status FROM invoices WHERE id = :id");
@@ -2004,8 +2043,6 @@ class RepTrackingController extends Controller {
 
                 if ($stockStatus === 'deducted') {
                     if ($itemId) {
-                        require_once dirname(__DIR__) . '/Models/Item.php';
-                        $itemModel = new Item();
                         $itemModel->updateStockDelta($itemId, $qty);
                     }
                     if ($varId) {
@@ -2070,6 +2107,9 @@ class RepTrackingController extends Controller {
             echo json_encode(['status' => 'success', 'message' => 'Sales Order deleted successfully and inventory released!']);
             exit;
         } catch (Exception $e) {
+            if (isset($db) && $db->inTransaction()) {
+                $db->rollBack();
+            }
             header('Content-Type: application/json');
             echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
             exit;
@@ -2205,6 +2245,7 @@ class RepTrackingController extends Controller {
     public function api_attach_invoices() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $routeId = intval($payload['route_id'] ?? 0);
         $invoiceIds = $payload['invoice_ids'] ?? [];
@@ -2230,6 +2271,7 @@ class RepTrackingController extends Controller {
     public function api_create_binding() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $bindingName = trim($payload['binding_name'] ?? '');
         $routeIds = $payload['route_ids'] ?? [];
@@ -2257,6 +2299,7 @@ class RepTrackingController extends Controller {
     public function api_unbind_route() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $bindingId = intval($payload['binding_id'] ?? 0);
         $routeId = intval($payload['route_id'] ?? 0);
@@ -2348,6 +2391,7 @@ class RepTrackingController extends Controller {
     public function api_save_reconciliation() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $deliveryId = intval($payload['delivery_id'] ?? 0);
         $reconciliationData = $payload['reconciliation_data'] ?? null;
@@ -2402,6 +2446,7 @@ class RepTrackingController extends Controller {
     public function api_process_delivery_visit() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         
         $payload = json_decode(file_get_contents('php://input'), true);
         $routeId = intval($payload['route_id'] ?? 0);
@@ -2516,6 +2561,7 @@ class RepTrackingController extends Controller {
     public function api_save_return_stock() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $deliveryId = intval($payload['delivery_id'] ?? 0);
         $returnStockData = $payload['return_stock_data'] ?? null;
@@ -2582,6 +2628,7 @@ class RepTrackingController extends Controller {
             echo json_encode(['status' => 'error', 'message' => 'CSRF validation failed.']);
             exit;
         }
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $deliveryId = intval($payload['delivery_id'] ?? 0);
         $routeId = intval($payload['route_id'] ?? 0);
@@ -2711,17 +2758,16 @@ class RepTrackingController extends Controller {
                             // 2. Update mapped accounts directly on the invoice's official primary journal entry
                             $officialJid = $invoice->journal_entry_id;
                             if ($officialJid) {
-                                // Update Debit transaction (AR) account ID & amount
-                                $db->query("UPDATE transactions SET account_id = :aid, debit = :deb WHERE journal_entry_id = :jid AND debit > 0");
+                                // Update Debit transaction (AR) account ID & amount on primary debit row
+                                $db->query("UPDATE transactions SET account_id = :aid, debit = :deb WHERE journal_entry_id = :jid AND debit > 0 ORDER BY debit DESC LIMIT 1");
                                 $db->bind(':aid', $debAcc);
                                 $db->bind(':deb', $gTotal);
                                 $db->bind(':jid', $officialJid);
                                 $db->execute();
 
-                                // Update Credit transaction (Revenue) account ID & amount
-                                $db->query("UPDATE transactions SET account_id = :aid, credit = :cred WHERE journal_entry_id = :jid AND credit > 0");
+                                // Update Credit transaction (Revenue) account ID on primary credit row
+                                $db->query("UPDATE transactions SET account_id = :aid WHERE journal_entry_id = :jid AND credit > 0 ORDER BY credit DESC LIMIT 1");
                                 $db->bind(':aid', $credAcc);
-                                $db->bind(':cred', $gTotal);
                                 $db->bind(':jid', $officialJid);
                                 $db->execute();
                             }
@@ -2747,6 +2793,7 @@ class RepTrackingController extends Controller {
     public function api_save_route_notes() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') { die("Invalid Request"); }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $routeId = intval($payload['route_id'] ?? 0);
         $notes = $payload['notes'] ?? '';
@@ -2796,6 +2843,7 @@ class RepTrackingController extends Controller {
             exit;
         }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
         $invoiceId = intval($payload['invoice_id'] ?? 0);
         if ($invoiceId <= 0) {
@@ -2860,6 +2908,7 @@ class RepTrackingController extends Controller {
         }
 
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
 
         $userId = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
         $routeName = isset($_POST['route_name']) ? trim($_POST['route_name']) : '';
@@ -3002,12 +3051,7 @@ class RepTrackingController extends Controller {
         unset($_SESSION[$lockoutKey]);
 
         // Verify Delete Permission
-        if (isset($_SESSION['role']) && strtolower($_SESSION['role']) !== 'admin') {
-            $perms = $_SESSION['permissions'] ?? [];
-            if (!($perms['sales']['can_delete'] ?? false)) {
-                $errorResponse("Access denied: You do not have permission to delete daily routes.");
-            }
-        }
+        $this->checkPermission('reptracking', 'delete');
 
         try {
             $userId = $_SESSION['user_id'] ?? 1;
@@ -3080,7 +3124,7 @@ class RepTrackingController extends Controller {
             exit;
         }
         $this->validateCsrf();
-        $this->checkPermission('rep_tracking', 'edit');
+        $this->checkPermission('reptracking', 'create_edit');
 
         $input = file_get_contents('php://input');
         $payload = json_decode($input, true);
@@ -3108,7 +3152,7 @@ class RepTrackingController extends Controller {
             exit;
         }
         $this->validateCsrf();
-        $this->checkPermission('rep_tracking', 'edit');
+        $this->checkPermission('reptracking', 'create_edit');
 
         $userId = $_SESSION['user_id'];
         $expenseService = new RouteExpenseService();
@@ -3147,6 +3191,7 @@ class RepTrackingController extends Controller {
             exit;
         }
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
 
         $payload = json_decode(file_get_contents('php://input'), true);
         $routeId = intval($payload['route_id'] ?? 0);
@@ -3242,6 +3287,7 @@ class RepTrackingController extends Controller {
         }
 
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
 
         $routeId = intval($payload['route_id'] ?? 0);
@@ -3452,6 +3498,7 @@ class RepTrackingController extends Controller {
         }
 
         $this->validateCsrf();
+        $this->checkPermission('reptracking', 'create_edit');
         $payload = json_decode(file_get_contents('php://input'), true);
 
         $routeId = intval($payload['route_id'] ?? 0);
@@ -3490,6 +3537,7 @@ class RepTrackingController extends Controller {
     }
 
     public function print_market_return($id = null) {
+        $this->checkPermission('reptracking', 'view');
         if (!$id) {
             die("Market Return ID is required.");
         }
