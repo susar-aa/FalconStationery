@@ -12,31 +12,45 @@ class JournalEntry {
         $this->auditLog = new AuditLog();
     }
 
-    public function getAllEntries(?int $limit = null, ?int $offset = null, array $filters = []): array {
-        $sql = "SELECT je.*, u.username 
-                FROM journal_entries je 
-                LEFT JOIN users u ON je.created_by = u.id 
-                WHERE je.is_manual = 1";
-        
-        $params = [];
+    private function buildFilterWhere(array $filters, array &$params): string {
+        $where = " WHERE 1=1";
+        $source = $filters['source'] ?? 'manual';
+        if ($source === 'manual') {
+            $where .= " AND je.is_manual = 1";
+        } elseif ($source === 'system') {
+            $where .= " AND je.is_manual = 0";
+        }
+
         if (!empty($filters['search'])) {
-            $sql .= " AND (je.reference LIKE :search OR je.description LIKE :search)";
+            $where .= " AND (je.reference LIKE :search OR je.description LIKE :search)";
             $params[':search'] = '%' . $filters['search'] . '%';
         }
         if (!empty($filters['status']) && $filters['status'] !== 'All') {
-            $sql .= " AND je.status = :status";
+            $where .= " AND je.status = :status";
             $params[':status'] = $filters['status'];
         }
         if (!empty($filters['start_date'])) {
-            $sql .= " AND je.entry_date >= :start_date";
+            $where .= " AND je.entry_date >= :start_date";
             $params[':start_date'] = $filters['start_date'];
         }
         if (!empty($filters['end_date'])) {
-            $sql .= " AND je.entry_date <= :end_date";
+            $where .= " AND je.entry_date <= :end_date";
             $params[':end_date'] = $filters['end_date'];
         }
-        
-        $sql .= " ORDER BY je.entry_date DESC, je.id DESC";
+        return $where;
+    }
+
+    public function getAllEntries(?int $limit = null, ?int $offset = null, array $filters = []): array {
+        $params = [];
+        $where = $this->buildFilterWhere($filters, $params);
+
+        $sql = "SELECT je.*, u.username,
+                       COALESCE((SELECT SUM(t.debit) FROM transactions t WHERE t.journal_entry_id = je.id), 0) as total_amount,
+                       (SELECT COUNT(*) FROM transactions t WHERE t.journal_entry_id = je.id) as lines_count
+                FROM journal_entries je 
+                LEFT JOIN users u ON je.created_by = u.id 
+                {$where}
+                ORDER BY je.entry_date DESC, je.id DESC";
         
         if ($limit !== null && $offset !== null) {
             $sql .= " LIMIT :limit OFFSET :offset";
@@ -57,25 +71,9 @@ class JournalEntry {
     }
 
     public function getEntriesCount(array $filters = []): int {
-        $sql = "SELECT COUNT(*) as total FROM journal_entries je WHERE je.is_manual = 1";
-        
         $params = [];
-        if (!empty($filters['search'])) {
-            $sql .= " AND (je.reference LIKE :search OR je.description LIKE :search)";
-            $params[':search'] = '%' . $filters['search'] . '%';
-        }
-        if (!empty($filters['status']) && $filters['status'] !== 'All') {
-            $sql .= " AND je.status = :status";
-            $params[':status'] = $filters['status'];
-        }
-        if (!empty($filters['start_date'])) {
-            $sql .= " AND je.entry_date >= :start_date";
-            $params[':start_date'] = $filters['start_date'];
-        }
-        if (!empty($filters['end_date'])) {
-            $sql .= " AND je.entry_date <= :end_date";
-            $params[':end_date'] = $filters['end_date'];
-        }
+        $where = $this->buildFilterWhere($filters, $params);
+        $sql = "SELECT COUNT(*) as total FROM journal_entries je {$where}";
         
         $this->db->query($sql);
         foreach ($params as $key => $val) {
@@ -84,6 +82,42 @@ class JournalEntry {
         
         $row = $this->db->single();
         return $row ? (int)$row->total : 0;
+    }
+
+    public function getEntryStats(array $filters = []): object {
+        $params = [];
+        // Exclude status filter when computing status breakdown counts, keep search/date/source
+        $statsFilters = $filters;
+        $statsFilters['status'] = 'All';
+        $where = $this->buildFilterWhere($statsFilters, $params);
+
+        $sql = "SELECT 
+                    COUNT(*) as total_count,
+                    SUM(CASE WHEN je.status = 'Posted' THEN 1 ELSE 0 END) as posted_count,
+                    SUM(CASE WHEN je.status = 'Voided' THEN 1 ELSE 0 END) as voided_count,
+                    SUM(CASE WHEN je.status = 'Draft' THEN 1 ELSE 0 END) as draft_count
+                FROM journal_entries je {$where}";
+        $this->db->query($sql);
+        foreach ($params as $key => $val) {
+            $this->db->bind($key, $val);
+        }
+        $row = $this->db->single();
+        return $row ?: (object)[
+            'total_count' => 0,
+            'posted_count' => 0,
+            'voided_count' => 0,
+            'draft_count' => 0
+        ];
+    }
+
+    public function getLightweightEntities(): array {
+        $this->db->query("SELECT id, name FROM customers WHERE status = 'Active' ORDER BY name ASC");
+        $customers = $this->db->resultSet() ?: [];
+
+        $this->db->query("SELECT id, name FROM vendors WHERE status = 'Active' ORDER BY name ASC");
+        $suppliers = $this->db->resultSet() ?: [];
+
+        return ['customers' => $customers, 'suppliers' => $suppliers];
     }
 
     public function postEntry(string $date, string $reference, string $description, array $lines, int $userId, bool $isManual = false): string|bool {
@@ -140,6 +174,12 @@ class JournalEntry {
                 $this->db->query("SELECT account_type FROM chart_of_accounts WHERE id = :id FOR UPDATE");
                 $this->db->bind(':id', $line['account_id']);
                 $account = $this->db->single();
+                if (!$account) {
+                    if (!$inTransaction) {
+                        $this->db->rollBack();
+                    }
+                    return 'Accounting Error: Selected account (ID ' . intval($line['account_id']) . ') does not exist.';
+                }
 
                 $balanceUpdateSql = "UPDATE chart_of_accounts SET balance = balance ";
                 if (in_array($account->account_type, [COA_TYPE_ASSET, COA_TYPE_EXPENSE])) {

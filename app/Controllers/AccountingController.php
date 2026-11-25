@@ -333,22 +333,34 @@ class AccountingController extends Controller {
     }
 
     public function journal(): void {
+        $this->checkPermission('accounting', 'view');
         $this->generateCsrfToken();
-        
+
+        $allowedLimits = [15, 25, 50, 100];
+        $limit = isset($_GET['limit']) ? intval($_GET['limit']) : 25;
+        if (!in_array($limit, $allowedLimits, true)) {
+            $limit = 25;
+        }
+
+        $source = $_GET['source'] ?? 'manual';
+        if (!in_array($source, ['manual', 'system', 'all'], true)) {
+            $source = 'manual';
+        }
+
         $filters = [
-            'search' => $_GET['search'] ?? '',
+            'search' => trim($_GET['search'] ?? ''),
             'status' => $_GET['status'] ?? 'All',
+            'source' => $source,
             'start_date' => $_GET['start_date'] ?? '',
             'end_date' => $_GET['end_date'] ?? ''
         ];
-        
+
         $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
         if ($page < 1) $page = 1;
-        $limit = 20;
         $offset = ($page - 1) * $limit;
-        
+
         $totalEntries = $this->journalModel->getEntriesCount($filters);
-        $totalPages = ceil($totalEntries / $limit);
+        $totalPages = (int)ceil($totalEntries / $limit);
         if ($totalPages < 1) $totalPages = 1;
         if ($page > $totalPages) {
             $page = $totalPages;
@@ -356,15 +368,19 @@ class AccountingController extends Controller {
         }
 
         $entries = $this->journalModel->getAllEntries($limit, $offset, $filters);
+        $stats = $this->journalModel->getEntryStats($filters);
+        $entities = $this->journalModel->getLightweightEntities();
 
         $data = [
             'title' => 'Journal Entries',
             'content_view' => 'accounting/journal',
             'accounts' => $this->coaModel->getAccounts(),
-            'customers' => $this->model('Customer')->getActiveCustomers(),
-            'suppliers' => $this->model('Supplier')->getActiveSuppliers(),
+            'customers' => $entities['customers'],
+            'suppliers' => $entities['suppliers'],
             'entries' => $entries,
+            'stats' => $stats,
             'page' => $page,
+            'limit' => $limit,
             'total_pages' => $totalPages,
             'total_entries' => $totalEntries,
             'filters' => $filters,
@@ -382,104 +398,114 @@ class AccountingController extends Controller {
         }
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $date = trim($_POST['entry_date']);
-            $reference = trim($_POST['reference']);
-            $description = trim($_POST['description']);
-            $accounts = $_POST['account_id'];
-            $debits = $_POST['debit'];
-            $credits = $_POST['credit'];
-            
+            $this->checkPermission('accounting', 'create_edit');
+            $this->validateCsrfOrDie();
+
+            $date = trim($_POST['entry_date'] ?? '');
+            $reference = trim($_POST['reference'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            $accounts = $_POST['account_id'] ?? [];
+            $debits = $_POST['debit'] ?? [];
+            $credits = $_POST['credit'] ?? [];
+
             $line_entity_types = $_POST['line_entity_type'] ?? [];
             $line_entity_ids = $_POST['line_entity_id'] ?? [];
-
             $line_descriptions = $_POST['line_description'] ?? [];
 
             $lines = [];
-            $totalDebit = 0; $totalCredit = 0;
+            $totalDebit = 0.0;
+            $totalCredit = 0.0;
             $hasNegative = false;
             $hasBoth = false;
+            $hasInvalidAccount = false;
 
-            for ($i = 0; $i < count($accounts); $i++) {
-                $deb = empty($debits[$i]) ? 0 : floatval($debits[$i]);
-                $cred = empty($credits[$i]) ? 0 : floatval($credits[$i]);
-                $line_desc = empty($line_descriptions[$i]) ? '' : trim($line_descriptions[$i]);
-                
-                $leid = $line_entity_ids[$i] ?? null;
-                if (!empty($leid)) $leid = intval($leid); else $leid = null;
+            $parsedDate = DateTime::createFromFormat('Y-m-d', $date);
+            if (!$parsedDate || $parsedDate->format('Y-m-d') !== $date) {
+                $data['error'] = 'Validation Error: Invalid entry date format.';
+            } elseif (empty($description)) {
+                $data['error'] = 'Validation Error: Description / Memo is required.';
+            } elseif (!is_array($accounts) || count($accounts) < 2) {
+                $data['error'] = 'Validation Error: A journal entry must contain at least 2 transaction lines.';
+            } else {
+                for ($i = 0; $i < count($accounts); $i++) {
+                    $deb = empty($debits[$i]) ? 0.0 : floatval($debits[$i]);
+                    $cred = empty($credits[$i]) ? 0.0 : floatval($credits[$i]);
+                    $line_desc = empty($line_descriptions[$i]) ? '' : trim($line_descriptions[$i]);
 
-                $aid_raw = $accounts[$i];
-                $let = null;
-                $aid = 0;
+                    $leid = $line_entity_ids[$i] ?? null;
+                    $leid = !empty($leid) ? intval($leid) : null;
 
-                if ($aid_raw === 'Customer') {
-                    $let = 'Customer';
-                    $ar_account = $this->coaModel->getAccountByCode('1200'); // Accounts Receivable default code
-                    $aid = $ar_account ? $ar_account->id : 0;
-                } else if ($aid_raw === 'Vendor') {
-                    $let = 'Vendor';
-                    $ap_account = $this->coaModel->getAccountByCode('2000'); // Accounts Payable default code
-                    $aid = $ap_account ? $ap_account->id : 0;
-                } else {
-                    $aid = intval($aid_raw);
-                    if (!empty($line_entity_types[$i])) {
-                        $let = $line_entity_types[$i];
-                    }
-                    if (empty($let) && !empty($leid)) {
-                        $accObj = $this->coaModel->getAccountById($aid);
-                        if ($accObj) {
-                            if ($accObj->account_code === '1200' || $accObj->account_type === 'Asset') {
-                                $let = 'Customer';
-                            } else {
-                                $let = 'Vendor';
+                    $aid_raw = $accounts[$i] ?? '';
+                    $let = null;
+                    $aid = 0;
+
+                    if ($aid_raw === 'Customer') {
+                        $let = 'Customer';
+                        $ar_account = $this->coaModel->getAccountByCode('1200');
+                        $aid = $ar_account ? (int)$ar_account->id : 0;
+                    } elseif ($aid_raw === 'Vendor') {
+                        $let = 'Vendor';
+                        $ap_account = $this->coaModel->getAccountByCode('2000');
+                        $aid = $ap_account ? (int)$ap_account->id : 0;
+                    } else {
+                        $aid = intval($aid_raw);
+                        if (!empty($line_entity_types[$i])) {
+                            $let = $line_entity_types[$i];
+                        }
+                        if (empty($let) && !empty($leid)) {
+                            $accObj = $this->coaModel->getAccountById($aid);
+                            if ($accObj) {
+                                $let = ($accObj->account_code === '1200' || $accObj->account_type === 'Asset') ? 'Customer' : 'Vendor';
                             }
                         }
                     }
+
+                    if ($deb < 0 || $cred < 0) {
+                        $hasNegative = true;
+                    }
+                    if ($deb > 0 && $cred > 0) {
+                        $hasBoth = true;
+                    }
+
+                    if (($deb > 0 || $cred > 0) && $deb >= 0 && $cred >= 0) {
+                        if ($aid <= 0) {
+                            $hasInvalidAccount = true;
+                        }
+                        $lines[] = [
+                            'account_id' => $aid,
+                            'debit' => $deb,
+                            'credit' => $cred,
+                            'description' => $line_desc,
+                            'entity_type' => $let,
+                            'entity_id' => $leid
+                        ];
+                        $totalDebit += $deb;
+                        $totalCredit += $cred;
+                    }
                 }
 
-                if ($deb < 0 || $cred < 0) {
-                    $hasNegative = true;
-                }
-                if ($deb > 0 && $cred > 0) {
-                    $hasBoth = true;
-                }
+                $totalDebitCents = bcmul(sprintf("%.2f", $totalDebit), '100', 0);
+                $totalCreditCents = bcmul(sprintf("%.2f", $totalCredit), '100', 0);
 
-                if (($deb > 0 || $cred > 0) && $deb >= 0 && $cred >= 0) {
-                    $lines[] = [
-                        'account_id' => $aid, 
-                        'debit' => $deb, 
-                        'credit' => $cred, 
-                        'description' => $line_desc,
-                        'entity_type' => $let,
-                        'entity_id' => $leid
-                    ];
-                    $totalDebit += $deb; $totalCredit += $cred;
-                }
-            }
-
-            $totalDebitCents = bcmul(sprintf("%.2f", $totalDebit), '100', 0);
-            $totalCreditCents = bcmul(sprintf("%.2f", $totalCredit), '100', 0);
-
-            if ($hasNegative) { $data['error'] = 'Accounting Error: Debit and Credit amounts cannot be negative.'; }
-            elseif ($hasBoth) { $data['error'] = 'Accounting Error: A single transaction line cannot contain both a Debit and a Credit amount.'; }
-            elseif (empty($lines)) { $data['error'] = 'You must enter at least one transaction line.'; } 
-            elseif ($totalDebitCents !== $totalCreditCents) { $data['error'] = 'Accounting Error: Total Debits must equal Total Credits.'; } 
-            else {
-                $postResult = $this->journalModel->postEntry($date, $reference, $description, $lines, $_SESSION['user_id'], true);
-                if ($postResult === true) {
-                    $data['success'] = 'Journal Entry successfully posted.';
-                    // Recalculate
-                    $page = 1;
-                    $offset = 0;
-                    $totalEntries = $this->journalModel->getEntriesCount();
-                    $totalPages = ceil($totalEntries / $limit);
-                    if ($totalPages < 1) $totalPages = 1;
-                    
-                    $data['entries'] = $this->journalModel->getAllEntries($limit, $offset);
-                    $data['page'] = $page;
-                    $data['total_pages'] = $totalPages;
-                    $data['total_entries'] = $totalEntries;
+                if ($hasNegative) {
+                    $data['error'] = 'Accounting Error: Debit and Credit amounts cannot be negative.';
+                } elseif ($hasBoth) {
+                    $data['error'] = 'Accounting Error: A single transaction line cannot contain both a Debit and a Credit amount.';
+                } elseif ($hasInvalidAccount) {
+                    $data['error'] = 'Accounting Error: Every active line must have a valid ledger account selected.';
+                } elseif (count($lines) < 2) {
+                    $data['error'] = 'You must enter at least two balanced transaction lines.';
+                } elseif ($totalDebitCents !== $totalCreditCents || (int)$totalDebitCents <= 0) {
+                    $data['error'] = 'Accounting Error: Total Debits must equal Total Credits and be greater than zero.';
                 } else {
-                    $data['error'] = $postResult;
+                    $postResult = $this->journalModel->postEntry($date, $reference, $description, $lines, (int)$_SESSION['user_id'], true);
+                    if ($postResult === true) {
+                        $_SESSION['flash_success'] = 'Journal Entry successfully posted.';
+                        header('Location: ' . APP_URL . '/accounting/journal');
+                        exit;
+                    } else {
+                        $data['error'] = $postResult;
+                    }
                 }
             }
         }
@@ -736,6 +762,7 @@ class AccountingController extends Controller {
     }
 
     public function void_journal(): void {
+        $this->checkPermission('accounting', 'delete');
         if ($_SESSION['role'] !== 'Admin' && $_SESSION['role'] !== 'Accountant') {
             die("Access Denied: Only Administrators or Accountants can void journal entries.");
         }
@@ -867,6 +894,7 @@ class AccountingController extends Controller {
     }
 
     public function journal_details(int $id): void {
+        $this->checkPermission('accounting', 'view');
         header('Content-Type: application/json');
         $details = $this->journalModel->getEntryDetails($id);
         if (!$details) {
@@ -877,6 +905,7 @@ class AccountingController extends Controller {
     }
 
     public function print_journal(int $id): void {
+        $this->checkPermission('accounting', 'view');
         $details = $this->journalModel->getEntryDetails($id);
         if (!$details) {
             die("Error: Journal entry #{$id} not found.");
@@ -885,9 +914,15 @@ class AccountingController extends Controller {
     }
 
     public function print_journal_list(): void {
+        $this->checkPermission('accounting', 'view');
+        $source = $_GET['source'] ?? 'manual';
+        if (!in_array($source, ['manual', 'system', 'all'], true)) {
+            $source = 'manual';
+        }
         $filters = [
             'search' => isset($_GET['search']) ? trim($_GET['search']) : '',
             'status' => isset($_GET['status']) ? trim($_GET['status']) : 'All',
+            'source' => $source,
             'start_date' => isset($_GET['start_date']) ? trim($_GET['start_date']) : '',
             'end_date' => isset($_GET['end_date']) ? trim($_GET['end_date']) : ''
         ];
