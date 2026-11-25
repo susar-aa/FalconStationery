@@ -42,13 +42,11 @@ class Supplier {
                     JOIN journal_entries je ON t.journal_entry_id = je.id
                     JOIN chart_of_accounts coa ON t.account_id = coa.id
                     LEFT JOIN supplier_payments sp ON sp.journal_entry_id = je.id
-                    LEFT JOIN grn g ON g.journal_entry_id = je.id
                     WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier')) 
                       AND (COALESCE(t.entity_id, je.entity_id) = v.id) 
                       AND je.status = 'Posted' 
                       AND coa.account_code = '2000'
                       AND sp.id IS NULL
-                      AND g.id IS NULL
                       AND je.reference NOT LIKE 'GRN-%'
                       AND je.reference NOT LIKE 'PO-%') as total_je_balance
             FROM vendors v
@@ -339,13 +337,11 @@ class Supplier {
             JOIN journal_entries je ON t.journal_entry_id = je.id
             JOIN chart_of_accounts coa ON t.account_id = coa.id
             LEFT JOIN supplier_payments sp ON sp.journal_entry_id = je.id
-            LEFT JOIN grn g ON g.journal_entry_id = je.id
             WHERE (COALESCE(t.entity_type, je.entity_type) IN ('Vendor', 'Supplier')) 
               AND (COALESCE(t.entity_id, je.entity_id) = :id) 
               AND je.status = 'Posted' 
               AND coa.account_code = '2000'
               AND sp.id IS NULL
-              AND g.id IS NULL
               AND je.reference NOT LIKE 'GRN-%'
               AND je.reference NOT LIKE 'PO-%'
         ");
